@@ -1,8 +1,8 @@
-ButtonHUD.min.lua
-ButtonHUD.wrapped.conf
-ButtonHUD.exports
-ButtonHUD.extracted.lua
-ButtonHUD.conf.version
+ArchHUD.min.lua
+ArchHUD.wrapped.conf
+ArchHUD.exports
+ArchHUD.extracted.lua
+ArchHUD.conf.version
 scripts/node_modules/**
 scripts/work/**
 src/du
