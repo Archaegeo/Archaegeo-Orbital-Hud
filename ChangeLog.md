@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version Reset to 1.000
+    - Reset version to differentiate from DU Orbtial Hud version.
+
 Version 5.450
 - Orbiting
     - Improved efficiency of achieving orbit

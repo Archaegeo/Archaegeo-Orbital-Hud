@@ -2,17 +2,17 @@
 
 
 <!--Intro information-->
-# DU-Orbital-HUD
-## A general purpose HUD for Dual Universe
+# Arch-Orbital-HUD
+## A general purpose HUD for Dual Universe, based on DU Orbital Hud 5.450 and earlier
 #### Cockpits are *NOT* supported.
-###### For assistance, see our [Discord](https://discord.gg/sRaqzmS)
-###### Donations are accepted! We have a Donation Station in Sanctuary District 3 and more to come or you can always contact us and do a VR trade. We do not spend any time mining or building so our funds to test features are limited.
+###### For assistance, see our [Discord](https://discord.gg/CNRE45xRu7)
+###### Donations are accepted! We have a drop box on Alioth at ::pos{0,2,46.4596,-155.1799,22.6572} or you can always contact us and do a VR trade. 
 <!--TOC-->
 # Table of Contents
 | |
 |------|
-| [Features List](#features-list) |
-| [Change Log](./ChangeLog.md) |
+|[Features List](#features-list) |
+|[Change Log](./ChangeLog.md) |
 |[Warnings](#warnings)
 |[Installation](#installation)|
 |[Usage / Hotkey Reference](#Usage)
@@ -68,10 +68,8 @@ Vertical speed indicator | LUA chat commands | Waypoint management
 
 ##### DISCLAIMER: We do not accept any responsibility for incorrect use of the autopilot, which may result in fiery reentry, mountain impacts or undesired entrance into PvP. Read and heed the warnings below!
 
-##### :warning: Auto-Land - Use with supervision. Will only engage if brakes > total mass. Uses brakes and hovers / vertical engines to lower you to a safe landing.
-##### :warning: Autopilot (Space) - Not suitable for interplanetay trips less than 2SU. Ensure you have LOS (line of sight) to the target body before engaging as autopilot is direct flight and does not detect bodies (will fly into a planet / body if in between starting position and destination).
-##### :warning: Autopilot to Saved Location - Accurate within roughly 15m of saved and selected location assuming a brake landing is available. If Coast Landing is displayed, you will need to resume control upon arrival at your destination.
-##### :warning: Auto-Rentry - Not suitable for bodies without atmosphere. Not suitable for bodies with high altitudes (Thades etc.). Know the altitude of the surface before using! __Alt-Space__ and/or __Alt-C__ may be used to adjust hover altitude as needed.
+##### :warning: Autopilot (Space) - Ensure you have LOS (line of sight) to the target body before engaging as autopilot is direct flight and does not detect bodies (will fly into a planet / body if in between starting position and destination).
+#### :warning: Auto-Rentry - Not suitable for bodies without atmosphere. 
 
 [Return to Table of Contents](#table-of-contents)
 <!--Basic install instructions / point them towards real install instructions-->
@@ -87,9 +85,9 @@ Vertical speed indicator | LUA chat commands | Waypoint management
 ##### 1) Pre-installation Notes:
 
 ##### :black_small_square: Button - If manually connected to the seat, will be pressed when you enter (sit), and open / extend when you exit (stand).
-##### :black_small_square: Databank - Although not required, we recommend a databank to be used. This allows the HUD to save your user preferences and some long-term variables.  In addition, flight status is saved if you leave and return to the seat.
+##### :black_small_square: Databank - Although not required, we recommend a databank to be used. This allows the HUD to save your user preferences and some long-term variables.  In addition, flight status is saved if you leave and return to the seat.  Databanks must be manually slotted the first time you install script.
 ##### :black_small_square: Doors / Forcefields - If manually connected to the seat, will close / retract when you enter (sit), and open / extend when you exit (stand). Ensure they are closed / retracted before connecting to the seat.
-##### :black_small_square: Fuel tanks - If _not_ manually connected provide a rough estimate of fuel levels (set parameters for fuel tank handling talent). If manually connected, more accurate readings are provided and a non-HUD widget is updated.
+##### :black_small_square: Fuel tanks - If _not_ manually connected provide a rough estimate of fuel levels (set parameters for fuel tank handling, fuel tank optimization, and container optimization). If manually connected, more accurate readings are provided and a non-HUD widget is updated.
 
 ## 2) On the right side of this page, locate and click on "Releases" or select the "Release" listed as the latest. Detailed changelog and installation instructions are located there.
 

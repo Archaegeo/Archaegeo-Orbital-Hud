@@ -12,7 +12,7 @@
                 "Wrap (minified)"
             ],
             "args": [
-                "ButtonHUD.conf",
+                "ArchHUD.conf",
                 "${config:du.autoconfdir}/${config:du.testconffilename}"
             ],
             "problemMatcher": []
