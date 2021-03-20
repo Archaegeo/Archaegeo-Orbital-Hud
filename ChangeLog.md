@@ -1,7 +1,15 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.100
+- Remove exportable variables to save scripting room.  
+To change user variables, hit enter, select LUA Chat type and type "/G dump" to see them all. (or look at the README file) 
+Use "/G variablename value" to change it, i.e. /G AtmoSpeedLimit 1300
+- Fix erroneous warning message about wrong control scheme.
+- Begin cleanup and localizaion of functions
+- Removed initial dump of variables to Lua chat, use /G dump to see all user variables.
+
 Version Reset to 1.000
-    - Reset version to differentiate from DU Orbtial Hud version.
+- Reset version to differentiate from DU Orbtial Hud version.
 
 Version 5.450
 - Orbiting
