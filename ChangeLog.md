@@ -6,7 +6,8 @@ To change user variables, hit enter, select LUA Chat type and type "/G dump" to 
 Use "/G variablename value" to change it, i.e. /G AtmoSpeedLimit 1300
 - Fix erroneous warning message about wrong control scheme.
 - Begin cleanup and localizaion of functions
-- Removed initial dump of variables to Lua chat, use /G dump to see all user variables.
+- Removed initial dump of variables to Lua chat, use /G dump to see all user variables.\
+- Removed Alt-7-7 to wipe databank.. Use /wipedatabank command instead. (reclaiming hotkeys)
 
 Version Reset to 1.000
 - Reset version to differentiate from DU Orbtial Hud version.
