@@ -4,6 +4,8 @@ Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
+VERSION_NUMBER = 1.004
+
 -- User settings.  Must be global to work with databank system as set up due to using _G assignment
 freeLookToggle = true -- (Default: true)
 BrakeToggleDefault = true -- (Default: true)
@@ -769,7 +771,16 @@ local function getDistanceDisplayString(distance, places)
     return result, displayUnit
 end
 
-function AddNewLocation() -- Don't call this unless they have a databank or it's kinda pointless
+local function findAtlasIndex(atlasList)
+    for k, v in pairs(atlasList) do
+        if v.name and v.name == CustomTarget.name then
+            return k
+        end
+    end
+    return -1
+end
+
+local function AddNewLocation() -- Don't call this unless they have a databank or it's kinda pointless
     -- Add a new location to SavedLocations
     if dbHud_1 then
         local position = vec3(core.getConstructWorldPos())
@@ -804,15 +815,10 @@ function AddNewLocation() -- Don't call this unless they have a databank or it's
     end
 end
 
-function UpdatePosition(newName)
+local function UpdatePosition(newName)
     local index = -1
     local newLocation
-    for k, v in pairs(SavedLocations) do
-        if v.name and v.name == CustomTarget.name then
-            index = k
-            break
-        end
-    end
+    index = findAtlasIndex(SavedLocations)
     if index ~= -1 then
         local updatedName
         if newName ~= nil then
@@ -835,11 +841,7 @@ function UpdatePosition(newName)
         end
         SavedLocations[index] = newLocation
         index = -1
-        for k, v in pairs(atlas[0]) do
-            if v.name and v.name == CustomTarget.name then
-                index = k
-            end
-        end
+        index = findAtlasIndex(atlas[0])
         if index > -1 then
             atlas[0][index] = newLocation
         end
@@ -852,40 +854,31 @@ function UpdatePosition(newName)
     end
 end
 
-function ClearCurrentPosition()
+local function ClearCurrentPosition()
     -- So AutopilotTargetIndex is special and not a real index.  We have to do this by hand.
     local index = -1
-    for k, v in pairs(atlas[0]) do
-        if v.name and v.name == CustomTarget.name then
-            index = k
-        end
-    end
+    index = findAtlasIndex(atlas[0])
     if index > -1 then
         table.remove(atlas[0], index)
     end
     -- And SavedLocations
     index = -1
-    for k, v in pairs(SavedLocations) do
-        if v.name and v.name == CustomTarget.name then
-            msgText = v.name .. " saved location cleared"
-            index = k
-            break
-        end
-    end
+    index = findAtlasIndex(SavedLocations)
     if index ~= -1 then
+        msgText = CustomTarget.name .. " saved location cleared"
         table.remove(SavedLocations, index)
     end
     DecrementAutopilotTargetIndex()
     UpdateAtlasLocationsList()
 end
 
-function DrawDeadZone(newContent)
+local function DrawDeadZone(newContent)
     newContent[#newContent + 1] = stringf(
                                       [[<circle class="dim line" style="fill:none" cx="50%%" cy="50%%" r="%d"/>]],
                                       DeadZone)
 end
 
-function ToggleRadarPanel()
+local function ToggleRadarPanel()
     if radarPanelID ~= nil and peris == 0 then
         system.destroyWidgetPanel(radarPanelID)
         radarPanelID = nil
@@ -912,8 +905,9 @@ function ToggleRadarPanel()
     end
 end
 
-function ToggleWidgets()
-    if UnitHidden then
+local function ToggleWidgets()
+    UnitHidden = not UnitHidden
+    if not UnitHidden then
         unit.show()
         core.show()
         if atmofueltank_size > 0 then
@@ -931,7 +925,6 @@ function ToggleWidgets()
                 L_TEXT("ui_lua_widget_rocketfuel", "Rocket Fuel"), "fuel_container")
             rocketfuelPanelID = _autoconf.panels[_autoconf.panels_size]
         end
-        UnitHidden = false
     else
         unit.hide()
         core.hide()
@@ -947,60 +940,57 @@ function ToggleWidgets()
             system.destroyWidgetPanel(rocketfuelPanelID)
             rocketfuelPanelID = nil
         end
-        UnitHidden = true
     end
 end
 
-function SetupInterplanetaryPanel() -- Interplanetary helper
+local function SetupInterplanetaryPanel() -- Interplanetary helper
     panelInterplanetary = system.createWidgetPanel("Interplanetary Helper")
+
     interplanetaryHeader = system.createWidget(panelInterplanetary, "value")
     interplanetaryHeaderText = system.createData('{"label": "Target Planet", "value": "N/A", "unit":""}')
     system.addDataToWidget(interplanetaryHeaderText, interplanetaryHeader)
+
     widgetDistance = system.createWidget(panelInterplanetary, "value")
     widgetDistanceText = system.createData('{"label": "distance", "value": "N/A", "unit":""}')
     system.addDataToWidget(widgetDistanceText, widgetDistance)
+
     widgetTravelTime = system.createWidget(panelInterplanetary, "value")
     widgetTravelTimeText = system.createData('{"label": "Travel Time", "value": "N/A", "unit":""}')
     system.addDataToWidget(widgetTravelTimeText, widgetTravelTime)
+
     widgetMaxMass = system.createWidget(panelInterplanetary, "value")
     widgetMaxMassText = system.createData('{"label": "Maximum Mass", "value": "N/A", "unit":""}')
     system.addDataToWidget(widgetMaxMassText, widgetMaxMass)
-    widgetCurBrakeDistance = system.createWidget(panelInterplanetary, "value")
-    widgetCurBrakeDistanceText = system.createData('{"label": "Cur Brake distance", "value": "N/A", "unit":""}')
-    if not inAtmo then
-        system.addDataToWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
-    end
-    widgetCurBrakeTime = system.createWidget(panelInterplanetary, "value")
-    widgetCurBrakeTimeText = system.createData('{"label": "Cur Brake Time", "value": "N/A", "unit":""}')
-    if not inAtmo then
-        system.addDataToWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
-    end
-    widgetMaxBrakeDistance = system.createWidget(panelInterplanetary, "value")
-    widgetMaxBrakeDistanceText = system.createData('{"label": "Max Brake distance", "value": "N/A", "unit":""}')
-    if not inAtmo then
-        system.addDataToWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
-    end
-    widgetMaxBrakeTime = system.createWidget(panelInterplanetary, "value")
-    widgetMaxBrakeTimeText = system.createData('{"label": "Max Brake Time", "value": "N/A", "unit":""}')
-    if not inAtmo then
-        system.addDataToWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
-    end
-    widgetTrajectoryAltitude = system.createWidget(panelInterplanetary, "value")
-    widgetTrajectoryAltitudeText = system.createData(
-                                       '{"label": "Projected Altitude", "value": "N/A", "unit":""}')
-    if not inAtmo then
-        system.addDataToWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
-    end
-
 
     widgetTargetOrbit = system.createWidget(panelInterplanetary, "value")
     widgetTargetOrbitText = system.createData('{"label": "Target Altitude", "value": "N/A", "unit":""}')
-    --if not inAtmo then
-        system.addDataToWidget(widgetTargetOrbitText, widgetTargetOrbit)
-    --end
+    system.addDataToWidget(widgetTargetOrbitText, widgetTargetOrbit)
+
+    widgetCurBrakeDistance = system.createWidget(panelInterplanetary, "value")
+    widgetCurBrakeDistanceText = system.createData('{"label": "Cur Brake distance", "value": "N/A", "unit":""}')
+    widgetCurBrakeTime = system.createWidget(panelInterplanetary, "value")
+    widgetCurBrakeTimeText = system.createData('{"label": "Cur Brake Time", "value": "N/A", "unit":""}')
+    widgetMaxBrakeDistance = system.createWidget(panelInterplanetary, "value")
+    widgetMaxBrakeDistanceText = system.createData('{"label": "Max Brake distance", "value": "N/A", "unit":""}')
+    widgetMaxBrakeTime = system.createWidget(panelInterplanetary, "value")
+    widgetMaxBrakeTimeText = system.createData('{"label": "Max Brake Time", "value": "N/A", "unit":""}')
+    widgetTrajectoryAltitude = system.createWidget(panelInterplanetary, "value")
+    widgetTrajectoryAltitudeText = system.createData('{"label": "Projected Altitude", "value": "N/A", "unit":""}')
+    if not inAtmo then
+        system.addDataToWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
+        system.addDataToWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
+        system.addDataToWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
+        system.addDataToWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
+        system.addDataToWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
+    end
 end
 
-function Contains(mousex, mousey, x, y, width, height)
+local function HideInterplanetaryPanel()
+    system.destroyWidgetPanel(panelInterplanetary)
+    panelInterplanetary = nil
+end
+
+local function Contains(mousex, mousey, x, y, width, height)
     if mousex > x and mousex < (x + width) and mousey > y and mousey < (y + height) then
         return true
     else
@@ -1008,118 +998,11 @@ function Contains(mousex, mousey, x, y, width, height)
     end
 end
 
-function ToggleTurnBurn()
+local function ToggleTurnBurn()
     TurnBurn = not TurnBurn
 end
 
-function ToggleVectorToTarget(SpaceTarget)
-    -- This is a feature to vector toward the target destination in atmo or otherwise on-planet
-    -- Uses altitude hold.  
-    VectorToTarget = not VectorToTarget
-    if VectorToTarget then
-        TurnBurn = false
-        if not AltitudeHold and not SpaceTarget then
-            ToggleAltitudeHold()
-        end
-    end
-    VectorStatus = "Proceeding to Waypoint"
-end
-
-function ToggleAutoLanding()
-    if BrakeLanding then
-        BrakeLanding = false
-        -- Don't disable alt hold for auto land
-    else
-        StrongBrakes = ((planet.gravity * 9.80665 * constructMass()) < LastMaxBrake)
-        --if not StrongBrakes and velMag > minAutopilotSpeed then
-        --    msgText = "WARNING: Insufficient Brakes - Attempting coast landing, beware obstacles"
-        --end
-        AltitudeHold = false
-        AutoTakeoff = false
-        LockPitch = nil
-        BrakeLanding = true
-        Nav.axisCommandManager:setThrottleCommand(axisCommandId.longitudinal, 0)
-        PlayerThrottle = 0
-    end
-end
-
-function ToggleAutoTakeoff()
-    if AutoTakeoff then
-        -- Turn it off, and also AltitudeHold cuz it's weird if you cancel and that's still going 
-        AutoTakeoff = false
-        if AltitudeHold then
-            ToggleAltitudeHold()
-        end
-    elseif VertTakeOff then
-        BrakeLanding = true
-        VertTakeOff = false
-        AltitudeHold = false
-    else
-        if VertTakeOffEngine then
-            VertTakeOff = true
-            AltitudeHold = false
-        else
-            if not AltitudeHold then
-                ToggleAltitudeHold()
-            end
-            AutoTakeoff = true
-            HoldAltitude = coreAltitude + AutoTakeoffAltitude
-        end
-        OrbitAchieved = false
-        GearExtended = false
-        Nav.control.retractLandingGears()
-        Nav.axisCommandManager:setTargetGroundAltitude(500) -- Hard set this for takeoff, you wouldn't use takeoff from a hangar
-        BrakeIsOn = true
-    end
-end
-
-function ToggleIntoOrbit()
-    if IntoOrbit then
-        if OrbitAchieved then
-            CancelIntoOrbit = false
-        else
-            CancelIntoOrbit = true
-        end
-        OrbitAchieved = false
-        IntoOrbit = false
-        orbitAligned = false
-        orbitPitch = nil
-        orbitRoll = nil
-        OrbitTargetPlanet = nil
-        OrbitTicks = 0
-    elseif unit.getClosestPlanetInfluence() > 0 and atmosphere() == 0 then
-        IntoOrbit = true
-        OrbitAchieved = false
-        CancelIntoOrbit = false
-        orbitAligned = false
-        orbitPitch = nil
-        orbitRoll = nil
-        OrbitTicks = 0
-        if OrbitTargetPlanet == nil then
-            OrbitTargetPlanet = planet
-        end
-    else
-        msgText = "Unable to engage orbiting, not near planet"
-    end
-end
-
-function ToggleLockPitch()
-    if LockPitch == nil then
-        local constrF = vec3(core.getConstructWorldOrientationForward())
-        local constrR = vec3(core.getConstructWorldOrientationRight())
-        local worldV = vec3(core.getWorldVertical())
-        local pitch = getPitch(worldV, constrF, constrR)
-        LockPitch = pitch
-        AutoTakeoff = false
-        AltitudeHold = false
-        BrakeLanding = false
-    else
-        LockPitch = nil
-    end
-end
-
-function ToggleAltitudeHold()
-    local time = systime()
+local function ToggleAltitudeHold()  -- Must stay global for some reason, investigate later.
     if (time - ahDoubleClick) < 1.5 then
         if planet.hasAtmosphere then
             if atmosphere() > 0 then
@@ -1138,13 +1021,13 @@ function ToggleAltitudeHold()
         ahDoubleClick = time
     end
     AltitudeHold = not AltitudeHold
+    BrakeLanding = false
+    Reentry = false
     if AltitudeHold then
         Autopilot = false
         ProgradeIsOn = false
         RetrogradeIsOn = false
         followMode = false
-        BrakeLanding = false
-        Reentry = false
         autoRoll = true
         LockPitch = nil
         OrbitAchieved = false
@@ -1176,14 +1059,114 @@ function ToggleAltitudeHold()
         if IntoOrbit then ToggleIntoOrbit() end
         autoRoll = autoRollPreference
         AutoTakeoff = false
-        BrakeLanding = false
-        Reentry = false
-        AutoTakeoff = false
         VectorToTarget = false
     end
 end
 
-function ToggleFollowMode()
+local function ToggleVectorToTarget(SpaceTarget)
+    -- This is a feature to vector toward the target destination in atmo or otherwise on-planet
+    -- Uses altitude hold.  
+    VectorToTarget = not VectorToTarget
+    if VectorToTarget then
+        TurnBurn = false
+        if not AltitudeHold and not SpaceTarget then
+            ToggleAltitudeHold()
+        end
+    end
+    VectorStatus = "Proceeding to Waypoint"
+end
+
+local function ToggleAutoLanding()
+    BrakeLanding = not BrakeLanding
+    if BrakeLanding then
+        StrongBrakes = ((planet.gravity * 9.80665 * constructMass()) < LastMaxBrake)
+        AltitudeHold = false
+        AutoTakeoff = false
+        LockPitch = nil
+        BrakeLanding = true
+        Nav.axisCommandManager:setThrottleCommand(axisCommandId.longitudinal, 0)
+        PlayerThrottle = 0
+    end
+end
+
+local function ToggleAutoTakeoff()
+    if AutoTakeoff then
+        -- Turn it off, and also AltitudeHold cuz it's weird if you cancel and that's still going 
+        AutoTakeoff = false
+        if AltitudeHold then
+            ToggleAltitudeHold()
+        end
+    elseif VertTakeOff then
+        BrakeLanding = true
+        VertTakeOff = false
+        AltitudeHold = false
+    else
+        if VertTakeOffEngine then
+            VertTakeOff = true
+            AltitudeHold = false
+        else
+            if not AltitudeHold then
+                ToggleAltitudeHold()
+            end
+            AutoTakeoff = true
+            HoldAltitude = coreAltitude + AutoTakeoffAltitude
+        end
+        OrbitAchieved = false
+        GearExtended = false
+        Nav.control.retractLandingGears()
+        Nav.axisCommandManager:setTargetGroundAltitude(500) -- Hard set this for takeoff, you wouldn't use takeoff from a hangar
+        BrakeIsOn = true
+    end
+end
+
+local function ToggleIntoOrbit()
+    orbitAligned = false
+    orbitPitch = nil
+    orbitRoll = nil
+    OrbitTicks = 0
+    if IntoOrbit then
+        if OrbitAchieved then
+            CancelIntoOrbit = false
+        else
+            CancelIntoOrbit = true
+        end
+        OrbitAchieved = false
+        IntoOrbit = false
+        OrbitTargetPlanet = nil
+    elseif unit.getClosestPlanetInfluence() > 0 and atmosphere() == 0 then
+        IntoOrbit = true
+        OrbitAchieved = false
+        CancelIntoOrbit = false
+        if OrbitTargetPlanet == nil then
+            OrbitTargetPlanet = planet
+        end
+    else
+        msgText = "Unable to engage orbiting, not near planet or in atmosphere"
+    end
+end
+
+local function worldVectors()
+    local constrF = vec3(core.getConstructWorldOrientationForward())
+    local constrR = vec3(core.getConstructWorldOrientationRight())
+    local constrU = vec3(core.getConstructWorldOrientationUp())
+    local worldV = vec3(core.getWorldVertical())
+    return constrF, constrR, constrU, worldV 
+end   
+
+local function ToggleLockPitch()
+    if LockPitch == nil then
+        local constrF, constrR, _, worldV = worldVectors()
+        local pitch = getPitch(worldV, constrF, constrR)
+        LockPitch = pitch
+        AutoTakeoff = false
+        AltitudeHold = false
+        BrakeLanding = false
+    else
+        LockPitch = nil
+    end
+end
+
+local function ToggleFollowMode()
     if isRemote() == 1 then
         followMode = not followMode
         if followMode then
@@ -1213,8 +1196,119 @@ function ToggleFollowMode()
     end
 end
 
-function ToggleAutopilot()
-    local time = systime()
+local function UpdateAutopilotTarget()
+    -- So the indices are weird.  I think we need to do a pairs
+    if AutopilotTargetIndex == 0 then
+        AutopilotTargetName = "None"
+        autopilotTargetPlanet = nil
+        CustomTarget = nil
+        return true
+    end
+
+    local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
+    local autopilotEntry = atlas[0][atlasIndex]
+    if autopilotEntry.center then -- Is a real atlas entry
+        AutopilotTargetName = autopilotEntry.name
+        autopilotTargetPlanet = galaxyReference[0][atlasIndex]
+        if CustomTarget ~= nil then
+            if atmosphere() == 0 then
+                if system.updateData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) ~= 1 then
+                    system.addDataToWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
+                if system.updateData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) ~= 1 then
+                    system.addDataToWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
+                if system.updateData(widgetCurBrakeTimeText, widgetCurBrakeTime) ~= 1 then
+                    system.addDataToWidget(widgetCurBrakeTimeText, widgetCurBrakeTime) end
+                if system.updateData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) ~= 1 then
+                    system.addDataToWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
+                if system.updateData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) ~= 1 then
+                    system.addDataToWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
+            end
+            if system.updateData(widgetMaxMassText, widgetMaxMass) ~= 1 then
+                system.addDataToWidget(widgetMaxMassText, widgetMaxMass) end
+            if system.updateData(widgetTravelTimeText, widgetTravelTime) ~= 1 then
+                system.addDataToWidget(widgetTravelTimeText, widgetTravelTime) end
+            if system.updateData(widgetTargetOrbitText, widgetTargetOrbit) ~= 1 then
+                system.addDataToWidget(widgetTargetOrbitText, widgetTargetOrbit) end
+        end
+        CustomTarget = nil
+    else
+        CustomTarget = autopilotEntry
+        for _, v in pairs(galaxyReference[0]) do
+            if v.name == CustomTarget.planetname then
+                autopilotTargetPlanet = v
+                AutopilotTargetName = CustomTarget.name
+                break
+            end
+        end
+        if system.updateData(widgetMaxMassText, widgetMaxMass) ~= 1 then
+            system.addDataToWidget(widgetMaxMassText, widgetMaxMass) end
+        if system.updateData(widgetTravelTimeText, widgetTravelTime) ~= 1 then
+            system.addDataToWidget(widgetTravelTimeText, widgetTravelTime) end
+    end
+    if CustomTarget == nil then
+        AutopilotTargetCoords = vec3(autopilotTargetPlanet.center) -- Aim center until we align
+    else
+        AutopilotTargetCoords = CustomTarget.position
+    end
+    -- Determine the end speed
+    if autopilotTargetPlanet.planetname ~= "Space" then
+        if autopilotTargetPlanet.hasAtmosphere then 
+            AutopilotTargetOrbit = math.floor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.noAtmosphericDensityAltitude)
+        else
+            AutopilotTargetOrbit = math.floor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.surfaceMaxAltitude)
+        end
+    else
+        AutopilotTargetOrbit = 1000
+    end
+    if CustomTarget ~= nil and CustomTarget.planetname == "Space" then 
+        AutopilotEndSpeed = 0
+    else
+        _, AutopilotEndSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed(AutopilotTargetOrbit)
+    end
+    AutopilotPlanetGravity = 0 -- This is inaccurate unless we integrate and we're not doing that.  
+    AutopilotAccelerating = false
+    AutopilotBraking = false
+    AutopilotCruising = false
+    Autopilot = false
+    AutopilotRealigned = false
+    AutopilotStatus = "Aligning"
+    return true
+end
+
+local function adjustAutopilotTargetIndex(up)
+    if not Autopilot and not VectorToTarget and not spaceLaunch then -- added to prevent crash when index == 0
+        if up == nil then 
+            AutopilotTargetIndex = AutopilotTargetIndex + 1
+            if AutopilotTargetIndex > #AtlasOrdered then
+                AutopilotTargetIndex = 0
+            end
+        else
+            AutopilotTargetIndex = AutopilotTargetIndex - 1
+            if AutopilotTargetIndex < 0 then
+                AutopilotTargetIndex = #AtlasOrdered
+            end  
+        end
+        if AutopilotTargetIndex == 0 then
+            UpdateAutopilotTarget()
+        else
+            local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
+            local autopilotEntry = atlas[0][atlasIndex]
+            if autopilotEntry.name == "Space" then 
+                if up == nil then 
+                    adjustAutopilotTargetIndex()
+                else
+                    adjustAutopilotTargetIndex(1)
+                end
+            else
+                UpdateAutopilotTarget()
+            end
+        end        
+    else
+        msgText = "Disengage autopilot before changing Interplanetary Helper"
+    end
+end 
+
+local function ToggleAutopilot()
     if (time - apDoubleClick) < 1.5 and atmosphere() > 0 then
         if not SpaceEngines then
             msgText = "No space engines detected, Orbital Hop not supported"
@@ -1715,11 +1809,6 @@ function DrawTank(newContent, updateTanks, x, nameSearchPrefix, nameReplacePrefi
     newContent[#newContent + 1] = "</g>"
 end
 
-function HideInterplanetaryPanel()
-    system.destroyWidgetPanel(panelInterplanetary)
-    panelInterplanetary = nil
-end
-
 function getRelativePitch(velocity)
     velocity = vec3(velocity)
     local pitch = -math.deg(math.atan(velocity.y, velocity.z)) + 180
@@ -2064,15 +2153,12 @@ function UpdateHud(newContent)
     local altitude = coreAltitude
     local velocity = core.getVelocity()
     local speed = vec3(velocity):len()
-    local worldV = vec3(core.getWorldVertical())
-    local constrF = vec3(core.getConstructWorldOrientationForward())
-    local constrR = vec3(core.getConstructWorldOrientationRight())
-    local constrU = vec3(core.getConstructWorldOrientationUp())
+    local constrF, constrR, constrU, worldV = worldVectors()
     local roll = getRoll(worldV, constrF, constrR) 
     local radianRoll = (roll / 180) * math.pi
     local corrX = math.cos(radianRoll)
     local corrY = math.sin(radianRoll)
-    local pitch = getPitch(worldV, constrF, (constrR * corrX) + (constrU * corrY)) -- 180 - getRoll(worldV, constrR, constrF)            
+    local pitch = getPitch(worldV, constrF, (constrR * corrX) + (constrU * corrY))  
     local originalRoll = roll
     local originalPitch = pitch
     local atmos = atmosphere()
@@ -3130,123 +3216,6 @@ function getMagnitudeInDirection(vector, direction)
     local result = vector * direction -- To preserve sign, just add them I guess
     
     return result.x + result.y + result.z
-end
-
-function UpdateAutopilotTarget()
-    -- So the indices are weird.  I think we need to do a pairs
-    if AutopilotTargetIndex == 0 then
-        AutopilotTargetName = "None"
-        autopilotTargetPlanet = nil
-        CustomTarget = nil
-        return true
-    end
-
-    local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
-    local autopilotEntry = atlas[0][atlasIndex]
-    if autopilotEntry.center then -- Is a real atlas entry
-        AutopilotTargetName = autopilotEntry.name
-        autopilotTargetPlanet = galaxyReference[0][atlasIndex]
-        if CustomTarget ~= nil then
-            if atmosphere() == 0 then
-                if system.updateData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) ~= 1 then
-                    system.addDataToWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
-                if system.updateData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) ~= 1 then
-                    system.addDataToWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
-                if system.updateData(widgetCurBrakeTimeText, widgetCurBrakeTime) ~= 1 then
-                    system.addDataToWidget(widgetCurBrakeTimeText, widgetCurBrakeTime) end
-                if system.updateData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) ~= 1 then
-                    system.addDataToWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
-                if system.updateData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) ~= 1 then
-                    system.addDataToWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
-            end
-            if system.updateData(widgetMaxMassText, widgetMaxMass) ~= 1 then
-                system.addDataToWidget(widgetMaxMassText, widgetMaxMass) end
-            if system.updateData(widgetTravelTimeText, widgetTravelTime) ~= 1 then
-                system.addDataToWidget(widgetTravelTimeText, widgetTravelTime) end
-            if system.updateData(widgetTargetOrbitText, widgetTargetOrbit) ~= 1 then
-                system.addDataToWidget(widgetTargetOrbitText, widgetTargetOrbit) end
-        end
-        CustomTarget = nil
-    else
-        CustomTarget = autopilotEntry
-        for _, v in pairs(galaxyReference[0]) do
-            if v.name == CustomTarget.planetname then
-                autopilotTargetPlanet = v
-                AutopilotTargetName = CustomTarget.name
-                break
-            end
-        end
-        if system.updateData(widgetMaxMassText, widgetMaxMass) ~= 1 then
-            system.addDataToWidget(widgetMaxMassText, widgetMaxMass) end
-        if system.updateData(widgetTravelTimeText, widgetTravelTime) ~= 1 then
-            system.addDataToWidget(widgetTravelTimeText, widgetTravelTime) end
-    end
-    if CustomTarget == nil then
-        AutopilotTargetCoords = vec3(autopilotTargetPlanet.center) -- Aim center until we align
-    else
-        AutopilotTargetCoords = CustomTarget.position
-    end
-    -- Determine the end speed
-    if autopilotTargetPlanet.planetname ~= "Space" then
-        if autopilotTargetPlanet.hasAtmosphere then 
-            AutopilotTargetOrbit = math.floor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.noAtmosphericDensityAltitude)
-        else
-            AutopilotTargetOrbit = math.floor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.surfaceMaxAltitude)
-        end
-    else
-        AutopilotTargetOrbit = 1000
-    end
-    if CustomTarget ~= nil and CustomTarget.planetname == "Space" then 
-        AutopilotEndSpeed = 0
-    else
-        _, AutopilotEndSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed(AutopilotTargetOrbit)
-    end
-    AutopilotPlanetGravity = 0 -- This is inaccurate unless we integrate and we're not doing that.  
-    AutopilotAccelerating = false
-    AutopilotBraking = false
-    AutopilotCruising = false
-    Autopilot = false
-    AutopilotRealigned = false
-    AutopilotStatus = "Aligning"
-    return true
-end
-
-function IncrementAutopilotTargetIndex()
-    AutopilotTargetIndex = AutopilotTargetIndex + 1
-    if AutopilotTargetIndex > #AtlasOrdered then
-        AutopilotTargetIndex = 0
-    end
-    if AutopilotTargetIndex == 0 then
-        UpdateAutopilotTarget()
-    else
-        local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
-        local autopilotEntry = atlas[0][atlasIndex]
-        if autopilotEntry.name == "Space" then 
-            IncrementAutopilotTargetIndex() 
-        else
-            -- if AutopilotTargetIndex > tablelength(atlas[0]) then
-            UpdateAutopilotTarget()
-        end
-    end
-end
-
-function DecrementAutopilotTargetIndex()
-    AutopilotTargetIndex = AutopilotTargetIndex - 1
-    if AutopilotTargetIndex < 0 then
-        --    AutopilotTargetIndex = tablelength(atlas[0])
-            AutopilotTargetIndex = #AtlasOrdered
-    end        
-    if AutopilotTargetIndex == 0 then
-        UpdateAutopilotTarget()
-    else
-        local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
-        local autopilotEntry = atlas[0][atlasIndex]
-        if autopilotEntry.name == "Space" then 
-            DecrementAutopilotTargetIndex() 
-        else
-            UpdateAutopilotTarget()
-        end
-    end
 end
 
 function GetAutopilotMaxMass()
@@ -5539,7 +5508,6 @@ end
 -- Start of actual HUD Script. Written by Dimencia and Archaegeo. Optimization and Automation of scripting by ChronosWS  Linked sources where appropriate, most have been modified.
 
 function script.onStart()
-    VERSION_NUMBER = 1.100
     SetupComplete = false
     beginSetup = coroutine.create(function()
         Nav.axisCommandManager:setupCustomTargetSpeedRanges(axisCommandId.longitudinal,
@@ -5880,14 +5848,10 @@ function script.onTick(timerId)
         -- Localized Functions
         inAtmo = (atmosphere() > 0)
 
-        local time = systime()
+        time = systime()
         local deltaTick = time - lastApTickTime
         lastApTickTime = time
-
-        local constrF = vec3(core.getConstructWorldOrientationForward())
-        local constrR = vec3(core.getConstructWorldOrientationRight())
-        local constrUp = vec3(core.getConstructWorldOrientationUp())
-        local worldV = vec3(core.getWorldVertical())
+        local constrF, constrR, constrUp, worldV = worldVectors()
 
         local worldPos = vec3(core.getConstructWorldPos())
         --local localVel = core.getVelocity()
@@ -7812,15 +7776,11 @@ function script.onActionStart(action)
             Nav.axisCommandManager:updateTargetGroundAltitudeFromActionStart(-1.0)
         end
     elseif action == "option1" then
-        if not Autopilot then -- added to prevent crash when index == 0
-            IncrementAutopilotTargetIndex()
-            toggleView = false
-        end
+        adjustAutopilotTargetIndex()
+        toggleView = false
     elseif action == "option2" then
-        if not Autopilot then -- added to prevent crash when index == 0
-            DecrementAutopilotTargetIndex()
-            toggleView = false
-        end
+        adjustAutopilotTargetIndex(1)
+        toggleView = false
     elseif action == "option3" then
         if hideHudOnToggleWidgets then
             if showHud then
@@ -7904,7 +7864,7 @@ function script.onActionStart(action)
                 Nav.axisCommandManager:updateCommandFromActionStart(axisCommandId.longitudinal, speedChangeLarge)
             end
         else
-            IncrementAutopilotTargetIndex()
+            adjustAutopilotTargetIndex()
         end
     elseif action == "speeddown" then
         if not holdingCtrl then
@@ -7915,7 +7875,7 @@ function script.onActionStart(action)
             end
             
         else
-            DecrementAutopilotTargetIndex()
+            adjustAutopilotTargetIndex(1)
         end
     elseif action == "antigravity" and not ExternalAGG then
         if antigrav ~= nil then
