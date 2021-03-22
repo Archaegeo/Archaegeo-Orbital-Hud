@@ -4,7 +4,7 @@ Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.006
+VERSION_NUMBER = 1.007
 
 -- User settings.  Must be global to work with databank system as set up due to using _G assignment
 freeLookToggle = true -- (Default: true)
@@ -189,7 +189,7 @@ end
 local PrimaryR = SafeR
 local PrimaryB = SafeB
 local PrimaryG = SafeG
-local pvpZone = false
+local notPvPZone = false
 local pvpDist = 0
 local PlayerThrottle = 0
 local brakeInput2 = 0
@@ -199,7 +199,6 @@ local WasInCruise = false
 local halfResolutionX = round(ResolutionX / 2,0)
 local halfResolutionY = round(ResolutionY / 2,0)
 local apThrottleSet = false -- Do not save this, because when they re-enter, throttle won't be set anymore
-local toggleView = true
 local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in
 local reentryMode = false
 local MousePitchFactor = 1 -- Mouse control only
@@ -324,7 +323,7 @@ local time = systime()
 
 -- BEGIN FUNCTION DEFINITIONS
 
-local function processVariableList(varList)
+function processVariableList(varList)
     local hasKey = dbHud_1.hasKey
     for k, v in pairs(varList) do
         if hasKey(v) then
@@ -337,7 +336,7 @@ local function processVariableList(varList)
     end
 end
 
-local function LoadVariables()
+function LoadVariables()
     if dbHud_1 then
         local hasKey = dbHud_1.hasKey
         processVariableList(saveableVariables)
@@ -382,7 +381,7 @@ local function LoadVariables()
     end
 end
 
-local function CalculateFuelVolume(curMass, vanillaMaxVolume)
+function CalculateFuelVolume(curMass, vanillaMaxVolume)
     if curMass > vanillaMaxVolume then
         vanillaMaxVolume = curMass
     end
@@ -395,7 +394,7 @@ local function CalculateFuelVolume(curMass, vanillaMaxVolume)
     return vanillaMaxVolume            
 end
 
-local function ProcessElements()
+function ProcessElements()
     local checkTanks = (fuelX ~= 0 and fuelY ~= 0)
     for k in pairs(elementsID) do
         local type = core.getElementTypeById(elementsID[k])
@@ -497,7 +496,7 @@ local function ProcessElements()
     end
 end
 
-local function SetupChecks()
+function SetupChecks()
     if gyro ~= nil then
         gyroIsOn = gyro.getState() == 1
     end
@@ -576,6 +575,24 @@ local function SetupChecks()
     end
 
     WasInAtmo = inAtmo
+end
+
+local function cmdThrottle(value, dontSwitch)
+    if dontSwitch == nil then
+        dontSwitch = false
+    end
+    if Nav.axisCommandManager:getAxisCommandType(0) ~= axisCommandType.byThrottle and not dontSwitch then
+        Nav.control.cancelCurrentControlMasterMode()
+    end
+    Nav.axisCommandManager:setThrottleCommand(axisCommandId.longitudinal, value)
+    PlayerThrottle = round(value*100,0)
+end
+
+local function cmdCruise(value, dontSwitch)
+    if Nav.axisCommandManager:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed and not dontSwitch then
+        Nav.control.cancelCurrentControlMasterMode()
+    end
+    Nav.axisCommandManager:setTargetSpeedCommand(axisCommandId.longitudinal, value)
 end
 
 local function ConvertResolutionX (v)
@@ -813,63 +830,6 @@ local function AddNewLocation() -- Don't call this unless they have a databank o
     end
 end
 
-local function UpdatePosition(newName)
-    local index = -1
-    local newLocation
-    index = findAtlasIndex(SavedLocations)
-    if index ~= -1 then
-        local updatedName
-        if newName ~= nil then
-            newLocation = {
-                position = SavedLocations[index].position,
-                name = newName,
-                atmosphere = SavedLocations[index].atmosphere,
-                planetname = SavedLocations[index].planetname,
-                gravity = SavedLocations[index].gravity
-            } 
-        else
-            newLocation = {
-                position = vec3(core.getConstructWorldPos()),
-                name = SavedLocations[index].name,
-                atmosphere = atmosDensity,
-                planetname = planet.name,
-                gravity = unit.getClosestPlanetInfluence(),
-                safe = true
-            }   
-        end
-        SavedLocations[index] = newLocation
-        index = -1
-        index = findAtlasIndex(atlas[0])
-        if index > -1 then
-            atlas[0][index] = newLocation
-        end
-        UpdateAtlasLocationsList()
-        msgText = CustomTarget.name .. " position updated"
-        AutopilotTargetIndex = 0
-        UpdateAutopilotTarget()
-    else
-        msgText = "Name Not Found"
-    end
-end
-
-local function ClearCurrentPosition()
-    -- So AutopilotTargetIndex is special and not a real index.  We have to do this by hand.
-    local index = -1
-    index = findAtlasIndex(atlas[0])
-    if index > -1 then
-        table.remove(atlas[0], index)
-    end
-    -- And SavedLocations
-    index = -1
-    index = findAtlasIndex(SavedLocations)
-    if index ~= -1 then
-        msgText = CustomTarget.name .. " saved location cleared"
-        table.remove(SavedLocations, index)
-    end
-    DecrementAutopilotTargetIndex()
-    UpdateAtlasLocationsList()
-end
-
 local function DrawDeadZone(newContent)
     newContent[#newContent + 1] = stringf(
                                       [[<circle class="dim line" style="fill:none" cx="50%%" cy="50%%" r="%d"/>]],
@@ -999,6 +959,30 @@ end
 local function ToggleTurnBurn()
     TurnBurn = not TurnBurn
 end
+
+local function hoverDetectGround()
+    local vgroundDistance = -1
+    local hgroundDistance = -1
+    if vBooster then
+        vgroundDistance = vBooster.distance()
+    end
+    if hover then
+        hgroundDistance = hover.distance()
+    end
+    if vgroundDistance ~= -1 and hgroundDistance ~= -1 then
+        if vgroundDistance < hgroundDistance then
+            return vgroundDistance
+        else
+            return hgroundDistance
+        end
+    elseif vgroundDistance ~= -1 then
+        return vgroundDistance
+    elseif hgroundDistance ~= -1 then
+        return hgroundDistance
+    else
+        return -1
+    end
+end  
 
 local function ToggleAltitudeHold()  -- Must stay global for some reason, investigate later.
     if (time - ahDoubleClick) < 1.5 then
@@ -1406,29 +1390,123 @@ local function ToggleAutopilot()
     end
 end
 
-function gradeToggle(pro)
-    if pro == 1 then 
-        ProgradeIsOn = not ProgradeIsOn
-        RetrogradeIsOn = false
+local function UpdatePosition(newName)
+    local index = -1
+    local newLocation
+    index = findAtlasIndex(SavedLocations)
+    if index ~= -1 then
+        local updatedName
+        if newName ~= nil then
+            newLocation = {
+                position = SavedLocations[index].position,
+                name = newName,
+                atmosphere = SavedLocations[index].atmosphere,
+                planetname = SavedLocations[index].planetname,
+                gravity = SavedLocations[index].gravity
+            } 
+        else
+            newLocation = {
+                position = vec3(core.getConstructWorldPos()),
+                name = SavedLocations[index].name,
+                atmosphere = atmosDensity,
+                planetname = planet.name,
+                gravity = unit.getClosestPlanetInfluence(),
+                safe = true
+            }   
+        end
+        SavedLocations[index] = newLocation
+        index = -1
+        index = findAtlasIndex(atlas[0])
+        if index > -1 then
+            atlas[0][index] = newLocation
+        end
+        UpdateAtlasLocationsList()
+        msgText = CustomTarget.name .. " position updated"
+        AutopilotTargetIndex = 0
+        UpdateAutopilotTarget()
     else
-        RetrogradeIsOn = not RetrogradeIsOn
-        ProgradeIsOn = false
-    end        
-        Autopilot = false
-        AltitudeHold = false
-        followMode = false
-        BrakeLanding = false
-        LockPitch = nil
-        Reentry = false
-        AutoTakeoff = false
+        msgText = "Name Not Found"
+    end
 end
 
-function ProgradeToggle()
-    -- Toggle Progrades
-    gradeToggle(1)
+local function ClearCurrentPosition()
+    -- So AutopilotTargetIndex is special and not a real index.  We have to do this by hand.
+    local index = -1
+    index = findAtlasIndex(atlas[0])
+    if index > -1 then
+        table.remove(atlas[0], index)
+    end
+    -- And SavedLocations
+    index = -1
+    index = findAtlasIndex(SavedLocations)
+    if index ~= -1 then
+        msgText = CustomTarget.name .. " saved location cleared"
+        table.remove(SavedLocations, index)
+    end
+    adjustAutopilotTargetIndex()
+    UpdateAtlasLocationsList()
 end
 
-function BrakeToggle()
+local function getPitch(gravityDirection, forward, right)
+    local horizontalForward = gravityDirection:cross(right):normalize_inplace() -- Cross forward?
+    local pitch = math.acos(utils.clamp(horizontalForward:dot(-forward), -1, 1)) * constants.rad2deg -- acos?
+    
+    if horizontalForward:cross(-forward):dot(right) < 0 then
+        pitch = -pitch
+    end -- Cross right dot forward?
+    return pitch
+end
+
+local function signedRotationAngle(normal, vecA, vecB)
+    vecA = vecA:project_on_plane(normal)
+    vecB = vecB:project_on_plane(normal)
+   return atan(vecA:cross(vecB):dot(normal), vecA:dot(vecB))
+ end
+ 
+ local function hoverDetectGround()
+    local vgroundDistance = -1
+    local hgroundDistance = -1
+    if vBooster then
+        vgroundDistance = vBooster.distance()
+    end
+    if hover then
+        hgroundDistance = hover.distance()
+    end
+    if vgroundDistance ~= -1 and hgroundDistance ~= -1 then
+        if vgroundDistance < hgroundDistance then
+            return vgroundDistance
+        else
+            return hgroundDistance
+        end
+    elseif vgroundDistance ~= -1 then
+        return vgroundDistance
+    elseif hgroundDistance ~= -1 then
+        return hgroundDistance
+    else
+        return -1
+    end
+end   
+
+local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
+    local radius = 500000
+    local distsz, distp, key = math.huge
+    local safe = false
+    local safeWorldPos = vec3({13771471,7435803,-128971})
+    local safeRadius = 18000000 
+    distsz = vec3(WorldPos):dist(safeWorldPos)
+    if distsz < safeRadius then  
+        return true, math.abs(distsz - safeRadius), "Safe Zone", 0
+    end
+    distp = vec3(WorldPos):dist(vec3(planet.center))
+    if distp < radius then safe = true end
+    if math.abs(distp - radius) < math.abs(distsz - safeRadius) then 
+        return safe, math.abs(distp - radius), planet.name, planet.bodyId
+    else
+        return safe, math.abs(distsz - safeRadius), "Safe Zone", 0
+    end
+end
+
+local function BrakeToggle()
     -- Toggle brakes
     BrakeIsOn = not BrakeIsOn
     if BrakeLanding then
@@ -1456,6 +1534,174 @@ function BrakeToggle()
         finalLand = false
         upAmount = 0
     end
+end
+
+local function getMagnitudeInDirection(vector, direction)
+    -- return vec3(vector):project_on(vec3(direction)):len()
+    vector = vec3(vector)
+    direction = vec3(direction):normalize()
+    local result = vector * direction -- To preserve sign, just add them I guess
+    
+    return result.x + result.y + result.z
+end
+
+local function AlignToWorldVector(vector, tolerance, damping)
+    -- Sets inputs to attempt to point at the autopilot target
+    -- Meant to be called from Update or Tick repeatedly
+    if not inAtmo or not stalling or hovGndDet ~= -1 or velMag < minAutopilotSpeed then
+        local dampingMult = damping
+        if dampingMult == nil then
+            dampingMult = DampingMultiplier
+        end
+
+        if tolerance == nil then
+            tolerance = alignmentTolerance
+        end
+        vector = vec3(vector):normalize()
+        local targetVec = (vec3() - vector)
+        local yawAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationRight()) * autopilotStrength
+        local pitchAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationUp()) * autopilotStrength
+        if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
+        if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
+        -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
+        -- Instead of taking literal forever to converge
+        if math.abs(yawAmount) < 0.1 then
+            yawInput2 = yawInput2 - yawAmount*2
+        else
+            yawInput2 = yawInput2 - (yawAmount + (yawAmount - previousYawAmount) * dampingMult)
+        end
+        if math.abs(pitchAmount) < 0.1 then
+            pitchInput2 = pitchInput2 + pitchAmount*2
+        else
+            pitchInput2 = pitchInput2 + (pitchAmount + (pitchAmount - previousPitchAmount) * dampingMult)
+        end
+
+
+        previousYawAmount = yawAmount
+        previousPitchAmount = pitchAmount
+        -- Return true or false depending on whether or not we're aligned
+        if math.abs(yawAmount) < tolerance and math.abs(pitchAmount) < tolerance then
+            return true
+        end
+        return false
+    elseif stalling and hovGndDet == -1 then
+        -- If stalling, align to velocity to fix the stall
+        -- IDK I'm just copy pasting all this
+        vector = vec3(core.getWorldVelocity())
+        local dampingMult = damping
+        if dampingMult == nil then
+            dampingMult = DampingMultiplier
+        end
+
+        if tolerance == nil then
+            tolerance = alignmentTolerance
+        end
+        vector = vec3(vector):normalize()
+        local targetVec = (vec3(core.getConstructWorldOrientationForward()) - vector)
+        local yawAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationRight()) * autopilotStrength
+        local pitchAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationUp()) * autopilotStrength
+        if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
+        if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
+        -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
+        -- Instead of taking literal forever to converge
+        if math.abs(yawAmount) < 0.1 then
+            yawInput2 = yawInput2 - yawAmount*5
+        else
+            yawInput2 = yawInput2 - (yawAmount + (yawAmount - previousYawAmount) * dampingMult)
+        end
+        if math.abs(pitchAmount) < 0.1 then
+            pitchInput2 = pitchInput2 + pitchAmount*5
+        else
+            pitchInput2 = pitchInput2 + (pitchAmount + (pitchAmount - previousPitchAmount) * dampingMult)
+        end
+        previousYawAmount = yawAmount
+        previousPitchAmount = pitchAmount
+        -- Return true or false depending on whether or not we're aligned
+        if math.abs(yawAmount) < tolerance and math.abs(pitchAmount) < tolerance then
+            return true
+        end
+        return false
+    end
+end
+
+local function BeginReentry()
+    if Reentry then
+        msgText = "Re-Entry cancelled"
+        Reentry = false
+        autoRoll = autoRollPreference
+        AltitudeHold = false
+    elseif not planet.hasAtmosphere then
+        msgText = "Re-Entry requirements not met: you must start out of atmosphere\n and within a planets gravity well over a planet with atmosphere"
+        msgTimer = 5
+    elseif not reentryMode then-- Parachute ReEntry
+        StrongBrakes = ((planet.gravity * 9.80665 * constructMass()) < LastMaxBrakeInAtmo)
+        if not StrongBrakes  then
+            msgText = "WARNING: Insufficient Brakes for Parachute Re-Entry"
+        else
+            Reentry = true
+            if Nav.axisCommandManager:getAxisCommandType(0) ~= controlMasterModeId.cruise then
+                Nav.control.cancelCurrentControlMasterMode()
+            end                
+            autoRoll = true
+            BrakeIsOn = false
+            msgText = "Beginning Parachute Re-Entry - Strap In.  Target speed: " .. ReentrySpeed
+        end
+    else --Glide Reentry
+        Reentry = true
+        AltitudeHold = true
+        autoRoll = true
+        BrakeIsOn = false
+        HoldAltitude = planet.spaceEngineMinAltitude - 50
+        local text, altUnit = getDistanceDisplayString(HoldAltitude)
+        msgText = "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text .. altUnit
+        cmdCruise(math.floor(adjustedAtmoSpeedLimit))
+    end
+    AutoTakeoff = false -- This got left on somewhere.. 
+end
+
+local function GetAutopilotBrakeDistanceAndTime(speed)
+    -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
+    -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
+    if not inAtmo then
+        RefreshLastMaxBrake()
+        return Kinematic.computeDistanceAndTime(speed, AutopilotEndSpeed, constructMass(), 0, 0,
+                   LastMaxBrake - (AutopilotPlanetGravity * constructMass()))
+    else
+        if LastMaxBrakeInAtmo and LastMaxBrakeInAtmo > 0 then
+            return Kinematic.computeDistanceAndTime(speed, AutopilotEndSpeed, constructMass(), 0, 0,
+                       LastMaxBrakeInAtmo - (AutopilotPlanetGravity * constructMass()))
+        else
+            return 0, 0
+        end
+    end
+end
+
+local function GetAutopilotTBBrakeDistanceAndTime(speed) -- Uses thrust and a configured T50
+    RefreshLastMaxBrake()
+    return Kinematic.computeDistanceAndTime(speed, AutopilotEndSpeed, constructMass(), Nav:maxForceForward(),
+               warmup, LastMaxBrake - (AutopilotPlanetGravity * constructMass()))
+end
+
+function gradeToggle(pro)
+    if pro == 1 then 
+        ProgradeIsOn = not ProgradeIsOn
+        RetrogradeIsOn = false
+    else
+        RetrogradeIsOn = not RetrogradeIsOn
+        ProgradeIsOn = false
+    end        
+        Autopilot = false
+        AltitudeHold = false
+        followMode = false
+        BrakeLanding = false
+        LockPitch = nil
+        Reentry = false
+        AutoTakeoff = false
+end
+
+function ProgradeToggle()
+    -- Toggle Progrades
+    gradeToggle(1)
 end
 
 function CheckDamage(newContent)
@@ -1538,22 +1784,6 @@ function DrawCursorLine(newContent)
                                       "<line x1='0' y1='0' x2='%fpx' y2='%fpx' style='stroke:rgb(%d,%d,%d);stroke-width:2;transform:translate(50%%, 50%%)' />",
                                       simulatedX, simulatedY, mfloor(PrimaryR + 0.5) + strokeColor,
                                       mfloor(PrimaryG + 0.5) - strokeColor, mfloor(PrimaryB + 0.5) - strokeColor)
-end
-
-function getPitch(gravityDirection, forward, right)
-    local horizontalForward = gravityDirection:cross(right):normalize_inplace() -- Cross forward?
-    local pitch = math.acos(utils.clamp(horizontalForward:dot(-forward), -1, 1)) * constants.rad2deg -- acos?
-    
-    if horizontalForward:cross(-forward):dot(right) < 0 then
-        pitch = -pitch
-    end -- Cross right dot forward?
-    return pitch
-end
-
-function signedRotationAngle(normal, vecA, vecB)
-   vecA = vecA:project_on_plane(normal)
-   vecB = vecB:project_on_plane(normal)
-  return atan(vecA:cross(vecB):dot(normal), vecA:dot(vecB))
 end
 
 function clearAll()
@@ -1808,85 +2038,6 @@ function getRelativeYaw(velocity)
     return yaw
 end
 
-function AlignToWorldVector(vector, tolerance, damping)
-    -- Sets inputs to attempt to point at the autopilot target
-    -- Meant to be called from Update or Tick repeatedly
-    if not inAtmo or not stalling or hovGndDet ~= -1 or velMag < minAutopilotSpeed then
-        local dampingMult = damping
-        if dampingMult == nil then
-            dampingMult = DampingMultiplier
-        end
-
-        if tolerance == nil then
-            tolerance = alignmentTolerance
-        end
-        vector = vec3(vector):normalize()
-        local targetVec = (vec3(core.getConstructWorldOrientationForward()) - vector)
-        local yawAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationRight()) * autopilotStrength
-        local pitchAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationUp()) * autopilotStrength
-        if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
-        if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
-        -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
-        -- Instead of taking literal forever to converge
-        if math.abs(yawAmount) < 0.1 then
-            yawInput2 = yawInput2 - yawAmount*2
-        else
-            yawInput2 = yawInput2 - (yawAmount + (yawAmount - previousYawAmount) * dampingMult)
-        end
-        if math.abs(pitchAmount) < 0.1 then
-            pitchInput2 = pitchInput2 + pitchAmount*2
-        else
-            pitchInput2 = pitchInput2 + (pitchAmount + (pitchAmount - previousPitchAmount) * dampingMult)
-        end
-
-
-        previousYawAmount = yawAmount
-        previousPitchAmount = pitchAmount
-        -- Return true or false depending on whether or not we're aligned
-        if math.abs(yawAmount) < tolerance and math.abs(pitchAmount) < tolerance then
-            return true
-        end
-        return false
-    elseif stalling and hovGndDet == -1 then
-        -- If stalling, align to velocity to fix the stall
-        -- IDK I'm just copy pasting all this
-        vector = vec3(core.getWorldVelocity())
-        local dampingMult = damping
-        if dampingMult == nil then
-            dampingMult = DampingMultiplier
-        end
-
-        if tolerance == nil then
-            tolerance = alignmentTolerance
-        end
-        vector = vec3(vector):normalize()
-        local targetVec = (vec3(core.getConstructWorldOrientationForward()) - vector)
-        local yawAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationRight()) * autopilotStrength
-        local pitchAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationUp()) * autopilotStrength
-        if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
-        if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
-        -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
-        -- Instead of taking literal forever to converge
-        if math.abs(yawAmount) < 0.1 then
-            yawInput2 = yawInput2 - yawAmount*5
-        else
-            yawInput2 = yawInput2 - (yawAmount + (yawAmount - previousYawAmount) * dampingMult)
-        end
-        if math.abs(pitchAmount) < 0.1 then
-            pitchInput2 = pitchInput2 + pitchAmount*5
-        else
-            pitchInput2 = pitchInput2 + (pitchAmount + (pitchAmount - previousPitchAmount) * dampingMult)
-        end
-        previousYawAmount = yawAmount
-        previousPitchAmount = pitchAmount
-        -- Return true or false depending on whether or not we're aligned
-        if math.abs(yawAmount) < tolerance and math.abs(pitchAmount) < tolerance then
-            return true
-        end
-        return false
-    end
-end
-
 function getAPEnableName()
     local name = AutopilotTargetName
     if name == nil then
@@ -1925,41 +2076,6 @@ function ToggleAntigrav()
             antigrav.show()
         end
     end
-end
-
-function BeginReentry()
-    if Reentry then
-        msgText = "Re-Entry cancelled"
-        Reentry = false
-        autoRoll = autoRollPreference
-        AltitudeHold = false
-    elseif not planet.hasAtmosphere then
-        msgText = "Re-Entry requirements not met: you must start out of atmosphere\n and within a planets gravity well over a planet with atmosphere"
-        msgTimer = 5
-    elseif not reentryMode then-- Parachute ReEntry
-        StrongBrakes = ((planet.gravity * 9.80665 * constructMass()) < LastMaxBrakeInAtmo)
-        if not StrongBrakes  then
-            msgText = "WARNING: Insufficient Brakes for Parachute Re-Entry"
-        else
-            Reentry = true
-            if Nav.axisCommandManager:getAxisCommandType(0) ~= controlMasterModeId.cruise then
-                Nav.control.cancelCurrentControlMasterMode()
-            end                
-            autoRoll = true
-            BrakeIsOn = false
-            msgText = "Beginning Parachute Re-Entry - Strap In.  Target speed: " .. ReentrySpeed
-        end
-    else --Glide Reentry
-        Reentry = true
-        AltitudeHold = true
-        autoRoll = true
-        BrakeIsOn = false
-        HoldAltitude = planet.spaceEngineMinAltitude - 50
-        local text, altUnit = getDistanceDisplayString(HoldAltitude)
-        msgText = "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text .. altUnit
-        cmdCruise(math.floor(adjustedAtmoSpeedLimit))
-    end
-    AutoTakeoff = false -- This got left on somewhere.. 
 end
 
 function SetupButtons()
@@ -2240,7 +2356,7 @@ function IsInFreeLook()
 end
 
 function HUDPrologue(newContent)
-    if not pvpZone then -- misnamed variable, fix later
+    if not notPvPZone then -- misnamed variable, fix later
         PrimaryR = PvPR
         PrimaryG = PvPG
         PrimaryB = PvPB
@@ -2985,7 +3101,7 @@ function DrawWarnings(newContent)
                                                   warningX, apY + 50)
             end
         else
-            local displayText, displayUnit = getDistanceDisplayString(HoldAltitude)
+            local displayText, displayUnit = getDistanceDisplayString(HoldAltitude, 2)
             newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Altitude Hold: %s</text>]],
                                               warningX, apY, displayText.. displayUnit)
         end
@@ -3180,15 +3296,6 @@ function FormatTimeString(seconds)
     end
 end
 
-function getMagnitudeInDirection(vector, direction)
-    -- return vec3(vector):project_on(vec3(direction)):len()
-    vector = vec3(vector)
-    direction = vec3(direction):normalize()
-    local result = vector * direction -- To preserve sign, just add them I guess
-    
-    return result.x + result.y + result.z
-end
-
 function GetAutopilotMaxMass()
     local apmaxmass = LastMaxBrakeInAtmo /
                           (autopilotTargetPlanet:getGravity(
@@ -3254,53 +3361,6 @@ function GetAutopilotTravelTime()
         return accelTime + brakeTime + cruiseTime
     end
 end
-
-function GetAutopilotBrakeDistanceAndTime(speed)
-    -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
-    -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
-    if not inAtmo then
-        RefreshLastMaxBrake()
-        return Kinematic.computeDistanceAndTime(speed, AutopilotEndSpeed, constructMass(), 0, 0,
-                   LastMaxBrake - (AutopilotPlanetGravity * constructMass()))
-    else
-        if LastMaxBrakeInAtmo and LastMaxBrakeInAtmo > 0 then
-            return Kinematic.computeDistanceAndTime(speed, AutopilotEndSpeed, constructMass(), 0, 0,
-                       LastMaxBrakeInAtmo - (AutopilotPlanetGravity * constructMass()))
-        else
-            return 0, 0
-        end
-    end
-end
-
-function GetAutopilotTBBrakeDistanceAndTime(speed) -- Uses thrust and a configured T50
-    RefreshLastMaxBrake()
-    return Kinematic.computeDistanceAndTime(speed, AutopilotEndSpeed, constructMass(), Nav:maxForceForward(),
-               warmup, LastMaxBrake - (AutopilotPlanetGravity * constructMass()))
-end
-
-function hoverDetectGround()
-    local vgroundDistance = -1
-    local hgroundDistance = -1
-    if vBooster then
-        vgroundDistance = vBooster.distance()
-    end
-    if hover then
-        hgroundDistance = hover.distance()
-    end
-    if vgroundDistance ~= -1 and hgroundDistance ~= -1 then
-        if vgroundDistance < hgroundDistance then
-            return vgroundDistance
-        else
-            return hgroundDistance
-        end
-    elseif vgroundDistance ~= -1 then
-        return vgroundDistance
-    elseif hgroundDistance ~= -1 then
-        return hgroundDistance
-    else
-        return -1
-    end
-end            
 
 function AboveGroundLevel()
     local groundDistance = -1
@@ -3398,7 +3458,7 @@ function updateRadar()
                             radarX, radarY, #radarContacts)
             local friendlies = {}
             for k, v in pairs(radarContacts) do
-                if radar_1.hastringmatchingTransponder(v) == 1 then
+                if radar_1.hasMatchingTransponder(v) == 1 then
                     table.insert(friendlies,v)
                 end
             end
@@ -5417,42 +5477,6 @@ function Kinematics()
     return Kinematic
 end
 
-function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
-    local radius = 500000
-    local distsz, distp, key = math.huge
-    local safe = false
-    local safeWorldPos = vec3({13771471,7435803,-128971})
-    local safeRadius = 18000000 
-    distsz = vec3(WorldPos):dist(safeWorldPos)
-    if distsz < safeRadius then  
-        return true, math.abs(distsz - safeRadius), "Safe Zone", 0
-    end
-    distp = vec3(WorldPos):dist(vec3(planet.center))
-    if distp < radius then safe = true end
-    if math.abs(distp - radius) < math.abs(distsz - safeRadius) then 
-        return safe, math.abs(distp - radius), planet.name, planet.bodyId
-    else
-        return safe, math.abs(distsz - safeRadius), "Safe Zone", 0
-    end
-end
-
-function cmdThrottle(value, dontSwitch)
-    if dontSwitch == nil then
-        dontSwitch = false
-    end
-    if Nav.axisCommandManager:getAxisCommandType(0) ~= axisCommandType.byThrottle and not dontSwitch then
-        Nav.control.cancelCurrentControlMasterMode()
-    end
-    Nav.axisCommandManager:setThrottleCommand(axisCommandId.longitudinal, value)
-    PlayerThrottle = round(value*100,0)
-end
-function cmdCruise(value, dontSwitch)
-    if Nav.axisCommandManager:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed and not dontSwitch then
-        Nav.control.cancelCurrentControlMasterMode()
-    end
-    Nav.axisCommandManager:setTargetSpeedCommand(axisCommandId.longitudinal, value)
-end
-
 function SaveDataBank(copy)
     if dbHud_1 then
         if not wipedDatabank then
@@ -5822,18 +5846,13 @@ function script.onTick(timerId)
         local deltaTick = time - lastApTickTime
         lastApTickTime = time
         local constrF, constrR, constrUp, worldV = worldVectors()
-
         local worldPos = vec3(core.getConstructWorldPos())
-        --local localVel = core.getVelocity()
-        --local currentYaw = getRelativeYaw(localVel)
-        --local currentPitch = getRelativePitch(localVel)
         local roll = getRoll(worldV, constrF, constrR)
         local radianRoll = (roll / 180) * math.pi
         local corrX = math.cos(radianRoll)
         local corrY = math.sin(radianRoll)
         local pitch = getPitch(worldV, constrF, constrR) -- Left in for compat, but we should really use adjustedPitch
         local adjustedPitch = getPitch(worldV, constrF, (constrR * corrX) + (constrUp * corrY)) 
-
         local currentYaw = -math.deg(signedRotationAngle(constrUp, velocity, constrF))
         local currentPitch = math.deg(signedRotationAngle(constrR, velocity, constrF)) -- Let's use a consistent func that uses global velocity
 
@@ -5852,12 +5871,20 @@ function script.onTick(timerId)
         --if planet.name == "Space" then planet = atlas[0][2] end -- Assign to Alioth since otherwise Space gets returned if at Alioth.
         kepPlanet = Kep(planet)
         orbit = kepPlanet:orbitalParameters(core.getConstructWorldPos(), velocity)
+        coreAltitude = core.getAltitude()
+        if coreAltitude == 0 then
+            coreAltitude = (worldPos - planet.center):len() - planet.radius
+        end
         hovGndDet = hoverDetectGround() 
         local gravity = planet:getGravity(core.getConstructWorldPos()):len() * constructMass()
         targetRoll = 0
         maxKinematicUp = core.getMaxKinematicsParametersAlongAxis("ground", core.getConstructOrientationUp())[1]
 
-        pvpZone, pvpDist, _, _ = safeZone(worldPos)
+        if not inAtmo then 
+            notPvPZone, pvpDist, _, _ = safeZone(worldPos)
+        else
+            notPvPZone = true
+        end
 
         if isRemote() == 1 and screen_1 and screen_1.getMouseY() ~= -1 then
             simulatedX = screen_1.getMouseX() * ResolutionX
@@ -5954,10 +5981,6 @@ function script.onTick(timerId)
             brakeInput = 1
         else
             brakeInput = 0
-        end
-        coreAltitude = core.getAltitude()
-        if coreAltitude == 0 then
-            coreAltitude = (vec3(core.getConstructWorldPos()) - planet.center):len() - planet.radius
         end
 
         if ProgradeIsOn then
@@ -6349,7 +6372,7 @@ function script.onTick(timerId)
                     local initialDirection = ((worldPos+(velocity*100000)) - autopilotTargetPlanet.center):normalize() -- Should be pointing up
                     local finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize()
                     if finalDirection:len() < 1 then
-                        initialDirection = ((worldPos+(vec3(core.getConstructWorldOrientationForward())*100000)) - autopilotTargetPlanet.center):normalize()
+                        initialDirection = ((worldPos+(constrF*100000)) - autopilotTargetPlanet.center):normalize()
                         finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize() -- Align to nearest to ship forward then
                     end
                     -- And... actually that's all that I need.  If forward is really gone, this should give us a point on the edge of the planet
@@ -6468,11 +6491,6 @@ function script.onTick(timerId)
                 aligned = AlignToWorldVector(-vec3(velocity):normalize())
             end
             if AutopilotAccelerating then
-                --if vec3(core.getConstructWorldOrientationForward()):dot(velocity) < 0 and velMag > 300 then
-                --    BrakeIsOn = true
-                --    Nav.axisCommandManager:setThrottleCommand(axisCommandId.longitudinal, 0)
-                --    apThrottleSet = false
-                --elseif not apThrottleSet then
                 if not apThrottleSet then
                     BrakeIsOn = false
                     cmdThrottle(AutopilotInterplanetaryThrottle)
@@ -6623,9 +6641,9 @@ function script.onTick(timerId)
                         if not spaceLand then
                             AutopilotTargetCoords = vec3(autopilotTargetPlanet.center) +
                                                         ((AutopilotTargetOrbit + autopilotTargetPlanet.radius) *
-                                                            vec3(core.getConstructWorldOrientationRight()))
-                            AutopilotShipUp = core.getConstructWorldOrientationUp()
-                            AutopilotShipRight = core.getConstructWorldOrientationRight()
+                                                            constrR)
+                            AutopilotShipUp = constrUp
+                            AutopilotShipRight = constrR
                         end
                         AutopilotRealigned = true
                     elseif aligned then
@@ -6670,12 +6688,12 @@ function script.onTick(timerId)
             -- Keep brake engaged at all times unless: 
             -- Ship is aligned with the target on yaw (roll and pitch are locked to 0)
             -- and ship's speed is below like 5-10m/s
-            local pos = vec3(core.getConstructWorldPos()) + vec3(unit.getMasterPlayerRelativePosition()) -- Is this related to core forward or nah?
-            local distancePos = (pos - vec3(core.getConstructWorldPos()))
+            local pos = worldPos + vec3(unit.getMasterPlayerRelativePosition()) -- Is this related to core forward or nah?
+            local distancePos = (pos - worldPos)
             -- local distance = distancePos:len()
             -- distance needs to be calculated using only construct forward and right
-            local distanceForward = vec3(distancePos):project_on(vec3(core.getConstructWorldOrientationForward())):len()
-            local distanceRight = vec3(distancePos):project_on(vec3(core.getConstructWorldOrientationRight())):len()
+            local distanceForward = vec3(distancePos):project_on(constrF):len()
+            local distanceRight = vec3(distancePos):project_on(constrR):len()
             -- local distanceDown = vec3(distancePos):project_on(-vec3(core.getConstructWorldOrientationRight())):len()
             local distance = math.sqrt(distanceForward * distanceForward + distanceRight * distanceRight)
             AlignToWorldVector(distancePos:normalize())
@@ -7317,7 +7335,6 @@ function script.onFlush()
             elseif Autopilot then
                 MaxGameVelocity = utils.clamp(MaxGameVelocity + speedChangeLarge/3.6*100,0, 8333.00)
             end
-            toggleView = false
         else
             PlayerThrottle = round(utils.clamp(PlayerThrottle + speedChangeLarge/100, -1, 1),2)
         end
@@ -7328,7 +7345,6 @@ function script.onFlush()
             elseif Autopilot then
                 MaxGameVelocity = utils.clamp(MaxGameVelocity - speedChangeLarge/3.6*100,0, 8333.00)
             end
-            toggleView = false
         else
             PlayerThrottle = round(utils.clamp(PlayerThrottle - speedChangeLarge/100, -1, 1),2)
         end
@@ -7746,11 +7762,29 @@ function script.onActionStart(action)
         end
     elseif action == "option1" then
         adjustAutopilotTargetIndex()
-        toggleView = false
     elseif action == "option2" then
         adjustAutopilotTargetIndex(1)
-        toggleView = false
     elseif action == "option3" then
+        if isRemote() == 0 and freeLookToggle then
+            if system.isViewLocked() == 1 then
+                system.lockView(0)
+            else
+                system.lockView(1)
+            end
+        elseif isRemote() == 0 and not freeLookToggle and userControlScheme == "keyboard" then
+            if system.isViewLocked() == 1 then
+                system.lockView(0)
+            else
+                system.lockView(1)
+            end
+        end
+    elseif action == "option4" then
+        ToggleAutopilot()
+    elseif action == "option5" then
+        ToggleLockPitch()
+    elseif action == "option6" then
+        ToggleAltitudeHold()
+    elseif action == "option7" then
         if hideHudOnToggleWidgets then
             if showHud then
                 showHud = false
@@ -7758,29 +7792,14 @@ function script.onActionStart(action)
                 showHud = true
             end
         end
-        toggleView = false
         ToggleWidgets()
-    elseif action == "option4" then
-        ToggleAutopilot()
-        toggleView = false
-    elseif action == "option5" then
-        ToggleLockPitch()
-        toggleView = false
-    elseif action == "option6" then
-        ToggleAltitudeHold()
-        toggleView = false
-    elseif action == "option7" then
-        msgText = "Use /wipedatabank command to wipe databank."
-        toggleView = false
     elseif action == "option8" then
         ToggleFollowMode()
-        toggleView = false
     elseif action == "option9" then
         if gyro ~= nil then
             gyro.toggle()
             gyroIsOn = gyro.getState() == 1
         end
-        toggleView = false
     elseif action == "lshift" then
         if system.isViewLocked() == 1 then
             holdingCtrl = true
@@ -7801,9 +7820,6 @@ function script.onActionStart(action)
         end
     elseif action == "lalt" then
         AltIsOn = true
-        if isRemote() == 0 and not freeLookToggle and userControlScheme == "keyboard" then
-            system.lockView(1)
-        end
     elseif action == "booster" then
         -- Dodgin's Don't Die Rocket Govenor - Cruise Control Edition
         if VanillaRockets then 
@@ -7889,7 +7905,6 @@ function script.onActionStop(action)
         if AltitudeHold then
             holdAltitudeButtonModifier = OldButtonMod
         end
-        toggleView = false
     elseif action == "groundaltitudedown" then
         if antigrav and not ExternalAGG and antigrav.getState() == 1 then
             antiGravButtonModifier = OldAntiMod
@@ -7897,7 +7912,6 @@ function script.onActionStop(action)
         if AltitudeHold then
             holdAltitudeButtonModifier = OldButtonMod
         end
-        toggleView = false
     elseif action == "lshift" then
         if system.isViewLocked() == 1 then
             holdingCtrl = false
@@ -7918,19 +7932,6 @@ function script.onActionStop(action)
             end
         end
     elseif action == "lalt" then
-        if isRemote() == 0 and freeLookToggle then
-            if toggleView then
-                if system.isViewLocked() == 1 then
-                    system.lockView(0)
-                else
-                    system.lockView(1)
-                end
-            else
-                toggleView = true
-            end
-        elseif isRemote() == 0 and not freeLookToggle and userControlScheme == "keyboard" then
-            system.lockView(0)
-        end
         AltIsOn = false
     end
 end
