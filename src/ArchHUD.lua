@@ -460,7 +460,7 @@ local function getDistanceDisplayString(distance, places)
     return result, displayUnit
 end
 
-function findAtlasIndex(atlasList)
+local function findAtlasIndex(atlasList)
     for k, v in pairs(atlasList) do
         if v.name and v.name == CustomTarget.name then
             return k
@@ -1118,7 +1118,7 @@ local function GetAutopilotTBBrakeDistanceAndTime(speed) -- Uses thrust and a co
                warmup, LastMaxBrake - (AutopilotPlanetGravity * constructMass()))
 end
 
-function ToggleAntigrav()
+local function ToggleAntigrav()
     if antigrav and not ExternalAGG then
         if antigrav.getState() == 1 then
             antigrav.deactivate()
@@ -1163,7 +1163,7 @@ local function FormatTimeString(seconds)
     end
 end
 
-function AboveGroundLevel()
+local function AboveGroundLevel()
     local groundDistance = -1
     local hgroundDet = hoverDetectGround()
     if telemeter_1 then 
