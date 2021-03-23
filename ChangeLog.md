@@ -1,15 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.100 - MAJOR REFACTOR plus Enhancements.
-- Remove exportable variables to save scripting room.  
-To change user variables, hit enter, select LUA Chat type and type "/G dump" to see them all. (or look at the README file) 
-Use "/G variablename value" to change it, i.e. /G AtmoSpeedLimit 1300.  You can also edit them directly in script.
 - Fix erroneous warning message about wrong control scheme.
 - Removed initial dump of variables to Lua chat, use /G dump to see all user variables.\
 - Removed Alt-7-7 to wipe databank.. Use /wipedatabank command instead. (reclaiming hotkeys)
 - Moved Alt-3 (widget vanilla view toggle) to Alt-7. Not needed to fix the old tab slideshow anymore, but still needed sometimes (busy marketplace)
 - Changed Freelook toggle from Alt to Alt-3.  This should prevent inadvertantly changing out of ship or camera control when alt-tabbing.
-- Begin cleanup and localizaion of functions and cleanup of duplication of code work
+- Major refactoring of script.
 
 Version Reset to 1.000
 - Reset version to differentiate from DU Orbtial Hud version.

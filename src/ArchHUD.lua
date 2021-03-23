@@ -4,96 +4,97 @@ Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.010
+VERSION_NUMBER = 1.012
 
 -- User settings.  Must be global to work with databank system as set up due to using _G assignment
-freeLookToggle = true -- (Default: true)
-BrakeToggleDefault = true -- (Default: true)
-RemoteFreeze = false -- (Default: false)
-RemoteHud = false -- (Default: false)
-brightHud = false -- (Default: false)
-VanillaRockets = false -- (Default: false)
-InvertMouse = false -- (Default: false)
-userControlScheme = "virtual joystick" -- (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard"
-ResolutionX = 1920 -- (Default: 1920)
-ResolutionY = 1080 -- (Default: 1080) 
-SafeR = 130 -- (Default: 130)
-SafeG = 224 -- (Default: 224)
-SafeB = 255 -- (Default: 255)
-PvPR = 255 -- (Default: 255)
-PvPG = 0 -- (Default: 0)
-PvPB = 0 -- (Default: 0)
-centerX = 960 -- (Default: 960)
-centerY = 540 -- (Default: 540)
-throtPosX = 1300 -- (Default: 1300)
-throtPosY = 540 -- (Default: 540)
-vSpdMeterX = 1525  -- (Default: 1525)
-vSpdMeterY = 325 -- (Default: 325)
-altMeterX = 550  -- (Default: 550)
-altMeterY = 540 -- (Default: 540) 
-fuelX = 100 -- (Default: 100)
-fuelY = 350 -- (Default: 350)
-circleRad = 400 -- (Default: 400)
-DeadZone = 50 -- (Default: 50)
-DisplayOrbit = true -- (Default: true) 
-OrbitMapSize = 250 -- (Default: 250)
-OrbitMapX = 75 -- (Default: 75)
-OrbitMapY = 0 -- (Default: 0)
-showHud = true -- (Default: true) 
-ShowOdometer = true -- (Default: true)
-hideHudOnToggleWidgets = true -- (Default: true)
-ShiftShowsRemoteButtons = true -- (Default: true)
-YawStallAngle = 35 -- (Default: 35)
-PitchStallAngle = 35 -- (Default: 35)
-speedChangeLarge = 5 -- (Default: 5)
-speedChangeSmall = 1 -- (Default: 1)
-brakeLandingRate = 30 -- (Default: 30)
-MaxPitch = 30 -- (Default: 30)
-ReentrySpeed = 1050 -- (Default: 1050)
-AtmoSpeedLimit = 1050 -- (Default: 1050)
-SpaceSpeedLimit = 30000 -- (Default: 30000).
-ReentryAltitude = 2500 -- (Default: 2500)
-AutoTakeoffAltitude = 1000 -- (Default: 1000)
-TargetHoverHeight = 50 -- (Default: 50)
-LandingGearGroundHeight = 0 -- (Default: 0)
-MaxGameVelocity = 8333.00 -- (Default: 8333.00)
-TargetOrbitRadius = 1.4 -- (Default: 1.4)
-AutopilotInterplanetaryThrottle = 1.0 -- (Default: 1.0)
-warmup = 32 -- (Default: 32)
-MouseYSensitivity = 0.003 -- (Default: 0.003)
-MouseXSensitivity = 0.003 -- (Default: 0.003)
-autoRollPreference = false -- (Default: false)
-autoRollFactor = 2 -- (Default: 2)
-rollSpeedFactor = 1.5 -- (Default: 1.5)
-turnAssist = true -- (Default: true)
-turnAssistFactor = 2 -- (Default: 2)
-TrajectoryAlignmentStrength = 0.002 -- (Default: 0.002)
-torqueFactor = 2 -- (Default: 2)
-pitchSpeedFactor = 0.8 -- (Default: 0.8)
-yawSpeedFactor = 1 -- (Default: 1)
-brakeSpeedFactor = 3 -- (Default: 3)
-brakeFlatFactor = 1 -- (Default: 1)
-DampingMultiplier = 40 -- (Default: 40) 
-fuelTankHandlingAtmo = 0 -- (Default: 0)
-fuelTankHandlingSpace = 0 -- (Default: 0)
-fuelTankHandlingRocket = 0 -- (Default: 0)
-ContainerOptimization = 0 -- (Default: 0)
-FuelTankOptimization = 0 -- (Default: 0)
-ExtraLongitudeTags = "none" -- (Default: "none")
-ExtraLateralTags = "none" -- (Default: "none")
-ExtraVerticalTags = "none" -- (Default: "none")
-ExternalAGG = false -- (Default: false)
-UseSatNav = false -- (Default: false)
-apTickRate = 0.0166667 -- (Default: 0.0166667)  
-hudTickRate = 0.0666667 -- (Default: 0.0666667)
-ShouldCheckDamage = true -- (Default: true)
-CalculateBrakeLandingSpeed = false -- (Default: false)
-autoRollRollThreshold = 0 -- (Default: 0)
-AtmoSpeedAssist = true -- (Default: true)
-ForceAlignment = false -- (Default: false)
-minRollVelocity = 150 -- (Default: 150)
-VertTakeOffEngine = false -- (Default: false)
-DisplayDeadZone = true -- (Default: true)
+useTheseSettings = false --export: (Default: false)
+freeLookToggle = true --export: (Default: true)
+BrakeToggleDefault = true --export: (Default: true)
+RemoteFreeze = false --export: (Default: false)
+RemoteHud = false --export: (Default: false)
+brightHud = false --export: (Default: false)
+VanillaRockets = false --export: (Default: false)
+InvertMouse = false --export: (Default: false)
+userControlScheme = "virtual joystick" --export: (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard"
+ResolutionX = 1920 --export: (Default: 1920)
+ResolutionY = 1080 --export: (Default: 1080) 
+SafeR = 130 --export: (Default: 130)
+SafeG = 224 --export: (Default: 224)
+SafeB = 255 --export: (Default: 255)
+PvPR = 255 --export: (Default: 255)
+PvPG = 0 --export: (Default: 0)
+PvPB = 0 --export: (Default: 0)
+centerX = 960 --export: (Default: 960)
+centerY = 540 --export: (Default: 540)
+throtPosX = 1300 --export: (Default: 1300)
+throtPosY = 540 --export: (Default: 540)
+vSpdMeterX = 1525  --export: (Default: 1525)
+vSpdMeterY = 325 --export: (Default: 325)
+altMeterX = 550  --export: (Default: 550)
+altMeterY = 540 --export: (Default: 540) 
+fuelX = 100 --export: (Default: 100)
+fuelY = 350 --export: (Default: 350)
+circleRad = 400 --export: (Default: 400)
+DeadZone = 50 --export: (Default: 50)
+DisplayOrbit = true --export: (Default: true) 
+OrbitMapSize = 250 --export: (Default: 250)
+OrbitMapX = 75 --export: (Default: 75)
+OrbitMapY = 0 --export: (Default: 0)
+showHud = true --export: (Default: true) 
+ShowOdometer = true --export: (Default: true)
+hideHudOnToggleWidgets = true --export: (Default: true)
+ShiftShowsRemoteButtons = true --export: (Default: true)
+YawStallAngle = 35 --export: (Default: 35)
+PitchStallAngle = 35 --export: (Default: 35)
+speedChangeLarge = 5 --export: (Default: 5)
+speedChangeSmall = 1 --export: (Default: 1)
+brakeLandingRate = 30 --export: (Default: 30)
+MaxPitch = 30 --export: (Default: 30)
+ReentrySpeed = 1050 --export: (Default: 1050)
+AtmoSpeedLimit = 1050 --export: (Default: 1050)
+SpaceSpeedLimit = 30000 --export: (Default: 30000).
+ReentryAltitude = 2500 --export: (Default: 2500)
+AutoTakeoffAltitude = 1000 --export: (Default: 1000)
+TargetHoverHeight = 50 --export: (Default: 50)
+LandingGearGroundHeight = 0 --export: (Default: 0)
+MaxGameVelocity = 8333.00 --export: (Default: 8333.00)
+TargetOrbitRadius = 1.4 --export: (Default: 1.4)
+AutopilotInterplanetaryThrottle = 1.0 --export: (Default: 1.0)
+warmup = 32 --export: (Default: 32)
+MouseYSensitivity = 0.003 --export: (Default: 0.003)
+MouseXSensitivity = 0.003 --export: (Default: 0.003)
+autoRollPreference = false --export: (Default: false)
+autoRollFactor = 2 --export: (Default: 2)
+rollSpeedFactor = 1.5 --export: (Default: 1.5)
+turnAssist = true --export: (Default: true)
+turnAssistFactor = 2 --export: (Default: 2)
+TrajectoryAlignmentStrength = 0.002 --export: (Default: 0.002)
+torqueFactor = 2 --export: (Default: 2)
+pitchSpeedFactor = 0.8 --export: (Default: 0.8)
+yawSpeedFactor = 1 --export: (Default: 1)
+brakeSpeedFactor = 3 --export: (Default: 3)
+brakeFlatFactor = 1 --export: (Default: 1)
+DampingMultiplier = 40 --export: (Default: 40) 
+fuelTankHandlingAtmo = 0 --export: (Default: 0)
+fuelTankHandlingSpace = 0 --export: (Default: 0)
+fuelTankHandlingRocket = 0 --export: (Default: 0)
+ContainerOptimization = 0 --export: (Default: 0)
+FuelTankOptimization = 0 --export: (Default: 0)
+ExtraLongitudeTags = "none" --export: (Default: "none")
+ExtraLateralTags = "none" --export: (Default: "none")
+ExtraVerticalTags = "none" --export: (Default: "none")
+ExternalAGG = false --export: (Default: false)
+UseSatNav = false --export: (Default: false)
+apTickRate = 0.0166667 --export: (Default: 0.0166667)  
+hudTickRate = 0.0666667 --export: (Default: 0.0666667)
+ShouldCheckDamage = true --export: (Default: true)
+CalculateBrakeLandingSpeed = false --export: (Default: false)
+autoRollRollThreshold = 0 --export: (Default: 0)
+AtmoSpeedAssist = true --export: (Default: true)
+ForceAlignment = false --export: (Default: false)
+minRollVelocity = 150 --export: (Default: 150)
+VertTakeOffEngine = false --export: (Default: false)
+DisplayDeadZone = true --export: (Default: true)
 
 -- Auto Variable declarations that store status of ship. Must be global because they get saved/read to Databank due to using _G assignment
 BrakeToggleStatus = BrakeToggleDefault
@@ -329,260 +330,6 @@ local worldPos = vec3(core.getConstructWorldPos())
 
 -- BEGIN FUNCTION DEFINITIONS
 
-function processVariableList(varList)
-    local hasKey = dbHud_1.hasKey
-    for k, v in pairs(varList) do
-        if hasKey(v) then
-            local result = jdecode(dbHud_1.getStringValue(v))
-            if result ~= nil then
-                _G[v] = result
-                valuesAreSet = true
-            end
-        end
-    end
-end
-
-function LoadVariables()
-    if dbHud_1 then
-        local hasKey = dbHud_1.hasKey
-        processVariableList(saveableVariables)
-        coroutine.yield()
-        processVariableList(autoVariables)
-        if valuesAreSet then
-            msgText = "Loaded Saved Variables (see Lua Chat Tab for list)"
-            halfResolutionX = round(ResolutionX / 2,0)
-            halfResolutionY = round(ResolutionY / 2,0)
-            resolutionWidth = ResolutionX
-            resolutionHeight = ResolutionY
-            BrakeToggleStatus = BrakeToggleDefault
-            userControlScheme = string.lower(userControlScheme)
-            autoRoll = autoRollPreference
-            adjustedAtmoSpeedLimit = AtmoSpeedLimit
-            rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) ..
-            [[)]]
-            rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..
-               mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]  
-        else
-            msgText = "No Saved Variables Found - Stand up / leave remote to save settings"
-        end
-    else
-        msgText = "No databank found, install one anywhere and rerun the autoconfigure to save variables"
-    end
-
-    if (LastStartTime + 180) < time then -- Variables to reset if out of seat (and not on hud) for more than 3 min
-        LastMaxBrakeInAtmo = 0
-    end
-    LastStartTime = time
-    userControlScheme = string.lower(userControlScheme)
-    if string.find("keyboard virtual joystick mouse",  userControlScheme) == nil then 
-        msgText = "Invalid User Control Scheme selected.  Change userControlScheme in Lua Parameters to keyboard, mouse, or virtual joystick\nOr use shift and button in screen"
-        msgTimer = 5
-    end
-
-    if antigrav and not ExternalAGG then
-        if AntigravTargetAltitude == nil then 
-            AntigravTargetAltitude = coreAltitude
-        end
-        antigrav.setBaseAltitude(AntigravTargetAltitude)
-    end
-end
-
-function CalculateFuelVolume(curMass, vanillaMaxVolume)
-    if curMass > vanillaMaxVolume then
-        vanillaMaxVolume = curMass
-    end
-    if ContainerOptimization > 0 then 
-        vanillaMaxVolume = vanillaMaxVolume - (vanillaMaxVolume * ContainerOptimization * 0.05)
-    end
-    if FuelTankOptimization > 0 then 
-        vanillaMaxVolume = vanillaMaxVolume - (vanillaMaxVolume * FuelTankOptimization * 0.05)
-    end
-    return vanillaMaxVolume            
-end
-
-function ProcessElements()
-    local checkTanks = (fuelX ~= 0 and fuelY ~= 0)
-    for k in pairs(elementsID) do
-        local type = core.getElementTypeById(elementsID[k])
-        if stringmatch(type, '^.*Space Engine$') then
-            SpaceEngines = true
-            if stringmatch(tostring(core.getElementTagsById(elementsID[k])), '^.*vertical.*$') then
-                local enrot = core.getElementRotationById(elementsID[k])
-                if enrot[4] < 0 then
-                    if utilsround(-enrot[4],0.1) == 0.5 then
-                        SpaceEngineVertUp = true
-                    end
-                else
-                    if utilsround(enrot[4],0.1) == 0.5 then
-                        SpaceEngineVertDn = true
-                    end
-                end
-            end
-        end
-        if (type == "Landing Gear") then
-            hasGear = true
-        end
-        if (type == "Dynamic Core Unit") then
-            local hp = eleMaxHp(elementsID[k])
-            if hp > 10000 then
-                coreOffset = 128
-            elseif hp > 1000 then
-                coreOffset = 64
-            elseif hp > 150 then
-                coreOffset = 32
-            end
-        end
-        eleTotalMaxHp = eleTotalMaxHp + eleMaxHp(elementsID[k])
-        if checkTanks and (type == "Atmospheric Fuel Tank" or type == "Space Fuel Tank" or type == "Rocket Fuel Tank") then
-            local hp = eleMaxHp(elementsID[k])
-            local mass = eleMass(elementsID[k])
-            local curMass = 0
-            local curTime = systime()
-            if (type == "Atmospheric Fuel Tank") then
-                local vanillaMaxVolume = 400
-                local massEmpty = 35.03
-                if hp > 10000 then
-                    vanillaMaxVolume = 51200 -- volume in kg of L tank
-                    massEmpty = 5480
-                elseif hp > 1300 then
-                    vanillaMaxVolume = 6400 -- volume in kg of M
-                    massEmpty = 988.67
-                elseif hp > 150 then
-                    vanillaMaxVolume = 1600 --- volume in kg small
-                    massEmpty = 182.67
-                end
-                curMass = mass - massEmpty
-                if fuelTankHandlingAtmo > 0 then
-                    vanillaMaxVolume = vanillaMaxVolume + (vanillaMaxVolume * (fuelTankHandlingAtmo * 0.2))
-                end
-                vanillaMaxVolume =  CalculateFuelVolume(curMass, vanillaMaxVolume)
-                atmoTanks[#atmoTanks + 1] = {elementsID[k], eleName(elementsID[k]),
-                                            vanillaMaxVolume, massEmpty, curMass, curTime}
-            end
-            if (type == "Rocket Fuel Tank") then
-                local vanillaMaxVolume = 320
-                local massEmpty = 173.42
-                if hp > 65000 then
-                    vanillaMaxVolume = 40000 -- volume in kg of L tank
-                    massEmpty = 25740
-                elseif hp > 6000 then
-                    vanillaMaxVolume = 5120 -- volume in kg of M
-                    massEmpty = 4720
-                elseif hp > 700 then
-                    vanillaMaxVolume = 640 --- volume in kg small
-                    massEmpty = 886.72
-                end
-                curMass = mass - massEmpty
-                if fuelTankHandlingRocket > 0 then
-                    vanillaMaxVolume = vanillaMaxVolume + (vanillaMaxVolume * (fuelTankHandlingRocket * 0.1))
-                end
-                vanillaMaxVolume =  CalculateFuelVolume(curMass, vanillaMaxVolume)
-                rocketTanks[#rocketTanks + 1] = {elementsID[k], eleName(elementsID[k]),
-                                                vanillaMaxVolume, massEmpty, curMass, curTime}
-            end
-            if (type == "Space Fuel Tank") then
-                local vanillaMaxVolume = 2400
-                local massEmpty = 182.67
-                if hp > 10000 then
-                    vanillaMaxVolume = 76800 -- volume in kg of L tank
-                    massEmpty = 5480
-                elseif hp > 1300 then
-                    vanillaMaxVolume = 9600 -- volume in kg of M
-                    massEmpty = 988.67
-                end
-                curMass = mass - massEmpty
-                if fuelTankHandlingSpace > 0 then
-                    vanillaMaxVolume = vanillaMaxVolume + (vanillaMaxVolume * (fuelTankHandlingSpace * 0.2))
-                end
-                vanillaMaxVolume =  CalculateFuelVolume(curMass, vanillaMaxVolume)
-                spaceTanks[#spaceTanks + 1] = {elementsID[k], eleName(elementsID[k]),
-                                            vanillaMaxVolume, massEmpty, curMass, curTime}
-            end
-        end
-    end
-end
-
-function SetupChecks()
-    if gyro ~= nil then
-        gyroIsOn = gyro.getState() == 1
-    end
-    if userControlScheme ~= "keyboard" then
-        system.lockView(1)
-    else
-        system.lockView(0)
-    end
-    -- Close door and retract ramp if available
-    if door and (inAtmo or (not inAtmo and coreAltitude < 10000)) then
-        for _, v in pairs(door) do
-            v.toggle()
-        end
-    end
-    if switch then 
-        for _, v in pairs(switch) do
-            v.toggle()
-        end
-    end    
-    if forcefield and (inAtmo or (not inAtmo == 0 and coreAltitude < 10000)) then
-        for _, v in pairs(forcefield) do
-            v.toggle()
-        end
-    end
-    if antigrav ~= nil and not ExternalAGG then
-        if(antigrav.getState() == 1) then
-            antigrav.show()
-        end
-    end
-    -- unfreeze the player if he is remote controlling the construct
-    if isRemote() == 1 and RemoteFreeze then
-        system.freeze(1)
-    else
-        system.freeze(0)
-    end
-    if hasGear then
-        GearExtended = (Nav.control.isAnyLandingGearExtended() == 1)
-        if GearExtended then
-            Nav.control.extendLandingGears()
-        else
-            Nav.control.retractLandingGears()
-        end
-    end
-    
-    local aboveGroundLevel = AboveGroundLevel()
-
-    -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
-    if aboveGroundLevel ~= -1 or (not inAtmo and vec3(core.getVelocity()):len() < 50) then
-        BrakeIsOn = true
-        if not hasGear then
-            GearExtended = true
-        end
-    else
-        BrakeIsOn = false
-    end
-
-    if targetGroundAltitude ~= nil then
-        Nav.axisCommandManager:setTargetGroundAltitude(targetGroundAltitude)
-        if targetGroundAltitude == 0 and not hasGear then 
-            GearExtended = true
-            BrakeIsOn = true -- If they were hovering at 0 and have no gear, consider them landed 
-        end
-    else
-        targetGroundAltitude = Nav:getTargetGroundAltitude() 
-        if GearExtended then -- or not hasGear then -- And we already tagged GearExtended if they don't have gear, we can just use this
-            Nav.axisCommandManager:setTargetGroundAltitude(LandingGearGroundHeight)
-            --GearExtended = true -- We don't need to extend gear just because they have a databank, that would have been done earlier if necessary
-        else
-            Nav.axisCommandManager:setTargetGroundAltitude(TargetHoverHeight)
-        end
-    end
-
-    -- Store their max kinematic parameters in ship-up direction for use in brake-landing
-    if inAtmo and aboveGroundLevel ~= -1 then 
-        maxKinematicUp = core.getMaxKinematicsParametersAlongAxis("ground", core.getConstructOrientationUp())[1]
-    end
-
-    WasInAtmo = inAtmo
-end
-
 local function cmdThrottle(value, dontSwitch)
     if dontSwitch == nil then
         dontSwitch = false
@@ -644,25 +391,7 @@ local function RefreshLastMaxBrake(gravity, force)
     end
 end
 
-local function MakeButton(enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition)
-    local newButton = {
-        enableName = enableName,
-        disableName = disableName,
-        width = width,
-        height = height,
-        x = x,
-        y = y,
-        toggleVar = toggleVar,
-        toggleFunction = toggleFunction,
-        drawCondition = drawCondition,
-        hovered = false
-    }
-    table.insert(Buttons, newButton)
-    return newButton -- readonly, I don't think it will be saved if we change these?  Maybe.
-    
-end
-
-function UpdateAtlasLocationsList()
+local function UpdateAtlasLocationsList()
     AtlasOrdered = {}
     for k, v in pairs(atlas[0]) do
         table.insert(AtlasOrdered, { name = v.name, index = k} )
@@ -672,13 +401,6 @@ function UpdateAtlasLocationsList()
     end
 
     table.sort(AtlasOrdered, atlasCmp)
-end
-
-function AddLocationsToAtlas() -- Just called once during init really
-    for k, v in pairs(SavedLocations) do
-        table.insert(atlas[0], v)
-    end
-    UpdateAtlasLocationsList()
 end
 
 local function float_eq(a, b)
@@ -721,60 +443,6 @@ local function zeroConvertToMapPosition(targetplanet, worldCoordinates)
     }, MapPosition)
 end
 
-function zeroConvertToWorldCoordinates(pos) -- Many thanks to SilverZero for this.
-    local num  = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
-    local posPattern = '::pos{' .. num .. ',' .. num .. ',' ..  num .. ',' .. num ..  ',' .. num .. '}'    
-    local systemId, bodyId, latitude, longitude, altitude = stringmatch(pos, posPattern)
-    if (systemId == "0" and bodyId == "0") then
-        return vec3(tonumber(latitude),
-                    tonumber(longitude),
-                    tonumber(altitude))
-    end
-    longitude = math.rad(longitude)
-    latitude = math.rad(latitude)
-    local planet = atlas[tonumber(systemId)][tonumber(bodyId)]  
-    local xproj = math.cos(latitude);   
-    local planetxyz = vec3(xproj*math.cos(longitude),
-                          xproj*math.sin(longitude),
-                             math.sin(latitude));
-    return planet.center + (planet.radius + altitude) * planetxyz
-end
-
-function AddNewLocationByWaypoint(savename, planet, pos)
-    if dbHud_1 then
-        local newLocation = {}
-        local position = zeroConvertToWorldCoordinates(pos)
-        if planet.name == "Space" then
-            newLocation = {
-                position = position,
-                name = savename,
-                atmosphere = false,
-                planetname = planet.name,
-                gravity = planet.gravity
-            }
-        else
-            local atmo = false
-            if planet.hasAtmosphere then
-                atmo = true 
-            else 
-                atmo = false 
-            end
-            newLocation = {
-                position = position,
-                name = savename,
-                atmosphere = atmo,
-                planetname = planet.name,
-                gravity = planet.gravity
-            }
-        end
-        SavedLocations[#SavedLocations + 1] = newLocation
-        table.insert(atlas[0], newLocation)
-        UpdateAtlasLocationsList()
-    else
-        msgText = "Databank must be installed to save locations"
-    end
-end
-
 local function getDistanceDisplayString(distance, places)
     local su = distance > 100000
     local result, displayUnit = ""
@@ -799,41 +467,6 @@ function findAtlasIndex(atlasList)
         end
     end
     return -1
-end
-
-local function AddNewLocation() -- Don't call this unless they have a databank or it's kinda pointless
-    -- Add a new location to SavedLocations
-    if dbHud_1 then
-        local position = worldPos
-        local name = planet.name .. ". " .. #SavedLocations
-        if radar_1 then -- Just match the first one
-            local id,_ = radar_1.getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
-            if id ~= nil and id ~= "" then
-                name = name .. " " .. radar_1.getConstructName(id)
-            end
-        end
-        local newLocation = {}
-        local atmo = false
-        if planet.hasAtmosphere then
-            atmo = true 
-        end
-        newLocation = {
-            position = position,
-            name = name,
-            atmosphere = atmo,
-            planetname = planet.name,
-            gravity = planet.gravity,
-            safe = true -- This indicates we can extreme land here, because this was a real positional waypoint
-        }
-        SavedLocations[#SavedLocations + 1] = newLocation
-        -- Nearest planet, gravity also important - if it's 0, we don't autopilot to the target planet, the target isn't near a planet.                      
-        table.insert(atlas[0], newLocation)
-        UpdateAtlasLocationsList()
-        -- Store atmosphere so we know whether the location is in space or not
-        msgText = "Location saved as " .. name
-    else
-        msgText = "Databank must be installed to save locations"
-    end
 end
 
 local function ToggleRadarPanel()
@@ -861,103 +494,6 @@ local function ToggleRadarPanel()
         end
         peris = 0
     end
-end
-
-local function ToggleWidgets()
-    UnitHidden = not UnitHidden
-    if not UnitHidden then
-        unit.show()
-        core.show()
-        if atmofueltank_size > 0 then
-            _autoconf.displayCategoryPanel(atmofueltank, atmofueltank_size,
-                L_TEXT("ui_lua_widget_atmofuel", "Atmo Fuel"), "fuel_container")
-            fuelPanelID = _autoconf.panels[_autoconf.panels_size]
-        end
-        if spacefueltank_size > 0 then
-            _autoconf.displayCategoryPanel(spacefueltank, spacefueltank_size,
-                L_TEXT("ui_lua_widget_spacefuel", "Space Fuel"), "fuel_container")
-            spacefuelPanelID = _autoconf.panels[_autoconf.panels_size]
-        end
-        if rocketfueltank_size > 0 then
-            _autoconf.displayCategoryPanel(rocketfueltank, rocketfueltank_size,
-                L_TEXT("ui_lua_widget_rocketfuel", "Rocket Fuel"), "fuel_container")
-            rocketfuelPanelID = _autoconf.panels[_autoconf.panels_size]
-        end
-    else
-        unit.hide()
-        core.hide()
-        if fuelPanelID ~= nil then
-            system.destroyWidgetPanel(fuelPanelID)
-            fuelPanelID = nil
-        end
-        if spacefuelPanelID ~= nil then
-            system.destroyWidgetPanel(spacefuelPanelID)
-            spacefuelPanelID = nil
-        end
-        if rocketfuelPanelID ~= nil then
-            system.destroyWidgetPanel(rocketfuelPanelID)
-            rocketfuelPanelID = nil
-        end
-    end
-end
-
-local function SetupInterplanetaryPanel() -- Interplanetary helper
-    panelInterplanetary = system.createWidgetPanel("Interplanetary Helper")
-
-    interplanetaryHeader = system.createWidget(panelInterplanetary, "value")
-    interplanetaryHeaderText = system.createData('{"label": "Target Planet", "value": "N/A", "unit":""}')
-    system.addDataToWidget(interplanetaryHeaderText, interplanetaryHeader)
-
-    widgetDistance = system.createWidget(panelInterplanetary, "value")
-    widgetDistanceText = system.createData('{"label": "distance", "value": "N/A", "unit":""}')
-    system.addDataToWidget(widgetDistanceText, widgetDistance)
-
-    widgetTravelTime = system.createWidget(panelInterplanetary, "value")
-    widgetTravelTimeText = system.createData('{"label": "Travel Time", "value": "N/A", "unit":""}')
-    system.addDataToWidget(widgetTravelTimeText, widgetTravelTime)
-
-    widgetMaxMass = system.createWidget(panelInterplanetary, "value")
-    widgetMaxMassText = system.createData('{"label": "Maximum Mass", "value": "N/A", "unit":""}')
-    system.addDataToWidget(widgetMaxMassText, widgetMaxMass)
-
-    widgetTargetOrbit = system.createWidget(panelInterplanetary, "value")
-    widgetTargetOrbitText = system.createData('{"label": "Target Altitude", "value": "N/A", "unit":""}')
-    system.addDataToWidget(widgetTargetOrbitText, widgetTargetOrbit)
-
-    widgetCurBrakeDistance = system.createWidget(panelInterplanetary, "value")
-    widgetCurBrakeDistanceText = system.createData('{"label": "Cur Brake distance", "value": "N/A", "unit":""}')
-    widgetCurBrakeTime = system.createWidget(panelInterplanetary, "value")
-    widgetCurBrakeTimeText = system.createData('{"label": "Cur Brake Time", "value": "N/A", "unit":""}')
-    widgetMaxBrakeDistance = system.createWidget(panelInterplanetary, "value")
-    widgetMaxBrakeDistanceText = system.createData('{"label": "Max Brake distance", "value": "N/A", "unit":""}')
-    widgetMaxBrakeTime = system.createWidget(panelInterplanetary, "value")
-    widgetMaxBrakeTimeText = system.createData('{"label": "Max Brake Time", "value": "N/A", "unit":""}')
-    widgetTrajectoryAltitude = system.createWidget(panelInterplanetary, "value")
-    widgetTrajectoryAltitudeText = system.createData('{"label": "Projected Altitude", "value": "N/A", "unit":""}')
-    if not inAtmo then
-        system.addDataToWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
-        system.addDataToWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
-        system.addDataToWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
-        system.addDataToWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
-        system.addDataToWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
-    end
-end
-
-local function HideInterplanetaryPanel()
-    system.destroyWidgetPanel(panelInterplanetary)
-    panelInterplanetary = nil
-end
-
-local function Contains(mousex, mousey, x, y, width, height)
-    if mousex > x and mousex < (x + width) and mousey > y and mousey < (y + height) then
-        return true
-    else
-        return false
-    end
-end
-
-local function ToggleTurnBurn()
-    TurnBurn = not TurnBurn
 end
 
 local function hoverDetectGround()
@@ -1045,62 +581,6 @@ local function ToggleAltitudeHold()  -- Must stay global for some reason, invest
     end
 end
 
-local function ToggleVectorToTarget(SpaceTarget)
-    -- This is a feature to vector toward the target destination in atmo or otherwise on-planet
-    -- Uses altitude hold.  
-    VectorToTarget = not VectorToTarget
-    if VectorToTarget then
-        TurnBurn = false
-        if not AltitudeHold and not SpaceTarget then
-            ToggleAltitudeHold()
-        end
-    end
-    VectorStatus = "Proceeding to Waypoint"
-end
-
-local function ToggleAutoLanding()
-    BrakeLanding = not BrakeLanding
-    if BrakeLanding then
-        StrongBrakes = ((planet.gravity * 9.80665 * constructMass()) < LastMaxBrake)
-        AltitudeHold = false
-        AutoTakeoff = false
-        LockPitch = nil
-        BrakeLanding = true
-        Nav.axisCommandManager:setThrottleCommand(axisCommandId.longitudinal, 0)
-        PlayerThrottle = 0
-    end
-end
-
-local function ToggleAutoTakeoff()
-    if AutoTakeoff then
-        -- Turn it off, and also AltitudeHold cuz it's weird if you cancel and that's still going 
-        AutoTakeoff = false
-        if AltitudeHold then
-            ToggleAltitudeHold()
-        end
-    elseif VertTakeOff then
-        BrakeLanding = true
-        VertTakeOff = false
-        AltitudeHold = false
-    else
-        if VertTakeOffEngine then
-            VertTakeOff = true
-            AltitudeHold = false
-        else
-            if not AltitudeHold then
-                ToggleAltitudeHold()
-            end
-            AutoTakeoff = true
-            HoldAltitude = coreAltitude + AutoTakeoffAltitude
-        end
-        OrbitAchieved = false
-        GearExtended = false
-        Nav.control.retractLandingGears()
-        Nav.axisCommandManager:setTargetGroundAltitude(500) -- Hard set this for takeoff, you wouldn't use takeoff from a hangar
-        BrakeIsOn = true
-    end
-end
-
 local function ToggleIntoOrbit()
     orbitAligned = false
     orbitPitch = nil
@@ -1124,18 +604,6 @@ local function ToggleIntoOrbit()
         end
     else
         msgText = "Unable to engage orbiting, not near planet or in atmosphere"
-    end
-end
-
-function ToggleLockPitch()
-    if LockPitch == nil then
-        local pitch = getPitch(worldVertical, constructForward, constructRight)
-        LockPitch = pitch
-        AutoTakeoff = false
-        AltitudeHold = false
-        BrakeLanding = false
-    else
-        LockPitch = nil
     end
 end
 
@@ -1282,6 +750,20 @@ local function adjustAutopilotTargetIndex(up)
 end 
 
 local function ToggleAutopilot()
+
+    local function ToggleVectorToTarget(SpaceTarget)
+        -- This is a feature to vector toward the target destination in atmo or otherwise on-planet
+        -- Uses altitude hold.  
+        VectorToTarget = not VectorToTarget
+        if VectorToTarget then
+            TurnBurn = false
+            if not AltitudeHold and not SpaceTarget then
+                ToggleAltitudeHold()
+            end
+        end
+        VectorStatus = "Proceeding to Waypoint"
+    end
+
     if (time - apDoubleClick) < 1.5 and atmosDensity > 0 then
         if not SpaceEngines then
             msgText = "No space engines detected, Orbital Hop not supported"
@@ -1381,7 +863,7 @@ local function ToggleAutopilot()
     end
 end
 
-function UpdatePosition(newName)
+local function UpdatePosition(newName)
     local index = -1
     local newLocation
     index = findAtlasIndex(SavedLocations)
@@ -1418,24 +900,6 @@ function UpdatePosition(newName)
     else
         msgText = "Name Not Found"
     end
-end
-
-function ClearCurrentPosition()
-    -- So AutopilotTargetIndex is special and not a real index.  We have to do this by hand.
-    local index = -1
-    index = findAtlasIndex(atlas[0])
-    if index > -1 then
-        table.remove(atlas[0], index)
-    end
-    -- And SavedLocations
-    index = -1
-    index = findAtlasIndex(SavedLocations)
-    if index ~= -1 then
-        msgText = CustomTarget.name .. " saved location cleared"
-        table.remove(SavedLocations, index)
-    end
-    adjustAutopilotTargetIndex()
-    UpdateAtlasLocationsList()
 end
 
 local function getPitch(gravityDirection, forward, right)
@@ -1477,25 +941,6 @@ local function signedRotationAngle(normal, vecA, vecB)
         return -1
     end
 end   
-
-local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
-    local radius = 500000
-    local distsz, distp, key = math.huge
-    local safe = false
-    local safeWorldPos = vec3({13771471,7435803,-128971})
-    local safeRadius = 18000000 
-    distsz = vec3(WorldPos):dist(safeWorldPos)
-    if distsz < safeRadius then  
-        return true, math.abs(distsz - safeRadius), "Safe Zone", 0
-    end
-    distp = vec3(WorldPos):dist(vec3(planet.center))
-    if distp < radius then safe = true end
-    if math.abs(distp - radius) < math.abs(distsz - safeRadius) then 
-        return safe, math.abs(distp - radius), planet.name, planet.bodyId
-    else
-        return safe, math.abs(distsz - safeRadius), "Safe Zone", 0
-    end
-end
 
 local function BrakeToggle()
     -- Toggle brakes
@@ -1673,283 +1118,6 @@ local function GetAutopilotTBBrakeDistanceAndTime(speed) -- Uses thrust and a co
                warmup, LastMaxBrake - (AutopilotPlanetGravity * constructMass()))
 end
 
-function gradeToggle(pro)
-    if pro == 1 then 
-        ProgradeIsOn = not ProgradeIsOn
-        RetrogradeIsOn = false
-    else
-        RetrogradeIsOn = not RetrogradeIsOn
-        ProgradeIsOn = false
-    end        
-        Autopilot = false
-        AltitudeHold = false
-        followMode = false
-        BrakeLanding = false
-        LockPitch = nil
-        Reentry = false
-        AutoTakeoff = false
-end
-
-function ProgradeToggle()
-    -- Toggle Progrades
-    gradeToggle(1)
-end
-
-function CheckDamage(newContent)
-    local percentDam = 0
-    damageMessage = ""
-    local maxShipHP = eleTotalMaxHp
-    local curShipHP = 0
-    local damagedElements = 0
-    local disabledElements = 0
-    local colorMod = 0
-    local color = ""
-    for k in pairs(elementsID) do
-        local hp = 0
-        local mhp = 0
-        mhp = eleMaxHp(elementsID[k])
-        hp = eleHp(elementsID[k])
-        curShipHP = curShipHP + hp
-        if (hp < mhp) then
-            if (hp == 0) then
-                disabledElements = disabledElements + 1
-            else
-                damagedElements = damagedElements + 1
-            end
-            -- Thanks to Jerico for the help and code starter for arrow markers!
-            if repairArrows and #markers == 0 then
-                position = vec3(core.getElementPositionById(elementsID[k]))
-                local x = position.x - coreOffset
-                local y = position.y - coreOffset
-                local z = position.z - coreOffset
-                table.insert(markers, core.spawnArrowSticker(x, y, z + 1, "down"))
-                table.insert(markers, core.spawnArrowSticker(x, y, z + 1, "down"))
-                core.rotateSticker(markers[2], 0, 0, 90)
-                table.insert(markers, core.spawnArrowSticker(x + 1, y, z, "north"))
-                table.insert(markers, core.spawnArrowSticker(x + 1, y, z, "north"))
-                core.rotateSticker(markers[4], 90, 90, 0)
-                table.insert(markers, core.spawnArrowSticker(x - 1, y, z, "south"))
-                table.insert(markers, core.spawnArrowSticker(x - 1, y, z, "south"))
-                core.rotateSticker(markers[6], 90, -90, 0)
-                table.insert(markers, core.spawnArrowSticker(x, y - 1, z, "east"))
-                table.insert(markers, core.spawnArrowSticker(x, y - 1, z, "east"))
-                core.rotateSticker(markers[8], 90, 0, 90)
-                table.insert(markers, core.spawnArrowSticker(x, y + 1, z, "west"))
-                table.insert(markers, core.spawnArrowSticker(x, y + 1, z, "west"))
-                core.rotateSticker(markers[10], -90, 0, 90)
-                table.insert(markers, elementsID[k])
-            end
-        elseif repairArrows and #markers > 0 and markers[11] == elementsID[k] then
-            for j in pairs(markers) do
-                core.deleteSticker(markers[j])
-            end
-            markers = {}
-        end
-    end
-    percentDam = mfloor((curShipHP / maxShipHP)*100)
-    if percentDam < 100 then
-        newContent[#newContent + 1] = [[<g class="pbright txt">]]
-        colorMod = mfloor(percentDam * 2.55)
-        color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
-        if percentDam < 100 then
-            newContent[#newContent + 1] = stringf(
-                                              [[<text class="txtbig txtmid" x=50%% y="1035" style="fill:%s">Elemental Integrity: %i %%</text>]],
-                                              color, percentDam)
-            if (disabledElements > 0) then
-                newContent[#newContent + 1] = stringf(
-                                                  [[<text class="txtbig txtmid" x=50%% y="1055" style="fill:%s">Disabled Modules: %i Damaged Modules: %i</text>]],
-                                                  color, disabledElements, damagedElements)
-            elseif damagedElements > 0 then
-                newContent[#newContent + 1] = stringf(
-                                                  [[<text class="txtbig txtmid" x=50%% y="1055"style="fill:%s">Damaged Modules: %i</text>]],
-                                                  color, damagedElements)
-            end
-        end
-        newContent[#newContent + 1] = [[<\g>]]
-    end
-end
-
-function DrawCursorLine(newContent)
-    local strokeColor = mfloor(utils.clamp((distance / (resolutionWidth / 4)) * 255, 0, 255))
-    newContent[#newContent + 1] = stringf(
-                                      "<line x1='0' y1='0' x2='%fpx' y2='%fpx' style='stroke:rgb(%d,%d,%d);stroke-width:2;transform:translate(50%%, 50%%)' />",
-                                      simulatedX, simulatedY, mfloor(PrimaryR + 0.5) + strokeColor,
-                                      mfloor(PrimaryG + 0.5) - strokeColor, mfloor(PrimaryB + 0.5) - strokeColor)
-end
-
-function clearAll()
-    if clearAllCheck then
-        clearAllCheck = false
-        AutopilotAccelerating = false
-        AutopilotBraking = false
-        AutopilotCruising = false
-        Autopilot = false
-        AutopilotRealigned = false
-        AutopilotStatus = "Aligning"                
-        RetrogradeIsOn = false
-        ProgradeIsOn = false
-        AltitudeHold = false
-        Reentry = false
-        BrakeLanding = false
-        BrakeIsOn = false
-        AutoTakeoff = false
-        VertTakeOff = false
-        followMode = false
-        apThrottleSet = false
-        spaceLand = false
-        spaceLaunch = false
-        reentryMode = false
-        autoRoll = autoRollPreference
-        VectorToTarget = false
-        TurnBurn = false
-        gyroIsOn = false
-        LockPitch = nil
-        IntoOrbit = false
-    else
-        clearAllCheck = true
-    end
-end
-
-function wipeSaveVariables()
-    for k, v in pairs(saveableVariables) do
-        dbHud_1.setStringValue(v, jencode(nil))
-    end
-    for k, v in pairs(autoVariables) do
-        if v ~= "SavedLocations" then dbHud_1.setStringValue(v, jencode(nil)) end
-    end
-    --dbHud_1.clear()
-    msgText =
-        "Databank wiped except Save Locations. New variables will save after re-enter seat and exit"
-    msgTimer = 5
-    valuesAreSet = false
-    wipedDatabank = true
-end
-
-function CheckButtons()
-    for _, v in pairs(Buttons) do
-        if v.hovered then
-            if not v.drawCondition or v.drawCondition() then
-                v.toggleFunction()
-            end
-            v.hovered = false
-        end
-    end
-end
-
-function SetButtonContains()
-    local x = simulatedX + resolutionWidth / 2
-    local y = simulatedY + resolutionHeight / 2
-    for _, v in pairs(Buttons) do
-        -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
-        v.hovered = Contains(x, y, v.x, v.y, v.width, v.height)
-    end
-end
-
-function DrawButton(newContent, toggle, hover, x, y, w, h, activeColor, inactiveColor, activeText, inactiveText)
-    if type(activeText) == "function" then
-        activeText = activeText()
-    end
-    if type(inactiveText) == "function" then
-        inactiveText = inactiveText()
-    end
-    newContent[#newContent + 1] = stringf("<rect x='%f' y='%f' width='%f' height='%f' fill='", x, y, w, h)
-    if toggle then
-        newContent[#newContent + 1] = stringf("%s'", activeColor)
-    else
-        newContent[#newContent + 1] = inactiveColor
-    end
-    if hover then
-        newContent[#newContent + 1] = " style='stroke:white; stroke-width:2'"
-    else
-        newContent[#newContent + 1] = " style='stroke:black; stroke-width:1'"
-    end
-    newContent[#newContent + 1] = "></rect>"
-    newContent[#newContent + 1] = stringf("<text x='%f' y='%f' font-size='24' fill='", x + w / 2,
-                                      y + (h / 2) + 5)
-    if toggle then
-        newContent[#newContent + 1] = "black"
-    else
-        newContent[#newContent + 1] = "white"
-    end
-    newContent[#newContent + 1] = "' text-anchor='middle' font-family='Montserrat'>"
-    if toggle then
-        newContent[#newContent + 1] = stringf("%s</text>", activeText)
-    else
-        newContent[#newContent + 1] = stringf("%s</text>", inactiveText)
-    end
-end
-
-function DrawButtons(newContent)
-    local defaultColor = "rgb(50,50,50)'"
-    local onColor = "rgb(210,200,200)"
-    local draw = DrawButton
-    for _, v in pairs(Buttons) do
-        -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
-        local disableName = v.disableName
-        local enableName = v.enableName
-        if type(disableName) == "function" then
-            disableName = disableName()
-        end
-        if type(enableName) == "function" then
-            enableName = enableName()
-        end
-        if not v.drawCondition or v.drawCondition() then -- If they gave us a nil condition
-            draw(newContent, v.toggleVar(), v.hovered, v.x, v.y, v.width, v.height, onColor, defaultColor,
-                disableName, enableName)
-        end
-    end
-end
-
-function getRelativePitch(velocity)
-    velocity = vec3(velocity)
-    local pitch = -math.deg(math.atan(velocity.y, velocity.z)) + 180
-    -- This is 0-360 where 0 is straight up
-    pitch = pitch - 90
-    -- So now 0 is straight, but we can now get angles up to 420
-    if pitch < 0 then
-        pitch = 360 + pitch
-    end
-    -- Now, if it's greater than 180, say 190, make it go to like -170
-    if pitch > 180 then
-        pitch = -180 + (pitch - 180)
-    end
-    -- And it's backwards.  
-    return -pitch
-end
-
-function getRelativeYaw(velocity)
-    velocity = vec3(velocity)
-    local yaw = math.deg(math.atan(velocity.y, velocity.x)) - 90
-    if yaw < -180 then
-        yaw = 360 + yaw
-    end
-    return yaw
-end
-
-function getAPEnableName()
-    local name = AutopilotTargetName
-    if name == nil then
-        local displayText, displayUnit = getDistanceDisplayString((worldPos - CustomTarget.position):len())
-        name = CustomTarget.name .. " " .. displayText .. displayUnit
-                   
-    end
-    if name == nil then
-        name = "None"
-    end
-    return "Engage Autopilot: " .. name
-end
-
-function getAPDisableName()
-    local name = AutopilotTargetName
-    if name == nil then
-        name = CustomTarget.name
-    end
-    if name == nil then
-        name = "None"
-    end
-    return "Disable Autopilot: " .. name
-end
-
 function ToggleAntigrav()
     if antigrav and not ExternalAGG then
         if antigrav.getState() == 1 then
@@ -1966,171 +1134,7 @@ function ToggleAntigrav()
     end
 end
 
-function SetupButtons()
-    -- BEGIN BUTTON DEFINITIONS
-
-    -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
-    local buttonHeight = 50
-    local buttonWidth = 260 -- Defaults
-    local brake = MakeButton("Enable Brake Toggle", "Disable Brake Toggle", buttonWidth, buttonHeight,
-                        resolutionWidth / 2 - buttonWidth / 2, resolutionHeight / 2 + 350, function()
-            return BrakeToggleStatus
-        end, function()
-            BrakeToggleStatus = not BrakeToggleStatus
-            if (BrakeToggleStatus) then
-                msgText = "Brakes in Toggle Mode"
-            else
-                msgText = "Brakes in Default Mode"
-            end
-        end)
-    MakeButton("Align Prograde", "Disable Prograde", buttonWidth, buttonHeight,
-        resolutionWidth / 2 - buttonWidth / 2 - 50 - brake.width, resolutionHeight / 2 - buttonHeight + 380,
-        function()
-            return ProgradeIsOn
-        end, ProgradeToggle)
-    MakeButton("Align Retrograde", "Disable Retrograde", buttonWidth, buttonHeight,
-        resolutionWidth / 2 - buttonWidth / 2 + brake.width + 50, resolutionHeight / 2 - buttonHeight + 380,
-        function()
-            return RetrogradeIsOn
-        end, gradeToggle, function()
-            return atmosDensity == 0
-        end) -- Hope this works
-    local apbutton = MakeButton(getAPEnableName, getAPDisableName, 600, 60, resolutionWidth / 2 - 600 / 2,
-                            resolutionHeight / 2 - 60 / 2 - 400, function()
-            return Autopilot
-        end, ToggleAutopilot)
-    MakeButton("Save Position", "Save Position", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y,
-        function()
-            return false
-        end, AddNewLocation, function()
-            return AutopilotTargetIndex == 0 or CustomTarget == nil
-        end)
-    MakeButton("Update Position", "Update Position", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y,
-        function()
-            return false
-        end, UpdatePosition, function()
-            return AutopilotTargetIndex > 0 and CustomTarget ~= nil
-        end)
-    MakeButton("Clear Position", "Clear Position", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y,
-        function()
-            return true
-        end, ClearCurrentPosition, function()
-            return AutopilotTargetIndex > 0 and CustomTarget ~= nil
-        end)
-    -- The rest are sort of standardized
-    buttonHeight = 60
-    buttonWidth = 300
-    local x = 10
-    local y = resolutionHeight / 2 - 300
-    MakeButton("Enable Turn and Burn", "Disable Turn and Burn", buttonWidth, buttonHeight, x, y, function()
-        return TurnBurn
-    end, ToggleTurnBurn)
-    MakeButton("Engage Altitude Hold", "Disable Altitude Hold", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
-        function()
-            return AltitudeHold
-        end, ToggleAltitudeHold)
-    y = y + buttonHeight + 20
-    MakeButton("Engage Autoland", "Disable Autoland", buttonWidth, buttonHeight, x, y, function()
-        return AutoLanding
-    end, ToggleAutoLanding)
-    local engageMsg, dengageMsg, tOSwitch
-    if VertTakeOffEngine then
-        engageMsg = "Engage Vertical Takeoff"
-        dengageMsg = "Disable Vertical Takeoff"
-        tOSwitch = VertTakeOff
-    else
-        engageMsg = "Engage Auto Takeoff"
-        dengageMsg = "Disable Auto Takeoff"
-        tOSwitch = AutoTakeoff
-    end
-    MakeButton(engageMsg, dengageMsg, buttonWidth, buttonHeight, x + buttonWidth + 20, y,
-        function()
-            return tOSwitch
-        end, ToggleAutoTakeoff)
-    y = y + buttonHeight + 20
-    MakeButton("Show Orbit Display", "Hide Orbit Display", buttonWidth, buttonHeight, x, y,
-        function()
-            return DisplayOrbit
-        end, function()
-            DisplayOrbit = not DisplayOrbit
-            if (DisplayOrbit) then
-                msgText = "Orbit Display Enabled"
-            else
-                msgText = "Orbit Display Disabled"
-            end
-        end)
-     -- prevent this button from being an option until you're in atmosphere
-    MakeButton("Engage Orbiting", "Cancel Orbiting", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
-            function()
-                return IntoOrbit
-            end, ToggleIntoOrbit, function()
-                return (atmosDensity == 0 and unit.getClosestPlanetInfluence() > 0)
-            end)
-    y = y + buttonHeight + 20
-    MakeButton("Glide Re-Entry", "Cancel Glide Re-Entry", buttonWidth, buttonHeight, x, y,
-        function() return Reentry end, function() spaceLand = true ProgradeToggle() end, function() return (coreAltitude > ReentryAltitude) end )
-    MakeButton("Parachute Re-Entry", "Cancel Parachute Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
-        function() return Reentry end, BeginReentry, function() return (coreAltitude > ReentryAltitude) end )
-    y = y + buttonHeight + 20
-    MakeButton("Engage Follow Mode", "Disable Follow Mode", buttonWidth, buttonHeight, x, y, function()
-        return followMode
-    end, ToggleFollowMode, function()
-        return isRemote() == 1
-    end)
-    MakeButton("Enable Repair Arrows", "Disable Repair Arrows", buttonWidth, buttonHeight, x + buttonWidth + 20, y, function()
-        return repairArrows
-    end, function()
-        repairArrows = not repairArrows
-        if (repairArrows) then
-            msgText = "Repair Arrows Enabled"
-        else
-            msgText = "Repair Arrows Diabled"
-        end
-    end, function()
-        return isRemote() == 1
-    end)
-    y = y + buttonHeight + 20
-    if not ExternalAGG then
-        MakeButton("Enable AGG", "Disable AGG", buttonWidth, buttonHeight, x, y, function()
-        return antigrav.getState() == 1 end, ToggleAntigrav, function()
-        return antigrav ~= nil end)
-    end   
-    y = y + buttonHeight + 20
-    MakeButton(function()
-        return stringf("Toggle Control Scheme - Current: %s", userControlScheme)
-    end, function()
-        return stringf("Control Scheme: %s", userControlScheme)
-    end, buttonWidth * 2, buttonHeight, x, y, function()
-        return false
-    end, function()
-        if userControlScheme == "keyboard" then
-            userControlScheme = "mouse"
-        elseif userControlScheme == "mouse" then
-            userControlScheme = "virtual joystick"
-        else
-            userControlScheme = "keyboard"
-        end
-    end)
-end
-
-function getHeading(forward) -- code provided by tomisunlucky   
-    local up = -worldVertical
-    forward = forward - forward:project_on(up)
-    local north = vec3(0, 0, 1)
-    north = north - north:project_on(up)
-    local east = north:cross(up)
-    local angle = north:angle_between(forward) * constants.rad2deg
-    if forward:dot(east) < 0 then
-        angle = 360-angle
-    end
-    return angle
-end
-
-function getSpeedDisplayString(speed) -- TODO: Allow options, for now just do kph
-    return mfloor(round(speed * 3.6, 0) + 0.5) .. " km/h" -- And generally it's not accurate enough to not twitch unless we round 0
-end
-
-function FormatTimeString(seconds)
+local function FormatTimeString(seconds)
     local minutes = 0
     local hours = 0
     local days = 0
@@ -2159,71 +1163,6 @@ function FormatTimeString(seconds)
     end
 end
 
-function GetAutopilotMaxMass()
-    local apmaxmass = LastMaxBrakeInAtmo /
-                          (autopilotTargetPlanet:getGravity(
-                              autopilotTargetPlanet.center + (vec3(0, 0, 1) * autopilotTargetPlanet.radius))
-                              :len())
-    return apmaxmass
-end
-
-function GetAutopilotTravelTime()
-    if not Autopilot then
-        if CustomTarget == nil or CustomTarget.planetname ~= planet.name then
-            AutopilotDistance = (autopilotTargetPlanet.center - worldPos):len() -- This updates elsewhere if we're already piloting
-        else
-            AutopilotDistance = (CustomTarget.position - worldPos):len()
-        end
-    end
-    local speed = velMag
-    local throttle = unit.getThrottle()/100
-    if AtmoSpeedAssist then throttle = PlayerThrottle end
-    local accelDistance, accelTime =
-        Kinematic.computeDistanceAndTime(velMag, MaxGameVelocity, -- From currently velocity to max
-            constructMass(), Nav:maxForceForward()*throttle, warmup, -- T50?  Assume none, negligible for this
-            0) -- Brake thrust, none for this
-    -- accelDistance now has the amount of distance for which we will be accelerating
-    -- Then we need the distance we'd brake from full speed
-    -- Note that for some nearby moons etc, it may never reach full speed though.
-    local brakeDistance, brakeTime
-    if not TurnBurn then
-        brakeDistance, brakeTime = GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
-    else
-        brakeDistance, brakeTime = GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
-    end
-    local _, curBrakeTime
-    if not TurnBurn and speed > 0 then -- Will this cause problems?  Was spamming something in here was giving 0 speed and 0 accel
-        _, curBrakeTime = GetAutopilotBrakeDistanceAndTime(speed)
-    else
-        _, curBrakeTime = GetAutopilotTBBrakeDistanceAndTime(speed)
-    end
-    local cruiseDistance = 0
-    local cruiseTime = 0
-    -- So, time is in seconds
-    -- If cruising or braking, use real cruise/brake values
-    if AutopilotCruising or (not Autopilot and speed > 5) then -- If already cruising, use current speed
-        cruiseTime = Kinematic.computeTravelTime(speed, 0, AutopilotDistance)
-    elseif brakeDistance + accelDistance < AutopilotDistance then
-        -- Add any remaining distance
-        cruiseDistance = AutopilotDistance - (brakeDistance + accelDistance)
-        cruiseTime = Kinematic.computeTravelTime(8333.0556, 0, cruiseDistance)
-    else
-        local accelRatio = (AutopilotDistance - brakeDistance) / accelDistance
-        accelDistance = AutopilotDistance - brakeDistance -- Accel until we brake
-        
-        accelTime = accelTime * accelRatio
-    end
-    if CustomTarget ~= nil and CustomTarget.planetname == planet.name and not Autopilot then
-        return cruiseTime
-    elseif AutopilotBraking then
-        return curBrakeTime
-    elseif AutopilotCruising then
-        return cruiseTime + curBrakeTime
-    else -- If not cruising or braking, assume we'll get to max speed
-        return accelTime + brakeTime + cruiseTime
-    end
-end
-
 function AboveGroundLevel()
     local groundDistance = -1
     local hgroundDet = hoverDetectGround()
@@ -2243,228 +1182,8 @@ function AboveGroundLevel()
     end
 end
 
-function tablelength(T)
-    local count = 0
-    for _ in pairs(T) do
-        count = count + 1
-    end
-    return count
-end
-
-function BeginProfile(profileName)
-    ProfileTimeStart = systime()
-end
-
-function EndProfile(profileName)
-    local profileTime = systime() - ProfileTimeStart
-    ProfileTimeSum = ProfileTimeSum + profileTime
-    ProfileCount = ProfileCount + 1
-    if profileTime > ProfileTimeMax then
-        ProfileTimeMax = profileTime
-    end
-
-    if profileTime < ProfileTimeMin then
-        ProfileTimeMin = profileTime
-    end
-end
-
-function ResetProfiles()
-    ProfileTimeMin = 9999
-    ProfileTimeMax = 0
-    ProfileCount = 0
-    ProfileTimeSum = 0
-end
-
-function ReportProfiling()
-    local totalTime = ProfileTimeSum
-    local averageTime = ProfileTimeSum / ProfileCount
-    local min = ProfileTimeMin
-    local max = ProfileTimeMax
-    local samples = ProfileCount
-    system.print(stringf("SUM: %.4f AVG: %.4f MIN: %.4f MAX: %.4f CNT: %d", totalTime, averageTime, min,
-                     max, samples))
-end
-
-function updateWeapons()
-    if weapon then
-        if  WeaponPanelID==nil and (radarPanelID ~= nil or GearExtended)  then
-            _autoconf.displayCategoryPanel(weapon, weapon_size, L_TEXT("ui_lua_widget_weapon", "Weapons"), "weapon", true)
-            WeaponPanelID = _autoconf.panels[_autoconf.panels_size]
-        elseif WeaponPanelID ~= nil and radarPanelID == nil and not GearExtended then
-            system.destroyWidgetPanel(WeaponPanelID)
-            WeaponPanelID = nil
-        end
-    end
-end
-
-function updateRadar()
-    if (radar_1) then
-        local radarContacts = radar_1.getEntries()
-        local radarData = radar_1.getData()
-        local radarX = ConvertResolutionX(1770)
-        local radarY = ConvertResolutionY(330)
-        if #radarContacts > 0 then
-            local target = radarData:find('identifiedConstructs":%[%]')
-            if target == nil and perisPanelID == nil then
-                peris = 1
-                ToggleRadarPanel()
-            end
-            if target ~= nil and perisPanelID ~= nil then
-                ToggleRadarPanel()
-            end
-            if radarPanelID == nil then
-                ToggleRadarPanel()
-            end
-            radarMessage = stringf(
-                            [[<text class="pbright txtbig txtmid" x="%d" y="%d">Radar: %i contacts</text>]],
-                            radarX, radarY, #radarContacts)
-            local friendlies = {}
-            for k, v in pairs(radarContacts) do
-                if radar_1.hasMatchingTransponder(v) == 1 then
-                    table.insert(friendlies,v)
-                end
-            end
-            if #friendlies > 0 then
-                local y = ConvertResolutionY(15)
-                local x = ConvertResolutionX(1370)
-                radarMessage = stringf(
-                                [[%s<text class="pbright txtbig txtmid" x="%d" y="%d">Friendlies In Range</text>]],
-                                radarMessage, x, y)
-                for k, v in pairs(friendlies) do
-                    y = y + 20
-                    radarMessage = stringf([[%s<text class="pdim txtmid" x="%d" y="%d">%s</text>]],
-                                    radarMessage, x, y, radar_1.getConstructName(v))
-                end
-            end
-        else
-            local data
-            data = radarData:find('worksInEnvironment":false')
-            if data then
-                radarMessage = stringf([[
-                    <text class="pbright txtbig txtmid" x="%d" y="%d">Radar: Jammed</text>]],
-                    radarX, radarY)
-            else
-                radarMessage = stringf([[
-                    <text class="pbright txtbig txtmid" x="%d" y="%d">Radar: No Contacts</text>]],
-                    radarX, radarY)
-            end
-            if radarPanelID ~= nil then
-                peris = 0
-                ToggleRadarPanel()
-            end
-        end
-    end
-end
-
-function updateDistance()
-    local curTime = systime()
-    local spd = velMag
-    local elapsedTime = curTime - lastTravelTime
-    if (spd > 1.38889) then
-        spd = spd / 1000
-        local newDistance = spd * (curTime - lastTravelTime)
-        TotalDistanceTravelled = TotalDistanceTravelled + newDistance
-        totalDistanceTrip = totalDistanceTrip + newDistance
-    end
-    flightTime = flightTime + elapsedTime
-    TotalFlightTime = TotalFlightTime + elapsedTime
-    lastTravelTime = curTime
-end
-
-local function composeAxisAccelerationFromTargetSpeedV(commandAxis, targetSpeed)
-
-    local axisCRefDirection = vec3()
-    local axisWorldDirection = vec3()
-
-    if (commandAxis == axisCommandId.longitudinal) then
-        axisCRefDirection = vec3(core.getConstructOrientationForward())
-        axisWorldDirection = constructForward
-    elseif (commandAxis == axisCommandId.vertical) then
-        axisCRefDirection = vec3(core.getConstructOrientationUp())
-        axisWorldDirection = constructUp
-    elseif (commandAxis == axisCommandId.lateral) then
-        axisCRefDirection = vec3(core.getConstructOrientationRight())
-        axisWorldDirection = constructRight
-    else
-        return vec3()
-    end
-
-    local gravityAcceleration = vec3(core.getWorldGravity())
-    local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
-
-    local airResistanceAcceleration = vec3(core.getWorldAirFrictionAcceleration())
-    local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
-
-    local currentVelocity = vec3(core.getVelocity())
-    local currentAxisSpeedMS = currentVelocity:dot(axisCRefDirection)
-
-    local targetAxisSpeedMS = targetSpeed * constants.kph2m
-
-    if targetSpeedPID2 == nil then -- CHanged first param from 1 to 10...
-        targetSpeedPID2 = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
-    end
-
-    targetSpeedPID2:inject(targetAxisSpeedMS - currentAxisSpeedMS) -- update PID
-
-    local accelerationCommand = targetSpeedPID2:get()
-
-    local finalAcceleration = (accelerationCommand - airResistanceAccelerationCommand - gravityAccelerationCommand) * axisWorldDirection  -- Try to compensate air friction
-
-    -- The hell are these? Uncommented recently just in case they were important
-    --system.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
-    --system.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
-
-    return finalAcceleration
-end
-
-local function composeAxisAccelerationFromTargetSpeed(commandAxis, targetSpeed)
-
-    local axisCRefDirection = vec3()
-    local axisWorldDirection = vec3()
-
-    if (commandAxis == axisCommandId.longitudinal) then
-        axisCRefDirection = vec3(core.getConstructOrientationForward())
-        axisWorldDirection = constructForward
-    elseif (commandAxis == axisCommandId.vertical) then
-        axisCRefDirection = vec3(core.getConstructOrientationUp())
-        axisWorldDirection = constructUp
-    elseif (commandAxis == axisCommandId.lateral) then
-        axisCRefDirection = vec3(core.getConstructOrientationRight())
-        axisWorldDirection = constructRight
-    else
-        return vec3()
-    end
-
-    local gravityAcceleration = vec3(core.getWorldGravity())
-    local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
-
-    local airResistanceAcceleration = vec3(core.getWorldAirFrictionAcceleration())
-    local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
-
-    local currentVelocity = vec3(core.getVelocity())
-    local currentAxisSpeedMS = currentVelocity:dot(axisCRefDirection)
-
-    local targetAxisSpeedMS = targetSpeed * constants.kph2m
-
-    if targetSpeedPID == nil then -- CHanged first param from 1 to 10...
-        targetSpeedPID = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
-    end
-
-    targetSpeedPID:inject(targetAxisSpeedMS - currentAxisSpeedMS) -- update PID
-
-    local accelerationCommand = targetSpeedPID:get()
-
-    local finalAcceleration = (accelerationCommand - airResistanceAccelerationCommand - gravityAccelerationCommand) * axisWorldDirection  -- Try to compensate air friction
-
-    -- The hell are these? Uncommented recently just in case they were important
-    --system.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
-    --system.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
-
-    return finalAcceleration
-end
-
 -- Planet Info - https://gitlab.com/JayleBreak/dualuniverse/-/tree/master/DUflightfiles/autoconf/custom with minor modifications
-function Atlas()
+local function Atlas()
     return {
         [0] = {
             [0] = {
@@ -3597,64 +2316,7 @@ function Atlas()
     }
 end
 
-function SetupAtlas()
-    atlas = Atlas()
-    for k, v in pairs(atlas[0]) do
-        if minAtlasX == nil or v.center.x < minAtlasX then
-            minAtlasX = v.center.x
-        end
-        if maxAtlasX == nil or v.center.x > maxAtlasX then
-            maxAtlasX = v.center.x
-        end
-        if minAtlasY == nil or v.center.y < minAtlasY then
-            minAtlasY = v.center.y
-        end
-        if maxAtlasY == nil or v.center.y > maxAtlasY then
-            maxAtlasY = v.center.y
-        end
-    end
-    GalaxyMapHTML = "" -- No starting SVG tag so we can add it where we want it
-    -- Figure out our scale here... 
-    local xRatio = 1.1 * (maxAtlasX - minAtlasX) / 1920 -- Add 10% for padding
-    local yRatio = 1.4 * (maxAtlasY - minAtlasY) / 1080 -- Extra so we can get ion back in
-    for k, v in pairs(atlas[0]) do
-        -- Draw a circle at the scaled coordinates
-        local x = 960 + (v.center.x / xRatio)
-        local y = 540 + (v.center.y / yRatio)
-        GalaxyMapHTML =
-            GalaxyMapHTML .. '<circle cx="' .. x .. '" cy="' .. y .. '" r="' .. (v.radius / xRatio) * 30 ..
-                '" stroke="white" stroke-width="3" fill="blue" />'
-        if not stringmatch(v.name, "Moon") and not stringmatch(v.name, "Sanctuary") and not stringmatch (v.name, "Space") then
-            GalaxyMapHTML = GalaxyMapHTML .. "<text x='" .. x .. "' y='" .. y + (v.radius / xRatio) * 30 + 20 ..
-                                "' font-size='28' fill=" .. rgb .. " text-anchor='middle' font-family='Montserrat'>" ..
-                                v.name .. "</text>"
-        end
-    end
-    -- Draw a 'You Are Here' - face edition
-    local pos = worldPos
-    local x = 960 + pos.x / xRatio
-    local y = 540 + pos.y / yRatio
-    GalaxyMapHTML = GalaxyMapHTML .. '<circle cx="' .. x .. '" cy="' .. y ..
-                        '" r="5" stroke="white" stroke-width="3" fill="red"/>'
-    GalaxyMapHTML = GalaxyMapHTML .. "<text x='" .. x .. "' y='" .. y - 50 ..
-                        "' font-size='36' fill='darkred' text-anchor='middle' font-family='Bank' font-weight='bold'>You Are Here</text>"
-    GalaxyMapHTML = GalaxyMapHTML .. [[</svg>]]
-    MapXRatio = xRatio
-    MapYRatio = yRatio
-    if screen_2 then
-        screen_2.setHTML('<svg width="100%" height="100%" viewBox="0 0 1920 1080">' .. GalaxyMapHTML) -- This is permanent and doesn't change
-        -- Draw a 'You Are Here' - screen edition
-        local pos = worldPos
-        local x = 960 + pos.x / xRatio
-        local y = 540 + pos.y / yRatio
-        GalaxyMapHTML = '<svg><circle cx="80" cy="80" r="5" stroke="white" stroke-width="3" fill="red"/>'
-        GalaxyMapHTML = GalaxyMapHTML .. "<text x='80' y='105' font-size='18' fill=" .. rgb ..
-                            " text-anchor='middle' font-family='Montserrat''>You Are Here</text></svg>"
-        YouAreHere = screen_2.addContent((x - 80) / 19.20, (y - 80) / 10.80, GalaxyMapHTML)
-    end
-end
-
-function PlanetRef()
+local function PlanetRef()
     --[[                    START OF LOCAL IMPLEMENTATION DETAILS             ]]--
     -- Type checks
     local function isNumber(n)
@@ -4093,238 +2755,7 @@ function PlanetRef()
     })
 end
 
-function Keplers()
-    local vec3 = require('cpml.vec3')
-    local PlanetRef = PlanetRef()
-    local function isString(s)
-        return type(s) == 'string'
-    end
-    local function isTable(t)
-        return type(t) == 'table'
-    end
-    local function float_eq(a, b)
-        if a == 0 then
-            return math.abs(b) < 1e-09
-        end
-        if b == 0 then
-            return math.abs(a) < 1e-09
-        end
-        return math.abs(a - b) < math.max(math.abs(a), math.abs(b)) * constants.epsilon
-    end
-    Kepler = {}
-    Kepler.__index = Kepler
-
-    function Kepler:escapeAndOrbitalSpeed(altitude)
-        assert(self.body)
-        -- P = -GMm/r and KE = mv^2/2 (no lorentz factor used)
-        -- mv^2/2 = GMm/r
-        -- v^2 = 2GM/r
-        -- v = sqrt(2GM/r1)
-        local distance = altitude + self.body.radius
-        if not float_eq(distance, 0) then
-            local orbit = math.sqrt(self.body.GM / distance)
-            return math.sqrt(2) * orbit, orbit
-        end
-        return nil, nil
-    end
-
-    function Kepler:orbitalParameters(overload, velocity)
-        assert(self.body)
-        assert(isTable(overload) or isString(overload))
-        assert(isTable(velocity))
-        local pos = (isString(overload) or PlanetRef.isMapPosition(overload)) and
-                        self.body:convertToWorldCoordinates(overload) or vec3(overload)
-        local v = vec3(velocity)
-        local r = pos - self.body.center
-        local v2 = v:len2()
-        local d = r:len()
-        local mu = self.body.GM
-        local e = ((v2 - mu / d) * r - r:dot(v) * v) / mu
-        local a = mu / (2 * mu / d - v2)
-        local ecc = e:len()
-        local dir = e:normalize()
-        local pd = a * (1 - ecc)
-        local ad = a * (1 + ecc)
-        local per = pd * dir + self.body.center
-        local apo = ecc <= 1 and -ad * dir + self.body.center or nil
-        local trm = math.sqrt(a * mu * (1 - ecc * ecc))
-        local Period = apo and 2 * math.pi * math.sqrt(a ^ 3 / mu)
-        -- These are great and all, but, I need more.
-        local trueAnomaly = math.acos((e:dot(r)) / (ecc * d))
-        if r:dot(v) < 0 then
-            trueAnomaly = -(trueAnomaly - 2 * math.pi)
-        end
-        -- Apparently... cos(EccentricAnomaly) = (cos(trueAnomaly) + eccentricity)/(1 + eccentricity * cos(trueAnomaly))
-        local EccentricAnomaly = math.acos((math.cos(trueAnomaly) + ecc) / (1 + ecc * math.cos(trueAnomaly)))
-        -- Then.... apparently if this is below 0, we should add 2pi to it
-        -- I think also if it's below 0, we're past the apoapsis?
-        local timeTau = EccentricAnomaly
-        if timeTau < 0 then
-            timeTau = timeTau + 2 * math.pi
-        end
-        -- So... time since periapsis...
-        -- Is apparently easy if you get mean anomly.  t = M/n where n is mean motion, = 2*pi/Period
-        local MeanAnomaly = timeTau - ecc * math.sin(timeTau)
-        local TimeSincePeriapsis = 0
-        local TimeToPeriapsis = 0
-        local TimeToApoapsis = 0
-        if Period ~= nil then
-            TimeSincePeriapsis = MeanAnomaly / (2 * math.pi / Period)
-            -- Mean anom is 0 at periapsis, positive before it... and positive after it.
-            -- I guess this is why I needed to use timeTau and not EccentricAnomaly here
-
-            TimeToPeriapsis = Period - TimeSincePeriapsis
-            TimeToApoapsis = TimeToPeriapsis + Period / 2
-            if trueAnomaly - math.pi > 0 then -- TBH I think something's wrong in my formulas because I needed this.
-                TimeToPeriapsis = TimeSincePeriapsis
-                TimeToApoapsis = TimeToPeriapsis + Period / 2
-            end
-            if TimeToApoapsis > Period then
-                TimeToApoapsis = TimeToApoapsis - Period
-            end
-        end
-        return {
-            periapsis = {
-                position = per,
-                speed = trm / pd,
-                circularOrbitSpeed = math.sqrt(mu / pd),
-                altitude = pd - self.body.radius
-            },
-            apoapsis = apo and {
-                position = apo,
-                speed = trm / ad,
-                circularOrbitSpeed = math.sqrt(mu / ad),
-                altitude = ad - self.body.radius
-            },
-            currentVelocity = v,
-            currentPosition = pos,
-            eccentricity = ecc,
-            period = Period,
-            eccentricAnomaly = EccentricAnomaly,
-            meanAnomaly = MeanAnomaly,
-            timeToPeriapsis = TimeToPeriapsis,
-            timeToApoapsis = TimeToApoapsis
-        }
-    end
-    local function new(bodyParameters)
-        local params = PlanetRef.BodyParameters(bodyParameters.planetarySystemId, bodyParameters.bodyId,
-                           bodyParameters.radius, bodyParameters.center, bodyParameters.GM)
-        return setmetatable({
-            body = params
-        }, Kepler)
-    end
-    return setmetatable(Kepler, {
-        __call = function(_, ...)
-            return new(...)
-        end
-    })
-end
-
-function Kinematics()
-
-    local Kinematic = {} -- just a namespace
-    local C = 30000000 / 3600
-    local C2 = C * C
-    local ITERATIONS = 100 -- iterations over engine "warm-up" period
-    local function lorentz(v)
-        return 1 / math.sqrt(1 - v * v / C2)
-    end
-
-    function Kinematic.computeAccelerationTime(initial, acceleration, final)
-        -- The low speed limit of following is: t=(vf-vi)/a (from: vf=vi+at)
-        local k1 = C * math.asin(initial / C)
-        return (C * math.asin(final / C) - k1) / acceleration
-    end
-
-    function Kinematic.computeDistanceAndTime(initial, final, restMass, thrust, t50, brakeThrust)
-
-        t50 = t50 or 0
-        brakeThrust = brakeThrust or 0 -- usually zero when accelerating
-        local speedUp = initial <= final
-        local a0 = thrust * (speedUp and 1 or -1) / restMass
-        local b0 = -brakeThrust / restMass
-        local totA = a0 + b0
-        if speedUp and totA <= 0 or not speedUp and totA >= 0 then
-            return -1, -1 -- no solution
-        end
-        local distanceToMax, timeToMax = 0, 0
-
-        if a0 ~= 0 and t50 > 0 then
-
-            local k1 = math.asin(initial / C)
-            local c1 = math.pi * (a0 / 2 + b0)
-            local c2 = a0 * t50
-            local c3 = C * math.pi
-            local v = function(t)
-                local w = (c1 * t - c2 * math.sin(math.pi * t / 2 / t50) + c3 * k1) / c3
-                local tan = math.tan(w)
-                return C * tan / math.sqrt(tan * tan + 1)
-            end
-            local speedchk = speedUp and function(s)
-                return s >= final
-            end or function(s)
-                return s <= final
-            end
-            timeToMax = 2 * t50
-            if speedchk(v(timeToMax)) then
-                local lasttime = 0
-                while math.abs(timeToMax - lasttime) > 0.5 do
-                    local t = (timeToMax + lasttime) / 2
-                    if speedchk(v(t)) then
-                        timeToMax = t
-                    else
-                        lasttime = t
-                    end
-                end
-            end
-            -- There is no closed form solution for distance in this case.
-            -- Numerically integrate for time t=0 to t=2*T50 (or less)
-            local lastv = initial
-            local tinc = timeToMax / ITERATIONS
-            for step = 1, ITERATIONS do
-                local speed = v(step * tinc)
-                distanceToMax = distanceToMax + (speed + lastv) * tinc / 2
-                lastv = speed
-            end
-            if timeToMax < 2 * t50 then
-                return distanceToMax, timeToMax
-            end
-            initial = lastv
-        end
-
-        local k1 = C * math.asin(initial / C)
-        local time = (C * math.asin(final / C) - k1) / totA
-        local k2 = C2 * math.cos(k1 / C) / totA
-        local distance = k2 - C2 * math.cos((totA * time + k1) / C) / totA
-        return distance + distanceToMax, time + timeToMax
-    end
-
-    function Kinematic.computeTravelTime(initial, acceleration, distance)
-        -- The low speed limit of following is: t=(sqrt(2ad+v^2)-v)/a
-        -- (from: d=vt+at^2/2)
-        if distance == 0 then
-            return 0
-        end
-        -- So then what's with all the weird ass sines and cosines?
-        if acceleration > 0 then
-            local k1 = C * math.asin(initial / C)
-            local k2 = C2 * math.cos(k1 / C) / acceleration
-            return (C * math.acos(acceleration * (k2 - distance) / C2) - k1) / acceleration
-        end
-        if initial == 0 then
-            return -1 -- IDK something like that should make sure we never hit the assert yelling at us
-        end
-        assert(initial > 0, 'Acceleration and initial speed are both zero.')
-        return distance / initial
-    end
-
-    function Kinematic.lorentz(v)
-        return lorentz(v)
-    end
-    return Kinematic
-end
-
-function SaveDataBank(copy)
+local function SaveDataBank(copy)
     if dbHud_1 then
         if not wipedDatabank then
             for k, v in pairs(autoVariables) do
@@ -4498,6 +2929,19 @@ local function Huds() -- Everything HUD releated
             ]], vSpdMeterX, vSpdMeterY, mfloor(vSpd), mfloor(angle))
         end
         return newContent
+    end
+
+    local function getHeading(forward) -- code provided by tomisunlucky   
+        local up = -worldVertical
+        forward = forward - forward:project_on(up)
+        local north = vec3(0, 0, 1)
+        north = north - north:project_on(up)
+        local east = north:cross(up)
+        local angle = north:angle_between(forward) * constants.rad2deg
+        if forward:dot(east) < 0 then
+            angle = 360-angle
+        end
+        return angle
     end
 
     local function DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
@@ -4770,6 +3214,32 @@ local function Huds() -- Everything HUD releated
             table.insert(newContent, [[</g></g>]])
         end
     end
+
+    local function getRelativePitch(velocity)
+        velocity = vec3(velocity)
+        local pitch = -math.deg(math.atan(velocity.y, velocity.z)) + 180
+        -- This is 0-360 where 0 is straight up
+        pitch = pitch - 90
+        -- So now 0 is straight, but we can now get angles up to 420
+        if pitch < 0 then
+            pitch = 360 + pitch
+        end
+        -- Now, if it's greater than 180, say 190, make it go to like -170
+        if pitch > 180 then
+            pitch = -180 + (pitch - 180)
+        end
+        -- And it's backwards.  
+        return -pitch
+    end
+
+    local function getRelativeYaw(velocity)
+        velocity = vec3(velocity)
+        local yaw = math.deg(math.atan(velocity.y, velocity.x)) - 90
+        if yaw < -180 then
+            yaw = 360 + yaw
+        end
+        return yaw
+    end    
 
     local function DrawPrograde (newContent, velocity, speed, centerX, centerY)
         if (speed > 5 and not inAtmo) or (speed > minAutopilotSpeed) then
@@ -5113,6 +3583,10 @@ local function Huds() -- Everything HUD releated
     
         newContent[#newContent + 1] = "</g>"
         return newContent
+    end
+
+    local function getSpeedDisplayString(speed) -- TODO: Allow options, for now just do kph
+        return mfloor(round(speed * 3.6, 0) + 0.5) .. " km/h" -- And generally it's not accurate enough to not twitch unless we round 0
     end
     
     local function DisplayOrbitScreen(newContent)
@@ -5519,7 +3993,876 @@ end
 -- Start of actual HUD Script. Written by Dimencia and Archaegeo. Optimization and Automation of scripting by ChronosWS  Linked sources where appropriate, most have been modified.
 
 function script.onStart()
+
+    local function LoadVariables()
+
+        local function processVariableList(varList)
+            local hasKey = dbHud_1.hasKey
+            for k, v in pairs(varList) do
+                if hasKey(v) then
+                    local result = jdecode(dbHud_1.getStringValue(v))
+                    if result ~= nil then
+                        _G[v] = result
+                        valuesAreSet = true
+                    end
+                end
+            end
+        end
+
+        if dbHud_1 then
+            local hasKey = dbHud_1.hasKey
+            if not useTheseSettings then 
+                processVariableList(saveableVariables)
+            else
+                msgText = "Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use saved values"
+                msgTimer = 5
+            end
+            coroutine.yield()
+            processVariableList(autoVariables)
+            if valuesAreSet then
+                msgText = "Loaded Saved Variables (see Lua Chat Tab for list)"
+                halfResolutionX = round(ResolutionX / 2,0)
+                halfResolutionY = round(ResolutionY / 2,0)
+                resolutionWidth = ResolutionX
+                resolutionHeight = ResolutionY
+                BrakeToggleStatus = BrakeToggleDefault
+                userControlScheme = string.lower(userControlScheme)
+                autoRoll = autoRollPreference
+                adjustedAtmoSpeedLimit = AtmoSpeedLimit
+                rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) ..
+                [[)]]
+                rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..
+                   mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]  
+            else
+                msgText = "No Saved Variables Found - Stand up / leave remote to save settings"
+            end
+        else
+            msgText = "No databank found, install one anywhere and rerun the autoconfigure to save variables"
+        end
+    
+        if (LastStartTime + 180) < time then -- Variables to reset if out of seat (and not on hud) for more than 3 min
+            LastMaxBrakeInAtmo = 0
+        end
+        LastStartTime = time
+        userControlScheme = string.lower(userControlScheme)
+        if string.find("keyboard virtual joystick mouse",  userControlScheme) == nil then 
+            msgText = "Invalid User Control Scheme selected.  Change userControlScheme in Lua Parameters to keyboard, mouse, or virtual joystick\nOr use shift and button in screen"
+            msgTimer = 5
+        end
+    
+        if antigrav and not ExternalAGG then
+            if AntigravTargetAltitude == nil then 
+                AntigravTargetAltitude = coreAltitude
+            end
+            antigrav.setBaseAltitude(AntigravTargetAltitude)
+        end
+    end
+
+    local function ProcessElements()
+
+        local function CalculateFuelVolume(curMass, vanillaMaxVolume)
+            if curMass > vanillaMaxVolume then
+                vanillaMaxVolume = curMass
+            end
+            if ContainerOptimization > 0 then 
+                vanillaMaxVolume = vanillaMaxVolume - (vanillaMaxVolume * ContainerOptimization * 0.05)
+            end
+            if FuelTankOptimization > 0 then 
+                vanillaMaxVolume = vanillaMaxVolume - (vanillaMaxVolume * FuelTankOptimization * 0.05)
+            end
+            return vanillaMaxVolume            
+        end
+
+        local checkTanks = (fuelX ~= 0 and fuelY ~= 0)
+        for k in pairs(elementsID) do
+            local type = core.getElementTypeById(elementsID[k])
+            if stringmatch(type, '^.*Space Engine$') then
+                SpaceEngines = true
+                if stringmatch(tostring(core.getElementTagsById(elementsID[k])), '^.*vertical.*$') then
+                    local enrot = core.getElementRotationById(elementsID[k])
+                    if enrot[4] < 0 then
+                        if utilsround(-enrot[4],0.1) == 0.5 then
+                            SpaceEngineVertUp = true
+                        end
+                    else
+                        if utilsround(enrot[4],0.1) == 0.5 then
+                            SpaceEngineVertDn = true
+                        end
+                    end
+                end
+            end
+            if (type == "Landing Gear") then
+                hasGear = true
+            end
+            if (type == "Dynamic Core Unit") then
+                local hp = eleMaxHp(elementsID[k])
+                if hp > 10000 then
+                    coreOffset = 128
+                elseif hp > 1000 then
+                    coreOffset = 64
+                elseif hp > 150 then
+                    coreOffset = 32
+                end
+            end
+            eleTotalMaxHp = eleTotalMaxHp + eleMaxHp(elementsID[k])
+            if checkTanks and (type == "Atmospheric Fuel Tank" or type == "Space Fuel Tank" or type == "Rocket Fuel Tank") then
+                local hp = eleMaxHp(elementsID[k])
+                local mass = eleMass(elementsID[k])
+                local curMass = 0
+                local curTime = systime()
+                if (type == "Atmospheric Fuel Tank") then
+                    local vanillaMaxVolume = 400
+                    local massEmpty = 35.03
+                    if hp > 10000 then
+                        vanillaMaxVolume = 51200 -- volume in kg of L tank
+                        massEmpty = 5480
+                    elseif hp > 1300 then
+                        vanillaMaxVolume = 6400 -- volume in kg of M
+                        massEmpty = 988.67
+                    elseif hp > 150 then
+                        vanillaMaxVolume = 1600 --- volume in kg small
+                        massEmpty = 182.67
+                    end
+                    curMass = mass - massEmpty
+                    if fuelTankHandlingAtmo > 0 then
+                        vanillaMaxVolume = vanillaMaxVolume + (vanillaMaxVolume * (fuelTankHandlingAtmo * 0.2))
+                    end
+                    vanillaMaxVolume =  CalculateFuelVolume(curMass, vanillaMaxVolume)
+                    atmoTanks[#atmoTanks + 1] = {elementsID[k], eleName(elementsID[k]),
+                                                vanillaMaxVolume, massEmpty, curMass, curTime}
+                end
+                if (type == "Rocket Fuel Tank") then
+                    local vanillaMaxVolume = 320
+                    local massEmpty = 173.42
+                    if hp > 65000 then
+                        vanillaMaxVolume = 40000 -- volume in kg of L tank
+                        massEmpty = 25740
+                    elseif hp > 6000 then
+                        vanillaMaxVolume = 5120 -- volume in kg of M
+                        massEmpty = 4720
+                    elseif hp > 700 then
+                        vanillaMaxVolume = 640 --- volume in kg small
+                        massEmpty = 886.72
+                    end
+                    curMass = mass - massEmpty
+                    if fuelTankHandlingRocket > 0 then
+                        vanillaMaxVolume = vanillaMaxVolume + (vanillaMaxVolume * (fuelTankHandlingRocket * 0.1))
+                    end
+                    vanillaMaxVolume =  CalculateFuelVolume(curMass, vanillaMaxVolume)
+                    rocketTanks[#rocketTanks + 1] = {elementsID[k], eleName(elementsID[k]),
+                                                    vanillaMaxVolume, massEmpty, curMass, curTime}
+                end
+                if (type == "Space Fuel Tank") then
+                    local vanillaMaxVolume = 2400
+                    local massEmpty = 182.67
+                    if hp > 10000 then
+                        vanillaMaxVolume = 76800 -- volume in kg of L tank
+                        massEmpty = 5480
+                    elseif hp > 1300 then
+                        vanillaMaxVolume = 9600 -- volume in kg of M
+                        massEmpty = 988.67
+                    end
+                    curMass = mass - massEmpty
+                    if fuelTankHandlingSpace > 0 then
+                        vanillaMaxVolume = vanillaMaxVolume + (vanillaMaxVolume * (fuelTankHandlingSpace * 0.2))
+                    end
+                    vanillaMaxVolume =  CalculateFuelVolume(curMass, vanillaMaxVolume)
+                    spaceTanks[#spaceTanks + 1] = {elementsID[k], eleName(elementsID[k]),
+                                                vanillaMaxVolume, massEmpty, curMass, curTime}
+                end
+            end
+        end
+    end
+    
+    local function SetupChecks()
+        if gyro ~= nil then
+            gyroIsOn = gyro.getState() == 1
+        end
+        if userControlScheme ~= "keyboard" then
+            system.lockView(1)
+        else
+            system.lockView(0)
+        end
+        -- Close door and retract ramp if available
+        if door and (inAtmo or (not inAtmo and coreAltitude < 10000)) then
+            for _, v in pairs(door) do
+                v.toggle()
+            end
+        end
+        if switch then 
+            for _, v in pairs(switch) do
+                v.toggle()
+            end
+        end    
+        if forcefield and (inAtmo or (not inAtmo == 0 and coreAltitude < 10000)) then
+            for _, v in pairs(forcefield) do
+                v.toggle()
+            end
+        end
+        if antigrav ~= nil and not ExternalAGG then
+            if(antigrav.getState() == 1) then
+                antigrav.show()
+            end
+        end
+        -- unfreeze the player if he is remote controlling the construct
+        if isRemote() == 1 and RemoteFreeze then
+            system.freeze(1)
+        else
+            system.freeze(0)
+        end
+        if hasGear then
+            GearExtended = (Nav.control.isAnyLandingGearExtended() == 1)
+            if GearExtended then
+                Nav.control.extendLandingGears()
+            else
+                Nav.control.retractLandingGears()
+            end
+        end
+        
+        local aboveGroundLevel = AboveGroundLevel()
+    
+        -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
+        if aboveGroundLevel ~= -1 or (not inAtmo and vec3(core.getVelocity()):len() < 50) then
+            BrakeIsOn = true
+            if not hasGear then
+                GearExtended = true
+            end
+        else
+            BrakeIsOn = false
+        end
+    
+        if targetGroundAltitude ~= nil then
+            Nav.axisCommandManager:setTargetGroundAltitude(targetGroundAltitude)
+            if targetGroundAltitude == 0 and not hasGear then 
+                GearExtended = true
+                BrakeIsOn = true -- If they were hovering at 0 and have no gear, consider them landed 
+            end
+        else
+            targetGroundAltitude = Nav:getTargetGroundAltitude() 
+            if GearExtended then -- or not hasGear then -- And we already tagged GearExtended if they don't have gear, we can just use this
+                Nav.axisCommandManager:setTargetGroundAltitude(LandingGearGroundHeight)
+                --GearExtended = true -- We don't need to extend gear just because they have a databank, that would have been done earlier if necessary
+            else
+                Nav.axisCommandManager:setTargetGroundAltitude(TargetHoverHeight)
+            end
+        end
+    
+        -- Store their max kinematic parameters in ship-up direction for use in brake-landing
+        if inAtmo and aboveGroundLevel ~= -1 then 
+            maxKinematicUp = core.getMaxKinematicsParametersAlongAxis("ground", core.getConstructOrientationUp())[1]
+        end
+    
+        WasInAtmo = inAtmo
+    end
+
+    local function MakeButton(enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition)
+        local newButton = {
+            enableName = enableName,
+            disableName = disableName,
+            width = width,
+            height = height,
+            x = x,
+            y = y,
+            toggleVar = toggleVar,
+            toggleFunction = toggleFunction,
+            drawCondition = drawCondition,
+            hovered = false
+        }
+        table.insert(Buttons, newButton)
+        return newButton -- readonly, I don't think it will be saved if we change these?  Maybe.
+        
+    end
+
+    local function SetupButtons()
+        local function AddNewLocation() -- Don't call this unless they have a databank or it's kinda pointless
+            -- Add a new location to SavedLocations
+            if dbHud_1 then
+                local position = worldPos
+                local name = planet.name .. ". " .. #SavedLocations
+                if radar_1 then -- Just match the first one
+                    local id,_ = radar_1.getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
+                    if id ~= nil and id ~= "" then
+                        name = name .. " " .. radar_1.getConstructName(id)
+                    end
+                end
+                local newLocation = {}
+                local atmo = false
+                if planet.hasAtmosphere then
+                    atmo = true 
+                end
+                newLocation = {
+                    position = position,
+                    name = name,
+                    atmosphere = atmo,
+                    planetname = planet.name,
+                    gravity = planet.gravity,
+                    safe = true -- This indicates we can extreme land here, because this was a real positional waypoint
+                }
+                SavedLocations[#SavedLocations + 1] = newLocation
+                -- Nearest planet, gravity also important - if it's 0, we don't autopilot to the target planet, the target isn't near a planet.                      
+                table.insert(atlas[0], newLocation)
+                UpdateAtlasLocationsList()
+                -- Store atmosphere so we know whether the location is in space or not
+                msgText = "Location saved as " .. name
+            else
+                msgText = "Databank must be installed to save locations"
+            end
+        end
+        
+        local function ToggleTurnBurn()
+            TurnBurn = not TurnBurn
+        end
+
+        local function gradeToggle(pro)
+            if pro == 1 then 
+                ProgradeIsOn = not ProgradeIsOn
+                RetrogradeIsOn = false
+            else
+                RetrogradeIsOn = not RetrogradeIsOn
+                ProgradeIsOn = false
+            end        
+                Autopilot = false
+                AltitudeHold = false
+                followMode = false
+                BrakeLanding = false
+                LockPitch = nil
+                Reentry = false
+                AutoTakeoff = false
+        end
+
+        local function ToggleAutoLanding()
+            BrakeLanding = not BrakeLanding
+            if BrakeLanding then
+                StrongBrakes = ((planet.gravity * 9.80665 * constructMass()) < LastMaxBrake)
+                AltitudeHold = false
+                AutoTakeoff = false
+                LockPitch = nil
+                BrakeLanding = true
+                Nav.axisCommandManager:setThrottleCommand(axisCommandId.longitudinal, 0)
+                PlayerThrottle = 0
+            end
+        end
+
+        local function ToggleAutoTakeoff()
+            if AutoTakeoff then
+                -- Turn it off, and also AltitudeHold cuz it's weird if you cancel and that's still going 
+                AutoTakeoff = false
+                if AltitudeHold then
+                    ToggleAltitudeHold()
+                end
+            elseif VertTakeOff then
+                BrakeLanding = true
+                VertTakeOff = false
+                AltitudeHold = false
+            else
+                if VertTakeOffEngine then
+                    VertTakeOff = true
+                    AltitudeHold = false
+                else
+                    if not AltitudeHold then
+                        ToggleAltitudeHold()
+                    end
+                    AutoTakeoff = true
+                    HoldAltitude = coreAltitude + AutoTakeoffAltitude
+                end
+                OrbitAchieved = false
+                GearExtended = false
+                Nav.control.retractLandingGears()
+                Nav.axisCommandManager:setTargetGroundAltitude(500) -- Hard set this for takeoff, you wouldn't use takeoff from a hangar
+                BrakeIsOn = true
+            end
+        end
+
+        local function ProgradeToggle()
+            -- Toggle Progrades
+            gradeToggle(1)
+        end
+
+        local function ClearCurrentPosition()
+            -- So AutopilotTargetIndex is special and not a real index.  We have to do this by hand.
+            local index = -1
+            index = findAtlasIndex(atlas[0])
+            if index > -1 then
+                table.remove(atlas[0], index)
+            end
+            -- And SavedLocations
+            index = -1
+            index = findAtlasIndex(SavedLocations)
+            if index ~= -1 then
+                msgText = CustomTarget.name .. " saved location cleared"
+                table.remove(SavedLocations, index)
+            end
+            adjustAutopilotTargetIndex()
+            UpdateAtlasLocationsList()
+        end
+        
+        local function getAPEnableName()
+            local name = AutopilotTargetName
+            if name == nil then
+                local displayText, displayUnit = getDistanceDisplayString((worldPos - CustomTarget.position):len())
+                name = CustomTarget.name .. " " .. displayText .. displayUnit
+                           
+            end
+            if name == nil then
+                name = "None"
+            end
+            return "Engage Autopilot: " .. name
+        end
+
+        local function getAPDisableName()
+            local name = AutopilotTargetName
+            if name == nil then
+                name = CustomTarget.name
+            end
+            if name == nil then
+                name = "None"
+            end
+            return "Disable Autopilot: " .. name
+        end        
+
+        -- BEGIN BUTTON DEFINITIONS
+    
+        -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
+        local buttonHeight = 50
+        local buttonWidth = 260 -- Defaults
+        local brake = MakeButton("Enable Brake Toggle", "Disable Brake Toggle", buttonWidth, buttonHeight,
+                            resolutionWidth / 2 - buttonWidth / 2, resolutionHeight / 2 + 350, function()
+                return BrakeToggleStatus
+            end, function()
+                BrakeToggleStatus = not BrakeToggleStatus
+                if (BrakeToggleStatus) then
+                    msgText = "Brakes in Toggle Mode"
+                else
+                    msgText = "Brakes in Default Mode"
+                end
+            end)
+        MakeButton("Align Prograde", "Disable Prograde", buttonWidth, buttonHeight,
+            resolutionWidth / 2 - buttonWidth / 2 - 50 - brake.width, resolutionHeight / 2 - buttonHeight + 380,
+            function()
+                return ProgradeIsOn
+            end, ProgradeToggle)
+        MakeButton("Align Retrograde", "Disable Retrograde", buttonWidth, buttonHeight,
+            resolutionWidth / 2 - buttonWidth / 2 + brake.width + 50, resolutionHeight / 2 - buttonHeight + 380,
+            function()
+                return RetrogradeIsOn
+            end, gradeToggle, function()
+                return atmosDensity == 0
+            end) -- Hope this works
+        local apbutton = MakeButton(getAPEnableName, getAPDisableName, 600, 60, resolutionWidth / 2 - 600 / 2,
+                                resolutionHeight / 2 - 60 / 2 - 400, function()
+                return Autopilot
+            end, ToggleAutopilot)
+        MakeButton("Save Position", "Save Position", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y,
+            function()
+                return false
+            end, AddNewLocation, function()
+                return AutopilotTargetIndex == 0 or CustomTarget == nil
+            end)
+        MakeButton("Update Position", "Update Position", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y,
+            function()
+                return false
+            end, UpdatePosition, function()
+                return AutopilotTargetIndex > 0 and CustomTarget ~= nil
+            end)
+        MakeButton("Clear Position", "Clear Position", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y,
+            function()
+                return true
+            end, ClearCurrentPosition, function()
+                return AutopilotTargetIndex > 0 and CustomTarget ~= nil
+            end)
+        -- The rest are sort of standardized
+        buttonHeight = 60
+        buttonWidth = 300
+        local x = 10
+        local y = resolutionHeight / 2 - 300
+        MakeButton("Enable Turn and Burn", "Disable Turn and Burn", buttonWidth, buttonHeight, x, y, function()
+            return TurnBurn
+        end, ToggleTurnBurn)
+        MakeButton("Engage Altitude Hold", "Disable Altitude Hold", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
+            function()
+                return AltitudeHold
+            end, ToggleAltitudeHold)
+        y = y + buttonHeight + 20
+        MakeButton("Engage Autoland", "Disable Autoland", buttonWidth, buttonHeight, x, y, function()
+            return AutoLanding
+        end, ToggleAutoLanding)
+        local engageMsg, dengageMsg, tOSwitch
+        if VertTakeOffEngine then
+            engageMsg = "Engage Vertical Takeoff"
+            dengageMsg = "Disable Vertical Takeoff"
+            tOSwitch = VertTakeOff
+        else
+            engageMsg = "Engage Auto Takeoff"
+            dengageMsg = "Disable Auto Takeoff"
+            tOSwitch = AutoTakeoff
+        end
+        MakeButton(engageMsg, dengageMsg, buttonWidth, buttonHeight, x + buttonWidth + 20, y,
+            function()
+                return tOSwitch
+            end, ToggleAutoTakeoff)
+        y = y + buttonHeight + 20
+        MakeButton("Show Orbit Display", "Hide Orbit Display", buttonWidth, buttonHeight, x, y,
+            function()
+                return DisplayOrbit
+            end, function()
+                DisplayOrbit = not DisplayOrbit
+                if (DisplayOrbit) then
+                    msgText = "Orbit Display Enabled"
+                else
+                    msgText = "Orbit Display Disabled"
+                end
+            end)
+         -- prevent this button from being an option until you're in atmosphere
+        MakeButton("Engage Orbiting", "Cancel Orbiting", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
+                function()
+                    return IntoOrbit
+                end, ToggleIntoOrbit, function()
+                    return (atmosDensity == 0 and unit.getClosestPlanetInfluence() > 0)
+                end)
+        y = y + buttonHeight + 20
+        MakeButton("Glide Re-Entry", "Cancel Glide Re-Entry", buttonWidth, buttonHeight, x, y,
+            function() return Reentry end, function() spaceLand = true ProgradeToggle() end, function() return (coreAltitude > ReentryAltitude) end )
+        MakeButton("Parachute Re-Entry", "Cancel Parachute Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
+            function() return Reentry end, BeginReentry, function() return (coreAltitude > ReentryAltitude) end )
+        y = y + buttonHeight + 20
+        MakeButton("Engage Follow Mode", "Disable Follow Mode", buttonWidth, buttonHeight, x, y, function()
+            return followMode
+        end, ToggleFollowMode, function()
+            return isRemote() == 1
+        end)
+        MakeButton("Enable Repair Arrows", "Disable Repair Arrows", buttonWidth, buttonHeight, x + buttonWidth + 20, y, function()
+            return repairArrows
+        end, function()
+            repairArrows = not repairArrows
+            if (repairArrows) then
+                msgText = "Repair Arrows Enabled"
+            else
+                msgText = "Repair Arrows Diabled"
+            end
+        end, function()
+            return isRemote() == 1
+        end)
+        y = y + buttonHeight + 20
+        if not ExternalAGG then
+            MakeButton("Enable AGG", "Disable AGG", buttonWidth, buttonHeight, x, y, function()
+            return antigrav.getState() == 1 end, ToggleAntigrav, function()
+            return antigrav ~= nil end)
+        end   
+        y = y + buttonHeight + 20
+        MakeButton(function()
+            return stringf("Toggle Control Scheme - Current: %s", userControlScheme)
+        end, function()
+            return stringf("Control Scheme: %s", userControlScheme)
+        end, buttonWidth * 2, buttonHeight, x, y, function()
+            return false
+        end, function()
+            if userControlScheme == "keyboard" then
+                userControlScheme = "mouse"
+            elseif userControlScheme == "mouse" then
+                userControlScheme = "virtual joystick"
+            else
+                userControlScheme = "keyboard"
+            end
+        end)
+    end
+
+    local function SetupAtlas()
+        atlas = Atlas()
+        for k, v in pairs(atlas[0]) do
+            if minAtlasX == nil or v.center.x < minAtlasX then
+                minAtlasX = v.center.x
+            end
+            if maxAtlasX == nil or v.center.x > maxAtlasX then
+                maxAtlasX = v.center.x
+            end
+            if minAtlasY == nil or v.center.y < minAtlasY then
+                minAtlasY = v.center.y
+            end
+            if maxAtlasY == nil or v.center.y > maxAtlasY then
+                maxAtlasY = v.center.y
+            end
+        end
+        GalaxyMapHTML = "" -- No starting SVG tag so we can add it where we want it
+        -- Figure out our scale here... 
+        local xRatio = 1.1 * (maxAtlasX - minAtlasX) / 1920 -- Add 10% for padding
+        local yRatio = 1.4 * (maxAtlasY - minAtlasY) / 1080 -- Extra so we can get ion back in
+        for k, v in pairs(atlas[0]) do
+            -- Draw a circle at the scaled coordinates
+            local x = 960 + (v.center.x / xRatio)
+            local y = 540 + (v.center.y / yRatio)
+            GalaxyMapHTML =
+                GalaxyMapHTML .. '<circle cx="' .. x .. '" cy="' .. y .. '" r="' .. (v.radius / xRatio) * 30 ..
+                    '" stroke="white" stroke-width="3" fill="blue" />'
+            if not stringmatch(v.name, "Moon") and not stringmatch(v.name, "Sanctuary") and not stringmatch (v.name, "Space") then
+                GalaxyMapHTML = GalaxyMapHTML .. "<text x='" .. x .. "' y='" .. y + (v.radius / xRatio) * 30 + 20 ..
+                                    "' font-size='28' fill=" .. rgb .. " text-anchor='middle' font-family='Montserrat'>" ..
+                                    v.name .. "</text>"
+            end
+        end
+        -- Draw a 'You Are Here' - face edition
+        local pos = worldPos
+        local x = 960 + pos.x / xRatio
+        local y = 540 + pos.y / yRatio
+        GalaxyMapHTML = GalaxyMapHTML .. '<circle cx="' .. x .. '" cy="' .. y ..
+                            '" r="5" stroke="white" stroke-width="3" fill="red"/>'
+        GalaxyMapHTML = GalaxyMapHTML .. "<text x='" .. x .. "' y='" .. y - 50 ..
+                            "' font-size='36' fill='darkred' text-anchor='middle' font-family='Bank' font-weight='bold'>You Are Here</text>"
+        GalaxyMapHTML = GalaxyMapHTML .. [[</svg>]]
+        MapXRatio = xRatio
+        MapYRatio = yRatio
+        if screen_2 then
+            screen_2.setHTML('<svg width="100%" height="100%" viewBox="0 0 1920 1080">' .. GalaxyMapHTML) -- This is permanent and doesn't change
+            -- Draw a 'You Are Here' - screen edition
+            local pos = worldPos
+            local x = 960 + pos.x / xRatio
+            local y = 540 + pos.y / yRatio
+            GalaxyMapHTML = '<svg><circle cx="80" cy="80" r="5" stroke="white" stroke-width="3" fill="red"/>'
+            GalaxyMapHTML = GalaxyMapHTML .. "<text x='80' y='105' font-size='18' fill=" .. rgb ..
+                                " text-anchor='middle' font-family='Montserrat''>You Are Here</text></svg>"
+            YouAreHere = screen_2.addContent((x - 80) / 19.20, (y - 80) / 10.80, GalaxyMapHTML)
+        end
+    end
+
+    local function AddLocationsToAtlas() -- Just called once during init really
+        for k, v in pairs(SavedLocations) do
+            table.insert(atlas[0], v)
+        end
+        UpdateAtlasLocationsList()
+    end
+
+    local function Kinematics()
+
+        local Kinematic = {} -- just a namespace
+        local C = 30000000 / 3600
+        local C2 = C * C
+        local ITERATIONS = 100 -- iterations over engine "warm-up" period
+        local function lorentz(v)
+            return 1 / math.sqrt(1 - v * v / C2)
+        end
+    
+        function Kinematic.computeAccelerationTime(initial, acceleration, final)
+            -- The low speed limit of following is: t=(vf-vi)/a (from: vf=vi+at)
+            local k1 = C * math.asin(initial / C)
+            return (C * math.asin(final / C) - k1) / acceleration
+        end
+    
+        function Kinematic.computeDistanceAndTime(initial, final, restMass, thrust, t50, brakeThrust)
+    
+            t50 = t50 or 0
+            brakeThrust = brakeThrust or 0 -- usually zero when accelerating
+            local speedUp = initial <= final
+            local a0 = thrust * (speedUp and 1 or -1) / restMass
+            local b0 = -brakeThrust / restMass
+            local totA = a0 + b0
+            if speedUp and totA <= 0 or not speedUp and totA >= 0 then
+                return -1, -1 -- no solution
+            end
+            local distanceToMax, timeToMax = 0, 0
+    
+            if a0 ~= 0 and t50 > 0 then
+    
+                local k1 = math.asin(initial / C)
+                local c1 = math.pi * (a0 / 2 + b0)
+                local c2 = a0 * t50
+                local c3 = C * math.pi
+                local v = function(t)
+                    local w = (c1 * t - c2 * math.sin(math.pi * t / 2 / t50) + c3 * k1) / c3
+                    local tan = math.tan(w)
+                    return C * tan / math.sqrt(tan * tan + 1)
+                end
+                local speedchk = speedUp and function(s)
+                    return s >= final
+                end or function(s)
+                    return s <= final
+                end
+                timeToMax = 2 * t50
+                if speedchk(v(timeToMax)) then
+                    local lasttime = 0
+                    while math.abs(timeToMax - lasttime) > 0.5 do
+                        local t = (timeToMax + lasttime) / 2
+                        if speedchk(v(t)) then
+                            timeToMax = t
+                        else
+                            lasttime = t
+                        end
+                    end
+                end
+                -- There is no closed form solution for distance in this case.
+                -- Numerically integrate for time t=0 to t=2*T50 (or less)
+                local lastv = initial
+                local tinc = timeToMax / ITERATIONS
+                for step = 1, ITERATIONS do
+                    local speed = v(step * tinc)
+                    distanceToMax = distanceToMax + (speed + lastv) * tinc / 2
+                    lastv = speed
+                end
+                if timeToMax < 2 * t50 then
+                    return distanceToMax, timeToMax
+                end
+                initial = lastv
+            end
+    
+            local k1 = C * math.asin(initial / C)
+            local time = (C * math.asin(final / C) - k1) / totA
+            local k2 = C2 * math.cos(k1 / C) / totA
+            local distance = k2 - C2 * math.cos((totA * time + k1) / C) / totA
+            return distance + distanceToMax, time + timeToMax
+        end
+    
+        function Kinematic.computeTravelTime(initial, acceleration, distance)
+            -- The low speed limit of following is: t=(sqrt(2ad+v^2)-v)/a
+            -- (from: d=vt+at^2/2)
+            if distance == 0 then
+                return 0
+            end
+            -- So then what's with all the weird ass sines and cosines?
+            if acceleration > 0 then
+                local k1 = C * math.asin(initial / C)
+                local k2 = C2 * math.cos(k1 / C) / acceleration
+                return (C * math.acos(acceleration * (k2 - distance) / C2) - k1) / acceleration
+            end
+            if initial == 0 then
+                return -1 -- IDK something like that should make sure we never hit the assert yelling at us
+            end
+            assert(initial > 0, 'Acceleration and initial speed are both zero.')
+            return distance / initial
+        end
+    
+        function Kinematic.lorentz(v)
+            return lorentz(v)
+        end
+        return Kinematic
+    end
+
+    local function Keplers()
+        local vec3 = require('cpml.vec3')
+        local PlanetRef = PlanetRef()
+        local function isString(s)
+            return type(s) == 'string'
+        end
+        local function isTable(t)
+            return type(t) == 'table'
+        end
+        local function float_eq(a, b)
+            if a == 0 then
+                return math.abs(b) < 1e-09
+            end
+            if b == 0 then
+                return math.abs(a) < 1e-09
+            end
+            return math.abs(a - b) < math.max(math.abs(a), math.abs(b)) * constants.epsilon
+        end
+        Kepler = {}
+        Kepler.__index = Kepler
+    
+        function Kepler:escapeAndOrbitalSpeed(altitude)
+            assert(self.body)
+            -- P = -GMm/r and KE = mv^2/2 (no lorentz factor used)
+            -- mv^2/2 = GMm/r
+            -- v^2 = 2GM/r
+            -- v = sqrt(2GM/r1)
+            local distance = altitude + self.body.radius
+            if not float_eq(distance, 0) then
+                local orbit = math.sqrt(self.body.GM / distance)
+                return math.sqrt(2) * orbit, orbit
+            end
+            return nil, nil
+        end
+    
+        function Kepler:orbitalParameters(overload, velocity)
+            assert(self.body)
+            assert(isTable(overload) or isString(overload))
+            assert(isTable(velocity))
+            local pos = (isString(overload) or PlanetRef.isMapPosition(overload)) and
+                            self.body:convertToWorldCoordinates(overload) or vec3(overload)
+            local v = vec3(velocity)
+            local r = pos - self.body.center
+            local v2 = v:len2()
+            local d = r:len()
+            local mu = self.body.GM
+            local e = ((v2 - mu / d) * r - r:dot(v) * v) / mu
+            local a = mu / (2 * mu / d - v2)
+            local ecc = e:len()
+            local dir = e:normalize()
+            local pd = a * (1 - ecc)
+            local ad = a * (1 + ecc)
+            local per = pd * dir + self.body.center
+            local apo = ecc <= 1 and -ad * dir + self.body.center or nil
+            local trm = math.sqrt(a * mu * (1 - ecc * ecc))
+            local Period = apo and 2 * math.pi * math.sqrt(a ^ 3 / mu)
+            -- These are great and all, but, I need more.
+            local trueAnomaly = math.acos((e:dot(r)) / (ecc * d))
+            if r:dot(v) < 0 then
+                trueAnomaly = -(trueAnomaly - 2 * math.pi)
+            end
+            -- Apparently... cos(EccentricAnomaly) = (cos(trueAnomaly) + eccentricity)/(1 + eccentricity * cos(trueAnomaly))
+            local EccentricAnomaly = math.acos((math.cos(trueAnomaly) + ecc) / (1 + ecc * math.cos(trueAnomaly)))
+            -- Then.... apparently if this is below 0, we should add 2pi to it
+            -- I think also if it's below 0, we're past the apoapsis?
+            local timeTau = EccentricAnomaly
+            if timeTau < 0 then
+                timeTau = timeTau + 2 * math.pi
+            end
+            -- So... time since periapsis...
+            -- Is apparently easy if you get mean anomly.  t = M/n where n is mean motion, = 2*pi/Period
+            local MeanAnomaly = timeTau - ecc * math.sin(timeTau)
+            local TimeSincePeriapsis = 0
+            local TimeToPeriapsis = 0
+            local TimeToApoapsis = 0
+            if Period ~= nil then
+                TimeSincePeriapsis = MeanAnomaly / (2 * math.pi / Period)
+                -- Mean anom is 0 at periapsis, positive before it... and positive after it.
+                -- I guess this is why I needed to use timeTau and not EccentricAnomaly here
+    
+                TimeToPeriapsis = Period - TimeSincePeriapsis
+                TimeToApoapsis = TimeToPeriapsis + Period / 2
+                if trueAnomaly - math.pi > 0 then -- TBH I think something's wrong in my formulas because I needed this.
+                    TimeToPeriapsis = TimeSincePeriapsis
+                    TimeToApoapsis = TimeToPeriapsis + Period / 2
+                end
+                if TimeToApoapsis > Period then
+                    TimeToApoapsis = TimeToApoapsis - Period
+                end
+            end
+            return {
+                periapsis = {
+                    position = per,
+                    speed = trm / pd,
+                    circularOrbitSpeed = math.sqrt(mu / pd),
+                    altitude = pd - self.body.radius
+                },
+                apoapsis = apo and {
+                    position = apo,
+                    speed = trm / ad,
+                    circularOrbitSpeed = math.sqrt(mu / ad),
+                    altitude = ad - self.body.radius
+                },
+                currentVelocity = v,
+                currentPosition = pos,
+                eccentricity = ecc,
+                period = Period,
+                eccentricAnomaly = EccentricAnomaly,
+                meanAnomaly = MeanAnomaly,
+                timeToPeriapsis = TimeToPeriapsis,
+                timeToApoapsis = TimeToApoapsis
+            }
+        end
+        local function new(bodyParameters)
+            local params = PlanetRef.BodyParameters(bodyParameters.planetarySystemId, bodyParameters.bodyId,
+                               bodyParameters.radius, bodyParameters.center, bodyParameters.GM)
+            return setmetatable({
+                body = params
+            }, Kepler)
+        end
+        return setmetatable(Kepler, {
+            __call = function(_, ...)
+                return new(...)
+            end
+        })
+    end    
+
     SetupComplete = false
+
     beginSetup = coroutine.create(function()
         Nav.axisCommandManager:setupCustomTargetSpeedRanges(axisCommandId.longitudinal,
             {1000, 5000, 10000, 20000, 30000})
@@ -5538,14 +4881,17 @@ function script.onStart()
 
         -- Set up Jaylebreak and atlas
         SetupAtlas()
+
         PlanetaryReference = PlanetRef()
         galaxyReference = PlanetaryReference(Atlas())
         Kinematic = Kinematics()
         Kep = Keplers()
         HUD = Huds()
+        
         AddLocationsToAtlas()
         UpdateAtlasLocationsList()
         UpdateAutopilotTarget()
+
         coroutine.yield()
 
         unit.hide()
@@ -5600,6 +4946,392 @@ function script.onStop()
 end
 
 function script.onTick(timerId)
+
+    local function SetupInterplanetaryPanel() -- Interplanetary helper
+        panelInterplanetary = system.createWidgetPanel("Interplanetary Helper")
+    
+        interplanetaryHeader = system.createWidget(panelInterplanetary, "value")
+        interplanetaryHeaderText = system.createData('{"label": "Target Planet", "value": "N/A", "unit":""}')
+        system.addDataToWidget(interplanetaryHeaderText, interplanetaryHeader)
+    
+        widgetDistance = system.createWidget(panelInterplanetary, "value")
+        widgetDistanceText = system.createData('{"label": "distance", "value": "N/A", "unit":""}')
+        system.addDataToWidget(widgetDistanceText, widgetDistance)
+    
+        widgetTravelTime = system.createWidget(panelInterplanetary, "value")
+        widgetTravelTimeText = system.createData('{"label": "Travel Time", "value": "N/A", "unit":""}')
+        system.addDataToWidget(widgetTravelTimeText, widgetTravelTime)
+    
+        widgetMaxMass = system.createWidget(panelInterplanetary, "value")
+        widgetMaxMassText = system.createData('{"label": "Maximum Mass", "value": "N/A", "unit":""}')
+        system.addDataToWidget(widgetMaxMassText, widgetMaxMass)
+    
+        widgetTargetOrbit = system.createWidget(panelInterplanetary, "value")
+        widgetTargetOrbitText = system.createData('{"label": "Target Altitude", "value": "N/A", "unit":""}')
+        system.addDataToWidget(widgetTargetOrbitText, widgetTargetOrbit)
+    
+        widgetCurBrakeDistance = system.createWidget(panelInterplanetary, "value")
+        widgetCurBrakeDistanceText = system.createData('{"label": "Cur Brake distance", "value": "N/A", "unit":""}')
+        widgetCurBrakeTime = system.createWidget(panelInterplanetary, "value")
+        widgetCurBrakeTimeText = system.createData('{"label": "Cur Brake Time", "value": "N/A", "unit":""}')
+        widgetMaxBrakeDistance = system.createWidget(panelInterplanetary, "value")
+        widgetMaxBrakeDistanceText = system.createData('{"label": "Max Brake distance", "value": "N/A", "unit":""}')
+        widgetMaxBrakeTime = system.createWidget(panelInterplanetary, "value")
+        widgetMaxBrakeTimeText = system.createData('{"label": "Max Brake Time", "value": "N/A", "unit":""}')
+        widgetTrajectoryAltitude = system.createWidget(panelInterplanetary, "value")
+        widgetTrajectoryAltitudeText = system.createData('{"label": "Projected Altitude", "value": "N/A", "unit":""}')
+        if not inAtmo then
+            system.addDataToWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
+            system.addDataToWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
+            system.addDataToWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
+            system.addDataToWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
+            system.addDataToWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
+        end
+    end
+
+    local function HideInterplanetaryPanel()
+        system.destroyWidgetPanel(panelInterplanetary)
+        panelInterplanetary = nil
+    end    
+    
+    local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
+        local radius = 500000
+        local distsz, distp, key = math.huge
+        local safe = false
+        local safeWorldPos = vec3({13771471,7435803,-128971})
+        local safeRadius = 18000000 
+        distsz = vec3(WorldPos):dist(safeWorldPos)
+        if distsz < safeRadius then  
+            return true, math.abs(distsz - safeRadius), "Safe Zone", 0
+        end
+        distp = vec3(WorldPos):dist(vec3(planet.center))
+        if distp < radius then safe = true end
+        if math.abs(distp - radius) < math.abs(distsz - safeRadius) then 
+            return safe, math.abs(distp - radius), planet.name, planet.bodyId
+        else
+            return safe, math.abs(distsz - safeRadius), "Safe Zone", 0
+        end
+    end
+
+    local function CheckDamage(newContent)
+        local percentDam = 0
+        damageMessage = ""
+        local maxShipHP = eleTotalMaxHp
+        local curShipHP = 0
+        local damagedElements = 0
+        local disabledElements = 0
+        local colorMod = 0
+        local color = ""
+        for k in pairs(elementsID) do
+            local hp = 0
+            local mhp = 0
+            mhp = eleMaxHp(elementsID[k])
+            hp = eleHp(elementsID[k])
+            curShipHP = curShipHP + hp
+            if (hp < mhp) then
+                if (hp == 0) then
+                    disabledElements = disabledElements + 1
+                else
+                    damagedElements = damagedElements + 1
+                end
+                -- Thanks to Jerico for the help and code starter for arrow markers!
+                if repairArrows and #markers == 0 then
+                    position = vec3(core.getElementPositionById(elementsID[k]))
+                    local x = position.x - coreOffset
+                    local y = position.y - coreOffset
+                    local z = position.z - coreOffset
+                    table.insert(markers, core.spawnArrowSticker(x, y, z + 1, "down"))
+                    table.insert(markers, core.spawnArrowSticker(x, y, z + 1, "down"))
+                    core.rotateSticker(markers[2], 0, 0, 90)
+                    table.insert(markers, core.spawnArrowSticker(x + 1, y, z, "north"))
+                    table.insert(markers, core.spawnArrowSticker(x + 1, y, z, "north"))
+                    core.rotateSticker(markers[4], 90, 90, 0)
+                    table.insert(markers, core.spawnArrowSticker(x - 1, y, z, "south"))
+                    table.insert(markers, core.spawnArrowSticker(x - 1, y, z, "south"))
+                    core.rotateSticker(markers[6], 90, -90, 0)
+                    table.insert(markers, core.spawnArrowSticker(x, y - 1, z, "east"))
+                    table.insert(markers, core.spawnArrowSticker(x, y - 1, z, "east"))
+                    core.rotateSticker(markers[8], 90, 0, 90)
+                    table.insert(markers, core.spawnArrowSticker(x, y + 1, z, "west"))
+                    table.insert(markers, core.spawnArrowSticker(x, y + 1, z, "west"))
+                    core.rotateSticker(markers[10], -90, 0, 90)
+                    table.insert(markers, elementsID[k])
+                end
+            elseif repairArrows and #markers > 0 and markers[11] == elementsID[k] then
+                for j in pairs(markers) do
+                    core.deleteSticker(markers[j])
+                end
+                markers = {}
+            end
+        end
+        percentDam = mfloor((curShipHP / maxShipHP)*100)
+        if percentDam < 100 then
+            newContent[#newContent + 1] = [[<g class="pbright txt">]]
+            colorMod = mfloor(percentDam * 2.55)
+            color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
+            if percentDam < 100 then
+                newContent[#newContent + 1] = stringf(
+                                                  [[<text class="txtbig txtmid" x=50%% y="1035" style="fill:%s">Elemental Integrity: %i %%</text>]],
+                                                  color, percentDam)
+                if (disabledElements > 0) then
+                    newContent[#newContent + 1] = stringf(
+                                                      [[<text class="txtbig txtmid" x=50%% y="1055" style="fill:%s">Disabled Modules: %i Damaged Modules: %i</text>]],
+                                                      color, disabledElements, damagedElements)
+                elseif damagedElements > 0 then
+                    newContent[#newContent + 1] = stringf(
+                                                      [[<text class="txtbig txtmid" x=50%% y="1055"style="fill:%s">Damaged Modules: %i</text>]],
+                                                      color, damagedElements)
+                end
+            end
+            newContent[#newContent + 1] = [[<\g>]]
+        end
+    end
+    
+    local function DrawCursorLine(newContent)
+        local strokeColor = mfloor(utils.clamp((distance / (resolutionWidth / 4)) * 255, 0, 255))
+        newContent[#newContent + 1] = stringf(
+                                          "<line x1='0' y1='0' x2='%fpx' y2='%fpx' style='stroke:rgb(%d,%d,%d);stroke-width:2;transform:translate(50%%, 50%%)' />",
+                                          simulatedX, simulatedY, mfloor(PrimaryR + 0.5) + strokeColor,
+                                          mfloor(PrimaryG + 0.5) - strokeColor, mfloor(PrimaryB + 0.5) - strokeColor)
+    end
+
+    local function GetAutopilotMaxMass()
+        local apmaxmass = LastMaxBrakeInAtmo /
+                              (autopilotTargetPlanet:getGravity(
+                                  autopilotTargetPlanet.center + (vec3(0, 0, 1) * autopilotTargetPlanet.radius))
+                                  :len())
+        return apmaxmass
+    end
+
+    local function GetAutopilotTravelTime()
+        if not Autopilot then
+            if CustomTarget == nil or CustomTarget.planetname ~= planet.name then
+                AutopilotDistance = (autopilotTargetPlanet.center - worldPos):len() -- This updates elsewhere if we're already piloting
+            else
+                AutopilotDistance = (CustomTarget.position - worldPos):len()
+            end
+        end
+        local speed = velMag
+        local throttle = unit.getThrottle()/100
+        if AtmoSpeedAssist then throttle = PlayerThrottle end
+        local accelDistance, accelTime =
+            Kinematic.computeDistanceAndTime(velMag, MaxGameVelocity, -- From currently velocity to max
+                constructMass(), Nav:maxForceForward()*throttle, warmup, -- T50?  Assume none, negligible for this
+                0) -- Brake thrust, none for this
+        -- accelDistance now has the amount of distance for which we will be accelerating
+        -- Then we need the distance we'd brake from full speed
+        -- Note that for some nearby moons etc, it may never reach full speed though.
+        local brakeDistance, brakeTime
+        if not TurnBurn then
+            brakeDistance, brakeTime = GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
+        else
+            brakeDistance, brakeTime = GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
+        end
+        local _, curBrakeTime
+        if not TurnBurn and speed > 0 then -- Will this cause problems?  Was spamming something in here was giving 0 speed and 0 accel
+            _, curBrakeTime = GetAutopilotBrakeDistanceAndTime(speed)
+        else
+            _, curBrakeTime = GetAutopilotTBBrakeDistanceAndTime(speed)
+        end
+        local cruiseDistance = 0
+        local cruiseTime = 0
+        -- So, time is in seconds
+        -- If cruising or braking, use real cruise/brake values
+        if AutopilotCruising or (not Autopilot and speed > 5) then -- If already cruising, use current speed
+            cruiseTime = Kinematic.computeTravelTime(speed, 0, AutopilotDistance)
+        elseif brakeDistance + accelDistance < AutopilotDistance then
+            -- Add any remaining distance
+            cruiseDistance = AutopilotDistance - (brakeDistance + accelDistance)
+            cruiseTime = Kinematic.computeTravelTime(8333.0556, 0, cruiseDistance)
+        else
+            local accelRatio = (AutopilotDistance - brakeDistance) / accelDistance
+            accelDistance = AutopilotDistance - brakeDistance -- Accel until we brake
+            
+            accelTime = accelTime * accelRatio
+        end
+        if CustomTarget ~= nil and CustomTarget.planetname == planet.name and not Autopilot then
+            return cruiseTime
+        elseif AutopilotBraking then
+            return curBrakeTime
+        elseif AutopilotCruising then
+            return cruiseTime + curBrakeTime
+        else -- If not cruising or braking, assume we'll get to max speed
+            return accelTime + brakeTime + cruiseTime
+        end
+    end
+
+    local function updateWeapons()
+        if weapon then
+            if  WeaponPanelID==nil and (radarPanelID ~= nil or GearExtended)  then
+                _autoconf.displayCategoryPanel(weapon, weapon_size, L_TEXT("ui_lua_widget_weapon", "Weapons"), "weapon", true)
+                WeaponPanelID = _autoconf.panels[_autoconf.panels_size]
+            elseif WeaponPanelID ~= nil and radarPanelID == nil and not GearExtended then
+                system.destroyWidgetPanel(WeaponPanelID)
+                WeaponPanelID = nil
+            end
+        end
+    end    
+
+    local function updateRadar()
+        if (radar_1) then
+            local radarContacts = radar_1.getEntries()
+            local radarData = radar_1.getData()
+            local radarX = ConvertResolutionX(1770)
+            local radarY = ConvertResolutionY(330)
+            if #radarContacts > 0 then
+                local target = radarData:find('identifiedConstructs":%[%]')
+                if target == nil and perisPanelID == nil then
+                    peris = 1
+                    ToggleRadarPanel()
+                end
+                if target ~= nil and perisPanelID ~= nil then
+                    ToggleRadarPanel()
+                end
+                if radarPanelID == nil then
+                    ToggleRadarPanel()
+                end
+                radarMessage = stringf(
+                                [[<text class="pbright txtbig txtmid" x="%d" y="%d">Radar: %i contacts</text>]],
+                                radarX, radarY, #radarContacts)
+                local friendlies = {}
+                for k, v in pairs(radarContacts) do
+                    if radar_1.hasMatchingTransponder(v) == 1 then
+                        table.insert(friendlies,v)
+                    end
+                end
+                if #friendlies > 0 then
+                    local y = ConvertResolutionY(15)
+                    local x = ConvertResolutionX(1370)
+                    radarMessage = stringf(
+                                    [[%s<text class="pbright txtbig txtmid" x="%d" y="%d">Friendlies In Range</text>]],
+                                    radarMessage, x, y)
+                    for k, v in pairs(friendlies) do
+                        y = y + 20
+                        radarMessage = stringf([[%s<text class="pdim txtmid" x="%d" y="%d">%s</text>]],
+                                        radarMessage, x, y, radar_1.getConstructName(v))
+                    end
+                end
+            else
+                local data
+                data = radarData:find('worksInEnvironment":false')
+                if data then
+                    radarMessage = stringf([[
+                        <text class="pbright txtbig txtmid" x="%d" y="%d">Radar: Jammed</text>]],
+                        radarX, radarY)
+                else
+                    radarMessage = stringf([[
+                        <text class="pbright txtbig txtmid" x="%d" y="%d">Radar: No Contacts</text>]],
+                        radarX, radarY)
+                end
+                if radarPanelID ~= nil then
+                    peris = 0
+                    ToggleRadarPanel()
+                end
+            end
+        end
+    end
+
+    local function updateDistance()
+        local curTime = systime()
+        local spd = velMag
+        local elapsedTime = curTime - lastTravelTime
+        if (spd > 1.38889) then
+            spd = spd / 1000
+            local newDistance = spd * (curTime - lastTravelTime)
+            TotalDistanceTravelled = TotalDistanceTravelled + newDistance
+            totalDistanceTrip = totalDistanceTrip + newDistance
+        end
+        flightTime = flightTime + elapsedTime
+        TotalFlightTime = TotalFlightTime + elapsedTime
+        lastTravelTime = curTime
+    end
+    
+    local function CheckButtons()
+        for _, v in pairs(Buttons) do
+            if v.hovered then
+                if not v.drawCondition or v.drawCondition() then
+                    v.toggleFunction()
+                end
+                v.hovered = false
+            end
+        end
+    end
+
+    local function SetButtonContains()
+
+        local function Contains(mousex, mousey, x, y, width, height)
+            if mousex > x and mousex < (x + width) and mousey > y and mousey < (y + height) then
+                return true
+            else
+                return false
+            end
+        end
+        
+    
+        local x = simulatedX + resolutionWidth / 2
+        local y = simulatedY + resolutionHeight / 2
+        for _, v in pairs(Buttons) do
+            -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
+            v.hovered = Contains(x, y, v.x, v.y, v.width, v.height)
+        end
+    end
+    
+    local function DrawButtons(newContent)
+
+        local function DrawButton(newContent, toggle, hover, x, y, w, h, activeColor, inactiveColor, activeText, inactiveText)
+            if type(activeText) == "function" then
+                activeText = activeText()
+            end
+            if type(inactiveText) == "function" then
+                inactiveText = inactiveText()
+            end
+            newContent[#newContent + 1] = stringf("<rect x='%f' y='%f' width='%f' height='%f' fill='", x, y, w, h)
+            if toggle then
+                newContent[#newContent + 1] = stringf("%s'", activeColor)
+            else
+                newContent[#newContent + 1] = inactiveColor
+            end
+            if hover then
+                newContent[#newContent + 1] = " style='stroke:white; stroke-width:2'"
+            else
+                newContent[#newContent + 1] = " style='stroke:black; stroke-width:1'"
+            end
+            newContent[#newContent + 1] = "></rect>"
+            newContent[#newContent + 1] = stringf("<text x='%f' y='%f' font-size='24' fill='", x + w / 2,
+                                              y + (h / 2) + 5)
+            if toggle then
+                newContent[#newContent + 1] = "black"
+            else
+                newContent[#newContent + 1] = "white"
+            end
+            newContent[#newContent + 1] = "' text-anchor='middle' font-family='Montserrat'>"
+            if toggle then
+                newContent[#newContent + 1] = stringf("%s</text>", activeText)
+            else
+                newContent[#newContent + 1] = stringf("%s</text>", inactiveText)
+            end
+        end    
+    
+        local defaultColor = "rgb(50,50,50)'"
+        local onColor = "rgb(210,200,200)"
+        local draw = DrawButton
+        for _, v in pairs(Buttons) do
+            -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
+            local disableName = v.disableName
+            local enableName = v.enableName
+            if type(disableName) == "function" then
+                disableName = disableName()
+            end
+            if type(enableName) == "function" then
+                enableName = enableName()
+            end
+            if not v.drawCondition or v.drawCondition() then -- If they gave us a nil condition
+                draw(newContent, v.toggleVar(), v.hovered, v.x, v.y, v.width, v.height, onColor, defaultColor,
+                    disableName, enableName)
+            end
+        end
+    end
+    
     if timerId == "tenthSecond" then
         if atmosDensity > 0 and not WasInAtmo then
             if Nav.axisCommandManager:getAxisCommandType(0) == axisCommandType.byTargetSpeed and AtmoSpeedAssist and (AltitudeHold or Reentry) then
@@ -7180,6 +6912,99 @@ function script.onTick(timerId)
 end
 
 function script.onFlush()
+
+    local function composeAxisAccelerationFromTargetSpeedV(commandAxis, targetSpeed)
+
+        local axisCRefDirection = vec3()
+        local axisWorldDirection = vec3()
+    
+        if (commandAxis == axisCommandId.longitudinal) then
+            axisCRefDirection = vec3(core.getConstructOrientationForward())
+            axisWorldDirection = constructForward
+        elseif (commandAxis == axisCommandId.vertical) then
+            axisCRefDirection = vec3(core.getConstructOrientationUp())
+            axisWorldDirection = constructUp
+        elseif (commandAxis == axisCommandId.lateral) then
+            axisCRefDirection = vec3(core.getConstructOrientationRight())
+            axisWorldDirection = constructRight
+        else
+            return vec3()
+        end
+    
+        local gravityAcceleration = vec3(core.getWorldGravity())
+        local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
+    
+        local airResistanceAcceleration = vec3(core.getWorldAirFrictionAcceleration())
+        local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
+    
+        local currentVelocity = vec3(core.getVelocity())
+        local currentAxisSpeedMS = currentVelocity:dot(axisCRefDirection)
+    
+        local targetAxisSpeedMS = targetSpeed * constants.kph2m
+    
+        if targetSpeedPID2 == nil then -- CHanged first param from 1 to 10...
+            targetSpeedPID2 = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
+        end
+    
+        targetSpeedPID2:inject(targetAxisSpeedMS - currentAxisSpeedMS) -- update PID
+    
+        local accelerationCommand = targetSpeedPID2:get()
+    
+        local finalAcceleration = (accelerationCommand - airResistanceAccelerationCommand - gravityAccelerationCommand) * axisWorldDirection  -- Try to compensate air friction
+    
+        -- The hell are these? Uncommented recently just in case they were important
+        --system.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
+        --system.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
+    
+        return finalAcceleration
+    end
+
+    local function composeAxisAccelerationFromTargetSpeed(commandAxis, targetSpeed)
+
+        local axisCRefDirection = vec3()
+        local axisWorldDirection = vec3()
+    
+        if (commandAxis == axisCommandId.longitudinal) then
+            axisCRefDirection = vec3(core.getConstructOrientationForward())
+            axisWorldDirection = constructForward
+        elseif (commandAxis == axisCommandId.vertical) then
+            axisCRefDirection = vec3(core.getConstructOrientationUp())
+            axisWorldDirection = constructUp
+        elseif (commandAxis == axisCommandId.lateral) then
+            axisCRefDirection = vec3(core.getConstructOrientationRight())
+            axisWorldDirection = constructRight
+        else
+            return vec3()
+        end
+    
+        local gravityAcceleration = vec3(core.getWorldGravity())
+        local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
+    
+        local airResistanceAcceleration = vec3(core.getWorldAirFrictionAcceleration())
+        local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
+    
+        local currentVelocity = vec3(core.getVelocity())
+        local currentAxisSpeedMS = currentVelocity:dot(axisCRefDirection)
+    
+        local targetAxisSpeedMS = targetSpeed * constants.kph2m
+    
+        if targetSpeedPID == nil then -- CHanged first param from 1 to 10...
+            targetSpeedPID = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
+        end
+    
+        targetSpeedPID:inject(targetAxisSpeedMS - currentAxisSpeedMS) -- update PID
+    
+        local accelerationCommand = targetSpeedPID:get()
+    
+        local finalAcceleration = (accelerationCommand - airResistanceAccelerationCommand - gravityAccelerationCommand) * axisWorldDirection  -- Try to compensate air friction
+    
+        -- The hell are these? Uncommented recently just in case they were important
+        --system.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
+        --system.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
+    
+        return finalAcceleration
+    end
+
     if antigrav ~= nil and (antigrav and not ExternalAGG) then
         if antigrav.getState() == 0 and antigrav.getBaseAltitude() ~= AntigravTargetAltitude then 
             antigrav.setBaseAltitude(AntigravTargetAltitude) 
@@ -7196,7 +7021,6 @@ function script.onFlush()
         PlayerThrottle = 0 -- Reset this here too, because, why not
         WasInCruise = true
     end
-
 
     -- validate params
     pitchSpeedFactor = math.max(pitchSpeedFactor, 0.01)
@@ -7615,6 +7439,90 @@ function script.onUpdate()
 end
 
 function script.onActionStart(action)
+
+    local function ToggleWidgets()
+        UnitHidden = not UnitHidden
+        if not UnitHidden then
+            unit.show()
+            core.show()
+            if atmofueltank_size > 0 then
+                _autoconf.displayCategoryPanel(atmofueltank, atmofueltank_size,
+                    L_TEXT("ui_lua_widget_atmofuel", "Atmo Fuel"), "fuel_container")
+                fuelPanelID = _autoconf.panels[_autoconf.panels_size]
+            end
+            if spacefueltank_size > 0 then
+                _autoconf.displayCategoryPanel(spacefueltank, spacefueltank_size,
+                    L_TEXT("ui_lua_widget_spacefuel", "Space Fuel"), "fuel_container")
+                spacefuelPanelID = _autoconf.panels[_autoconf.panels_size]
+            end
+            if rocketfueltank_size > 0 then
+                _autoconf.displayCategoryPanel(rocketfueltank, rocketfueltank_size,
+                    L_TEXT("ui_lua_widget_rocketfuel", "Rocket Fuel"), "fuel_container")
+                rocketfuelPanelID = _autoconf.panels[_autoconf.panels_size]
+            end
+        else
+            unit.hide()
+            core.hide()
+            if fuelPanelID ~= nil then
+                system.destroyWidgetPanel(fuelPanelID)
+                fuelPanelID = nil
+            end
+            if spacefuelPanelID ~= nil then
+                system.destroyWidgetPanel(spacefuelPanelID)
+                spacefuelPanelID = nil
+            end
+            if rocketfuelPanelID ~= nil then
+                system.destroyWidgetPanel(rocketfuelPanelID)
+                rocketfuelPanelID = nil
+            end
+        end
+    end
+
+    local function ToggleLockPitch()
+        if LockPitch == nil then
+            local pitch = getPitch(worldVertical, constructForward, constructRight)
+            LockPitch = pitch
+            AutoTakeoff = false
+            AltitudeHold = false
+            BrakeLanding = false
+        else
+            LockPitch = nil
+        end
+    end
+
+    local function clearAll()
+        if clearAllCheck then
+            clearAllCheck = false
+            AutopilotAccelerating = false
+            AutopilotBraking = false
+            AutopilotCruising = false
+            Autopilot = false
+            AutopilotRealigned = false
+            AutopilotStatus = "Aligning"                
+            RetrogradeIsOn = false
+            ProgradeIsOn = false
+            AltitudeHold = false
+            Reentry = false
+            BrakeLanding = false
+            BrakeIsOn = false
+            AutoTakeoff = false
+            VertTakeOff = false
+            followMode = false
+            apThrottleSet = false
+            spaceLand = false
+            spaceLaunch = false
+            reentryMode = false
+            autoRoll = autoRollPreference
+            VectorToTarget = false
+            TurnBurn = false
+            gyroIsOn = false
+            LockPitch = nil
+            IntoOrbit = false
+        else
+            clearAllCheck = true
+        end
+    end    
+
     if action == "gear" then
         --if hasGear then
         --    GearExtended = (Nav.control.isAnyLandingGearExtended() == 1)
@@ -7968,6 +7876,77 @@ function script.onActionLoop(action)
 end
 
 function script.onInputText(text)
+
+    local function wipeSaveVariables()
+        for k, v in pairs(saveableVariables) do
+            dbHud_1.setStringValue(v, jencode(nil))
+        end
+        for k, v in pairs(autoVariables) do
+            if v ~= "SavedLocations" then dbHud_1.setStringValue(v, jencode(nil)) end
+        end
+        --dbHud_1.clear()
+        msgText =
+            "Databank wiped except Save Locations. New variables will save after re-enter seat and exit"
+        msgTimer = 5
+        valuesAreSet = false
+        wipedDatabank = true
+    end
+
+    local function AddNewLocationByWaypoint(savename, planet, pos)
+
+        local function zeroConvertToWorldCoordinates(pos) -- Many thanks to SilverZero for this.
+            local num  = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
+            local posPattern = '::pos{' .. num .. ',' .. num .. ',' ..  num .. ',' .. num ..  ',' .. num .. '}'    
+            local systemId, bodyId, latitude, longitude, altitude = stringmatch(pos, posPattern)
+            if (systemId == "0" and bodyId == "0") then
+                return vec3(tonumber(latitude),
+                            tonumber(longitude),
+                            tonumber(altitude))
+            end
+            longitude = math.rad(longitude)
+            latitude = math.rad(latitude)
+            local planet = atlas[tonumber(systemId)][tonumber(bodyId)]  
+            local xproj = math.cos(latitude);   
+            local planetxyz = vec3(xproj*math.cos(longitude),
+                                  xproj*math.sin(longitude),
+                                     math.sin(latitude));
+            return planet.center + (planet.radius + altitude) * planetxyz
+        end    
+    
+        if dbHud_1 then
+            local newLocation = {}
+            local position = zeroConvertToWorldCoordinates(pos)
+            if planet.name == "Space" then
+                newLocation = {
+                    position = position,
+                    name = savename,
+                    atmosphere = false,
+                    planetname = planet.name,
+                    gravity = planet.gravity
+                }
+            else
+                local atmo = false
+                if planet.hasAtmosphere then
+                    atmo = true 
+                else 
+                    atmo = false 
+                end
+                newLocation = {
+                    position = position,
+                    name = savename,
+                    atmosphere = atmo,
+                    planetname = planet.name,
+                    gravity = planet.gravity
+                }
+            end
+            SavedLocations[#SavedLocations + 1] = newLocation
+            table.insert(atlas[0], newLocation)
+            UpdateAtlasLocationsList()
+        else
+            msgText = "Databank must be installed to save locations"
+        end
+    end
+
     local i
     local commands = "/commands /setname /G /agg /addlocation /copydatabank /wipedatabank"
     local command, arguement = nil, nil
