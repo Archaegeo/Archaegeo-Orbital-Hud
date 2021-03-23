@@ -1,9 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.100 - MAJOR REFACTOR plus Enhancements.
+- Re-ordered user variables to group them better in Edit Lua Parameters.
+- Changed command lines to start with ah- instead of / to avoid conflict with other scripts listening for text.
 - Fix erroneous warning message about wrong control scheme.
-- Removed initial dump of variables to Lua chat, use /G dump to see all user variables.\
-- Removed Alt-7-7 to wipe databank.. Use /wipedatabank command instead. (reclaiming hotkeys)
+- Removed initial dump of variables to Lua chat, use ah-G dump to see all user variables.
+- Removed Alt-7-7 to wipe databank.. Use ah-wipedatabank command instead. (reclaiming hotkeys)
 - Moved Alt-3 (widget vanilla view toggle) to Alt-7. Not needed to fix the old tab slideshow anymore, but still needed sometimes (busy marketplace)
 - Changed Freelook toggle from Alt to Alt-3.  This should prevent inadvertantly changing out of ship or camera control when alt-tabbing.
 - Major refactoring of script.

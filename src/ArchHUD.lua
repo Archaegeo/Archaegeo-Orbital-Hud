@@ -4,10 +4,11 @@ Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.012
+VERSION_NUMBER = 1.013
 
 -- User settings.  Must be global to work with databank system as set up due to using _G assignment
 useTheseSettings = false --export: (Default: false)
+userControlScheme = "virtual joystick" --export: (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard"
 freeLookToggle = true --export: (Default: true)
 BrakeToggleDefault = true --export: (Default: true)
 RemoteFreeze = false --export: (Default: false)
@@ -15,9 +16,40 @@ RemoteHud = false --export: (Default: false)
 brightHud = false --export: (Default: false)
 VanillaRockets = false --export: (Default: false)
 InvertMouse = false --export: (Default: false)
-userControlScheme = "virtual joystick" --export: (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard"
+autoRollPreference = false --export: (Default: false)
+turnAssist = true --export: (Default: true)
+ExternalAGG = false --export: (Default: false)
+UseSatNav = false --export: (Default: false)
+ShouldCheckDamage = true --export: (Default: true)
+CalculateBrakeLandingSpeed = false --export: (Default: false)
+autoRollRollThreshold = 0 --export: (Default: 0)
+AtmoSpeedAssist = true --export: (Default: true)
+ForceAlignment = false --export: (Default: false)
+VertTakeOffEngine = false --export: (Default: false)
+DisplayDeadZone = true --export: (Default: true)
+showHud = true --export: (Default: true) 
+ShowOdometer = true --export: (Default: true)
+hideHudOnToggleWidgets = true --export: (Default: true)
+ShiftShowsRemoteButtons = true --export: (Default: true)
+DisplayOrbit = true --export: (Default: true) 
+YawStallAngle = 35 --export: (Default: 35)
+PitchStallAngle = 35 --export: (Default: 35)
+brakeLandingRate = 30 --export: (Default: 30)
+MaxPitch = 30 --export: (Default: 30)
+TargetOrbitRadius = 1.4 --export: (Default: 1.4)
+ReentrySpeed = 1050 --export: (Default: 1050)
+AtmoSpeedLimit = 1050 --export: (Default: 1050)
+SpaceSpeedLimit = 30000 --export: (Default: 30000).
+ReentryAltitude = 2500 --export: (Default: 2500)
+AutoTakeoffAltitude = 1000 --export: (Default: 1000)
+TargetHoverHeight = 50 --export: (Default: 50)
+LandingGearGroundHeight = 0 --export: (Default: 0)
+MaxGameVelocity = 8333.00 --export: (Default: 8333.00)
+AutopilotInterplanetaryThrottle = 1.0 --export: (Default: 1.0)
+warmup = 32 --export: (Default: 32)
 ResolutionX = 1920 --export: (Default: 1920)
 ResolutionY = 1080 --export: (Default: 1080) 
+circleRad = 400 --export: (Default: 400)
 SafeR = 130 --export: (Default: 130)
 SafeG = 224 --export: (Default: 224)
 SafeB = 255 --export: (Default: 255)
@@ -34,39 +66,16 @@ altMeterX = 550  --export: (Default: 550)
 altMeterY = 540 --export: (Default: 540) 
 fuelX = 100 --export: (Default: 100)
 fuelY = 350 --export: (Default: 350)
-circleRad = 400 --export: (Default: 400)
 DeadZone = 50 --export: (Default: 50)
-DisplayOrbit = true --export: (Default: true) 
 OrbitMapSize = 250 --export: (Default: 250)
 OrbitMapX = 75 --export: (Default: 75)
 OrbitMapY = 0 --export: (Default: 0)
-showHud = true --export: (Default: true) 
-ShowOdometer = true --export: (Default: true)
-hideHudOnToggleWidgets = true --export: (Default: true)
-ShiftShowsRemoteButtons = true --export: (Default: true)
-YawStallAngle = 35 --export: (Default: 35)
-PitchStallAngle = 35 --export: (Default: 35)
 speedChangeLarge = 5 --export: (Default: 5)
 speedChangeSmall = 1 --export: (Default: 1)
-brakeLandingRate = 30 --export: (Default: 30)
-MaxPitch = 30 --export: (Default: 30)
-ReentrySpeed = 1050 --export: (Default: 1050)
-AtmoSpeedLimit = 1050 --export: (Default: 1050)
-SpaceSpeedLimit = 30000 --export: (Default: 30000).
-ReentryAltitude = 2500 --export: (Default: 2500)
-AutoTakeoffAltitude = 1000 --export: (Default: 1000)
-TargetHoverHeight = 50 --export: (Default: 50)
-LandingGearGroundHeight = 0 --export: (Default: 0)
-MaxGameVelocity = 8333.00 --export: (Default: 8333.00)
-TargetOrbitRadius = 1.4 --export: (Default: 1.4)
-AutopilotInterplanetaryThrottle = 1.0 --export: (Default: 1.0)
-warmup = 32 --export: (Default: 32)
 MouseYSensitivity = 0.003 --export: (Default: 0.003)
 MouseXSensitivity = 0.003 --export: (Default: 0.003)
-autoRollPreference = false --export: (Default: false)
 autoRollFactor = 2 --export: (Default: 2)
 rollSpeedFactor = 1.5 --export: (Default: 1.5)
-turnAssist = true --export: (Default: true)
 turnAssistFactor = 2 --export: (Default: 2)
 TrajectoryAlignmentStrength = 0.002 --export: (Default: 0.002)
 torqueFactor = 2 --export: (Default: 2)
@@ -80,21 +89,13 @@ fuelTankHandlingSpace = 0 --export: (Default: 0)
 fuelTankHandlingRocket = 0 --export: (Default: 0)
 ContainerOptimization = 0 --export: (Default: 0)
 FuelTankOptimization = 0 --export: (Default: 0)
+minRollVelocity = 150 --export: (Default: 150)
+apTickRate = 0.0166667 --export: (Default: 0.0166667)  
+hudTickRate = 0.0666667 --export: (Default: 0.0666667)
 ExtraLongitudeTags = "none" --export: (Default: "none")
 ExtraLateralTags = "none" --export: (Default: "none")
 ExtraVerticalTags = "none" --export: (Default: "none")
-ExternalAGG = false --export: (Default: false)
-UseSatNav = false --export: (Default: false)
-apTickRate = 0.0166667 --export: (Default: 0.0166667)  
-hudTickRate = 0.0666667 --export: (Default: 0.0666667)
-ShouldCheckDamage = true --export: (Default: true)
-CalculateBrakeLandingSpeed = false --export: (Default: false)
-autoRollRollThreshold = 0 --export: (Default: 0)
-AtmoSpeedAssist = true --export: (Default: true)
-ForceAlignment = false --export: (Default: false)
-minRollVelocity = 150 --export: (Default: 150)
-VertTakeOffEngine = false --export: (Default: false)
-DisplayDeadZone = true --export: (Default: true)
+
 
 -- Auto Variable declarations that store status of ship. Must be global because they get saved/read to Databank due to using _G assignment
 BrakeToggleStatus = BrakeToggleDefault
@@ -7948,12 +7949,12 @@ function script.onInputText(text)
     end
 
     local i
-    local commands = "/commands /setname /G /agg /addlocation /copydatabank /wipedatabank"
+    local commands = "ah-commands ah-setname ah-G ah-agg ah-addlocation ah-copydatabank ah-wipedatabank"
     local command, arguement = nil, nil
-    local commandhelp = "Command List:\n/commands \n/setname <newname> - Updates current selected saved position name\n/G VariableName newValue - Updates global variable to new value\n"..
-            "/G dump - shows all updatable variables with /G\n/agg <targetheight> - Manually set agg target height\n"..
-            "/addlocation savename ::pos{0,2,46.4596,-155.1799,22.6572} - adds a saved location by waypoint, not as accurate as making one at location\n"..
-            "/copydatabank - copies dbHud databank to a blank databank"
+    local commandhelp = "Command List:\nah-commands \nah-setname <newname> - Updates current selected saved position name\nah-G VariableName newValue - Updates global variable to new value\n"..
+            "ah-G dump - shows all updatable variables with ah-G\nah-agg <targetheight> - Manually set agg target height\n"..
+            "ah-addlocation savename ::pos{0,2,46.4596,-155.1799,22.6572} - adds a saved location by waypoint, not as accurate as making one at location\n"..
+            "ah-copydatabank - copies dbHud databank to a blank databank\nah-wipedatabank - wipes the databank of all hud variables but not save variables"
     i = string.find(text, " ")
     command = text
     if i ~= nil then
@@ -7965,9 +7966,9 @@ function script.onInputText(text)
         end
         return
     end
-    if command == "/setname" then 
+    if command == "ah-setname" then 
         if arguement == nil or arguement == "" then
-            msgText = "Usage: /setname Newname"
+            msgText = "Usage: ah-setname Newname"
             return
         end
         if AutopilotTargetIndex > 0 and CustomTarget ~= nil then
@@ -7975,9 +7976,9 @@ function script.onInputText(text)
         else
             msgText = "Select a saved target to rename first"
         end
-    elseif command == "/addlocation" then
+    elseif command == "ah-addlocation" then
         if arguement == nil or arguement == "" or string.find(arguement, "::") == nil then
-            msgText = "Usage: /addlocation savename ::pos{0,2,46.4596,-155.1799,22.6572}"
+            msgText = "Usage: ah-addlocation savename ::pos{0,2,46.4596,-155.1799,22.6572}"
             return
         end
         i = string.find(arguement, "::")
@@ -7990,18 +7991,18 @@ function script.onInputText(text)
         AddNewLocationByWaypoint(savename, planet, pos)   
         msgText = "Added "..savename.." to saved locations,\nplanet "..planet.name.." at "..pos
         msgTimer = 5    
-    elseif command == "/agg" then
+    elseif command == "ah-agg" then
         if arguement == nil or arguement == "" then
-            msgText = "Usage: /agg targetheight"
+            msgText = "Usage: ah-agg targetheight"
             return
         end
         arguement = tonumber(arguement)
         if arguement < 1000 then arguement = 1000 end
         AntigravTargetAltitude = arguement
         msgText = "AGG Target Height set to "..arguement
-    elseif command == "/G" then
+    elseif command == "ah-G" then
         if arguement == nil or arguement == "" then
-            msgText = "Usage: /G VariableName variablevalue\n/G dump - shows all variables"
+            msgText = "Usage: ah-G VariableName variablevalue\nah-G dump - shows all variables"
             return
         end
         if arguement == "dump" then
@@ -8041,13 +8042,13 @@ function script.onInputText(text)
             end
         end
         msgText = "No such global variable: "..globalVariableName
-    elseif command == "/copydatabank" then 
+    elseif command == "ah-copydatabank" then 
         if dbHud_2 then 
             SaveDataBank(true) 
         else
             msgText = "Spare Databank required to copy databank"
         end
-    elseif command == "/wipedatabank" then
+    elseif command == "ah-wipedatabank" then
         if dbHud_1 then
             wipeSaveVariables()
         else
