@@ -4,7 +4,7 @@ Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.013
+VERSION_NUMBER = 1.014
 
 -- User settings.  Must be global to work with databank system as set up due to using _G assignment
 useTheseSettings = false --export: (Default: false)
@@ -130,7 +130,7 @@ LocationIndex = 0
 LastMaxBrake = 0
 LockPitch = nil
 LastMaxBrakeInAtmo = 0
-AntigravTargetAltitude = core.getAltitude()
+AntigravTargetAltitude = 1000
 LastStartTime = 0
 SpaceTarget = false
 LeftAmount = 0
@@ -171,9 +171,7 @@ local jdecode = json.decode
 local jencode = json.encode
 local eleMaxHp = core.getElementMaxHitPointsById
 local atmosphere = unit.getAtmosphereDensity
-local eleHp = core.getElementHitPointsById
 local eleMass = core.getElementMassById
-local eleName = core.getElementNameById
 local constructMass = core.getConstructMass
 local isRemote = Nav.control.isRemoteControlled
 local atan = math.atan
@@ -203,8 +201,6 @@ local halfResolutionY = round(ResolutionY / 2,0)
 local apThrottleSet = false -- Do not save this, because when they re-enter, throttle won't be set anymore
 local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in
 local reentryMode = false
-local MousePitchFactor = 1 -- Mouse control only
-local MouseYawFactor = 1 -- Mouse control only
 local hasGear = false
 local pitchInput = 0
 local pitchInput2 = 0
@@ -255,14 +251,8 @@ local previousPitchAmount = 0
 local damageMessage = ""
 local UnitHidden = true
 local Buttons = {}
-local autopilotStrength = 1 -- How strongly autopilot tries to point at a target
-local alignmentTolerance = 0.001 -- How closely it must align to a planet before accelerating to it
 local resolutionWidth = ResolutionX
 local resolutionHeight = ResolutionY
-local minAtlasX = nil
-local maxAtlasX = nil
-local minAtlasY = nil
-local maxAtlasY = nil
 local valuesAreSet = false
 local doubleCheck = false
 local totalMass = 0
@@ -350,18 +340,18 @@ local function cmdCruise(value, dontSwitch)
 end
 
 local function ConvertResolutionX (v)
-    if ResolutionX == 1920 then 
+    if resolutionWidth == 1920 then 
         return v
     else
-        return round(ResolutionX * v / 1920, 0)
+        return round(resolutionWidth * v / 1920, 0)
     end
 end
 
 local function ConvertResolutionY (v)
-    if ResolutionY == 1080 then 
+    if resolutionHeight == 1080 then 
         return v
     else
-        return round(ResolutionY * v / 1080, 0)
+        return round(resolutionHeight * v / 1080, 0)
     end
 end
 
@@ -431,7 +421,7 @@ local function zeroConvertToMapPosition(targetplanet, worldCoordinates)
     local latitude = 0
     local longitude = 0
     if not float_eq(distance, 0) then
-        local phi = math.atan(coords.y, coords.x)
+        local phi = atan(coords.y, coords.x)
         longitude = phi >= 0 and phi or (2 * math.pi + phi)
         latitude = math.pi / 2 - math.acos(coords.z / distance)
     end
@@ -695,9 +685,9 @@ local function UpdateAutopilotTarget()
     -- Determine the end speed
     if autopilotTargetPlanet.planetname ~= "Space" then
         if autopilotTargetPlanet.hasAtmosphere then 
-            AutopilotTargetOrbit = math.floor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.noAtmosphericDensityAltitude)
+            AutopilotTargetOrbit = mfloor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.noAtmosphericDensityAltitude)
         else
-            AutopilotTargetOrbit = math.floor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.surfaceMaxAltitude)
+            AutopilotTargetOrbit = mfloor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.surfaceMaxAltitude)
         end
     else
         AutopilotTargetOrbit = 1000
@@ -718,7 +708,7 @@ local function UpdateAutopilotTarget()
 end
 
 local function adjustAutopilotTargetIndex(up)
-    if not Autopilot and not VectorToTarget and not spaceLaunch then -- added to prevent crash when index == 0
+    if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then -- added to prevent crash when index == 0
         if up == nil then 
             AutopilotTargetIndex = AutopilotTargetIndex + 1
             if AutopilotTargetIndex > #AtlasOrdered then
@@ -784,7 +774,7 @@ local function ToggleAutopilot()
     end
     TargetSet = false -- No matter what
     -- Toggle Autopilot, as long as the target isn't None
-    if AutopilotTargetIndex > 0 and not Autopilot and not VectorToTarget and not spaceLaunch then
+    if AutopilotTargetIndex > 0 and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
         UpdateAutopilotTarget() -- Make sure we're updated
         local waypoint = zeroConvertToMapPosition(autopilotTargetPlanet, AutopilotTargetCoords)
         waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
@@ -861,6 +851,13 @@ local function ToggleAutopilot()
         HoldAltitude = coreAltitude
         TargetSet = false
         Reentry = false
+        if IntoOrbit then 
+            if not orbitalParams.VectorToTarget then 
+                IntoOrbit = false
+            else
+                orbitalParams.VectorToTarget = false
+            end
+        end
     end
 end
 
@@ -985,6 +982,8 @@ end
 local function AlignToWorldVector(vector, tolerance, damping)
     -- Sets inputs to attempt to point at the autopilot target
     -- Meant to be called from Update or Tick repeatedly
+    local alignmentTolerance = 0.001 -- How closely it must align to a planet before accelerating to it
+    local autopilotStrength = 1 -- How strongly autopilot tries to point at a target
     if not inAtmo or not stalling or hovGndDet ~= -1 or velMag < minAutopilotSpeed then
         local dampingMult = damping
         if dampingMult == nil then
@@ -1091,7 +1090,7 @@ local function BeginReentry()
         HoldAltitude = planet.spaceEngineMinAltitude - 50
         local text, altUnit = getDistanceDisplayString(HoldAltitude)
         msgText = "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text .. altUnit
-        cmdCruise(math.floor(adjustedAtmoSpeedLimit))
+        cmdCruise(mfloor(adjustedAtmoSpeedLimit))
     end
     AutoTakeoff = false -- This got left on somewhere.. 
 end
@@ -2707,7 +2706,7 @@ local function PlanetRef()
         local latitude = 0
         local longitude = 0
         if not float_eq(distance, 0) then
-            local phi = math.atan(coords.y, coords.x)
+            local phi = atan(coords.y, coords.x)
             longitude = phi >= 0 and phi or (2 * math.pi + phi)
             latitude = math.pi / 2 - math.acos(coords.z / distance)
         end
@@ -3218,7 +3217,7 @@ local function Huds() -- Everything HUD releated
 
     local function getRelativePitch(velocity)
         velocity = vec3(velocity)
-        local pitch = -math.deg(math.atan(velocity.y, velocity.z)) + 180
+        local pitch = -math.deg(atan(velocity.y, velocity.z)) + 180
         -- This is 0-360 where 0 is straight up
         pitch = pitch - 90
         -- So now 0 is straight, but we can now get angles up to 420
@@ -3235,7 +3234,7 @@ local function Huds() -- Everything HUD releated
 
     local function getRelativeYaw(velocity)
         velocity = vec3(velocity)
-        local yaw = math.deg(math.atan(velocity.y, velocity.x)) - 90
+        local yaw = math.deg(atan(velocity.y, velocity.x)) - 90
         if yaw < -180 then
             yaw = 360 + yaw
         end
@@ -3290,7 +3289,7 @@ local function Huds() -- Everything HUD releated
                 -- tan(ang) = o/a, tan(ang) = x/y
                 -- atan(x/y) = ang (in radians)
                 -- This is a special overload for doing this on a circle and setting up the signs correctly for the quadrants
-                local angle = math.atan(dy,dx)
+                local angle = atan(dy,dx)
                  -- Project this onto the circle
                 -- These are backwards from what they're supposed to be.  Don't know why, that's just what makes it work apparently
                 local arrowSize = 4
@@ -3347,7 +3346,7 @@ local function Huds() -- Everything HUD releated
     end
 
     local function DrawThrottle(newContent, flightStyle, throt, flightValue)
-        throt = math.floor(throt+0.5) -- Hard-round it to an int
+        throt = mfloor(throt+0.5) -- Hard-round it to an int
         local y1 = throtPosY+10
         local y2 = throtPosY+20
         if isRemote() == 1 and not RemoteHud then
@@ -3383,7 +3382,7 @@ local function Huds() -- Everything HUD releated
         if inAtmo and AtmoSpeedAssist and Nav.axisCommandManager:getAxisCommandType(0) == axisCommandType.byThrottle and ThrottleLimited then
             -- Display a marker for where the AP throttle is putting it, calculatedThrottle
     
-            throt = math.floor(calculatedThrottle*100+0.5)
+            throt = mfloor(calculatedThrottle*100+0.5)
             local throtclass = "red"
             if throt < 0 then
                 throtclass = "red" -- TODO
@@ -3413,7 +3412,7 @@ local function Huds() -- Everything HUD releated
                 <g class="dim txtstart">
                     <text x="%s" y="%s">%s %s</text>
                 </g>
-            ]], throtPosX+10, y1-40, "LIMIT: ", math.floor(MaxGameVelocity*3.6+0.5) .. " km/h")
+            ]], throtPosX+10, y1-40, "LIMIT: ", mfloor(MaxGameVelocity*3.6+0.5) .. " km/h")
         end
     end
 
@@ -3760,7 +3759,7 @@ local function Huds() -- Everything HUD releated
             </head>
             <body>
                 <svg height="100%%" width="100%%" viewBox="0 0 %d %d">
-                ]], bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig, ResolutionX, ResolutionY)
+                ]], bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig, resolutionWidth, resolutionHeight)
         return newContent
     end
 
@@ -3898,6 +3897,7 @@ local function Huds() -- Everything HUD releated
         totalMass = constructMass()
         if not ShowOdometer then return end
         local accel = (vec3(core.getWorldAcceleration()):len() / 9.80665)
+        gravity =  (planet:getGravity(planet.center + (vec3(0, 0, 1) * planet.radius)):len())
         if gravity > 0.1 then
             reqThrust = totalMass * gravity
             maxMass = maxThrust / gravity
@@ -4073,7 +4073,7 @@ function script.onStart()
             end
             return vanillaMaxVolume            
         end
-
+        local eleName = core.getElementNameById
         local checkTanks = (fuelX ~= 0 and fuelY ~= 0)
         for k in pairs(elementsID) do
             local type = core.getElementTypeById(elementsID[k])
@@ -4424,6 +4424,7 @@ function script.onStart()
         -- BEGIN BUTTON DEFINITIONS
     
         -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
+        
         local buttonHeight = 50
         local buttonWidth = 260 -- Defaults
         local brake = MakeButton("Enable Brake Toggle", "Disable Brake Toggle", buttonWidth, buttonHeight,
@@ -4568,6 +4569,10 @@ function script.onStart()
     end
 
     local function SetupAtlas()
+        local minAtlasX = nil
+        local maxAtlasX = nil
+        local minAtlasY = nil
+        local maxAtlasY = nil
         atlas = Atlas()
         for k, v in pairs(atlas[0]) do
             if minAtlasX == nil or v.center.x < minAtlasX then
@@ -5023,6 +5028,8 @@ function script.onTick(timerId)
         local disabledElements = 0
         local colorMod = 0
         local color = ""
+        local eleHp = core.getElementHitPointsById
+
         for k in pairs(elementsID) do
             local hp = 0
             local mhp = 0
@@ -5442,7 +5449,7 @@ function script.onTick(timerId)
         -- Support for SatNav by Trog
         myAutopilotTarget = dbHud_1.getStringValue("SPBAutopilotTargetName")
         if myAutopilotTarget ~= nil and myAutopilotTarget ~= "" and myAutopilotTarget ~= "SatNavNotChanged" then
-            local result = json.decode(dbHud_1.getStringValue("SavedLocations"))
+            local result = jdecode(dbHud_1.getStringValue("SavedLocations"))
             if result ~= nil then
                 _G["SavedLocations"] = result        
                 local index = -1        
@@ -5506,7 +5513,7 @@ function script.onTick(timerId)
         HUD.HUDEpilogue(newContent)
         newContent[#newContent + 1] = stringf(
             [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
-            ResolutionX, ResolutionY)   
+            resolutionWidth, resolutionHeight)   
         if msgText ~= "empty" then
             HUD.DisplayMessage(newContent, msgText)
         end
@@ -5533,7 +5540,7 @@ function script.onTick(timerId)
                 if not Animating and not Animated then
                     local collapsedContent = table.concat(newContent, "")
                     newContent = {}
-                    newContent[#newContent + 1] = stringf("<style>@keyframes test { from { opacity: 0; } to { opacity: 1; } }  body { animation-name: test; animation-duration: 0.5s; }</style><body><svg width='100%%' height='100%%' position='absolute' top='0' left='0'><rect width='100%%' height='100%%' x='0' y='0' position='absolute' style='fill:rgb(6,5,26);'/></svg><svg width='50%%' height='50%%' style='position:absolute;top:30%%;left:25%%' viewbox='0 0 %d %d'>", ResolutionX, ResolutionY)
+                    newContent[#newContent + 1] = stringf("<style>@keyframes test { from { opacity: 0; } to { opacity: 1; } }  body { animation-name: test; animation-duration: 0.5s; }</style><body><svg width='100%%' height='100%%' position='absolute' top='0' left='0'><rect width='100%%' height='100%%' x='0' y='0' position='absolute' style='fill:rgb(6,5,26);'/></svg><svg width='50%%' height='50%%' style='position:absolute;top:30%%;left:25%%' viewbox='0 0 %d %d'>", resolutionWidth, resolutionHeight)
                     newContent[#newContent + 1] = GalaxyMapHTML
                     newContent[#newContent + 1] = collapsedContent
                     newContent[#newContent + 1] = "</body>"
@@ -5545,7 +5552,7 @@ function script.onTick(timerId)
                 elseif Animated then
                     local collapsedContent = table.concat(newContent, "")
                     newContent = {}
-                    newContent[#newContent + 1] = stringf("<body style='background-color:rgb(6,5,26)'><svg width='50%%' height='50%%' style='position:absolute;top:30%%;left:25%%' viewbox='0 0 %d %d'>", ResolutionX, ResolutionY)
+                    newContent[#newContent + 1] = stringf("<body style='background-color:rgb(6,5,26)'><svg width='50%%' height='50%%' style='position:absolute;top:30%%;left:25%%' viewbox='0 0 %d %d'>", resolutionWidth, resolutionHeight)
                     newContent[#newContent + 1] = GalaxyMapHTML
                     newContent[#newContent + 1] = collapsedContent
                     newContent[#newContent + 1] = "</body>"
@@ -5587,6 +5594,7 @@ function script.onTick(timerId)
         -- Localized Functions
         inAtmo = (atmosphere() > 0)
         atmosDensity = atmosphere()
+        coreAltitude = core.getAltitude()
         time = systime()
         local deltaTick = time - lastApTickTime
         lastApTickTime = time
@@ -5598,6 +5606,8 @@ function script.onTick(timerId)
         local adjustedPitch = getPitch(worldVertical, constructForward, (constructRight * corrX) + (constructUp * corrY)) 
         local currentYaw = -math.deg(signedRotationAngle(constructUp, constructVelocity, constructForward))
         local currentPitch = math.deg(signedRotationAngle(constructRight, constructVelocity, constructForward)) -- Let's use a consistent func that uses global velocity
+        local MousePitchFactor = 1 -- Mouse control only
+        local MouseYawFactor = 1 -- Mouse control only
 
         stalling = inAtmo and currentYaw < -YawStallAngle or currentYaw > YawStallAngle or currentPitch < -PitchStallAngle or currentPitch > PitchStallAngle
 
@@ -5612,7 +5622,6 @@ function script.onTick(timerId)
         --if planet.name == "Space" then planet = atlas[0][2] end -- Assign to Alioth since otherwise Space gets returned if at Alioth.
         kepPlanet = Kep(planet)
         orbit = kepPlanet:orbitalParameters(core.getConstructWorldPos(), constructVelocity)
-        coreAltitude = core.getAltitude()
         if coreAltitude == 0 then
             coreAltitude = (worldPos - planet.center):len() - planet.radius
         end
@@ -5628,8 +5637,8 @@ function script.onTick(timerId)
         end
 
         if isRemote() == 1 and screen_1 and screen_1.getMouseY() ~= -1 then
-            simulatedX = screen_1.getMouseX() * ResolutionX
-            simulatedY = screen_1.getMouseY() * ResolutionY
+            simulatedX = screen_1.getMouseX() * resolutionWidth
+            simulatedY = screen_1.getMouseY() * resolutionHeight
         elseif system.isViewLocked() == 0 then
             if isRemote() == 1 and holdingCtrl then
                 if not Animating then
@@ -5747,7 +5756,7 @@ function script.onTick(timerId)
                 elseif inAtmo and AtmoSpeedAssist then 
                     cmdThrottle(1) -- Just let them full throttle if they're in atmo
                 else
-                    cmdCruise(math.floor(adjustedAtmoSpeedLimit)) -- Trouble drawing if it's not an int
+                    cmdCruise(mfloor(adjustedAtmoSpeedLimit)) -- Trouble drawing if it's not an int
                     PlayerThrottle = 0 -- IDK why we do this? 
                 end
             elseif velMag > minAutopilotSpeed then
@@ -5856,9 +5865,9 @@ function script.onTick(timerId)
             end
             if not OrbitTargetSet then
                 if OrbitTargetPlanet.hasAtmosphere then
-                    OrbitTargetOrbit = math.floor(OrbitTargetPlanet.radius*(TargetOrbitRadius-1) + OrbitTargetPlanet.noAtmosphericDensityAltitude)
+                    OrbitTargetOrbit = mfloor(OrbitTargetPlanet.radius*(TargetOrbitRadius-1) + OrbitTargetPlanet.noAtmosphericDensityAltitude)
                 else
-                    OrbitTargetOrbit = math.floor(OrbitTargetPlanet.radius*(TargetOrbitRadius-1) + OrbitTargetPlanet.surfaceMaxAltitude)
+                    OrbitTargetOrbit = mfloor(OrbitTargetPlanet.radius*(TargetOrbitRadius-1) + OrbitTargetPlanet.surfaceMaxAltitude)
                 end
                 OrbitTargetSet = true
             end     
@@ -6030,7 +6039,7 @@ function script.onTick(timerId)
                         pcs = pcs*0.75
                     end
                 end
-                cmdCruise(math.floor(pcs))
+                cmdCruise(mfloor(pcs))
             end
             if orbitPitch ~= nil then
                 if (OrbitPitchPID == nil) then
@@ -6513,7 +6522,7 @@ function script.onTick(timerId)
             
             if Reentry then
 
-                local ReentrySpeed = math.floor(adjustedAtmoSpeedLimit)
+                local ReentrySpeed = mfloor(adjustedAtmoSpeedLimit)
 
                 local brakeDistancer, brakeTimer = Kinematic.computeDistanceAndTime(velMag, ReentrySpeed/3.6, constructMass(), 0, 0, LastMaxBrake - planet.gravity*9.8*constructMass())
                 local distanceToTarget = coreAltitude - (planet.noAtmosphericDensityAltitude + 5000)
@@ -7885,7 +7894,6 @@ function script.onInputText(text)
         for k, v in pairs(autoVariables) do
             if v ~= "SavedLocations" then dbHud_1.setStringValue(v, jencode(nil)) end
         end
-        --dbHud_1.clear()
         msgText =
             "Databank wiped except Save Locations. New variables will save after re-enter seat and exit"
         msgTimer = 5

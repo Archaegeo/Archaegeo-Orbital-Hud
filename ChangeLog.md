@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.100 - MAJOR REFACTOR plus Enhancements.
+- Note that max mass shown up top is based on thrust at current planet (takeoff).  Max Mass shown in Interplanetary Helper is based on brakes at target planet (landing)
 - Re-ordered user variables to group them better in Edit Lua Parameters.
 - Changed command lines to start with ah- instead of / to avoid conflict with other scripts listening for text.
 - Fix erroneous warning message about wrong control scheme.
