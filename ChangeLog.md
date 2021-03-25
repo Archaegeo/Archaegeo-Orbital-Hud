@@ -11,7 +11,11 @@ Version 1.100 - MAJOR REFACTOR plus Enhancements.
 - Changed Freelook toggle from Alt to Alt-3.  This should prevent inadvertantly changing out of ship or camera control when alt-tabbing.
 - Removed `ReentrySpeed` - AtmoSpeedLimit used instead.
 - Removed `ReentryAtltitude` - Calculated variable used instead.
+- Removed `VerticalTakeoffEngines` as a uservariable
 - Added safety check to not show Glide or Parachute re-entry buttons over planets without atmosphere or if in Atmosphere
+- Removed butttons that already have a hotkey (code space savings)
+- Changed Vert Takeoff button to a toggle between Vertical Takeoff and Horizontal Takeoff modes.
+    - Changed Alt-6 to do takeoff based on mode.
 - Major refactoring of script.
 - Cleaned up tab and commenting to allow for vscode collapse readability.
 

@@ -7,9 +7,10 @@ script = {}  -- wrappable container for all the code. Different than normal DU L
 VERSION_NUMBER = 1.015
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
-    -- True/False variables
     useTheseSettings = false --export: (Default: false)
     userControlScheme = "virtual joystick" --export: (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard"
+    
+    -- True/False variables
     freeLookToggle = true --export: (Default: true)
     BrakeToggleDefault = true --export: (Default: true)
     RemoteFreeze = false --export: (Default: false)
@@ -26,7 +27,6 @@ VERSION_NUMBER = 1.015
     autoRollRollThreshold = 0 --export: (Default: 0)
     AtmoSpeedAssist = true --export: (Default: true)
     ForceAlignment = false --export: (Default: false)
-    VertTakeOffEngine = false --export: (Default: false)
     DisplayDeadZone = true --export: (Default: true)
     showHud = true --export: (Default: true) 
     ShowOdometer = true --export: (Default: true)
@@ -114,10 +114,11 @@ VERSION_NUMBER = 1.015
                         "vSpdMeterX", "vSpdMeterY", "altMeterX", "altMeterY", "fuelX","fuelY", "LandingGearGroundHeight", "TrajectoryAlignmentStrength",
                         "RemoteHud", "YawStallAngle", "PitchStallAngle", "ResolutionX", "ResolutionY", "UseSatNav", "FuelTankOptimization", "ContainerOptimization",
                         "ExtraLongitudeTags", "ExtraLateralTags", "ExtraVerticalTags", "OrbitMapSize", "OrbitMapX", "OrbitMapY", "DisplayOrbit", "CalculateBrakeLandingSpeed",
-                        "ForceAlignment", "autoRollRollThreshold", "minRollVelocity", "VertTakeOffEngine", "PvPR", "PvPG", "PvPB", "DisplayDeadZone"}
+                        "ForceAlignment", "autoRollRollThreshold", "minRollVelocity", "PvPR", "PvPG", "PvPB", "DisplayDeadZone"}
     
 -- Auto Variable declarations that store status of ship. Must be global because they get saved/read to Databank due to using _G assignment
     BrakeToggleStatus = BrakeToggleDefault
+    VertTakeOffEngine = false 
     BrakeIsOn = false
     RetrogradeIsOn = false
     ProgradeIsOn = false
@@ -155,7 +156,7 @@ VERSION_NUMBER = 1.015
     LeftAmount = 0
     IntoOrbit = false
     -- autoVariables are those that are stored on databank to save ships status but are not user settable
-        local autoVariables = {"SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
+        local autoVariables = {"VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
                     "Autopilot", "TurnBurn", "AltitudeHold", "BrakeLanding",
                     "Reentry", "AutoTakeoff", "HoldAltitude", "AutopilotAccelerating", "AutopilotBraking",
                     "AutopilotCruising", "AutopilotRealigned", "AutopilotEndSpeed", "AutopilotStatus",
@@ -179,7 +180,10 @@ VERSION_NUMBER = 1.015
     local tostring = tostring
     local utilsround = utils.round
     local systime = system.getTime
-
+    local function round(num, numDecimalPlaces)
+        local mult = 10 ^ (numDecimalPlaces or 0)
+        return mfloor(num * mult + 0.5) / mult
+    end
 -- Variables that we declare local outside script because they will be treated as global but get local effectiveness
     local PrimaryR = SafeR
     local PrimaryB = SafeB
@@ -314,10 +318,6 @@ VERSION_NUMBER = 1.015
     local worldPos = vec3(core.getConstructWorldPos())
 
 -- Function Definitions that are used in more than one area
-    local function round(num, numDecimalPlaces)
-        local mult = 10 ^ (numDecimalPlaces or 0)
-        return mfloor(num * mult + 0.5) / mult
-    end
 
     local function cmdThrottle(value, dontSwitch)
         if dontSwitch == nil then
@@ -508,6 +508,28 @@ VERSION_NUMBER = 1.015
             return -1
         end
     end  
+    
+    local function ToggleVerticalTakeoff()
+        if VertTakeOff then
+            AltitudeHold = false
+            StrongBrakes = true -- We don't care about this anymore
+            Reentry = false
+            AutoTakeoff = false
+            VertTakeOff = false
+            AltitudeHold = false
+            BrakeLanding = true
+            autoRoll = true
+            upAmount = 0
+        else
+            VertTakeOff = true
+            AltitudeHold = false
+            OrbitAchieved = false
+            GearExtended = false
+            Nav.control.retractLandingGears()
+            Nav.axisCommandManager:setTargetGroundAltitude(TargetHoverHeight) -- Hard set this for takeoff, you wouldn't use takeoff from a hangar
+            BrakeIsOn = true
+        end
+    end
 
     local function ToggleAltitudeHold()  
         if (time - ahDoubleClick) < 1.5 then
@@ -538,7 +560,7 @@ VERSION_NUMBER = 1.015
             autoRoll = true
             LockPitch = nil
             OrbitAchieved = false
-            if (hoverDetectGround() == -1) then -- Never autotakeoff in space
+            if (hoverDetectGround() == -1 and not VertTakeOff) then 
                 AutoTakeoff = false
                 if ahDoubleClick > -1 then
                     if unit.getClosestPlanetInfluence() > 0 then
@@ -553,6 +575,8 @@ VERSION_NUMBER = 1.015
                         Nav.control.cancelCurrentControlMasterMode()
                     end
                 end
+            elseif VertTakeOffEngine or VertTakeOff then 
+                ToggleVerticalTakeoff()
             else
                 AutoTakeoff = true
                 if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
@@ -564,6 +588,8 @@ VERSION_NUMBER = 1.015
             if spaceLaunch then HoldAltitude = 100000 end
         else
             if IntoOrbit then ToggleIntoOrbit() end
+            if VertTakeOff then 
+                ToggleVerticalTakeoff() end
             autoRoll = autoRollPreference
             AutoTakeoff = false
             VectorToTarget = false
@@ -1940,9 +1966,9 @@ VERSION_NUMBER = 1.015
             if nearSide ~= nil and farSide ~= nil then
                 atmoDistance = math.min(nearSide,farSide)
             end
-            if AltitudeHold then
+            if AltitudeHold or VertTakeOff then
+                local displayText, displayUnit = getDistanceDisplayString(HoldAltitude, 2)
                 if AutoTakeoff and not IntoOrbit then
-                    local displayText, displayUnit = getDistanceDisplayString(HoldAltitude, 2)
                     newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Ascent to %s</text>]],
                                                     warningX, apY, displayText.. displayUnit)
                     if BrakeIsOn then
@@ -1950,8 +1976,15 @@ VERSION_NUMBER = 1.015
                                                         [[<text class="crit" x="%d" y="%d">Throttle Up and Disengage Brake For Takeoff</text>]],
                                                         warningX, apY + 50)
                     end
+                elseif VertTakeOff then
+                    if antigrav and antigrav.getState() == 1 then
+                        displayText, displayUnit = getDistanceDisplayString(antigrav.getBaseAltitude(),2)
+                    else
+                        displayText, displayUnit = "Orbit", ""
+                    end
+                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Ascent to %s</text>]],
+                                                    warningX, apY, displayText.. displayUnit)                    
                 else
-                    local displayText, displayUnit = getDistanceDisplayString(HoldAltitude, 2)
                     newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Altitude Hold: %s</text>]],
                                                     warningX, apY, displayText.. displayUnit)
                 end
@@ -4328,49 +4361,6 @@ VERSION_NUMBER = 1.015
                     AutoTakeoff = false
             end
 
-            local function ToggleAutoLanding()
-                BrakeLanding = not BrakeLanding
-                if BrakeLanding then
-                    StrongBrakes = ((planet.gravity * 9.80665 * constructMass()) < LastMaxBrake)
-                    AltitudeHold = false
-                    AutoTakeoff = false
-                    LockPitch = nil
-                    BrakeLanding = true
-                    Nav.axisCommandManager:setThrottleCommand(axisCommandId.longitudinal, 0)
-                    PlayerThrottle = 0
-                end
-            end
-
-            local function ToggleAutoTakeoff()
-                if AutoTakeoff then
-                    -- Turn it off, and also AltitudeHold cuz it's weird if you cancel and that's still going 
-                    AutoTakeoff = false
-                    if AltitudeHold then
-                        ToggleAltitudeHold()
-                    end
-                elseif VertTakeOff then
-                    BrakeLanding = true
-                    VertTakeOff = false
-                    AltitudeHold = false
-                else
-                    if VertTakeOffEngine then
-                        VertTakeOff = true
-                        AltitudeHold = false
-                    else
-                        if not AltitudeHold then
-                            ToggleAltitudeHold()
-                        end
-                        AutoTakeoff = true
-                        HoldAltitude = coreAltitude + AutoTakeoffAltitude
-                    end
-                    OrbitAchieved = false
-                    GearExtended = false
-                    Nav.control.retractLandingGears()
-                    Nav.axisCommandManager:setTargetGroundAltitude(500) -- Hard set this for takeoff, you wouldn't use takeoff from a hangar
-                    BrakeIsOn = true
-                end
-            end
-
             local function ProgradeToggle()
                 -- Toggle Progrades
                 gradeToggle(1)
@@ -4477,28 +4467,8 @@ VERSION_NUMBER = 1.015
             MakeButton("Enable Turn and Burn", "Disable Turn and Burn", buttonWidth, buttonHeight, x, y, function()
                 return TurnBurn
             end, ToggleTurnBurn)
-            MakeButton("Engage Altitude Hold", "Disable Altitude Hold", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
-                function()
-                    return AltitudeHold
-                end, ToggleAltitudeHold)
-            y = y + buttonHeight + 20
-            MakeButton("Engage Autoland", "Disable Autoland", buttonWidth, buttonHeight, x, y, function()
-                return AutoLanding
-            end, ToggleAutoLanding)
-            local engageMsg, dengageMsg, tOSwitch
-            if VertTakeOffEngine then
-                engageMsg = "Engage Vertical Takeoff"
-                dengageMsg = "Disable Vertical Takeoff"
-                tOSwitch = VertTakeOff
-            else
-                engageMsg = "Engage Auto Takeoff"
-                dengageMsg = "Disable Auto Takeoff"
-                tOSwitch = AutoTakeoff
-            end
-            MakeButton(engageMsg, dengageMsg, buttonWidth, buttonHeight, x + buttonWidth + 20, y,
-                function()
-                    return tOSwitch
-                end, ToggleAutoTakeoff)
+            MakeButton("Horizontal Takeoff Mode", "Vertical Takeoff Mode", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
+                function() return VertTakeOffEngine end, function () VertTakeOffEngine = not VertTakeOffEngine end)
             y = y + buttonHeight + 20
             MakeButton("Show Orbit Display", "Hide Orbit Display", buttonWidth, buttonHeight, x, y,
                 function()
@@ -7518,7 +7488,7 @@ VERSION_NUMBER = 1.015
         end    
 
         if action == "gear" then
-            
+            GearExtended = not GearExtended
             if GearExtended then
                 VectorToTarget = false
                 LockPitch = nil
