@@ -4,7 +4,7 @@ Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.015
+VERSION_NUMBER = 1.016
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -156,7 +156,7 @@ VERSION_NUMBER = 1.015
     LeftAmount = 0
     IntoOrbit = false
     -- autoVariables are those that are stored on databank to save ships status but are not user settable
-        local autoVariables = {"VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
+        local autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
                     "Autopilot", "TurnBurn", "AltitudeHold", "BrakeLanding",
                     "Reentry", "AutoTakeoff", "HoldAltitude", "AutopilotAccelerating", "AutopilotBraking",
                     "AutopilotCruising", "AutopilotRealigned", "AutopilotEndSpeed", "AutopilotStatus",
@@ -520,6 +520,15 @@ VERSION_NUMBER = 1.015
             BrakeLanding = true
             autoRoll = true
             upAmount = 0
+            if inAtmo and hovGndDet == -1 then
+                BrakeLanding = false
+                cmdThrottle(1, true)
+                PlayerThrottle = 1
+                AltitudeHold = true
+                HoldAltitude = coreAltitude
+                upAmount = 0
+                Nav:setEngineForceCommand('thrust analog vertical fueled ', vec3(), 1)
+            end
         else
             VertTakeOff = true
             AltitudeHold = false
@@ -589,7 +598,8 @@ VERSION_NUMBER = 1.015
         else
             if IntoOrbit then ToggleIntoOrbit() end
             if VertTakeOff then 
-                ToggleVerticalTakeoff() end
+                ToggleVerticalTakeoff() 
+            end
             autoRoll = autoRollPreference
             AutoTakeoff = false
             VectorToTarget = false
@@ -827,6 +837,8 @@ VERSION_NUMBER = 1.015
                         else
                             spaceLand = true
                             ProgradeIsOn = true
+                            OrbitTargetOrbit = planet.noAtmosphericDensityAltitude + 1000
+                            OrbitTargetSet = true
                             if AltitudeHold then ToggleAltitudeHold() end -- Make sure to cancel this.
                         end
                     end
@@ -4468,7 +4480,15 @@ VERSION_NUMBER = 1.015
                 return TurnBurn
             end, ToggleTurnBurn)
             MakeButton("Horizontal Takeoff Mode", "Vertical Takeoff Mode", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
-                function() return VertTakeOffEngine end, function () VertTakeOffEngine = not VertTakeOffEngine end)
+                function() return VertTakeOffEngine end, 
+                function () 
+                    VertTakeOffEngine = not VertTakeOffEngine 
+                    if VertTakeOffEngine then 
+                        msgText = "Vertical Takeoff Mode"
+                    else
+                        msgText = "Horizontal Takeoff Mode"
+                    end
+                end)
             y = y + buttonHeight + 20
             MakeButton("Show Orbit Display", "Hide Orbit Display", buttonWidth, buttonHeight, x, y,
                 function()
@@ -5712,14 +5732,18 @@ VERSION_NUMBER = 1.015
                         autoRoll = true
                         if aligned and (math.abs(roll) < 2 or math.abs(adjustedPitch) > 85) and velMag >= adjustedAtmoSpeedLimit/3.6-1 then
                                 -- Try to force it to get full speed toward target, so it goes straight to throttle and all is well
+                            if (vec3(targetCoords) - worldPos):len() > 40000 then
+                                ProgradeIsOn = false
+                                IntoOrbit = true
+                            else    
                                 BrakeIsOn = false
                                 ProgradeIsOn = false
                                 reentryMode = true
                                 spaceLand = false
                                 finalLand = true
                                 Autopilot = false
-                                --autoRoll = autoRollPreference   
                                 BeginReentry()
+                            end
                         elseif inAtmo and AtmoSpeedAssist then 
                             cmdThrottle(1) -- Just let them full throttle if they're in atmo
                         else
@@ -5737,7 +5761,7 @@ VERSION_NUMBER = 1.015
                         AlignToWorldVector(-(vec3(constructVelocity)))
                     end
                 end
-                if not ProgradeIsOn and spaceLand then 
+                if not ProgradeIsOn and spaceLand and not IntoOrbit then 
                     if atmosDensity == 0 then 
                         reentryMode = true
                         BeginReentry()
@@ -5825,7 +5849,6 @@ VERSION_NUMBER = 1.015
                     if OrbitTargetPlanet == nil then
                         if VectorToTarget then
                             OrbitTargetPlanet = autopilotTargetPlanet
-                            
                         else
                             OrbitTargetPlanet = planet
                         end
@@ -5837,12 +5860,11 @@ VERSION_NUMBER = 1.015
                             OrbitTargetOrbit = mfloor(OrbitTargetPlanet.radius*(TargetOrbitRadius-1) + OrbitTargetPlanet.surfaceMaxAltitude)
                         end
                         OrbitTargetSet = true
-                    end     
+                    end
                     if AltitudeHold or VectorToTarget then
                         if not spaceLaunch then 
                             OrbitTargetOrbit = round(HoldAltitude,1)
                             orbitAligned = true
-                            -- orbitalParams.AltitudeHold = AltitudeHold
                             AltitudeHold = false
                         end
                         if VectorToTarget then
@@ -5866,7 +5888,7 @@ VERSION_NUMBER = 1.015
                                     cmdThrottle(0)
                                     OrbitAchieved = true
                                     orbitPitch = 0
-                                    if orbitalParams.VectorToTarget then
+                                    if orbitalParams.VectorToTarget or spaceLand then
                                         -- Orbit to target...
 
                                         local targetVec = CustomTarget.position - worldPos
@@ -5880,12 +5902,13 @@ VERSION_NUMBER = 1.015
                                             --BrakeIsOn = false -- Leave brakes on to be safe while we align prograde
                                             AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
                                             reentryMode = true
+                                            spaceLand = false
                                             finalLand = true
                                             BeginReentry()
                                             orbitalParams.VectorToTarget = false -- Let it disable orbit
                                         end
                                     end
-                                    if not orbitalParams.VectorToTarget then
+                                    if not orbitalParams.VectorToTarget and not spaceLand then
                                         orbitMsg = nil
                                         orbitalRecover = false
                                         OrbitTargetSet = false

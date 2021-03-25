@@ -1,6 +1,6 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.100 - MAJOR REFACTOR plus Enhancements.
+Version 1.100 - MAJOR REFACTOR, code cleanup, enhancements (Harrier Takeoff).
 - Note that max mass shown up top is based on thrust at current planet (takeoff).  Max Mass shown in Interplanetary Helper is based on brakes at target planet (landing)
 - Re-ordered user variables to group them better in Edit Lua Parameters.
 - Changed command lines to start with ah- instead of / to avoid conflict with other scripts listening for text.
@@ -16,6 +16,8 @@ Version 1.100 - MAJOR REFACTOR plus Enhancements.
 - Removed butttons that already have a hotkey (code space savings)
 - Changed Vert Takeoff button to a toggle between Vertical Takeoff and Horizontal Takeoff modes.
     - Changed Alt-6 to do takeoff based on mode.
+    - Cancelling Vert Takeoff with Alt-6 before reaching end of atmosphere will engage horizontal alt-hold (Harrier takeoff)
+- Change Alt-4 when < 100k from planet to align to waypoint and then orbit in. (Idea by Dimencia, coded differently)
 - Major refactoring of script.
 - Cleaned up tab and commenting to allow for vscode collapse readability.
 
