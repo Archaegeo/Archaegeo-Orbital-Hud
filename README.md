@@ -185,10 +185,8 @@ Right click the seat and go to _Advanced_ -> _Edit Lua Parameters_ to see them a
 * speedChangeSmall = 1 --  (Default: 1) the speed change that occurs while you hold speed up/down, default is 1 (5% throttle change).
 * brakeLandingRate = 30 --  (Default: 30) Max loss of altitude speed in m/s when doing a brake landing, default 30.  This is to prevent "bouncing" as hover/boosters catch you.  Do not use negative number.
 * MaxPitch = 30 --  (Default: 30) Maximum allowed pitch during takeoff and altitude changes while in altitude hold.  You can set higher or lower depending on your ships capabilities.
-* ReentrySpeed = 1050 --  (Default: 1050) Target re-entry speed once in atmosphere in km/h. 
 * AtmoSpeedLimit = 1050 --  (Default: 1050) Speed limit in Atmosphere in km/h.  If you exceed this limit the ship will attempt to break till below this limit.
 * SpaceSpeedLimit = 30000 --  (Default: 30000) Space speed limit in KM/H.  If you hit this speed but are not in active autopilot, engines will turn off.
-* ReentryAltitude = 2500 --  (Default: 2500) Target alititude when using re-entry.
 * AutoTakeoffAltitude = 1000 --  (Default: 1000) How high above your ground starting position AutoTakeoff tries to put you
 * TargetHoverHeight = 50 --  (Default: 50) Hover height when retracting landing gear
 * LandingGearGroundHeight = 0 -- (Default: 0) Set to AGL-1 when on ground (or 0)

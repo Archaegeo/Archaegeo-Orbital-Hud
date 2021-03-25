@@ -9,7 +9,11 @@ Version 1.100 - MAJOR REFACTOR plus Enhancements.
 - Removed Alt-7-7 to wipe databank.. Use ah-wipedatabank command instead. (reclaiming hotkeys)
 - Moved Alt-3 (widget vanilla view toggle) to Alt-7. Not needed to fix the old tab slideshow anymore, but still needed sometimes (busy marketplace)
 - Changed Freelook toggle from Alt to Alt-3.  This should prevent inadvertantly changing out of ship or camera control when alt-tabbing.
+- Removed `ReentrySpeed` - AtmoSpeedLimit used instead.
+- Removed `ReentryAtltitude` - Calculated variable used instead.
+- Added safety check to not show Glide or Parachute re-entry buttons over planets without atmosphere or if in Atmosphere
 - Major refactoring of script.
+- Cleaned up tab and commenting to allow for vscode collapse readability.
 
 Version Reset to 1.000
 - Reset version to differentiate from DU Orbtial Hud version.
