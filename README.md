@@ -1,5 +1,5 @@
 
-
+# WARNING - A LOT OF THIS IS OUT OF DATE AND I AM LOOKING FOR A GOOD DOCUMENT WRITER.
 
 <!--Intro information-->
 # Arch-Orbital-HUD
@@ -23,6 +23,7 @@
 |[Credits](#credits) |
 <!--List of features both shorlist and expanded details-->
 # Features List
+https://docs.google.com/document/d/1HcoCwX9QqZt6SBJYQAZOf7sYLWXVJeUnE68RndYnPDY/edit?usp=sharing 
 
 | HUD (Heads-Up) | Autopilot | Brakes|
 | --- | --- | --- |
@@ -32,6 +33,7 @@ Pitch | Inter-planetary transit routes | Coast landings (brake force < construct
 Roll | Orbital insertion | Auto-roll
 Yaw | Transit-to-orbit | Pitch lock
 Vertical speed indicator | LUA chat commands | Waypoint management
+Vertical Takeoff to AGG, To Orbit, or to Horizontal flight
 
 
 | Feature Details / Additional Features | 
@@ -57,7 +59,7 @@ Vertical speed indicator | LUA chat commands | Waypoint management
 |Free-look mode (__ALT__ as toggle).|
 |User Parameters for customization of your HUD elements (e.g. x/y screen position) and your flight preference to your ship capabilities.|
 |Save parameters between HUD version updates (requires linking of a databank!).|
-|Manual Control HotKey|Pressing Stop engines (__Z__ by default) 2x within 1 second will clear ALL AP / special functions. You will be at 0 engine in throttle mode with brakes off. (normal __Z__ behavior) but all special features like altitude hold or brake landing or anything else will turn off. (Give me manual control key) Pressing it just once is normal vanilla stop all engines. NOTE: This will NOT turn off antigrav or stop a warp in progress.|
+|Manual Control HotKey|Pressing Stop engines (__MMB__ by default) 2x within 1 second will clear ALL AP / special functions. You will be at 0 engine in throttle mode with brakes off. (normal __MMB__ behavior) but all special features like altitude hold or brake landing or anything else will turn off. (Give me manual control key) Pressing it just once is normal vanilla stop all engines. NOTE: This will NOT turn off antigrav or stop a warp in progress.|
 |Ability to change HUD colors (RGB in PrimaryR, PrimaryG, PrimaryB)|
 |Stall Warning if your alignment drops below configured StallAngle (35 by default) - EVERY SHIP WILL BE DIFFERENT!|
 
@@ -104,13 +106,12 @@ Vertical speed indicator | LUA chat commands | Waypoint management
 |UI Overlay|Hold __SHIFT__|Displays the UI overlay with mouse-over buttons. Hover with mouse over a button (not click!) and let go of SHIFT to select it.|
 |Save Location|Hold __SHIFT__ then selecting the __Save Position__ mouseover| Will save the current location in the databank (if installed). This location may be selected by the autopilot option to automatically fly to the destination.  It will _not_ monitor for impeeding structures or ships. Monitor during use. Locations will be named by planet/moon and a number.|
 |Update Location|Hold __SHIFT__ then selecting the __Update Position__ mouseover| Select a previously saved location in the Interplanetary Helper to change its name with the name of the closest atmo radar target name. This is a workaround until manual editing/naming of locations is available.|
-|Free Look|__ALT__|Toggles free-look mode (mouse moves camera around ship, not flight input). Please note that your view does not auto center when exiting Free Look. Free Look must be enabled to zoom in 3rd person mode.|
-|Toggle HUD|__Option 3__, or __ALT-3__|Toggles the primary hud display HUD on/off, i.e. if off the vanilla widgets will appear.|
+|Freelook|__Option 3__, or __ALT-3__|Toggles freelook camera|
 |Autopilot Destination / Destination Select|__Option 1__ and __Option 2__, <br/>__ALT-1__ and __ALT-2__ or <br>__SHIFT-R__ and __SHIFT-T__|Cycles through autopilot destinations (planets / bodies / saved waypoints).|
-|Autopilot|__Option 4__, or __ALT-4__|Ship will tilt up at preset max angle (30 by default) and fly to 50km altitude and then engage autopilot to selected planet/moon. Once it arrives it will establish orbit and align to prograde. If a saved location was chosen, it will glide entry in and then autopilot to location. NOTE: It does not check to see if anything is in front of you on ground (like normal) nor if your target planet is behind current planet even 50km in space. DO NOT USE if your ship cannot power out of atmosphere at 30 deg with 100% engines. USE WITH CAUTION FIRST TIME. Tested Alioth to Sanct and Sanct to Alioth repeatedly.|
+|Autopilot|__Option 4__, or __ALT-4__|Alt-4 will fly to selected waypoint. Alt-4-4 will perform orbital hop to same player waypoint.|
 |Lock Pitch|__Option 5__, or __ALT-5__|Will lock your target pitch at current pitch and attempt to maintain that pitch (this is different from Altitude Hold) Most other AP features will cancel Lock Pitch.
 |Altitude Hold|__Option 6__, or __ALT-6__|Toggles the altitude hold functionality. Tries to keep the current altitude in spite of planetary curvatore. Depending on ship's lift/force, the actual height may be less than the targeted height! Adjust altitude with (left) __ALT-C__ (down) and (left) __ALT-SPACE__ (up) in increments (growing increments if key is kept held down).|
-|Save / Clear Databank Settings|__Option 7__, or __ALT-7__|Save or clear (double tap!) the currently saved configuration settings.|
+|Vanilla Widget Look|__Option 7__, or __ALT-7__|Toggles vanilla widget look|
 |Follow Me|__Option 8__, or __ALT-8__|Engage follow mode if you are using Remote Control.|
 |Anti-Gravity Generator|__ALT-G__ (default mapping) or <br/>HUD button|Once engaged, hold __ALT-C__ to lower target height or __ALT-Space__ to raise target height. The AGG's actual height will only change at 4m/s up or down toward the target altitude. Initiate new target altitude before leaving seat and AGG will continue changing.|
 <!--Messy Messy details. This needs to be cleaned up.-->
