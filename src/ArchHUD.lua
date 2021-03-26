@@ -4,7 +4,7 @@ Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.100
+VERSION_NUMBER = 1.110
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -24,7 +24,6 @@ VERSION_NUMBER = 1.100
     UseSatNav = false --export: (Default: false)
     ShouldCheckDamage = true --export: (Default: true)
     CalculateBrakeLandingSpeed = false --export: (Default: false)
-    autoRollRollThreshold = 0 --export: (Default: 0)
     AtmoSpeedAssist = true --export: (Default: true)
     ForceAlignment = false --export: (Default: false)
     DisplayDeadZone = true --export: (Default: true)
@@ -73,7 +72,7 @@ VERSION_NUMBER = 1.100
     altMeterX = 550  --export: (Default: 550)
     altMeterY = 540 --export: (Default: 540) 
     fuelX = 100 --export: (Default: 100)
-    fuelY = 350 --export: (Default: 350)
+    fuelY = 300 --export: (Default: 300)
     DeadZone = 50 --export: (Default: 50)
     OrbitMapSize = 250 --export: (Default: 250)
     OrbitMapX = 75 --export: (Default: 75)
@@ -86,6 +85,7 @@ VERSION_NUMBER = 1.100
     MouseXSensitivity = 0.003 --export: (Default: 0.003)
     autoRollFactor = 2 --export: (Default: 2)
     rollSpeedFactor = 1.5 --export: (Default: 1.5)
+    autoRollRollThreshold = 0 --export: (Default: 0)
     turnAssistFactor = 2 --export: (Default: 2)
     TrajectoryAlignmentStrength = 0.002 --export: (Default: 0.002)
     torqueFactor = 2 --export: (Default: 2)
@@ -155,8 +155,9 @@ VERSION_NUMBER = 1.100
     SpaceTarget = false
     LeftAmount = 0
     IntoOrbit = false
+    showHelp = true
     -- autoVariables are those that are stored on databank to save ships status but are not user settable
-        local autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
+        local autoVariables = {"showHelp","VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
                     "Autopilot", "TurnBurn", "AltitudeHold", "BrakeLanding",
                     "Reentry", "AutoTakeoff", "HoldAltitude", "AutopilotAccelerating", "AutopilotBraking",
                     "AutopilotCruising", "AutopilotRealigned", "AutopilotEndSpeed", "AutopilotStatus",
@@ -570,7 +571,8 @@ VERSION_NUMBER = 1.100
             autoRoll = true
             LockPitch = nil
             OrbitAchieved = false
-            if (hoverDetectGround() == -1 and not VertTakeOffEngine) then 
+            if hovGndDet == -1 then 
+                if VertTakeOff then ToggleVerticalTakeoff() end
                 AutoTakeoff = false
                 if ahDoubleClick > -1 then
                     if unit.getClosestPlanetInfluence() > 0 then
@@ -585,7 +587,7 @@ VERSION_NUMBER = 1.100
                         Nav.control.cancelCurrentControlMasterMode()
                     end
                 end
-            elseif (VertTakeOffEngine or VertTakeOff) and UpVertAtmoEngine then 
+            elseif VertTakeOffEngine and UpVertAtmoEngine then 
                 ToggleVerticalTakeoff()
             else
                 AutoTakeoff = true
@@ -789,7 +791,10 @@ VERSION_NUMBER = 1.100
             end
             VectorStatus = "Proceeding to Waypoint"
         end
-
+        if (hovGndDet ~= -1 and VertTakeOffEngine) or VertTakeOff then
+            msgText = "Vertical Takeoff autopilot not supported.\nFinish or Disable Vertical Takeoff"
+            return
+        end
         if (time - apDoubleClick) < 1.5 and atmosDensity > 0 then
             if not SpaceEngines then
                 msgText = "No space engines detected, Orbital Hop not supported"
@@ -996,6 +1001,9 @@ VERSION_NUMBER = 1.100
             BrakeLanding = false
             AutoLanding = false
             AltitudeHold = false -- And stop alt hold
+            if VertTakeOff then
+                ToggleVerticalTakeoff()
+            end
             if IntoOrbit then
                 ToggleIntoOrbit()
             end
@@ -1896,7 +1904,7 @@ VERSION_NUMBER = 1.100
 
         local function DrawWarnings(newContent)
             newContent[#newContent + 1] = stringf(
-                                            [[<text class="hudver" x="%d" y="%d">DU Hud Version: %.3f</text>]], 
+                                            [[<text class="hudver" x="%d" y="%d">ARCH Hud Version: %.3f</text>]], 
                                             ConvertResolutionX(1900), ConvertResolutionY(1070), VERSION_NUMBER)
             newContent[#newContent + 1] = [[<g class="warnings">]]
             if unit.isMouseControlActivated() == 1 then
@@ -2165,6 +2173,60 @@ VERSION_NUMBER = 1.100
                 return newContent
             end
         end
+
+        local function DisplayHelp(newContent)
+            local function addTable(table1, table2)
+                for i = 1, #table2 do
+                    table.insert(table1, table2[i])
+                end
+                return table1
+            end
+            local x = 50
+            local y = 525
+            local help = {"Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-3: Toggle Vanilla Widget view"}
+            local helpAtmo = {  "Alt-4: Autopilot in atmo to target", "Alt-4-4: Autopilot to +1k over atmosphere and orbit to target", "Alt-5: Lock Pitch at current pitch",
+                                "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", "Alt-9: Activate Gyroscope"}
+            local helpSpace = {"Alt-4 (Alt < 100k): Autopilot to Orbit and land", "Alt-4 (Alt > 100k): Autopilot to target", "Alt-6: Orbit at current altitude",
+                                "Alt-6-6: Orbit at 1k over atmosphere", "Alt-9: Activate Gyroscope"}
+            local helpGeneral = {"CTRL: Toggle Brakes on and off, cancels active AP", "LeftAlt: Tap to shift freelook on and off", "Shift: Hold while not in freelook to see Buttons",
+                                "Type ah-commands in lua chat to see text commands"}
+            if inAtmo then 
+                addTable(help, helpAtmo)
+                table.insert(help, "---------------------------------------")
+                if VertTakeOff then
+                    table.insert(help,"Hit Alt-6 before exiting Atmosphere during VTO to hold in level flight")
+                elseif hovGndDet ~= -1 then
+                    if antigrav then
+                        if antigrav.getState() == 1 then
+                            table.insert(help, "Alt-6: AGG on, will takeoff to AGG Height")
+                        else
+                            table.insert(help,  "Turn on AGG to takeoff to AGG Height")
+                        end
+                    end
+                    if VertTakeOffEngine then 
+                        table.insert(help, "Alt-6: Vertital Engines On, begins Vertical Takeoff.")
+                    else
+                        table.insert(help, "Alt-4/Alt-6: Autotakeoff if below hoverheight")
+                    end
+                else
+                    table.insert(help,"G: Begin BrakeLanding or Land")
+                end
+            else
+                addTable(help, helpSpace)
+            end
+            if AltitudeHold then 
+                table.insert(help, "Alt-Spacebar/Alt-C will raise/lower target height")
+            end
+            table.insert(help, "---------------------------------------")   
+            addTable(help, helpGeneral)
+            newContent[#newContent + 1] = [[<g class="pdim txt txtstart">]]
+            for i = 1, #help do
+                y=y+10
+                newContent[#newContent + 1] = stringf([[<text x=%d y="%d">%s</text>]],
+                 x, y, help[i])
+            end
+            newContent[#newContent + 1] = "</g>"
+        end
             
         function Hud.HUDPrologue(newContent)
             if not notPvPZone then -- misnamed variable, fix later
@@ -2339,6 +2401,7 @@ VERSION_NUMBER = 1.100
         
             DrawWarnings(newContent)
             DisplayOrbitScreen(newContent)
+            if showHelp then DisplayHelp(newContent) end
             if screen_2 then
                 local pos = worldPos
                 local x = 960 + pos.x / MapXRatio
@@ -4483,6 +4546,8 @@ VERSION_NUMBER = 1.100
             buttonHeight = 60
             buttonWidth = 300
             local x = 10
+            local y = resolutionHeight / 2 - 500
+            MakeButton("Show Help", "Hide Help", buttonWidth, buttonHeight, x, y, function() return showHelp end, function() showHelp = not showHelp end)
             local y = resolutionHeight / 2 - 300
             MakeButton("Enable Turn and Burn", "Disable Turn and Burn", buttonWidth, buttonHeight, x, y, function()
                 return TurnBurn
@@ -6508,7 +6573,7 @@ VERSION_NUMBER = 1.100
                         targetPitch = 0
                     end
                     if LockPitch ~= nil then 
-                        if nearPlanet and not IntoOrbit then 
+                        if inAtmo and not IntoOrbit then 
                             targetPitch = LockPitch 
                         else
                             LockPitch = nil
@@ -7475,7 +7540,7 @@ VERSION_NUMBER = 1.100
         end
 
         local function ToggleLockPitch()
-            if LockPitch == nil then
+            if LockPitch == nil and inAtmo then
                 LockPitch = getPitch(worldVertical, constructForward, constructRight)
                 AutoTakeoff = false
                 AltitudeHold = false
@@ -7516,8 +7581,8 @@ VERSION_NUMBER = 1.100
             else
                 clearAllCheck = true
             end
-        end    
-
+        end
+        
         if action == "gear" then
             GearExtended = not GearExtended
             if GearExtended then
@@ -7627,29 +7692,11 @@ VERSION_NUMBER = 1.100
             end
         elseif action == "option1" then
             adjustAutopilotTargetIndex()
+            toggleView = false
         elseif action == "option2" then
             adjustAutopilotTargetIndex(1)
+            toggleView = false
         elseif action == "option3" then
-            if isRemote() == 0 and freeLookToggle then
-                if system.isViewLocked() == 1 then
-                    system.lockView(0)
-                else
-                    system.lockView(1)
-                end
-            elseif isRemote() == 0 and not freeLookToggle and userControlScheme == "keyboard" then
-                if system.isViewLocked() == 1 then
-                    system.lockView(0)
-                else
-                    system.lockView(1)
-                end
-            end
-        elseif action == "option4" then
-            ToggleAutopilot()
-        elseif action == "option5" then
-            ToggleLockPitch()
-        elseif action == "option6" then
-            ToggleAltitudeHold()
-        elseif action == "option7" then
             if hideHudOnToggleWidgets then
                 if showHud then
                     showHud = false
@@ -7658,13 +7705,27 @@ VERSION_NUMBER = 1.100
                 end
             end
             ToggleWidgets()
+            toggleView = false
+        elseif action == "option4" then
+            ToggleAutopilot()
+            toggleView = false            
+        elseif action == "option5" then
+            ToggleLockPitch()
+            toggleView = false
+        elseif action == "option6" then
+            ToggleAltitudeHold()
+            toggleView = false
+        elseif action == "option7" then
+            toggleView = false
         elseif action == "option8" then
             ToggleFollowMode()
+            toggleView = false
         elseif action == "option9" then
             if gyro ~= nil then
                 gyro.toggle()
                 gyroIsOn = gyro.getState() == 1
             end
+            toggleView = false
         elseif action == "lshift" then
             if system.isViewLocked() == 1 then
                 holdingCtrl = true
@@ -7685,6 +7746,9 @@ VERSION_NUMBER = 1.100
             end
         elseif action == "lalt" then
             AltIsOn = true
+            if isRemote() == 0 and not freeLookToggle and userControlScheme == "keyboard" then
+                system.lockView(1)
+            end
         elseif action == "booster" then
             -- Dodgin's Don't Die Rocket Govenor - Cruise Control Edition
             if VanillaRockets then 
@@ -7797,6 +7861,19 @@ VERSION_NUMBER = 1.100
                 end
             end
         elseif action == "lalt" then
+            if isRemote() == 0 and freeLookToggle then
+                if toggleView then
+                    if system.isViewLocked() == 1 then
+                        system.lockView(0)
+                    else
+                        system.lockView(1)
+                    end
+                else
+                    toggleView = true
+                end
+            elseif isRemote() == 0 and not freeLookToggle and userControlScheme == "keyboard" then
+                system.lockView(0)
+            end
             AltIsOn = false
         end
     end
