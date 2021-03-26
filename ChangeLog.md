@@ -1,7 +1,28 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.100 - MAJOR REFACTOR, code cleanup, enhancements (Harrier Takeoff).
+- Note that max mass shown up top is based on thrust at current planet (takeoff).  Max Mass shown in Interplanetary Helper is based on brakes at target planet (landing)
+- Re-ordered user variables to group them better in Edit Lua Parameters.
+- Changed command lines to start with ah- instead of / to avoid conflict with other scripts listening for text.
+- Fix erroneous warning message about wrong control scheme.
+- Removed initial dump of variables to Lua chat, use ah-G dump to see all user variables.
+- Removed Alt-7-7 to wipe databank.. Use ah-wipedatabank command instead. (reclaiming hotkeys)
+- Moved Alt-3 (widget vanilla view toggle) to Alt-7. Not needed to fix the old tab slideshow anymore, but still needed sometimes (busy marketplace)
+- Changed Freelook toggle from Alt to Alt-3.  This should prevent inadvertantly changing out of ship or camera control when alt-tabbing.
+- Removed `ReentrySpeed` - AtmoSpeedLimit used instead.
+- Removed `ReentryAtltitude` - Calculated variable used instead.
+- Removed `VerticalTakeoffEngines` as a uservariable
+- Added safety check to not show Glide or Parachute re-entry buttons over planets without atmosphere or if in Atmosphere
+- Removed butttons that already have a hotkey (code space savings)
+- Changed Vert Takeoff button to a toggle between Vertical Takeoff and Horizontal Takeoff modes.
+    - Changed Alt-6 to do takeoff based on mode.
+    - Cancelling Vert Takeoff with Alt-6 before reaching end of atmosphere will engage horizontal alt-hold (Harrier takeoff)
+- Change Alt-4 when < 100k from planet to align to waypoint and then orbit in. (Idea by Dimencia, coded differently)
+- Major refactoring of script.
+- Cleaned up tab and commenting to allow for vscode collapse readability.
+
 Version Reset to 1.000
-    - Reset version to differentiate from DU Orbtial Hud version.
+- Reset version to differentiate from DU Orbtial Hud version.
 
 Version 5.450
 - Orbiting

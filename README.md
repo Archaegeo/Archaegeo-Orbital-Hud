@@ -1,5 +1,5 @@
 
-
+# WARNING - A LOT OF THIS IS OUT OF DATE AND I AM LOOKING FOR A GOOD DOCUMENT WRITER.
 
 <!--Intro information-->
 # Arch-Orbital-HUD
@@ -23,6 +23,7 @@
 |[Credits](#credits) |
 <!--List of features both shorlist and expanded details-->
 # Features List
+https://docs.google.com/document/d/1HcoCwX9QqZt6SBJYQAZOf7sYLWXVJeUnE68RndYnPDY/edit?usp=sharing 
 
 | HUD (Heads-Up) | Autopilot | Brakes|
 | --- | --- | --- |
@@ -32,6 +33,7 @@ Pitch | Inter-planetary transit routes | Coast landings (brake force < construct
 Roll | Orbital insertion | Auto-roll
 Yaw | Transit-to-orbit | Pitch lock
 Vertical speed indicator | LUA chat commands | Waypoint management
+Vertical Takeoff to AGG, To Orbit, or to Horizontal flight
 
 
 | Feature Details / Additional Features | 
@@ -57,7 +59,7 @@ Vertical speed indicator | LUA chat commands | Waypoint management
 |Free-look mode (__ALT__ as toggle).|
 |User Parameters for customization of your HUD elements (e.g. x/y screen position) and your flight preference to your ship capabilities.|
 |Save parameters between HUD version updates (requires linking of a databank!).|
-|Manual Control HotKey|Pressing Stop engines (__Z__ by default) 2x within 1 second will clear ALL AP / special functions. You will be at 0 engine in throttle mode with brakes off. (normal __Z__ behavior) but all special features like altitude hold or brake landing or anything else will turn off. (Give me manual control key) Pressing it just once is normal vanilla stop all engines. NOTE: This will NOT turn off antigrav or stop a warp in progress.|
+|Manual Control HotKey|Pressing Stop engines (__MMB__ by default) 2x within 1 second will clear ALL AP / special functions. You will be at 0 engine in throttle mode with brakes off. (normal __MMB__ behavior) but all special features like altitude hold or brake landing or anything else will turn off. (Give me manual control key) Pressing it just once is normal vanilla stop all engines. NOTE: This will NOT turn off antigrav or stop a warp in progress.|
 |Ability to change HUD colors (RGB in PrimaryR, PrimaryG, PrimaryB)|
 |Stall Warning if your alignment drops below configured StallAngle (35 by default) - EVERY SHIP WILL BE DIFFERENT!|
 
@@ -104,13 +106,12 @@ Vertical speed indicator | LUA chat commands | Waypoint management
 |UI Overlay|Hold __SHIFT__|Displays the UI overlay with mouse-over buttons. Hover with mouse over a button (not click!) and let go of SHIFT to select it.|
 |Save Location|Hold __SHIFT__ then selecting the __Save Position__ mouseover| Will save the current location in the databank (if installed). This location may be selected by the autopilot option to automatically fly to the destination.  It will _not_ monitor for impeeding structures or ships. Monitor during use. Locations will be named by planet/moon and a number.|
 |Update Location|Hold __SHIFT__ then selecting the __Update Position__ mouseover| Select a previously saved location in the Interplanetary Helper to change its name with the name of the closest atmo radar target name. This is a workaround until manual editing/naming of locations is available.|
-|Free Look|__ALT__|Toggles free-look mode (mouse moves camera around ship, not flight input). Please note that your view does not auto center when exiting Free Look. Free Look must be enabled to zoom in 3rd person mode.|
-|Toggle HUD|__Option 3__, or __ALT-3__|Toggles the primary hud display HUD on/off, i.e. if off the vanilla widgets will appear.|
+|Freelook|__Option 3__, or __ALT-3__|Toggles freelook camera|
 |Autopilot Destination / Destination Select|__Option 1__ and __Option 2__, <br/>__ALT-1__ and __ALT-2__ or <br>__SHIFT-R__ and __SHIFT-T__|Cycles through autopilot destinations (planets / bodies / saved waypoints).|
-|Autopilot|__Option 4__, or __ALT-4__|Ship will tilt up at preset max angle (30 by default) and fly to 50km altitude and then engage autopilot to selected planet/moon. Once it arrives it will establish orbit and align to prograde. If a saved location was chosen, it will glide entry in and then autopilot to location. NOTE: It does not check to see if anything is in front of you on ground (like normal) nor if your target planet is behind current planet even 50km in space. DO NOT USE if your ship cannot power out of atmosphere at 30 deg with 100% engines. USE WITH CAUTION FIRST TIME. Tested Alioth to Sanct and Sanct to Alioth repeatedly.|
+|Autopilot|__Option 4__, or __ALT-4__|Alt-4 will fly to selected waypoint. Alt-4-4 will perform orbital hop to same player waypoint.|
 |Lock Pitch|__Option 5__, or __ALT-5__|Will lock your target pitch at current pitch and attempt to maintain that pitch (this is different from Altitude Hold) Most other AP features will cancel Lock Pitch.
 |Altitude Hold|__Option 6__, or __ALT-6__|Toggles the altitude hold functionality. Tries to keep the current altitude in spite of planetary curvatore. Depending on ship's lift/force, the actual height may be less than the targeted height! Adjust altitude with (left) __ALT-C__ (down) and (left) __ALT-SPACE__ (up) in increments (growing increments if key is kept held down).|
-|Save / Clear Databank Settings|__Option 7__, or __ALT-7__|Save or clear (double tap!) the currently saved configuration settings.|
+|Vanilla Widget Look|__Option 7__, or __ALT-7__|Toggles vanilla widget look|
 |Follow Me|__Option 8__, or __ALT-8__|Engage follow mode if you are using Remote Control.|
 |Anti-Gravity Generator|__ALT-G__ (default mapping) or <br/>HUD button|Once engaged, hold __ALT-C__ to lower target height or __ALT-Space__ to raise target height. The AGG's actual height will only change at 4m/s up or down toward the target altitude. Initiate new target altitude before leaving seat and AGG will continue changing.|
 <!--Messy Messy details. This needs to be cleaned up.-->
@@ -141,94 +142,93 @@ This also means that when using autopilot, you can relatively easily move betwee
 # Customization
 Right click the seat and go to _Advanced_ -> _Edit Lua Parameters_ to see them all. Mouse over a name to see its purpose and potential settings.
 
-* -- Edit LUA Variable user settings.  Must be global to work with databank system as set up due to using _G assignment
-* useTheseSettings = false -- export: (Default: false) Toggle on to use the below preferences.  Toggle off to use saved preferences.  Preferences will save regardless when exiting seat. 
-* freeLookToggle = true -- export: (Default: true) Set to false for vanilla DU free look behavior.
-* BrakeToggleDefault = true -- export: (Default: true) Whether your brake toggle is on/off by default. Can be adjusted in the button menu.  Of is vanilla DU brakes.
-* RemoteFreeze = false -- export: (Default: false) Whether or not to freeze you when using a remote controller.  Breaks some things, only freeze on surfboards
-* RemoteHud = false -- export: (Default: false) Whether you want full HUD while in remote mode, experimental, might not look right.
-* brightHud = false -- export: (Default: false) Enable to prevent hud dimming when in freelook.
-* VanillaRockets = false -- export: (Default: false) If on, rockets behave like vanilla
-* InvertMouse = false -- export: (Default: false) If true, then when controlling flight mouse Y axis is inverted (pushing up noses plane down)  Does not affect selecting buttons or camera.
-* userControlScheme = "virtual joystick" -- export: (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard"
-* ResolutionX = 1920 -- export: (Default: 1920) Does not need to be set to same as game resolution.  You can set 1920 on a 2560 to get larger resolution
-* ResolutionY = 1080 -- export: (Default: 1080) Does not need to be set to same as game resolution.  You can set 1080 on a 1440 to get larger resolution
-* SafeR = 130 -- export: (Default: 130) Primary HUD color
-* SafeG = 224 -- export: (Default: 224) Primary HUD color
-* SafeB = 255 -- export: (Default: 255) Primary HUD color
-* PvPR = 255 -- export: (Default: 255) PvP HUD color
-* PvPG = 0 -- export: (Default: 0) PvP HUD color
-* PvPB = 0 -- export: (Default: 0) PvP HUD color
-* centerX = 960 -- export: (Default: 960) X postion of Artifical Horizon (KSP Navball), Default 960. Use centerX=700 and centerY=880 for lower left placement.
-* centerY = 540 -- export: (Default: 540) Y postion of Artifical Horizon (KSP Navball), Default 540. Use centerX=700 and centerY=880 for lower left placement. 
-* throtPosX = 1300 -- export: (Default: 1300) X position of Throttle Indicator, default 1300 to put it to right of default AH centerX parameter.
-* throtPosY = 540 -- export: (Default: 540) Y position of Throttle indicator, default is 540 to place it centered on default AH centerY parameter.
-* vSpdMeterX = 1525  -- export: (Default: 1525) X postion of Vertical Speed Meter.  Default 1525 (use 1920x1080, it will scale)
-* vSpdMeterY = 250 -- export: (Default: 250) Y postion of Vertical Speed Meter.  Default 250 (use 1920x1080, it will scale)
-* altMeterX = 550  -- export: (Default: 550) X postion of Altimeter.  Default 550 (use 1920x1080, it will scale)
-* altMeterY = 540 -- export: (Default: 540) Y postion of Altimeter.  Default 500 (use 1920x1080, it will scale)
-* fuelX = 100 -- export: (Default: 100) X position of fuel tanks, default is 100 for left side, set both fuelX and fuelY to 0 to hide fuel
-* fuelY = 350 -- export: (Default: 350) Y position of fuel tanks, default 350 for left side, set both fuelX and fuelY to 0 to hide fuel
-* circleRad = 400 -- export: (Default: 400) The size of the artifical horizon circle, recommended minimum 100, maximum 400.  Looks different > 200. Set to 0 to remove.
-* DeadZone = 50 -- export: (Default: 50) Number of pixels of deadzone at the center of the screen
-* DisplayOrbit = true -- export: (Default: true) Show Orbit display when valid or not.  May be toggled with shift Buttons
-* OrbitMapSize = 250 -- export: (Default: 250) Size of the orbit map, make sure it is divisible by 4
-* OrbitMapX = 75 -- export: (Default: 75) X postion of Orbit Display Disabled
-* OrbitMapY = 0 -- export: (Default: 0)  Y position of Orbit Display
-* showHud = true -- export: (Default: true) Uncheck to hide the HUD and only use autopilot features via ALT+# keys.
-* ShowOdometer = true -- export: (Default: true) Uncheck to hide the odometer panel up top.
-* hideHudOnToggleWidgets = true -- export: (Default: true) Uncheck to keep showing HUD when you toggle on the widgets via ALT+3.
-* ShiftShowsRemoteButtons = true -- export: (Default: true) Whether or not pressing Shift in remote controller mode shows you the buttons (otherwise no access to them)
-* YawStallAngle = 35 --export: (Default: 35) Angle at which the ship stalls when yawing (Stabilizers: 70, Wings: 55, Ailerons: 30)
-* PitchStallAngle = 35 --export: (Default: 35) Angle at which the ship stalls when pitching (Stabilizers: 70, Wings: 55, Ailerons: 30)
-* speedChangeLarge = 5 -- export: (Default: 5) The speed change that occurs when you tap speed up/down, default is 5 (25% throttle change). 
-* speedChangeSmall = 1 -- export: (Default: 1) the speed change that occurs while you hold speed up/down, default is 1 (5% throttle change).
-* brakeLandingRate = 30 -- export: (Default: 30) Max loss of altitude speed in m/s when doing a brake landing, default 30.  This is to prevent "bouncing" as hover/boosters catch you.  Do not use negative number.
-* MaxPitch = 30 -- export: (Default: 30) Maximum allowed pitch during takeoff and altitude changes while in altitude hold.  You can set higher or lower depending on your ships capabilities.
-* ReentrySpeed = 1050 -- export: (Default: 1050) Target re-entry speed once in atmosphere in km/h. 
-* AtmoSpeedLimit = 1050 -- export: (Default: 1050) Speed limit in Atmosphere in km/h.  If you exceed this limit the ship will attempt to break till below this limit.
-* SpaceSpeedLimit = 30000 -- export: (Default: 30000) Space speed limit in KM/H.  If you hit this speed but are not in active autopilot, engines will turn off.
-* ReentryAltitude = 2500 -- export: (Default: 2500) Target alititude when using re-entry.
-* AutoTakeoffAltitude = 1000 -- export: (Default: 1000) How high above your ground starting position AutoTakeoff tries to put you
-* TargetHoverHeight = 50 -- export: (Default: 50) Hover height when retracting landing gear
-* LandingGearGroundHeight = 0 --export: (Default: 0) Set to AGL-1 when on ground (or 0)
-* MaxGameVelocity = 8333.00 -- export: (Default: 8333.00) Max speed for your autopilot in m/s, do not go above 8333.055 (30000 km/hr), can be reduced to safe fuel, use 6944.4444 for 25000km/hr
-* TargetOrbitRadius = 1.4 -- export: (Default: 1.4) How tight you want to orbit the planet at end of autopilot.  The smaller the value the tighter the orbit.  1.4 sets an Alioth orbit of 56699m.
-* AutopilotInterplanetaryThrottle = 1.0 -- export: (Default: 1.0) How much throttle, 0.0 to 1.0, you want it to use when in autopilot to another planet to reach MaxGameVelocity
-* warmup = 32 -- export: (Default: 32) How long it takes your engines to warmup.  Basic Space Engines, from XS to XL: 0.25,1,4,16,32
-* MouseYSensitivity = 0.003 --export: (Default: 0.003) For virtual joystick only
-* MouseXSensitivity = 0.003 -- export: (Default: 0.003) For virtual joystick only
-* autoRollPreference = false -- export: (Default: false) [Only in atmosphere]<br>When the pilot stops rolling,  flight model will try to get back to horizontal (no roll)
-* autoRollFactor = 2 -- export: (Default: 2) [Only in atmosphere]<br>When autoRoll is engaged, this factor will increase to strength of the roll back to 0<br>Valid values: Superior or equal to 0.01
-* rollSpeedFactor = 1.5 -- export: (Default: 1.5) This factor will increase/decrease the player input along the roll axis<br>(higher value may be unstable)<br>Valid values: Superior or equal to 0.01
-* turnAssist = true -- export: (Default: true) [Only in atmosphere]<br>When the pilot is rolling, the flight model will try to add yaw and pitch to make the construct turn better<br>The flight model will start by adding more yaw the more horizontal the construct is and more pitch the more vertical it is
-* turnAssistFactor = 2 -- export: (Default: 2) [Only in atmosphere]<br>This factor will increase/decrease the turnAssist effect<br>(higher value may be unstable)<br>Valid values: Superior or equal to 0.01
-* TrajectoryAlignmentStrength = 0.002 -- export: (Default: 0.002) How strongly AP tries to align your velocity vector to the target when not in orbit, recommend 0.002
-* torqueFactor = 2 -- export: (Default: 2) Force factor applied to reach rotationSpeed<br>(higher value may be unstable)<br>Valid values: Superior or equal to 0.01
-* pitchSpeedFactor = 0.8 -- export: (Default: 0.8) For keyboard control
-* yawSpeedFactor = 1 -- export: (Default: 1) For keyboard control
-* brakeSpeedFactor = 3 -- export: (Default: 3) When braking, this factor will increase the brake force by brakeSpeedFactor * velocity<br>Valid values: Superior or equal to 0.01
-* brakeFlatFactor = 1 -- export: (Default: 1) When braking, this factor will increase the brake force by a flat brakeFlatFactor * velocity direction><br>(higher value may be unstable)<br>Valid values: Superior or equal to 0.01
-* DampingMultiplier = 40 -- export: (Default: 40) How strongly autopilot dampens when nearing the correct orientation
-* fuelTankHandlingAtmo = 0 -- export: (Default: 0) For accurate estimates, set this to the fuel tank handling level of the person who placed the element. Ignored for slotted tanks.
-* fuelTankHandlingSpace = 0 -- export: (Default: 0) For accurate estimates, set this to the fuel tank handling level of the person who placed the element. Ignored for slotted tanks.
-* fuelTankHandlingRocket = 0 -- export: (Default: 0) For accurate estimates, set this to the fuel tank handling level of the person who placed the element. Ignored for slotted tanks.
-* ContainerOptimization = 0 -- export: (Default: 0) For accurate estimates, set this to the Container Optimization level of the person who placed the tanks.  Ignored for slotted tanks.
-* FuelTankOptimization = 0 -- export: (Default: 0) For accurate unslotted fuel tank calculation, set this to the fuel tank optimization skill level of the person who placed the tank.  Ignored for slotted tanks.
-* ExtraLongitudeTags = "none" -- export: (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "forward faster major"  These will be added to the engines that are control by longitude.
-* ExtraLateralTags = "none" -- export: (Default: "none") Enter any extra lateral tags you use inside '' seperated by space, i.e. "left right"  These will be added to the engines that are control by lateral.
-* ExtraVerticalTags = "none" -- export: (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "up down"  These will be added to the engines that are control by vertical.
-* ExternalAGG = false -- export: (Default: false) Toggle On if using an external AGG system.  If on will prevent this HUD from doing anything with AGG.
-* UseSatNav = false -- export: (Default: false) Toggle on if using Trog SatNav script.  This will provide SatNav support.
-* apTickRate = 0.0166667 -- export: (Default: 0.0166667) Set the Tick Rate for your autopilot features.  0.016667 is effectively 60 fps and the default value. 0.03333333 is 30 fps.  
-* hudTickRate = 0.0666667 -- export: (Default: 0.0666667) Set the tick rate for your HUD. Default is 4 times slower than apTickRate
-* ShouldCheckDamage = true --export: (Default: true) Whether or not damage checks are performed.  Disabled for performance on very large ships
-* CalculateBrakeLandingSpeed = false --export: (Default: false) Whether BrakeLanding speed at non-waypoints should be calculated or use the brakeLandingRate user setting.  Only set to true for ships with low mass to lift capability.
-* autoRollRollThreshold = 0 --export: (Default: 0) The minimum amount of roll before autoRoll kicks in and stabilizes (if active)
-* AtmoSpeedAssist = true --export: (Default: true) Whether or not atmospheric speeds should be limited to a maximum of AtmoSpeedLimit
-* ForceAlignment = false --export: (Default: false) Whether velocity vector alignment should be forced when in Altitude Hold
-* minRollVelocity = 150 --export: (Default: 150) Min velocity, in m/s, over which advanced rolling can occur
-* VertTakeOffEngine = false --export: (Default: false) Set this to true if you have VTOL engines on your construct. Changes Auto Takeoff to Vertical Takeoff.
+* -- Use /G to change
+* useTheseSettings = false --  (Default: false) Toggle on to use the below preferences.  Toggle off to use saved preferences.  Preferences will save regardless when exiting seat. 
+* freeLookToggle = true --  (Default: true) Set to false for vanilla DU free look behavior.
+* BrakeToggleDefault = true --  (Default: true) Whether your brake toggle is on/off by default. Can be adjusted in the button menu.  Of is vanilla DU brakes.
+* RemoteFreeze = false --  (Default: false) Whether or not to freeze you when using a remote controller.  Breaks some things, only freeze on surfboards
+* RemoteHud = false --  (Default: false) Whether you want full HUD while in remote mode, experimental, might not look right.
+* brightHud = false --  (Default: false) Enable to prevent hud dimming when in freelook.
+* VanillaRockets = false --  (Default: false) If on, rockets behave like vanilla
+* InvertMouse = false --  (Default: false) If true, then when controlling flight mouse Y axis is inverted (pushing up noses plane down)  Does not affect selecting buttons or camera.
+* userControlScheme = "virtual joystick" --  (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard"
+* ResolutionX = 1920 --  (Default: 1920) Does not need to be set to same as game resolution.  You can set 1920 on a 2560 to get larger resolution
+* ResolutionY = 1080 --  (Default: 1080) Does not need to be set to same as game resolution.  You can set 1080 on a 1440 to get larger resolution
+* SafeR = 130 --  (Default: 130) Primary HUD color
+* SafeG = 224 --  (Default: 224) Primary HUD color
+* SafeB = 255 --  (Default: 255) Primary HUD color
+* PvPR = 255 --  (Default: 255) PvP HUD color
+* PvPG = 0 --  (Default: 0) PvP HUD color
+* PvPB = 0 --  (Default: 0) PvP HUD color
+* centerX = 960 --  (Default: 960) X postion of Artifical Horizon (KSP Navball), Default 960. Use centerX=700 and centerY=880 for lower left placement.
+* centerY = 540 --  (Default: 540) Y postion of Artifical Horizon (KSP Navball), Default 540. Use centerX=700 and centerY=880 for lower left placement. 
+* throtPosX = 1300 --  (Default: 1300) X position of Throttle Indicator, default 1300 to put it to right of default AH centerX parameter.
+* throtPosY = 540 --  (Default: 540) Y position of Throttle indicator, default is 540 to place it centered on default AH centerY parameter.
+* vSpdMeterX = 1525  --  (Default: 1525) X postion of Vertical Speed Meter.  Default 1525 (use 1920x1080, it will scale)
+* vSpdMeterY = 250 --  (Default: 250) Y postion of Vertical Speed Meter.  Default 250 (use 1920x1080, it will scale)
+* altMeterX = 550  --  (Default: 550) X postion of Altimeter.  Default 550 (use 1920x1080, it will scale)
+* altMeterY = 540 --  (Default: 540) Y postion of Altimeter.  Default 500 (use 1920x1080, it will scale)
+* fuelX = 100 --  (Default: 100) X position of fuel tanks, default is 100 for left side, set both fuelX and fuelY to 0 to hide fuel
+* fuelY = 350 --  (Default: 350) Y position of fuel tanks, default 350 for left side, set both fuelX and fuelY to 0 to hide fuel
+* circleRad = 400 --  (Default: 400) The size of the artifical horizon circle, recommended minimum 100, maximum 400.  Looks different > 200. Set to 0 to remove.
+* DeadZone = 50 --  (Default: 50) Number of pixels of deadzone at the center of the screen
+* DisplayOrbit = true --  (Default: true) Show Orbit display when valid or not.  May be toggled with shift Buttons
+* OrbitMapSize = 250 --  (Default: 250) Size of the orbit map, make sure it is divisible by 4
+* OrbitMapX = 75 --  (Default: 75) X postion of Orbit Display Disabled
+* OrbitMapY = 0 --  (Default: 0)  Y position of Orbit Display
+* showHud = true --  (Default: true) Uncheck to hide the HUD and only use autopilot features via ALT+# keys.
+* ShowOdometer = true --  (Default: true) Uncheck to hide the odometer panel up top.
+* hideHudOnToggleWidgets = true --  (Default: true) Uncheck to keep showing HUD when you toggle on the widgets via ALT+3.
+* ShiftShowsRemoteButtons = true --  (Default: true) Whether or not pressing Shift in remote controller mode shows you the buttons (otherwise no access to them)
+* YawStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when yawing (Stabilizers: 70, Wings: 55, Ailerons: 30)
+* PitchStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when pitching (Stabilizers: 70, Wings: 55, Ailerons: 30)
+* speedChangeLarge = 5 --  (Default: 5) The speed change that occurs when you tap speed up/down, default is 5 (25% throttle change). 
+* speedChangeSmall = 1 --  (Default: 1) the speed change that occurs while you hold speed up/down, default is 1 (5% throttle change).
+* brakeLandingRate = 30 --  (Default: 30) Max loss of altitude speed in m/s when doing a brake landing, default 30.  This is to prevent "bouncing" as hover/boosters catch you.  Do not use negative number.
+* MaxPitch = 30 --  (Default: 30) Maximum allowed pitch during takeoff and altitude changes while in altitude hold.  You can set higher or lower depending on your ships capabilities.
+* AtmoSpeedLimit = 1050 --  (Default: 1050) Speed limit in Atmosphere in km/h.  If you exceed this limit the ship will attempt to break till below this limit.
+* SpaceSpeedLimit = 30000 --  (Default: 30000) Space speed limit in KM/H.  If you hit this speed but are not in active autopilot, engines will turn off.
+* AutoTakeoffAltitude = 1000 --  (Default: 1000) How high above your ground starting position AutoTakeoff tries to put you
+* TargetHoverHeight = 50 --  (Default: 50) Hover height when retracting landing gear
+* LandingGearGroundHeight = 0 -- (Default: 0) Set to AGL-1 when on ground (or 0)
+* MaxGameVelocity = 8333.00 --  (Default: 8333.00) Max speed for your autopilot in m/s, do not go above 8333.055 (30000 km/hr), can be reduced to safe fuel, use 6944.4444 for 25000km/hr
+* TargetOrbitRadius = 1.4 --  (Default: 1.4) How tight you want to orbit the planet at end of autopilot.  The smaller the value the tighter the orbit.  1.4 sets an Alioth orbit of 56699m.
+* AutopilotInterplanetaryThrottle = 1.0 --  (Default: 1.0) How much throttle, 0.0 to 1.0, you want it to use when in autopilot to another planet to reach MaxGameVelocity
+* warmup = 32 --  (Default: 32) How long it takes your engines to warmup.  Basic Space Engines, from XS to XL: 0.25,1,4,16,32
+* MouseYSensitivity = 0.003 -- (Default: 0.003) For virtual joystick only
+* MouseXSensitivity = 0.003 --  (Default: 0.003) For virtual joystick only
+* autoRollPreference = false --  (Default: false) [Only in atmosphere]<br>When the pilot stops rolling,  flight model will try to get back to horizontal (no roll)
+* autoRollFactor = 2 --  (Default: 2) [Only in atmosphere]<br>When autoRoll is engaged, this factor will increase to strength of the roll back to 0<br>Valid values: Superior or equal to 0.01
+* rollSpeedFactor = 1.5 --  (Default: 1.5) This factor will increase/decrease the player input along the roll axis<br>(higher value may be unstable)<br>Valid values: Superior or equal to 0.01
+* turnAssist = true --  (Default: true) [Only in atmosphere]<br>When the pilot is rolling, the flight model will try to add yaw and pitch to make the construct turn better<br>The flight model will start by adding more yaw the more horizontal the construct is and more pitch the more vertical it is
+* turnAssistFactor = 2 --  (Default: 2) [Only in atmosphere]<br>This factor will increase/decrease the turnAssist effect<br>(higher value may be unstable)<br>Valid values: Superior or equal to 0.01
+* TrajectoryAlignmentStrength = 0.002 --  (Default: 0.002) How strongly AP tries to align your velocity vector to the target when not in orbit, recommend 0.002
+* torqueFactor = 2 --  (Default: 2) Force factor applied to reach rotationSpeed<br>(higher value may be unstable)<br>Valid values: Superior or equal to 0.01
+* pitchSpeedFactor = 0.8 --  (Default: 0.8) For keyboard control
+* yawSpeedFactor = 1 --  (Default: 1) For keyboard control
+* brakeSpeedFactor = 3 --  (Default: 3) When braking, this factor will increase the brake force by brakeSpeedFactor * velocity<br>Valid values: Superior or equal to 0.01
+* brakeFlatFactor = 1 --  (Default: 1) When braking, this factor will increase the brake force by a flat brakeFlatFactor * velocity direction><br>(higher value may be unstable)<br>Valid values: Superior or equal to 0.01
+* DampingMultiplier = 40 --  (Default: 40) How strongly autopilot dampens when nearing the correct orientation
+* fuelTankHandlingAtmo = 0 --  (Default: 0) For accurate estimates, set this to the fuel tank handling level of the person who placed the element. Ignored for slotted tanks.
+* fuelTankHandlingSpace = 0 --  (Default: 0) For accurate estimates, set this to the fuel tank handling level of the person who placed the element. Ignored for slotted tanks.
+* fuelTankHandlingRocket = 0 --  (Default: 0) For accurate estimates, set this to the fuel tank handling level of the person who placed the element. Ignored for slotted tanks.
+* ContainerOptimization = 0 --  (Default: 0) For accurate estimates, set this to the Container Optimization level of the person who placed the tanks.  Ignored for slotted tanks.
+* FuelTankOptimization = 0 --  (Default: 0) For accurate unslotted fuel tank calculation, set this to the fuel tank optimization skill level of the person who placed the tank.  Ignored for slotted tanks.
+* ExtraLongitudeTags = "none" --  (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "forward faster major"  These will be added to the engines that are control by longitude.
+* ExtraLateralTags = "none" --  (Default: "none") Enter any extra lateral tags you use inside '' seperated by space, i.e. "left right"  These will be added to the engines that are control by lateral.
+* ExtraVerticalTags = "none" --  (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "up down"  These will be added to the engines that are control by vertical.
+* ExternalAGG = false --  (Default: false) Toggle On if using an external AGG system.  If on will prevent this HUD from doing anything with AGG.
+* UseSatNav = false --  (Default: false) Toggle on if using Trog SatNav script.  This will provide SatNav support.
+* apTickRate = 0.0166667 --  (Default: 0.0166667) Set the Tick Rate for your autopilot features.  0.016667 is effectively 60 fps and the default value. 0.03333333 is 30 fps.  
+* hudTickRate = 0.0666667 --  (Default: 0.0666667) Set the tick rate for your HUD. Default is 4 times slower than apTickRate
+* ShouldCheckDamage = true -- (Default: true) Whether or not damage checks are performed.  Disabled for performance on very large ships
+* CalculateBrakeLandingSpeed = false -- (Default: false) Whether BrakeLanding speed at non-waypoints should be calculated or use the brakeLandingRate user setting.  Only set to true for ships with low mass to lift capability.
+* autoRollRollThreshold = 0 -- (Default: 0) The minimum amount of roll before autoRoll kicks in and stabilizes (if active)
+* AtmoSpeedAssist = true -- (Default: true) Whether or not atmospheric speeds should be limited to a maximum of AtmoSpeedLimit
+* ForceAlignment = false -- (Default: false) Whether velocity vector alignment should be forced when in Altitude Hold
+* minRollVelocity = 150 -- (Default: 150) Min velocity, in m/s, over which advanced rolling can occur
+* VertTakeOffEngine = false -- (Default: false) Set this to true if you have VTOL engines on your construct. Changes Auto Takeoff to Vertical Takeoff.
+* DisplayDeadZone = true -- (Default: true) Set this to false to not display deadzone while in virtual joystick mode.
     
 [Return to Table of Contents](#table-of-contents)
 
