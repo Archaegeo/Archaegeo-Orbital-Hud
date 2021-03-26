@@ -316,6 +316,7 @@ VERSION_NUMBER = 1.016
     local velMag = vec3(constructVelocity):len()
     local worldVertical = vec3(core.getWorldVertical())
     local worldPos = vec3(core.getConstructWorldPos())
+    local UpVertAtmoEngine = false
 
 -- Function Definitions that are used in more than one area
 
@@ -569,7 +570,7 @@ VERSION_NUMBER = 1.016
             autoRoll = true
             LockPitch = nil
             OrbitAchieved = false
-            if (hoverDetectGround() == -1 and not VertTakeOff) then 
+            if (hoverDetectGround() == -1 and not VertTakeOffEngine) then 
                 AutoTakeoff = false
                 if ahDoubleClick > -1 then
                     if unit.getClosestPlanetInfluence() > 0 then
@@ -584,7 +585,7 @@ VERSION_NUMBER = 1.016
                         Nav.control.cancelCurrentControlMasterMode()
                     end
                 end
-            elseif VertTakeOffEngine or VertTakeOff then 
+            elseif (VertTakeOffEngine or VertTakeOff) and UpVertAtmoEngine then 
                 ToggleVerticalTakeoff()
             else
                 AutoTakeoff = true
@@ -834,7 +835,7 @@ VERSION_NUMBER = 1.016
                         if coreAltitude > 100000 or coreAltitude == 0 then
                             OrbitAchieved = false
                             Autopilot = true
-                        else
+                        elseif not inAtmo then
                             spaceLand = true
                             ProgradeIsOn = true
                             OrbitTargetOrbit = planet.noAtmosphericDensityAltitude + 1000
@@ -4115,10 +4116,17 @@ VERSION_NUMBER = 1.016
                 end
                 return vanillaMaxVolume            
             end
+
             local eleName = core.getElementNameById
             local checkTanks = (fuelX ~= 0 and fuelY ~= 0)
             for k in pairs(elementsID) do --Look for space engines, landing gear, fuel tanks if not slotted and core size
                 local type = core.getElementTypeById(elementsID[k])
+                if stringmatch(type, '^.*Atmospheric Engine$') then
+                    if stringmatch(tostring(core.getElementTagsById(elementsID[k])), '^.*vertical.*$') then
+                        UpVertAtmoEngine = true
+                    end
+                end
+
                 if stringmatch(type, '^.*Space Engine$') then
                     SpaceEngines = true
                     if stringmatch(tostring(core.getElementTagsById(elementsID[k])), '^.*vertical.*$') then
@@ -4488,7 +4496,7 @@ VERSION_NUMBER = 1.016
                     else
                         msgText = "Horizontal Takeoff Mode"
                     end
-                end)
+                end, function() return UpVertAtmoEngine end)
             y = y + buttonHeight + 20
             MakeButton("Show Orbit Display", "Hide Orbit Display", buttonWidth, buttonHeight, x, y,
                 function()
