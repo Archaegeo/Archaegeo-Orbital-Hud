@@ -4,7 +4,7 @@ Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.100
+VERSION_NUMBER = 1.101
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -24,7 +24,6 @@ VERSION_NUMBER = 1.100
     UseSatNav = false --export: (Default: false)
     ShouldCheckDamage = true --export: (Default: true)
     CalculateBrakeLandingSpeed = false --export: (Default: false)
-    autoRollRollThreshold = 0 --export: (Default: 0)
     AtmoSpeedAssist = true --export: (Default: true)
     ForceAlignment = false --export: (Default: false)
     DisplayDeadZone = true --export: (Default: true)
@@ -86,6 +85,7 @@ VERSION_NUMBER = 1.100
     MouseXSensitivity = 0.003 --export: (Default: 0.003)
     autoRollFactor = 2 --export: (Default: 2)
     rollSpeedFactor = 1.5 --export: (Default: 1.5)
+    autoRollRollThreshold = 0 --export: (Default: 0)
     turnAssistFactor = 2 --export: (Default: 2)
     TrajectoryAlignmentStrength = 0.002 --export: (Default: 0.002)
     torqueFactor = 2 --export: (Default: 2)
