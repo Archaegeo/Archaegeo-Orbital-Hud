@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.120 
+- Full Harrier VTO automation - Alt-6 will VTO to normal auto-takeoff height then commence forward flight.
+    To VTO to orbit, just use alt-spacebar to set height > atmosphere.
+- Cleaned up AGG code
+- Fixed VertEngine thinking on when no vertical engines (removed since last sit down)
+- more code reduction/cleanup
+
 Version 1.110 - In Hud Help
 - Revert `alt-3` to Widget toggle, revert `lalt` to camera freelook toggle.  (ALt-3 to toggle camera was too slow when needed)
 - First passd on in hud help list - Toggled on or off by Button (hold shift while not in freelook to see buttons)
