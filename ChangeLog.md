@@ -1,7 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.120 
-- Full Harrier VTO automation - Alt-6 will VTO to normal auto-takeoff height then commence forward flight.
+Version 1.130 
+- Full Harrier VTO automation - Alt-6 will VTO to normal auto-takeoff height then commence forward flight using vanilla cruise control.
+    Alt-6-6 will VTO to 11% then commence forward flight using vanilla cruise control.
     To VTO to orbit, just use alt-spacebar to set height > atmosphere.
 - Cleaned up AGG code
 - Fixed VertEngine thinking on when no vertical engines (removed since last sit down)

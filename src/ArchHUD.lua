@@ -4,7 +4,7 @@ Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.120
+VERSION_NUMBER = 1.130
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -167,10 +167,8 @@ VERSION_NUMBER = 1.120
                     "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime"}
 
 -- function localizations for improved performance when used frequently or in loops.
-    local vec3 = vec3
-    local uclamp = utils.clamp
-    local mfloor = math.floor
     local mabs = math.abs
+    local mfloor = math.floor
     local stringf = string.format
     local jdecode = json.decode
     local jencode = json.encode
@@ -184,7 +182,10 @@ VERSION_NUMBER = 1.120
     local tostring = tostring
     local utilsround = utils.round
     local systime = system.getTime
-    local navAxisCom = Nav.axisCommandManager
+    local vec3 = vec3
+    local uclamp = utils.clamp
+    local navCom = Nav.axisCommandManager
+
     local function round(num, numDecimalPlaces)
         local mult = 10 ^ (numDecimalPlaces or 0)
         return mfloor(num * mult + 0.5) / mult
@@ -323,6 +324,7 @@ VERSION_NUMBER = 1.120
     local worldPos = vec3(core.getConstructWorldPos())
     local UpVertAtmoEngine = false
     local antigravOn = false
+    local setCruiseSpeed = nil
 
 -- Function Definitions that are used in more than one area
 
@@ -330,18 +332,20 @@ VERSION_NUMBER = 1.120
         if dontSwitch == nil then
             dontSwitch = false
         end
-        if navAxisCom:getAxisCommandType(0) ~= axisCommandType.byThrottle and not dontSwitch then
+        if navCom:getAxisCommandType(0) ~= axisCommandType.byThrottle and not dontSwitch then
             Nav.control.cancelCurrentControlMasterMode()
         end
-        navAxisCom:setThrottleCommand(axisCommandId.longitudinal, value)
+        navCom:setThrottleCommand(axisCommandId.longitudinal, value)
         PlayerThrottle = round(value*100,0)
     end
 
     local function cmdCruise(value, dontSwitch)
-        if navAxisCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed and not dontSwitch then
+        if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed and not dontSwitch then
             Nav.control.cancelCurrentControlMasterMode()
         end
-        navAxisCom:setTargetSpeedCommand(axisCommandId.longitudinal, value)
+        navCom:setTargetSpeedCommand(axisCommandId.longitudinal, value)
+        setCruiseSpeed = value
+        system.print("HERE: "..time)
     end
 
     local function ConvertResolutionX (v)
@@ -529,11 +533,10 @@ VERSION_NUMBER = 1.120
             upAmount = 0
             if inAtmo and hovGndDet == -1 then
                 BrakeLanding = false
-                cmdThrottle(1, true)
-                PlayerThrottle = 1
                 AltitudeHold = true
                 upAmount = 0
                 Nav:setEngineForceCommand('thrust analog vertical fueled ', vec3(), 1)
+                cmdCruise(mfloor(adjustedAtmoSpeedLimit))
             end
         else
             VertTakeOff = true
@@ -541,7 +544,7 @@ VERSION_NUMBER = 1.120
             OrbitAchieved = false
             GearExtended = false
             Nav.control.retractLandingGears()
-            navAxisCom:setTargetGroundAltitude(TargetHoverHeight) -- Hard set this for takeoff, you wouldn't use takeoff from a hangar
+            navCom:setTargetGroundAltitude(TargetHoverHeight) -- Hard set this for takeoff, you wouldn't use takeoff from a hangar
             BrakeIsOn = true
         end
     end
@@ -587,7 +590,7 @@ VERSION_NUMBER = 1.120
                     OrbitAchieved = false
                     OrbitTargetSet = true
                     IntoOrbit = true
-                    if not spaceLaunch and navAxisCom:getAxisCommandType(0) == 0  and not AtmoSpeedAssist then
+                    if not spaceLaunch and navCom:getAxisCommandType(0) == 0  and not AtmoSpeedAssist then
                         Nav.control.cancelCurrentControlMasterMode()
                     end
                 end
@@ -597,7 +600,7 @@ VERSION_NUMBER = 1.120
                 GearExtended = false
                 Nav.control.retractLandingGears()
                 BrakeIsOn = true
-                navAxisCom:setTargetGroundAltitude(TargetHoverHeight)
+                navCom:setTargetGroundAltitude(TargetHoverHeight)
                 if VertTakeOffEngine and UpVertAtmoEngine then 
                     ToggleVerticalTakeoff()
                 end
@@ -635,6 +638,8 @@ VERSION_NUMBER = 1.120
             if OrbitTargetPlanet == nil then
                 OrbitTargetPlanet = planet
             end
+            OrbitTargetOrbit = HoldAltitude
+            OrbitTargetSet = true
         else
             msgText = "Unable to engage orbiting, not near planet or in atmosphere"
         end
@@ -654,14 +659,14 @@ VERSION_NUMBER = 1.120
                 OldGearExtended = GearExtended
                 GearExtended = false
                 Nav.control.retractLandingGears()
-                navAxisCom:setTargetGroundAltitude(TargetHoverHeight)
+                navCom:setTargetGroundAltitude(TargetHoverHeight)
             else
                 BrakeIsOn = true
                 autoRoll = autoRollPreference
                 GearExtended = OldGearExtended
                 if GearExtended then
                     Nav.control.extendLandingGears()
-                    navAxisCom:setTargetGroundAltitude(LandingGearGroundHeight)
+                    navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                 end
             end
         else
@@ -1125,7 +1130,7 @@ VERSION_NUMBER = 1.120
                 msgText = "WARNING: Insufficient Brakes for Parachute Re-Entry"
             else
                 Reentry = true
-                if navAxisCom:getAxisCommandType(0) ~= controlMasterModeId.cruise then
+                if navCom:getAxisCommandType(0) ~= controlMasterModeId.cruise then
                     Nav.control.cancelCurrentControlMasterMode()
                 end                
                 autoRoll = true
@@ -1263,7 +1268,7 @@ VERSION_NUMBER = 1.120
         end
 
         local function GetFlightStyle()
-            local flightType = navAxisCom:getAxisCommandType(0)
+            local flightType = navCom:getAxisCommandType(0)
             local flightStyle = "TRAVEL"
             if (flightType == 1) then
                 flightStyle = "CRUISE"
@@ -1856,7 +1861,7 @@ VERSION_NUMBER = 1.120
                 </g>
             </g>]], throtPosX+10, y1, label, throtPosX+10, y2, value, unit)
         
-            if inAtmo and AtmoSpeedAssist and navAxisCom:getAxisCommandType(0) == axisCommandType.byThrottle and ThrottleLimited then
+            if inAtmo and AtmoSpeedAssist and navCom:getAxisCommandType(0) == axisCommandType.byThrottle and ThrottleLimited then
                 -- Display a marker for where the AP throttle is putting it, calculatedThrottle
         
                 throt = mfloor(calculatedThrottle*100+0.5)
@@ -2318,7 +2323,7 @@ VERSION_NUMBER = 1.120
             local pvpBoundaryX = ConvertResolutionX(1770)
             local pvpBoundaryY = ConvertResolutionY(310)
         
-            if AtmoSpeedAssist and navAxisCom:getAxisCommandType(0) == axisCommandType.byThrottle then
+            if AtmoSpeedAssist and navCom:getAxisCommandType(0) == axisCommandType.byThrottle then
                 flightValue = PlayerThrottle
                 throt = PlayerThrottle*100
             end
@@ -2429,6 +2434,7 @@ VERSION_NUMBER = 1.120
             local reqThrust = 0
             local brakeValue = 0
             local flightStyle = GetFlightStyle()
+            if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
             RefreshLastMaxBrake(gravity)
             if inAtmo then brakeValue = LastMaxBrakeInAtmo else brakeValue = LastMaxBrake end
             maxThrust = Nav:maxForceForward()
@@ -4352,7 +4358,7 @@ VERSION_NUMBER = 1.120
             end
         
             if targetGroundAltitude ~= nil then
-                navAxisCom:setTargetGroundAltitude(targetGroundAltitude)
+                navCom:setTargetGroundAltitude(targetGroundAltitude)
                 if targetGroundAltitude == 0 and not hasGear then 
                     GearExtended = true
                     BrakeIsOn = true -- If they were hovering at 0 and have no gear, consider them landed 
@@ -4360,10 +4366,10 @@ VERSION_NUMBER = 1.120
             else
                 targetGroundAltitude = Nav:getTargetGroundAltitude() 
                 if GearExtended then -- or not hasGear then -- And we already tagged GearExtended if they don't have gear, we can just use this
-                    navAxisCom:setTargetGroundAltitude(LandingGearGroundHeight)
+                    navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                     --GearExtended = true -- We don't need to extend gear just because they have a databank, that would have been done earlier if necessary
                 else
-                    navAxisCom:setTargetGroundAltitude(TargetHoverHeight)
+                    navCom:setTargetGroundAltitude(TargetHoverHeight)
                 end
             end
         
@@ -4936,7 +4942,7 @@ VERSION_NUMBER = 1.120
         SetupComplete = false
 
         beginSetup = coroutine.create(function()
-            navAxisCom:setupCustomTargetSpeedRanges(axisCommandId.longitudinal,
+            navCom:setupCustomTargetSpeedRanges(axisCommandId.longitudinal,
                 {1000, 5000, 10000, 20000, 30000})
 
             -- Load Saved Variables
@@ -5409,12 +5415,19 @@ VERSION_NUMBER = 1.120
         -- Various tick timers
             if timerId == "tenthSecond" then
                 if atmosDensity > 0 and not WasInAtmo then
-                    if navAxisCom:getAxisCommandType(0) == axisCommandType.byTargetSpeed and AtmoSpeedAssist and (AltitudeHold or Reentry) then
+                    if navCom:getAxisCommandType(0) == axisCommandType.byTargetSpeed and AtmoSpeedAssist and (AltitudeHold or Reentry) then
                         -- If they're reentering atmo from cruise, and have atmo speed Assist
                         -- Put them in throttle mode at 100%
                         PlayerThrottle = 1
                         Nav.control.cancelCurrentControlMasterMode()
                         WasInCruise = false -- And override the thing that would reset it, in this case
+                    end
+                end
+                if setCruiseSpeed ~= nil then
+                    if navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
+                        cmdCruise(setCruiseSpeed, TRUE)
+                    else
+                        setCruiseSpeed = nil
                     end
                 end
                 if AutopilotTargetName ~= "None" then
@@ -5478,9 +5491,9 @@ VERSION_NUMBER = 1.120
                                 system.addDataToWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
                             if system.updateData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) == 1 then
                                 system.addDataToWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
-                            --if navAxisCom:getAxisCommandType(0) == axisCommandType.byThrottle then
+                            --if navCom:getAxisCommandType(0) == axisCommandType.byThrottle then
                                 -- Put PlayerThrottle into the real throttle as we exit so no discrepancies
-                            --    navAxisCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle)
+                            --    navCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle)
                             --end
                             WasInAtmo = false
                         end
@@ -5769,10 +5782,10 @@ VERSION_NUMBER = 1.120
                 local isWarping = (velMag > 8334)
                 if velMag > SpaceSpeedLimit/3.6 and not inAtmo and not Autopilot and not isWarping then
                     msgText = "Space Speed Engine Shutoff reached"
-                    if navAxisCom:getAxisCommandType(0) == 1 then
+                    if navCom:getAxisCommandType(0) == 1 then
                         Nav.control.cancelCurrentControlMasterMode()
                     end
-                    navAxisCom:setThrottleCommand(axisCommandId.longitudinal, 0)
+                    navCom:setThrottleCommand(axisCommandId.longitudinal, 0)
                     PlayerThrottle = 0
                 end
                 if not isWarping and LastIsWarping then
@@ -5920,8 +5933,6 @@ VERSION_NUMBER = 1.120
                             if OrbitTargetPlanet == nil then
                                 OrbitTargetPlanet = planet
                             end
-                            OrbitTargetOrbit = HoldAltitude
-                            OrbitTargetSet = true
                             VertTakeOff = false
                         end
                     end
@@ -6403,7 +6414,7 @@ VERSION_NUMBER = 1.120
                                     if constructVelocity:normalize():dot(targetVec:normalize()) > 0.4 then -- Triggers when we get close to passing it
                                         AutopilotStatus = "Orbiting to Target"
                                         --brakeInput = 0
-                                        --navAxisCom:setThrottleCommand(axisCommandId.longitudinal, 0) -- And throttle if they want.  
+                                        --navCom:setThrottleCommand(axisCommandId.longitudinal, 0) -- And throttle if they want.  
                                         --PlayerThrottle = 0
                                         if not WaypointSet then
                                             BrakeIsOn = false -- We have to set this at least once
@@ -6483,7 +6494,7 @@ VERSION_NUMBER = 1.120
                                 -- Set throttle to max
                                 if not apThrottleSet then
                                     cmdThrottle(AutopilotInterplanetaryThrottle, true)
-                                    -- navAxisCom:setThrottleCommand(axisCommandId.longitudinal,
+                                    -- navCom:setThrottleCommand(axisCommandId.longitudinal,
                                     -- AutopilotInterplanetaryThrottle)
                                     PlayerThrottle = round(AutopilotInterplanetaryThrottle,2)
                                     apThrottleSet = true
@@ -6608,11 +6619,11 @@ VERSION_NUMBER = 1.120
                         local brakeDistancer, brakeTimer = Kinematic.computeDistanceAndTime(velMag, ReentrySpeed/3.6, constructMass(), 0, 0, LastMaxBrake - planet.gravity*9.8*constructMass())
                         local distanceToTarget = coreAltitude - (planet.noAtmosphericDensityAltitude + 5000)
 
-                        if navAxisCom:getAxisCommandType(0) == axisCommandType.byTargetSpeed and coreAltitude > planet.noAtmosphericDensityAltitude + 5000 and velMag <= ReentrySpeed/3.6 and velMag > (ReentrySpeed/3.6)-10 and mabs(constructVelocity:normalize():dot(constructForward)) > 0.9 then
+                        if navCom:getAxisCommandType(0) == axisCommandType.byTargetSpeed and coreAltitude > planet.noAtmosphericDensityAltitude + 5000 and velMag <= ReentrySpeed/3.6 and velMag > (ReentrySpeed/3.6)-10 and mabs(constructVelocity:normalize():dot(constructForward)) > 0.9 then
                             -- Swap to throttle for the approach
                             Nav.control.cancelCurrentControlMasterMode()
                             PlayerThrottle = 0
-                        elseif navAxisCom:getAxisCommandType(0) == axisCommandType.byThrottle and ((brakeDistancer > -1 and distanceToTarget <= brakeDistancer) or coreAltitude <= planet.noAtmosphericDensityAltitude + 5000) then
+                        elseif navCom:getAxisCommandType(0) == axisCommandType.byThrottle and ((brakeDistancer > -1 and distanceToTarget <= brakeDistancer) or coreAltitude <= planet.noAtmosphericDensityAltitude + 5000) then
                             --Nav.control.cancelCurrentControlMasterMode()
                             BrakeIsOn = true
                         else
@@ -6635,7 +6646,7 @@ VERSION_NUMBER = 1.120
                         elseif coreAltitude <= planet.noAtmosphericDensityAltitude + 5000 then
 
                             cmdCruise(ReentrySpeed)-- Then we have to wait a tick for it to take our new speed.
-                            if navAxisCom:getAxisCommandType(0) == axisCommandType.byTargetSpeed and navAxisCom:getTargetSpeed(axisCommandId.longitudinal) == adjustedAtmoSpeedLimit then
+                            if navCom:getAxisCommandType(0) == axisCommandType.byTargetSpeed and navCom:getTargetSpeed(axisCommandId.longitudinal) == adjustedAtmoSpeedLimit then
                                 reentryMode = false
                                 Reentry = false
                                 autoRoll = true -- wtf?  On some ships this makes it flail around because of the -80 and never recover
@@ -6878,11 +6889,11 @@ VERSION_NUMBER = 1.120
                                 end
                             end
                         end
-                        if navAxisCom:getAxisCommandType(0) == 1 then
+                        if navCom:getAxisCommandType(0) == 1 then
                             Nav.control.cancelCurrentControlMasterMode()
                         end
-                        navAxisCom:setTargetGroundAltitude(500)
-                        navAxisCom:activateGroundEngineAltitudeStabilization(500)
+                        navCom:setTargetGroundAltitude(500)
+                        navCom:activateGroundEngineAltitudeStabilization(500)
 
                         groundDistance = hovGndDet
                         if groundDistance > -1 then 
@@ -6893,7 +6904,7 @@ VERSION_NUMBER = 1.120
                                     AltitudeHold = false
                                     GearExtended = true
                                     Nav.control.extendLandingGears()
-                                    navAxisCom:setTargetGroundAltitude(LandingGearGroundHeight)
+                                    navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                                     upAmount = 0
                                     BrakeIsOn = true
                                 else
@@ -6925,7 +6936,7 @@ VERSION_NUMBER = 1.120
                         elseif mabs(targetPitch) < 15 and (coreAltitude/HoldAltitude) > 0.75 then
                             AutoTakeoff = false -- No longer in ascent
                             if not spaceLaunch then 
-                                if navAxisCom:getAxisCommandType(0) == 0 and not AtmoSpeedAssist then
+                                if navCom:getAxisCommandType(0) == 0 and not AtmoSpeedAssist then
                                     Nav.control.cancelCurrentControlMasterMode()
                                 end
                             elseif spaceLaunch and velMag < minAutopilotSpeed then
@@ -6945,10 +6956,10 @@ VERSION_NUMBER = 1.120
                             spaceLaunch = false
                             AltitudeHold = false
                             AutoTakeoff = false
-                            if navAxisCom:getAxisCommandType(0) == 1 then
+                            if navCom:getAxisCommandType(0) == 1 then
                                 Nav.control.cancelCurrentControlMasterMode()
                             end
-                            --navAxisCom:setThrottleCommand(axisCommandId.longitudinal, 0)
+                            --navCom:setThrottleCommand(axisCommandId.longitudinal, 0)
                             --PlayerThrottle = 0
                             AutopilotAccelerating = true -- Skip alignment and don't warm down the engines
                         end
@@ -7084,17 +7095,17 @@ VERSION_NUMBER = 1.120
         end
 
         if antigrav ~= nil and (antigrav and not ExternalAGG) then
-            if antigrav.getState() == 0 and antigrav.getBaseAltitude() ~= AntigravTargetAltitude then 
+            if not antigravOn and antigrav.getBaseAltitude() ~= AntigravTargetAltitude then 
                 antigrav.setBaseAltitude(AntigravTargetAltitude) 
             end
         end
 
-        if navAxisCom:getAxisCommandType(0) == axisCommandType.byThrottle and WasInCruise then
+        if navCom:getAxisCommandType(0) == axisCommandType.byThrottle and WasInCruise then
             -- Not in cruise, but was last tick
             PlayerThrottle = 0
-            navAxisCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle) -- Reset throttle
+            navCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle) -- Reset throttle
             WasInCruise = false
-        elseif navAxisCom:getAxisCommandType(0) == axisCommandType.byTargetSpeed and not WasInCruise then
+        elseif navCom:getAxisCommandType(0) == axisCommandType.byTargetSpeed and not WasInCruise then
             -- Is in cruise, but wasn't last tick
             PlayerThrottle = 0 -- Reset this here too, because, why not
             WasInCruise = true
@@ -7222,7 +7233,7 @@ VERSION_NUMBER = 1.120
         brakeInput2 = 0
         local vSpd = -worldVertical:dot(constructVelocity)
 
-        if inAtmo and AtmoSpeedAssist and navAxisCom:getAxisCommandType(0) == axisCommandType.byThrottle then
+        if inAtmo and AtmoSpeedAssist and navCom:getAxisCommandType(0) == axisCommandType.byThrottle then
             -- This is meant to replace cruise
             -- Uses AtmoSpeedLimit as the desired speed in which to 'cruise'
             -- In atmo, if throttle is 100%, it applies a PID to throttle to try to achieve AtmoSpeedLimit
@@ -7265,10 +7276,10 @@ VERSION_NUMBER = 1.120
             calculatedThrottle = uclamp(pidGet,-1,1)
             if calculatedThrottle < PlayerThrottle and (atmosDensity > 0.005) then -- We can limit throttle all the way to 0.05% probably
                 ThrottleLimited = true
-                navAxisCom:setThrottleCommand(axisCommandId.longitudinal, uclamp(calculatedThrottle,0.01,1))
+                navCom:setThrottleCommand(axisCommandId.longitudinal, uclamp(calculatedThrottle,0.01,1))
             else
                 ThrottleLimited = false
-                navAxisCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle)
+                navCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle)
                 
             end
 
@@ -7287,7 +7298,7 @@ VERSION_NUMBER = 1.120
             --end
             if brakeInput2 > 0 then
                 if ThrottleLimited and calculatedThrottle == 0.01 then
-                    navAxisCom:setThrottleCommand(axisCommandId.longitudinal, 0) -- We clamped it to >0 before but, if braking and it was at that clamp, 0 is good.
+                    navCom:setThrottleCommand(axisCommandId.longitudinal, 0) -- We clamped it to >0 before but, if braking and it was at that clamp, 0 is good.
                 end
             else -- For display purposes, keep calculatedThrottle positive in this case
                 calculatedThrottle = uclamp(calculatedThrottle,0.01,1)
@@ -7306,8 +7317,8 @@ VERSION_NUMBER = 1.120
 
             local longitudinalEngineTags = 'thrust analog longitudinal '
             if ExtraLongitudeTags ~= "none" then longitudinalEngineTags = longitudinalEngineTags..ExtraLongitudeTags end
-            local longitudinalCommandType = navAxisCom:getAxisCommandType(axisCommandId.longitudinal)
-            local longitudinalAcceleration = navAxisCom:composeAxisAccelerationFromThrottle(
+            local longitudinalCommandType = navCom:getAxisCommandType(axisCommandId.longitudinal)
+            local longitudinalAcceleration = navCom:composeAxisAccelerationFromThrottle(
                                                     longitudinalEngineTags, axisCommandId.longitudinal)
 
             local lateralAcceleration = composeAxisAccelerationFromTargetSpeed(axisCommandId.lateral, LeftAmount*1000)
@@ -7353,12 +7364,12 @@ VERSION_NUMBER = 1.120
         else
             --PlayerThrottle = 0
             if AtmoSpeedAssist then
-                navAxisCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle) -- Use PlayerThrottle always.
+                navCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle) -- Use PlayerThrottle always.
             end
 
             local targetSpeed = unit.getAxisCommandValue(0)
 
-            if navAxisCom:getAxisCommandType(0) == axisCommandType.byTargetSpeed then -- Use a PID to brake past targetSpeed
+            if navCom:getAxisCommandType(0) == axisCommandType.byTargetSpeed then -- Use a PID to brake past targetSpeed
                 if (brakePID == nil) then
                     brakePID = pid.new(1 * 0.01, 0, 1 * 0.1)
                 end
@@ -7380,19 +7391,19 @@ VERSION_NUMBER = 1.120
             -- Longitudinal Translation
             local longitudinalEngineTags = 'thrust analog longitudinal '
             if ExtraLongitudeTags ~= "none" then longitudinalEngineTags = longitudinalEngineTags..ExtraLongitudeTags end
-            local longitudinalCommandType = navAxisCom:getAxisCommandType(axisCommandId.longitudinal)
+            local longitudinalCommandType = navCom:getAxisCommandType(axisCommandId.longitudinal)
             if (longitudinalCommandType == axisCommandType.byThrottle) then
-                local longitudinalAcceleration = navAxisCom:composeAxisAccelerationFromThrottle(
+                local longitudinalAcceleration = navCom:composeAxisAccelerationFromThrottle(
                                                     longitudinalEngineTags, axisCommandId.longitudinal)
                 Nav:setEngineForceCommand(longitudinalEngineTags, longitudinalAcceleration, keepCollinearity)
             elseif (longitudinalCommandType == axisCommandType.byTargetSpeed) then
-                local longitudinalAcceleration = navAxisCom:composeAxisAccelerationFromTargetSpeed(
+                local longitudinalAcceleration = navCom:composeAxisAccelerationFromTargetSpeed(
                                                     axisCommandId.longitudinal)
                 autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. longitudinalEngineTags
                 autoNavigationAcceleration = autoNavigationAcceleration + longitudinalAcceleration
-                if (navAxisCom:getTargetSpeed(axisCommandId.longitudinal) == 0 or -- we want to stop
-                    navAxisCom:getCurrentToTargetDeltaSpeed(axisCommandId.longitudinal) <
-                    -navAxisCom:getTargetSpeedCurrentStep(axisCommandId.longitudinal) * 0.5) -- if the longitudinal velocity would need some braking
+                if (navCom:getTargetSpeed(axisCommandId.longitudinal) == 0 or -- we want to stop
+                    navCom:getCurrentToTargetDeltaSpeed(axisCommandId.longitudinal) <
+                    -navCom:getTargetSpeedCurrentStep(axisCommandId.longitudinal) * 0.5) -- if the longitudinal velocity would need some braking
                 then
                     autoNavigationUseBrake = true
                 end
@@ -7402,13 +7413,13 @@ VERSION_NUMBER = 1.120
             -- Lateral Translation
             local lateralStrafeEngineTags = 'thrust analog lateral '
             if ExtraLateralTags ~= "none" then lateralStrafeEngineTags = lateralStrafeEngineTags..ExtraLateralTags end
-            local lateralCommandType = navAxisCom:getAxisCommandType(axisCommandId.lateral)
+            local lateralCommandType = navCom:getAxisCommandType(axisCommandId.lateral)
             if (lateralCommandType == axisCommandType.byThrottle) then
-                local lateralStrafeAcceleration = navAxisCom:composeAxisAccelerationFromThrottle(
+                local lateralStrafeAcceleration = navCom:composeAxisAccelerationFromThrottle(
                                                     lateralStrafeEngineTags, axisCommandId.lateral)
                 Nav:setEngineForceCommand(lateralStrafeEngineTags, lateralStrafeAcceleration, keepCollinearity)
             elseif (lateralCommandType == axisCommandType.byTargetSpeed) then
-                local lateralAcceleration = navAxisCom:composeAxisAccelerationFromTargetSpeed(axisCommandId.lateral)
+                local lateralAcceleration = navCom:composeAxisAccelerationFromTargetSpeed(axisCommandId.lateral)
                 autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. lateralStrafeEngineTags
                 autoNavigationAcceleration = autoNavigationAcceleration + lateralAcceleration
             end
@@ -7416,9 +7427,9 @@ VERSION_NUMBER = 1.120
             -- Vertical Translation
             local verticalStrafeEngineTags = 'thrust analog vertical '
             if ExtraVerticalTags ~= "none" then verticalStrafeEngineTags = verticalStrafeEngineTags..ExtraVerticalTags end
-            local verticalCommandType = navAxisCom:getAxisCommandType(axisCommandId.vertical)
+            local verticalCommandType = navCom:getAxisCommandType(axisCommandId.vertical)
             if (verticalCommandType == axisCommandType.byThrottle)  then
-                local verticalStrafeAcceleration = navAxisCom:composeAxisAccelerationFromThrottle(
+                local verticalStrafeAcceleration = navCom:composeAxisAccelerationFromThrottle(
                                                     verticalStrafeEngineTags, axisCommandId.vertical)
                 if upAmount ~= 0 or (BrakeLanding and BrakeIsOn) then
                     Nav:setEngineForceCommand(verticalStrafeEngineTags, verticalStrafeAcceleration, keepCollinearity, 'airfoil',
@@ -7434,7 +7445,7 @@ VERSION_NUMBER = 1.120
                 if upAmount < 0 then 
                     Nav:setEngineForceCommand('hover', vec3(), keepCollinearity) 
                 end
-                local verticalAcceleration = navAxisCom:composeAxisAccelerationFromTargetSpeed(
+                local verticalAcceleration = navCom:composeAxisAccelerationFromTargetSpeed(
                                                 axisCommandId.vertical)
                 autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. verticalStrafeEngineTags
                 autoNavigationAcceleration = autoNavigationAcceleration + verticalAcceleration
@@ -7465,8 +7476,8 @@ VERSION_NUMBER = 1.120
         if isBoosting and not VanillaRockets then 
             local speed = vec3(core.getVelocity()):len()
             local maxSpeedLag = 0.15
-            if navAxisCom:getAxisCommandType(0) == 1 then -- Cruise control rocket boost assist, Dodgin's modified.
-                local cc_speed = navAxisCom:getTargetSpeed(axisCommandId.longitudinal)
+            if navCom:getAxisCommandType(0) == 1 then -- Cruise control rocket boost assist, Dodgin's modified.
+                local cc_speed = navCom:getTargetSpeed(axisCommandId.longitudinal)
                 if speed * 3.6 > (cc_speed * (1 - maxSpeedLag)) and IsRocketOn then
                     IsRocketOn = false
                     Nav:toggleBoosters()
@@ -7606,10 +7617,10 @@ VERSION_NUMBER = 1.120
             if GearExtended then
                 VectorToTarget = false
                 LockPitch = nil
-                if navAxisCom:getAxisCommandType(0) == 1 then
+                if navCom:getAxisCommandType(0) == 1 then
                     Nav.control.cancelCurrentControlMasterMode()
                 end
-                navAxisCom:setThrottleCommand(axisCommandId.longitudinal, 0)
+                navCom:setThrottleCommand(axisCommandId.longitudinal, 0)
                 PlayerThrottle = 0
                 if (vBooster or hover) and hovGndDet == -1 then
                     StrongBrakes = true -- We don't care about this anymore
@@ -7623,7 +7634,7 @@ VERSION_NUMBER = 1.120
                 else
                     BrakeIsOn = true
                     Nav.control.extendLandingGears()
-                    navAxisCom:setTargetGroundAltitude(LandingGearGroundHeight)
+                    navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                 end
 
                 if hasGear and not BrakeLanding then
@@ -7633,7 +7644,7 @@ VERSION_NUMBER = 1.120
                 if hasGear then
                     Nav.control.retractLandingGears()
                 end
-                navAxisCom:setTargetGroundAltitude(TargetHoverHeight)
+                navCom:setTargetGroundAltitude(TargetHoverHeight)
             end
         elseif action == "light" then
             if Nav.control.isAnyHeadlightSwitchedOn() == 1 then
@@ -7654,20 +7665,20 @@ VERSION_NUMBER = 1.120
         elseif action == "yawleft" then
             yawInput = yawInput + 1
         elseif action == "straferight" then
-            navAxisCom:updateCommandFromActionStart(axisCommandId.lateral, 1.0)
+            navCom:updateCommandFromActionStart(axisCommandId.lateral, 1.0)
             LeftAmount = 1
         elseif action == "strafeleft" then
-            navAxisCom:updateCommandFromActionStart(axisCommandId.lateral, -1.0)
+            navCom:updateCommandFromActionStart(axisCommandId.lateral, -1.0)
             LeftAmount = -1
         elseif action == "up" then
             upAmount = upAmount + 1
-            navAxisCom:deactivateGroundEngineAltitudeStabilization()
-            navAxisCom:updateCommandFromActionStart(axisCommandId.vertical, 1.0)
+            navCom:deactivateGroundEngineAltitudeStabilization()
+            navCom:updateCommandFromActionStart(axisCommandId.vertical, 1.0)
             
         elseif action == "down" then
             upAmount = upAmount - 1
-            navAxisCom:deactivateGroundEngineAltitudeStabilization()
-            navAxisCom:updateCommandFromActionStart(axisCommandId.vertical, -1.0)
+            navCom:deactivateGroundEngineAltitudeStabilization()
+            navCom:updateCommandFromActionStart(axisCommandId.vertical, -1.0)
         elseif action == "groundaltitudeup" then
             OldButtonMod = holdAltitudeButtonModifier
             OldAntiMod = antiGravButtonModifier
@@ -7685,7 +7696,7 @@ VERSION_NUMBER = 1.120
             elseif AltitudeHold or VertTakeOff then
                 HoldAltitude = HoldAltitude + holdAltitudeButtonModifier
             else
-                navAxisCom:updateTargetGroundAltitudeFromActionStart(1.0)
+                navCom:updateTargetGroundAltitudeFromActionStart(1.0)
             end
         elseif action == "groundaltitudedown" then
             OldButtonMod = holdAltitudeButtonModifier
@@ -7706,7 +7717,7 @@ VERSION_NUMBER = 1.120
             elseif AltitudeHold or VertTakeOff then
                 HoldAltitude = HoldAltitude - holdAltitudeButtonModifier
             else
-                navAxisCom:updateTargetGroundAltitudeFromActionStart(-1.0)
+                navCom:updateTargetGroundAltitudeFromActionStart(-1.0)
             end
         elseif action == "option1" then
             adjustAutopilotTargetIndex()
@@ -7785,7 +7796,7 @@ VERSION_NUMBER = 1.120
             isBoosting = false
         end
         elseif action == "stopengines" then
-            navAxisCom:resetCommand(axisCommandId.longitudinal)
+            navCom:resetCommand(axisCommandId.longitudinal)
             clearAll()
             PlayerThrottle = 0
         elseif action == "speedup" then
@@ -7793,7 +7804,7 @@ VERSION_NUMBER = 1.120
                 if AtmoSpeedAssist and not AltIsOn then
                     PlayerThrottle = uclamp(PlayerThrottle + speedChangeLarge/100, -1, 1)
                 else
-                    navAxisCom:updateCommandFromActionStart(axisCommandId.longitudinal, speedChangeLarge)
+                    navCom:updateCommandFromActionStart(axisCommandId.longitudinal, speedChangeLarge)
                 end
             else
                 adjustAutopilotTargetIndex()
@@ -7803,7 +7814,7 @@ VERSION_NUMBER = 1.120
                 if AtmoSpeedAssist and not AltIsOn then
                     PlayerThrottle = uclamp(PlayerThrottle - speedChangeLarge/100, -1, 1)
                 else
-                    navAxisCom:updateCommandFromActionStart(axisCommandId.longitudinal, -speedChangeLarge)
+                    navCom:updateCommandFromActionStart(axisCommandId.longitudinal, -speedChangeLarge)
                 end
                 
             else
@@ -7830,20 +7841,20 @@ VERSION_NUMBER = 1.120
         elseif action == "yawleft" then
             yawInput = 0
         elseif action == "straferight" then
-            navAxisCom:updateCommandFromActionStop(axisCommandId.lateral, -1.0)
+            navCom:updateCommandFromActionStop(axisCommandId.lateral, -1.0)
             LeftAmount = 0
         elseif action == "strafeleft" then
-            navAxisCom:updateCommandFromActionStop(axisCommandId.lateral, 1.0)
+            navCom:updateCommandFromActionStop(axisCommandId.lateral, 1.0)
             LeftAmount = 0
         elseif action == "up" then
             upAmount = 0
-            navAxisCom:updateCommandFromActionStop(axisCommandId.vertical, -1.0)
-            navAxisCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
+            navCom:updateCommandFromActionStop(axisCommandId.vertical, -1.0)
+            navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
             Nav:setEngineForceCommand('hover', vec3(), 1) 
         elseif action == "down" then
             upAmount = 0
-            navAxisCom:updateCommandFromActionStop(axisCommandId.vertical, 1.0)
-            navAxisCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
+            navCom:updateCommandFromActionStop(axisCommandId.vertical, 1.0)
+            navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
             Nav:setEngineForceCommand('hover', vec3(), 1) 
         elseif action == "groundaltitudeup" then
             if not ExternalAGG and antigravOn then
@@ -7916,7 +7927,7 @@ VERSION_NUMBER = 1.120
                 HoldAltitude = HoldAltitude + holdAltitudeButtonModifier
                 holdAltitudeButtonModifier = holdAltitudeButtonModifier * 1.05
             else
-                navAxisCom:updateTargetGroundAltitudeFromActionLoop(1.0)
+                navCom:updateTargetGroundAltitudeFromActionLoop(1.0)
             end
         elseif action == "groundaltitudedown" then
             if not ExternalAGG and antigravOn then
@@ -7939,14 +7950,14 @@ VERSION_NUMBER = 1.120
                 HoldAltitude = HoldAltitude - holdAltitudeButtonModifier
                 holdAltitudeButtonModifier = holdAltitudeButtonModifier * 1.05
             else
-                navAxisCom:updateTargetGroundAltitudeFromActionLoop(-1.0)
+                navCom:updateTargetGroundAltitudeFromActionLoop(-1.0)
             end
         elseif action == "speedup" then
             if not holdingCtrl then
                 if AtmoSpeedAssist and not AltIsOn then
                     PlayerThrottle = uclamp(PlayerThrottle + speedChangeSmall/100, -1, 1)
                 else
-                    navAxisCom:updateCommandFromActionLoop(axisCommandId.longitudinal, speedChangeSmall)
+                    navCom:updateCommandFromActionLoop(axisCommandId.longitudinal, speedChangeSmall)
                 end
             end
         elseif action == "speeddown" then
@@ -7954,7 +7965,7 @@ VERSION_NUMBER = 1.120
                 if AtmoSpeedAssist and not AltIsOn then
                     PlayerThrottle = uclamp(PlayerThrottle - speedChangeSmall/100, -1, 1)
                 else
-                    navAxisCom:updateCommandFromActionLoop(axisCommandId.longitudinal, -speedChangeSmall)
+                    navCom:updateCommandFromActionLoop(axisCommandId.longitudinal, -speedChangeSmall)
                 end
             end
         end
