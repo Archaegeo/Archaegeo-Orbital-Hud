@@ -1,5 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.131
+- Fixed planet atmosphere save value to use max atmosphere density if not using update position (fix SatNav issue)
+- Fixed PlayerThrottle value being set incorrectly.
+- Fixed cmdThrottle setting throttle to 1000 sometimes.
+
 Version 1.130 
 - Exiting ship sets waypoint to ship location
 - Full Harrier VTO automation - Alt-6 will VTO to normal auto-takeoff height then commence forward flight using vanilla cruise control.

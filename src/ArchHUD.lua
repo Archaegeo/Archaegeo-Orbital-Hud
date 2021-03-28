@@ -4,7 +4,7 @@ Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.130
+VERSION_NUMBER = 1.131
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -336,7 +336,7 @@ VERSION_NUMBER = 1.130
             Nav.control.cancelCurrentControlMasterMode()
         end
         navCom:setThrottleCommand(axisCommandId.longitudinal, value)
-        PlayerThrottle = round(value*100,0)
+        PlayerThrottle = uclamp(round(value*100,0)/100, -1, 1)
     end
 
     local function cmdCruise(value, dontSwitch)
@@ -4412,14 +4412,10 @@ VERSION_NUMBER = 1.130
                         end
                     end
                     local newLocation = {}
-                    local atmo = false
-                    if planet.hasAtmosphere then
-                        atmo = true 
-                    end
                     newLocation = {
                         position = position,
                         name = name,
-                        atmosphere = atmo,
+                        atmosphere = planet.atmosphericDensityAboveSurface,
                         planetname = planet.name,
                         gravity = planet.gravity,
                         safe = true -- This indicates we can extreme land here, because this was a real positional waypoint
@@ -5493,10 +5489,6 @@ VERSION_NUMBER = 1.130
                                 system.addDataToWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
                             if system.updateData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) == 1 then
                                 system.addDataToWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
-                            --if navCom:getAxisCommandType(0) == axisCommandType.byThrottle then
-                                -- Put PlayerThrottle into the real throttle as we exit so no discrepancies
-                            --    navCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle)
-                            --end
                             WasInAtmo = false
                         end
                     end
@@ -6390,7 +6382,7 @@ VERSION_NUMBER = 1.130
                             brakeInput = 1
                         end
                         if TurnBurn then
-                            cmdThrottle(100,true) -- This stays 100 to not mess up our calculations
+                            cmdThrottle(1,true) -- This stays 100 to not mess up our calculations
                             PlayerThrottle = 1
                         end
                         -- Check if an orbit has been established and cut brakes and disable autopilot if so
@@ -8038,21 +8030,15 @@ VERSION_NUMBER = 1.130
                     newLocation = {
                         position = position,
                         name = savename,
-                        atmosphere = false,
+                        atmosphere = 0,
                         planetname = planet.name,
                         gravity = planet.gravity
                     }
                 else
-                    local atmo = false
-                    if planet.hasAtmosphere then
-                        atmo = true 
-                    else 
-                        atmo = false 
-                    end
                     newLocation = {
                         position = position,
                         name = savename,
-                        atmosphere = atmo,
+                        atmosphere = planet.atmosphericDensityAboveSurface,
                         planetname = planet.name,
                         gravity = planet.gravity
                     }
