@@ -4,7 +4,7 @@ Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.131
+VERSION_NUMBER = 1.132
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -185,6 +185,12 @@ VERSION_NUMBER = 1.131
     local vec3 = vec3
     local uclamp = utils.clamp
     local navCom = Nav.axisCommandManager
+    local sysSetWP = system.setWaypoint
+    local sysDestWid = system.destroyWidgetPanel
+    local sysUpData = system.updateData
+    local sysAddData = system.addDataToWidget
+    local sysLockVw = system.lockView
+    local sysIsVwLock = system.isViewLocked
 
     local function round(num, numDecimalPlaces)
         local mult = 10 ^ (numDecimalPlaces or 0)
@@ -325,6 +331,7 @@ VERSION_NUMBER = 1.131
     local UpVertAtmoEngine = false
     local antigravOn = false
     local setCruiseSpeed = nil
+    local throttleMode = true
 
 -- Function Definitions that are used in more than one area
 
@@ -470,16 +477,16 @@ VERSION_NUMBER = 1.131
 
     local function ToggleRadarPanel()
         if radarPanelID ~= nil and peris == 0 then
-            system.destroyWidgetPanel(radarPanelID)
+            sysDestWid(radarPanelID)
             radarPanelID = nil
             if perisPanelID ~= nil then
-                system.destroyWidgetPanel(perisPanelID)
+                sysDestWid(perisPanelID)
                 perisPanelID = nil
             end
         else
             -- If radar is installed but no weapon, don't show periscope
             if peris == 1 then
-                system.destroyWidgetPanel(radarPanelID)
+                sysDestWid(radarPanelID)
                 radarPanelID = nil
                 _autoconf.displayCategoryPanel(radar, radar_size, L_TEXT("ui_lua_widget_periscope", "Periscope"),
                     "periscope")
@@ -589,7 +596,7 @@ VERSION_NUMBER = 1.131
                     OrbitTargetSet = true
                     OrbitTargetOrbit = HoldAltitude
                     IntoOrbit = true
-                    if not spaceLaunch and navCom:getAxisCommandType(0) == 0  and not AtmoSpeedAssist then
+                    if not spaceLaunch and throttleMode and not AtmoSpeedAssist then
                         Nav.control.cancelCurrentControlMasterMode()
                     end
                 end
@@ -691,23 +698,23 @@ VERSION_NUMBER = 1.131
             autopilotTargetPlanet = galaxyReference[0][atlasIndex]
             if CustomTarget ~= nil then
                 if atmosDensity == 0 then
-                    if system.updateData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) ~= 1 then
-                        system.addDataToWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
-                    if system.updateData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) ~= 1 then
-                        system.addDataToWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
-                    if system.updateData(widgetCurBrakeTimeText, widgetCurBrakeTime) ~= 1 then
-                        system.addDataToWidget(widgetCurBrakeTimeText, widgetCurBrakeTime) end
-                    if system.updateData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) ~= 1 then
-                        system.addDataToWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
-                    if system.updateData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) ~= 1 then
-                        system.addDataToWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
+                    if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) ~= 1 then
+                        sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
+                    if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) ~= 1 then
+                        sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
+                    if sysUpData(widgetCurBrakeTimeText, widgetCurBrakeTime) ~= 1 then
+                        sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime) end
+                    if sysUpData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) ~= 1 then
+                        sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
+                    if sysUpData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) ~= 1 then
+                        sysAddData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
                 end
-                if system.updateData(widgetMaxMassText, widgetMaxMass) ~= 1 then
-                    system.addDataToWidget(widgetMaxMassText, widgetMaxMass) end
-                if system.updateData(widgetTravelTimeText, widgetTravelTime) ~= 1 then
-                    system.addDataToWidget(widgetTravelTimeText, widgetTravelTime) end
-                if system.updateData(widgetTargetOrbitText, widgetTargetOrbit) ~= 1 then
-                    system.addDataToWidget(widgetTargetOrbitText, widgetTargetOrbit) end
+                if sysUpData(widgetMaxMassText, widgetMaxMass) ~= 1 then
+                    sysAddData(widgetMaxMassText, widgetMaxMass) end
+                if sysUpData(widgetTravelTimeText, widgetTravelTime) ~= 1 then
+                    sysAddData(widgetTravelTimeText, widgetTravelTime) end
+                if sysUpData(widgetTargetOrbitText, widgetTargetOrbit) ~= 1 then
+                    sysAddData(widgetTargetOrbitText, widgetTargetOrbit) end
             end
             CustomTarget = nil
         else
@@ -719,10 +726,10 @@ VERSION_NUMBER = 1.131
                     break
                 end
             end
-            if system.updateData(widgetMaxMassText, widgetMaxMass) ~= 1 then
-                system.addDataToWidget(widgetMaxMassText, widgetMaxMass) end
-            if system.updateData(widgetTravelTimeText, widgetTravelTime) ~= 1 then
-                system.addDataToWidget(widgetTravelTimeText, widgetTravelTime) end
+            if sysUpData(widgetMaxMassText, widgetMaxMass) ~= 1 then
+                sysAddData(widgetMaxMassText, widgetMaxMass) end
+            if sysUpData(widgetTravelTimeText, widgetTravelTime) ~= 1 then
+                sysAddData(widgetTravelTimeText, widgetTravelTime) end
         end
         if CustomTarget == nil then
             AutopilotTargetCoords = vec3(autopilotTargetPlanet.center) -- Aim center until we align
@@ -828,7 +835,7 @@ VERSION_NUMBER = 1.131
             UpdateAutopilotTarget() -- Make sure we're updated
             local waypoint = zeroConvertToMapPosition(autopilotTargetPlanet, AutopilotTargetCoords)
             waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
-            system.setWaypoint(waypoint)
+            sysSetWP(waypoint)
             if CustomTarget ~= nil then
                 LockPitch = nil
                 SpaceTarget = (CustomTarget.planetname == "Space")
@@ -1238,20 +1245,18 @@ VERSION_NUMBER = 1.131
     end
 
     local function SaveDataBank(copy)
+        local function writeData(dataList)
+            for k, v in pairs(dataList) do
+                dbHud_1.setStringValue(v, jencode(_G[v]))
+                if copy and dbHud_2 then
+                    dbHud_2.setStringValue(v, jencode(_G[v]))
+                end
+            end
+        end
         if dbHud_1 then
             if not wipedDatabank then
-                for k, v in pairs(autoVariables) do
-                    dbHud_1.setStringValue(v, jencode(_G[v]))
-                    if copy and dbHud_2 then
-                        dbHud_2.setStringValue(v, jencode(_G[v]))
-                    end
-                end
-                for k, v in pairs(saveableVariables) do
-                    dbHud_1.setStringValue(v, jencode(_G[v]))
-                    if copy and dbHud_2 then
-                        dbHud_2.setStringValue(v, jencode(_G[v]))
-                    end
-                end
+                writeData(autoVariables) 
+                writeData(saveableVariables)
                 system.print("Saved Variables to Datacore")
                 if copy and dbHud_2 then
                     msgText = "Databank copied.  Remove copy when ready."
@@ -1264,7 +1269,7 @@ VERSION_NUMBER = 1.131
         local Hud = {}
 
         local function IsInFreeLook()
-            return system.isViewLocked() == 0 and userControlScheme ~= "keyboard" and isRemote() == 0
+            return sysIsVwLock() == 0 and userControlScheme ~= "keyboard" and isRemote() == 0
         end
 
         local function GetFlightStyle()
@@ -1861,7 +1866,7 @@ VERSION_NUMBER = 1.131
                 </g>
             </g>]], throtPosX+10, y1, label, throtPosX+10, y2, value, unit)
         
-            if inAtmo and AtmoSpeedAssist and navCom:getAxisCommandType(0) == axisCommandType.byThrottle and ThrottleLimited then
+            if inAtmo and AtmoSpeedAssist and throttleMode and ThrottleLimited then
                 -- Display a marker for where the AP throttle is putting it, calculatedThrottle
         
                 throt = mfloor(calculatedThrottle*100+0.5)
@@ -2323,7 +2328,7 @@ VERSION_NUMBER = 1.131
             local pvpBoundaryX = ConvertResolutionX(1770)
             local pvpBoundaryY = ConvertResolutionY(310)
         
-            if AtmoSpeedAssist and navCom:getAxisCommandType(0) == axisCommandType.byThrottle then
+            if AtmoSpeedAssist and throttleMode then
                 flightValue = PlayerThrottle
                 throt = PlayerThrottle*100
             end
@@ -4306,9 +4311,9 @@ VERSION_NUMBER = 1.131
                 gyroIsOn = gyro.getState() == 1
             end
             if userControlScheme ~= "keyboard" then
-                system.lockView(1)
+                sysLockVw(1)
             else
-                system.lockView(0)
+                sysLockVw(0)
             end
             -- Close door and retract ramp if available
             if door and (inAtmo or (not inAtmo and coreAltitude < 10000)) then
@@ -5018,55 +5023,58 @@ VERSION_NUMBER = 1.131
         end
         local waypoint = zeroConvertToMapPosition(planet, worldPos)
         waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
-        system.setWaypoint(waypoint)
+        sysSetWP(waypoint)
     end
 
     function script.onTick(timerId)
         --local functions for onTick
+            local sysCrData = system.createData
+            local sysCrWid = system.createWidget
+
             local function SetupInterplanetaryPanel() -- Interplanetary helper
                 panelInterplanetary = system.createWidgetPanel("Interplanetary Helper")
             
-                interplanetaryHeader = system.createWidget(panelInterplanetary, "value")
-                interplanetaryHeaderText = system.createData('{"label": "Target Planet", "value": "N/A", "unit":""}')
-                system.addDataToWidget(interplanetaryHeaderText, interplanetaryHeader)
+                interplanetaryHeader = sysCrWid(panelInterplanetary, "value")
+                interplanetaryHeaderText = sysCrData('{"label": "Target Planet", "value": "N/A", "unit":""}')
+                sysAddData(interplanetaryHeaderText, interplanetaryHeader)
             
-                widgetDistance = system.createWidget(panelInterplanetary, "value")
-                widgetDistanceText = system.createData('{"label": "distance", "value": "N/A", "unit":""}')
-                system.addDataToWidget(widgetDistanceText, widgetDistance)
+                widgetDistance = sysCrWid(panelInterplanetary, "value")
+                widgetDistanceText = sysCrData('{"label": "distance", "value": "N/A", "unit":""}')
+                sysAddData(widgetDistanceText, widgetDistance)
             
-                widgetTravelTime = system.createWidget(panelInterplanetary, "value")
-                widgetTravelTimeText = system.createData('{"label": "Travel Time", "value": "N/A", "unit":""}')
-                system.addDataToWidget(widgetTravelTimeText, widgetTravelTime)
+                widgetTravelTime = sysCrWid(panelInterplanetary, "value")
+                widgetTravelTimeText = sysCrData('{"label": "Travel Time", "value": "N/A", "unit":""}')
+                sysAddData(widgetTravelTimeText, widgetTravelTime)
             
-                widgetMaxMass = system.createWidget(panelInterplanetary, "value")
-                widgetMaxMassText = system.createData('{"label": "Maximum Mass", "value": "N/A", "unit":""}')
-                system.addDataToWidget(widgetMaxMassText, widgetMaxMass)
+                widgetMaxMass = sysCrWid(panelInterplanetary, "value")
+                widgetMaxMassText = sysCrData('{"label": "Maximum Mass", "value": "N/A", "unit":""}')
+                sysAddData(widgetMaxMassText, widgetMaxMass)
             
-                widgetTargetOrbit = system.createWidget(panelInterplanetary, "value")
-                widgetTargetOrbitText = system.createData('{"label": "Target Altitude", "value": "N/A", "unit":""}')
-                system.addDataToWidget(widgetTargetOrbitText, widgetTargetOrbit)
+                widgetTargetOrbit = sysCrWid(panelInterplanetary, "value")
+                widgetTargetOrbitText = sysCrData('{"label": "Target Altitude", "value": "N/A", "unit":""}')
+                sysAddData(widgetTargetOrbitText, widgetTargetOrbit)
             
-                widgetCurBrakeDistance = system.createWidget(panelInterplanetary, "value")
-                widgetCurBrakeDistanceText = system.createData('{"label": "Cur Brake distance", "value": "N/A", "unit":""}')
-                widgetCurBrakeTime = system.createWidget(panelInterplanetary, "value")
-                widgetCurBrakeTimeText = system.createData('{"label": "Cur Brake Time", "value": "N/A", "unit":""}')
-                widgetMaxBrakeDistance = system.createWidget(panelInterplanetary, "value")
-                widgetMaxBrakeDistanceText = system.createData('{"label": "Max Brake distance", "value": "N/A", "unit":""}')
-                widgetMaxBrakeTime = system.createWidget(panelInterplanetary, "value")
-                widgetMaxBrakeTimeText = system.createData('{"label": "Max Brake Time", "value": "N/A", "unit":""}')
-                widgetTrajectoryAltitude = system.createWidget(panelInterplanetary, "value")
-                widgetTrajectoryAltitudeText = system.createData('{"label": "Projected Altitude", "value": "N/A", "unit":""}')
+                widgetCurBrakeDistance = sysCrWid(panelInterplanetary, "value")
+                widgetCurBrakeDistanceText = sysCrData('{"label": "Cur Brake distance", "value": "N/A", "unit":""}')
+                widgetCurBrakeTime = sysCrWid(panelInterplanetary, "value")
+                widgetCurBrakeTimeText = sysCrData('{"label": "Cur Brake Time", "value": "N/A", "unit":""}')
+                widgetMaxBrakeDistance = sysCrWid(panelInterplanetary, "value")
+                widgetMaxBrakeDistanceText = sysCrData('{"label": "Max Brake distance", "value": "N/A", "unit":""}')
+                widgetMaxBrakeTime = sysCrWid(panelInterplanetary, "value")
+                widgetMaxBrakeTimeText = sysCrData('{"label": "Max Brake Time", "value": "N/A", "unit":""}')
+                widgetTrajectoryAltitude = sysCrWid(panelInterplanetary, "value")
+                widgetTrajectoryAltitudeText = sysCrData('{"label": "Projected Altitude", "value": "N/A", "unit":""}')
                 if not inAtmo then
-                    system.addDataToWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
-                    system.addDataToWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
-                    system.addDataToWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
-                    system.addDataToWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
-                    system.addDataToWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
+                    sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
+                    sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime)
+                    sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
+                    sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
+                    sysAddData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
                 end
             end
 
             local function HideInterplanetaryPanel()
-                system.destroyWidgetPanel(panelInterplanetary)
+                sysDestWid(panelInterplanetary)
                 panelInterplanetary = nil
             end    
             
@@ -5244,7 +5252,7 @@ VERSION_NUMBER = 1.131
                         _autoconf.displayCategoryPanel(weapon, weapon_size, L_TEXT("ui_lua_widget_weapon", "Weapons"), "weapon", true)
                         WeaponPanelID = _autoconf.panels[_autoconf.panels_size]
                     elseif WeaponPanelID ~= nil and radarPanelID == nil and not GearExtended then
-                        system.destroyWidgetPanel(WeaponPanelID)
+                        sysDestWid(WeaponPanelID)
                         WeaponPanelID = nil
                     end
                 end
@@ -5413,11 +5421,10 @@ VERSION_NUMBER = 1.131
         -- Various tick timers
             if timerId == "tenthSecond" then
                 if atmosDensity > 0 and not WasInAtmo then
-                    if navCom:getAxisCommandType(0) == axisCommandType.byTargetSpeed and AtmoSpeedAssist and (AltitudeHold or Reentry) then
+                    if not throttleMode and AtmoSpeedAssist and (AltitudeHold or Reentry) then
                         -- If they're reentering atmo from cruise, and have atmo speed Assist
                         -- Put them in throttle mode at 100%
-                        PlayerThrottle = 1
-                        Nav.control.cancelCurrentControlMasterMode()
+                        cmdThrottle(1)
                         WasInCruise = false -- And override the thing that would reset it, in this case
                     end
                 end
@@ -5435,7 +5442,7 @@ VERSION_NUMBER = 1.131
                     if AutopilotTargetName ~= nil then
                         local customLocation = CustomTarget ~= nil
                         planetMaxMass = GetAutopilotMaxMass()
-                        system.updateData(interplanetaryHeaderText,
+                        sysUpData(interplanetaryHeaderText,
                             '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "unit":""}')
                         travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
                         if customLocation and not Autopilot then -- If in autopilot, keep this displaying properly
@@ -5451,24 +5458,24 @@ VERSION_NUMBER = 1.131
                             maxBrakeDistance, maxBrakeTime = GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
                         end
                         local displayText, displayUnit = getDistanceDisplayString(distance)
-                        system.updateData(widgetDistanceText, '{"label": "distance", "value": "' .. displayText
+                        sysUpData(widgetDistanceText, '{"label": "distance", "value": "' .. displayText
                             .. '", "unit":"' .. displayUnit .. '"}')
-                        system.updateData(widgetTravelTimeText, '{"label": "Travel Time", "value": "' ..
+                        sysUpData(widgetTravelTimeText, '{"label": "Travel Time", "value": "' ..
                             FormatTimeString(travelTime) .. '", "unit":""}')
                         displayText, displayUnit = getDistanceDisplayString(brakeDistance)
-                        system.updateData(widgetCurBrakeDistanceText, '{"label": "Cur Brake distance", "value": "' ..
+                        sysUpData(widgetCurBrakeDistanceText, '{"label": "Cur Brake distance", "value": "' ..
                             displayText.. '", "unit":"' .. displayUnit .. '"}')
-                        system.updateData(widgetCurBrakeTimeText, '{"label": "Cur Brake Time", "value": "' ..
+                        sysUpData(widgetCurBrakeTimeText, '{"label": "Cur Brake Time", "value": "' ..
                             FormatTimeString(brakeTime) .. '", "unit":""}')
                         displayText, displayUnit = getDistanceDisplayString(maxBrakeDistance)
-                        system.updateData(widgetMaxBrakeDistanceText, '{"label": "Max Brake distance", "value": "' ..
+                        sysUpData(widgetMaxBrakeDistanceText, '{"label": "Max Brake distance", "value": "' ..
                             displayText.. '", "unit":"' .. displayUnit .. '"}')
-                        system.updateData(widgetMaxBrakeTimeText, '{"label": "Max Brake Time", "value": "' ..
+                        sysUpData(widgetMaxBrakeTimeText, '{"label": "Max Brake Time", "value": "' ..
                             FormatTimeString(maxBrakeTime) .. '", "unit":""}')
-                        system.updateData(widgetMaxMassText, '{"label": "Maximum Mass", "value": "' ..
+                        sysUpData(widgetMaxMassText, '{"label": "Maximum Mass", "value": "' ..
                             stringf("%.2f", (planetMaxMass / 1000)) .. '", "unit":" Tons"}')
                         displayText, displayUnit = getDistanceDisplayString(AutopilotTargetOrbit)
-                        system.updateData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
+                        sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
                         stringf("%.2f", displayText) .. '", "unit":"' .. displayUnit .. '"}')
                         if atmosDensity > 0 and not WasInAtmo then
                             system.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
@@ -5479,16 +5486,16 @@ VERSION_NUMBER = 1.131
                             WasInAtmo = true
                         end
                         if atmosphere() == 0 and WasInAtmo then
-                            if system.updateData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) == 1 then
-                                system.addDataToWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
-                            if system.updateData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) == 1 then
-                                system.addDataToWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
-                            if system.updateData(widgetCurBrakeTimeText, widgetCurBrakeTime) == 1 then
-                                system.addDataToWidget(widgetCurBrakeTimeText, widgetCurBrakeTime) end
-                            if system.updateData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) == 1 then
-                                system.addDataToWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
-                            if system.updateData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) == 1 then
-                                system.addDataToWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
+                            if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) == 1 then
+                                sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
+                            if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) == 1 then
+                                sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
+                            if sysUpData(widgetCurBrakeTimeText, widgetCurBrakeTime) == 1 then
+                                sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime) end
+                            if sysUpData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) == 1 then
+                                sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
+                            if sysUpData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) == 1 then
+                                sysAddData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
                             WasInAtmo = false
                         end
                     end
@@ -5604,7 +5611,7 @@ VERSION_NUMBER = 1.131
                     newContent[#newContent + 1] = stringf(
                                                     [[<g transform="translate(%d %d)"><circle class="cursor" cx="%fpx" cy="%fpx" r="5"/></g>]],
                                                     halfResolutionX, halfResolutionY, simulatedX, simulatedY)
-                elseif system.isViewLocked() == 0 then
+                elseif sysIsVwLock() == 0 then
                     if isRemote() == 1 and holdingCtrl then
                         SetButtonContains()
                         DrawButtons(newContent)
@@ -5714,7 +5721,7 @@ VERSION_NUMBER = 1.131
                 if isRemote() == 1 and screen_1 and screen_1.getMouseY() ~= -1 then
                     simulatedX = screen_1.getMouseX() * resolutionWidth
                     simulatedY = screen_1.getMouseY() * resolutionHeight
-                elseif system.isViewLocked() == 0 then
+                elseif sysIsVwLock() == 0 then
                     if isRemote() == 1 and holdingCtrl then
                         if not Animating then
                             simulatedX = simulatedX + deltaX
@@ -5776,11 +5783,7 @@ VERSION_NUMBER = 1.131
                 local isWarping = (velMag > 8334)
                 if velMag > SpaceSpeedLimit/3.6 and not inAtmo and not Autopilot and not isWarping then
                     msgText = "Space Speed Engine Shutoff reached"
-                    if navCom:getAxisCommandType(0) == 1 then
-                        Nav.control.cancelCurrentControlMasterMode()
-                    end
-                    navCom:setThrottleCommand(axisCommandId.longitudinal, 0)
-                    PlayerThrottle = 0
+                    cmdThrottle(0)
                 end
                 if not isWarping and LastIsWarping then
                     if not BrakeIsOn then
@@ -5836,7 +5839,6 @@ VERSION_NUMBER = 1.131
                             cmdThrottle(1) -- Just let them full throttle if they're in atmo
                         else
                             cmdCruise(mfloor(adjustedAtmoSpeedLimit)) -- Trouble drawing if it's not an int
-                            PlayerThrottle = 0 -- IDK why we do this? 
                         end
                     elseif velMag > minAutopilotSpeed then
                         AlignToWorldVector(vec3(constructVelocity),0.01) 
@@ -6033,7 +6035,6 @@ VERSION_NUMBER = 1.131
                                 orbit.periapsis.altitude < orbit.apoapsis.altitude and orbit.periapsis.altitude*1.05 >= orbit.apoapsis.altitude) or OrbitAchieved then -- This should get us a stable orbit within 10% with the way we do it
                                 if OrbitAchieved then
                                     BrakeIsOn = false
-                                    PlayerThrottle = 0
                                     cmdThrottle(0)
                                     OrbitAchieved = true
                                     orbitPitch = 0
@@ -6210,7 +6211,7 @@ VERSION_NUMBER = 1.131
                             end
                             local waypoint = zeroConvertToMapPosition(autopilotTargetPlanet, AutopilotTargetCoords)
                             waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
-                            system.setWaypoint(waypoint)
+                            sysSetWP(waypoint)
                             skipAlign = true
                             TargetSet = true -- Only set the targetCoords once.  Don't let them change as we fly.
                         end
@@ -6243,7 +6244,7 @@ VERSION_NUMBER = 1.131
                             --AutopilotAccelerating = true
                             local waypoint = zeroConvertToMapPosition(autopilotTargetPlanet, AutopilotTargetCoords)
                             waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
-                            system.setWaypoint(waypoint)
+                            sysSetWP(waypoint)
                         end
                     end
 
@@ -6263,7 +6264,7 @@ VERSION_NUMBER = 1.131
 
                     
                     -- We do this in tenthSecond already.
-                    --system.updateData(widgetDistanceText, '{"label": "distance", "value": "' ..
+                    --sysUpData(widgetDistanceText, '{"label": "distance", "value": "' ..
                     --    displayText.. '", "unit":"' .. displayUnit .. '"}')
                     local aligned = true -- It shouldn't be used if the following condition isn't met, but just in case
 
@@ -6272,7 +6273,7 @@ VERSION_NUMBER = 1.131
                                                     (vec3(constructVelocity):normalize() * AutopilotDistance))):len() -
                                                 autopilotTargetPlanet.radius
                     local displayText, displayUnit = getDistanceDisplayString(projectedAltitude)
-                    system.updateData(widgetTrajectoryAltitudeText, '{"label": "Projected Altitude", "value": "' ..
+                    sysUpData(widgetTrajectoryAltitudeText, '{"label": "Projected Altitude", "value": "' ..
                         displayText.. '", "unit":"' .. displayUnit .. '"}')
                     
 
@@ -6363,7 +6364,6 @@ VERSION_NUMBER = 1.131
                             AutopilotStatus = "Cruising"
                             AutopilotCruising = true
                             cmdThrottle(0)
-                            PlayerThrottle = 0
                             --apThrottleSet = false -- We already did it, if they cancelled let them throttle up again
                         end
                         -- Check if accel needs to stop for braking
@@ -6373,7 +6373,6 @@ VERSION_NUMBER = 1.131
                             AutopilotStatus = "Braking"
                             AutopilotBraking = true
                             cmdThrottle(0)
-                            PlayerThrottle = 0
                             apThrottleSet = false
                         end
                     elseif AutopilotBraking then
@@ -6416,13 +6415,12 @@ VERSION_NUMBER = 1.131
                             AutopilotStatus = "Aligning" -- Disable autopilot and reset
                             --brakeInput = 0
                             cmdThrottle(0)
-                            PlayerThrottle = 0
                             apThrottleSet = false
                             ProgradeIsOn = true
                             spaceLand = true
                             local waypoint = zeroConvertToMapPosition(autopilotTargetPlanet, AutopilotTargetCoords)
                             waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
-                            system.setWaypoint(waypoint)
+                            sysSetWP(waypoint)
                         elseif orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 then
                             AutopilotStatus = "Circularizing"
                             local _, endSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed((worldPos-planet.center):len()-planet.radius)
@@ -6430,14 +6428,11 @@ VERSION_NUMBER = 1.131
                                 if CustomTarget ~= nil then
                                     if constructVelocity:normalize():dot(targetVec:normalize()) > 0.4 then -- Triggers when we get close to passing it
                                         AutopilotStatus = "Orbiting to Target"
-                                        --brakeInput = 0
-                                        --navCom:setThrottleCommand(axisCommandId.longitudinal, 0) -- And throttle if they want.  
-                                        --PlayerThrottle = 0
                                         if not WaypointSet then
                                             BrakeIsOn = false -- We have to set this at least once
                                             local waypoint = zeroConvertToMapPosition(autopilotTargetPlanet, CustomTarget.position)
                                             waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
-                                            system.setWaypoint(waypoint)
+                                            sysSetWP(waypoint)
                                             WaypointSet = true
                                         end
                                     else 
@@ -6450,14 +6445,13 @@ VERSION_NUMBER = 1.131
                                         AutopilotStatus = "Aligning" -- Disable autopilot and reset
                                         --brakeInput = 0
                                         cmdThrottle(0)
-                                        PlayerThrottle = 0
                                         apThrottleSet = false
                                         ProgradeIsOn = true
                                         spaceLand = true
                                         BrakeIsOn = false
                                         local waypoint = zeroConvertToMapPosition(autopilotTargetPlanet, CustomTarget.position)
                                         waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
-                                        system.setWaypoint(waypoint)
+                                        sysSetWP(waypoint)
                                         WaypointSet = false -- Don't need it anymore
                                     end
                                 else
@@ -6469,7 +6463,7 @@ VERSION_NUMBER = 1.131
                                     -- TODO: This is being added to newContent *after* we already drew the screen, so it'll never get displayed
                                     msgText = "Autopilot completed, orbit established"
                                     brakeInput = 0
-                                    PlayerThrottle = 0
+                                    cmdThrottle(0)
                                     apThrottleSet = false
                                     if CustomTarget ~= nil and CustomTarget.planetname ~= "Space" then
                                         ProgradeIsOn = true
@@ -6532,13 +6526,12 @@ VERSION_NUMBER = 1.131
                     AutopilotStatus = "Aligning" -- Disable autopilot and reset
                     brakeInput = 0
                     cmdThrottle(0)
-                    PlayerThrottle = 0
                     apThrottleSet = false
                     ProgradeIsOn = true
                     spaceLand = true
                     local waypoint = zeroConvertToMapPosition(autopilotTargetPlanet, CustomTarget.position)
                     waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
-                    system.setWaypoint(waypoint)
+                    sysSetWP(waypoint)
                 end
                 if followMode then
                     -- User is assumed to be outside the construct
@@ -6636,10 +6629,9 @@ VERSION_NUMBER = 1.131
                         local brakeDistancer, brakeTimer = Kinematic.computeDistanceAndTime(velMag, ReentrySpeed/3.6, constructMass(), 0, 0, LastMaxBrake - planet.gravity*9.8*constructMass())
                         local distanceToTarget = coreAltitude - (planet.noAtmosphericDensityAltitude + 5000)
 
-                        if navCom:getAxisCommandType(0) == axisCommandType.byTargetSpeed and coreAltitude > planet.noAtmosphericDensityAltitude + 5000 and velMag <= ReentrySpeed/3.6 and velMag > (ReentrySpeed/3.6)-10 and mabs(constructVelocity:normalize():dot(constructForward)) > 0.9 then
-                            Nav.control.cancelCurrentControlMasterMode()
-                            PlayerThrottle = 0
-                        elseif navCom:getAxisCommandType(0) == axisCommandType.byThrottle and ((brakeDistancer > -1 and distanceToTarget <= brakeDistancer) or coreAltitude <= planet.noAtmosphericDensityAltitude + 5000) then
+                        if not throttleMode and coreAltitude > planet.noAtmosphericDensityAltitude + 5000 and velMag <= ReentrySpeed/3.6 and velMag > (ReentrySpeed/3.6)-10 and mabs(constructVelocity:normalize():dot(constructForward)) > 0.9 then
+                            cmdThrottle(0)
+                        elseif throttleMode and ((brakeDistancer > -1 and distanceToTarget <= brakeDistancer) or coreAltitude <= planet.noAtmosphericDensityAltitude + 5000) then
                             BrakeIsOn = true
                         else
                             BrakeIsOn = false
@@ -6660,7 +6652,7 @@ VERSION_NUMBER = 1.131
                         elseif coreAltitude <= planet.noAtmosphericDensityAltitude + 5000 then
 
                             cmdCruise(ReentrySpeed)-- Then we have to wait a tick for it to take our new speed.
-                            if navCom:getAxisCommandType(0) == axisCommandType.byTargetSpeed and navCom:getTargetSpeed(axisCommandId.longitudinal) == adjustedAtmoSpeedLimit then
+                            if not throttleMode and navCom:getTargetSpeed(axisCommandId.longitudinal) == adjustedAtmoSpeedLimit then
                                 reentryMode = false
                                 Reentry = false
                                 autoRoll = true -- wtf?  On some ships this makes it flail around because of the -80 and never recover
@@ -6904,8 +6896,8 @@ VERSION_NUMBER = 1.131
                                 end
                             end
                         end
-                        if navCom:getAxisCommandType(0) == 1 then
-                            Nav.control.cancelCurrentControlMasterMode()
+                        if not throttleMode then
+                            cmdThrottle(0)
                         end
                         navCom:setTargetGroundAltitude(500)
                         navCom:activateGroundEngineAltitudeStabilization(500)
@@ -6951,7 +6943,7 @@ VERSION_NUMBER = 1.131
                         elseif mabs(targetPitch) < 15 and (coreAltitude/HoldAltitude) > 0.75 then
                             AutoTakeoff = false -- No longer in ascent
                             if not spaceLaunch then 
-                                if navCom:getAxisCommandType(0) == 0 and not AtmoSpeedAssist then
+                                if throttleMode and not AtmoSpeedAssist then
                                     Nav.control.cancelCurrentControlMasterMode()
                                 end
                             elseif spaceLaunch and velMag < minAutopilotSpeed then
@@ -6971,8 +6963,8 @@ VERSION_NUMBER = 1.131
                             spaceLaunch = false
                             AltitudeHold = false
                             AutoTakeoff = false
-                            if navCom:getAxisCommandType(0) == 1 then
-                                Nav.control.cancelCurrentControlMasterMode()
+                            if not throttleMode then
+                                cmdThrottle(0)
                             end
                             --navCom:setThrottleCommand(axisCommandId.longitudinal, 0)
                             --PlayerThrottle = 0
@@ -7115,12 +7107,13 @@ VERSION_NUMBER = 1.131
             end
         end
 
-        if navCom:getAxisCommandType(0) == axisCommandType.byThrottle and WasInCruise then
+        throttleMode = (navCom:getAxisCommandType(0) == axisCommandType.byThrottle)
+    
+        if throttleMode and WasInCruise then
             -- Not in cruise, but was last tick
-            PlayerThrottle = 0
-            navCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle) -- Reset throttle
+            cmdThrottle(0)
             WasInCruise = false
-        elseif navCom:getAxisCommandType(0) == axisCommandType.byTargetSpeed and not WasInCruise then
+        elseif not throttleMode and not WasInCruise then
             -- Is in cruise, but wasn't last tick
             PlayerThrottle = 0 -- Reset this here too, because, why not
             WasInCruise = true
@@ -7248,7 +7241,7 @@ VERSION_NUMBER = 1.131
         brakeInput2 = 0
         local vSpd = -worldVertical:dot(constructVelocity)
 
-        if inAtmo and AtmoSpeedAssist and navCom:getAxisCommandType(0) == axisCommandType.byThrottle then
+        if inAtmo and AtmoSpeedAssist and throttleMode then
             -- This is meant to replace cruise
             -- Uses AtmoSpeedLimit as the desired speed in which to 'cruise'
             -- In atmo, if throttle is 100%, it applies a PID to throttle to try to achieve AtmoSpeedLimit
@@ -7384,7 +7377,7 @@ VERSION_NUMBER = 1.131
 
             local targetSpeed = unit.getAxisCommandValue(0)
 
-            if navCom:getAxisCommandType(0) == axisCommandType.byTargetSpeed then -- Use a PID to brake past targetSpeed
+            if not throttleMode then -- Use a PID to brake past targetSpeed
                 if (brakePID == nil) then
                     brakePID = pid.new(1 * 0.01, 0, 1 * 0.1)
                 end
@@ -7491,7 +7484,7 @@ VERSION_NUMBER = 1.131
         if isBoosting and not VanillaRockets then 
             local speed = vec3(core.getVelocity()):len()
             local maxSpeedLag = 0.15
-            if navCom:getAxisCommandType(0) == 1 then -- Cruise control rocket boost assist, Dodgin's modified.
+            if not throttleMode then -- Cruise control rocket boost assist, Dodgin's modified.
                 local cc_speed = navCom:getTargetSpeed(axisCommandId.longitudinal)
                 if speed * 3.6 > (cc_speed * (1 - maxSpeedLag)) and IsRocketOn then
                     IsRocketOn = false
@@ -7569,15 +7562,15 @@ VERSION_NUMBER = 1.131
                 unit.hide()
                 core.hide()
                 if fuelPanelID ~= nil then
-                    system.destroyWidgetPanel(fuelPanelID)
+                    sysDestWid(fuelPanelID)
                     fuelPanelID = nil
                 end
                 if spacefuelPanelID ~= nil then
-                    system.destroyWidgetPanel(spacefuelPanelID)
+                    sysDestWid(spacefuelPanelID)
                     spacefuelPanelID = nil
                 end
                 if rocketfuelPanelID ~= nil then
-                    system.destroyWidgetPanel(rocketfuelPanelID)
+                    sysDestWid(rocketfuelPanelID)
                     rocketfuelPanelID = nil
                 end
             end
@@ -7632,11 +7625,7 @@ VERSION_NUMBER = 1.131
             if GearExtended then
                 VectorToTarget = false
                 LockPitch = nil
-                if navCom:getAxisCommandType(0) == 1 then
-                    Nav.control.cancelCurrentControlMasterMode()
-                end
-                navCom:setThrottleCommand(axisCommandId.longitudinal, 0)
-                PlayerThrottle = 0
+                cmdThrottle(0)
                 if (vBooster or hover) and hovGndDet == -1 then
                     StrongBrakes = true -- We don't care about this anymore
                     Reentry = false
@@ -7771,10 +7760,10 @@ VERSION_NUMBER = 1.131
             end
             toggleView = false
         elseif action == "lshift" then
-            if system.isViewLocked() == 1 then
+            if sysIsVwLock() == 1 then
                 holdingCtrl = true
-                PrevViewLock = system.isViewLocked()
-                system.lockView(1)
+                PrevViewLock = sysIsVwLock()
+                sysLockVw(1)
             elseif isRemote() == 1 and ShiftShowsRemoteButtons then
                 holdingCtrl = true
                 Animated = false
@@ -7791,7 +7780,7 @@ VERSION_NUMBER = 1.131
         elseif action == "lalt" then
             AltIsOn = true
             if isRemote() == 0 and not freeLookToggle and userControlScheme == "keyboard" then
-                system.lockView(1)
+                sysLockVw(1)
             end
         elseif action == "booster" then
             -- Dodgin's Don't Die Rocket Govenor - Cruise Control Edition
@@ -7886,11 +7875,11 @@ VERSION_NUMBER = 1.131
                 holdAltitudeButtonModifier = OldButtonMod
             end
         elseif action == "lshift" then
-            if system.isViewLocked() == 1 then
+            if sysIsVwLock() == 1 then
                 holdingCtrl = false
                 simulatedX = 0
                 simulatedY = 0 -- Reset for steering purposes
-                system.lockView(PrevViewLock)
+                sysLockVw(PrevViewLock)
             elseif isRemote() == 1 and ShiftShowsRemoteButtons then
                 holdingCtrl = false
                 Animated = false
@@ -7907,16 +7896,16 @@ VERSION_NUMBER = 1.131
         elseif action == "lalt" then
             if isRemote() == 0 and freeLookToggle then
                 if toggleView then
-                    if system.isViewLocked() == 1 then
-                        system.lockView(0)
+                    if sysIsVwLock() == 1 then
+                        sysLockVw(0)
                     else
-                        system.lockView(1)
+                        sysLockVw(1)
                     end
                 else
                     toggleView = true
                 end
             elseif isRemote() == 0 and not freeLookToggle and userControlScheme == "keyboard" then
-                system.lockView(0)
+                sysLockVw(0)
             end
             AltIsOn = false
         end
@@ -8063,7 +8052,7 @@ VERSION_NUMBER = 1.131
         if i ~= nil then
             command = string.sub(text, 0, i-1)
             arguement = string.sub(text, i+1)
-        elseif not string.find(commands, command) then
+        elseif string.find(commands, command) == -1 then
             for str in string.gmatch(commandhelp, "([^\n]+)") do
                 system.print(str)
             end

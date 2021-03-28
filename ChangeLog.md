@@ -1,6 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.131
+Version 1.132
+- Fixed no argument text command input. (ah-copydatabank and ah-wipedatabank)
+- More cleaning and localization of code.
 - Fixed planet atmosphere save value to use max atmosphere density if not using update position (fix SatNav issue)
 - Fixed PlayerThrottle value being set incorrectly.
 - Fixed cmdThrottle setting throttle to 1000 sometimes.
