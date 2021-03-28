@@ -801,10 +801,10 @@ VERSION_NUMBER = 1.130
             end
             VectorStatus = "Proceeding to Waypoint"
         end
-        if (hovGndDet ~= -1 and VertTakeOffEngine) or VertTakeOff then
-            msgText = "Vertical Takeoff autopilot not supported.\nFinish or Disable Vertical Takeoff"
-            return
-        end
+        --if (hovGndDet ~= -1 and VertTakeOffEngine) or VertTakeOff then
+           -- msgText = "Vertical Takeoff autopilot not supported.\nFinish or Disable Vertical Takeoff"
+            --return
+        --end
         if (time - apDoubleClick) < 1.5 and atmosDensity > 0 then
             if not SpaceEngines then
                 msgText = "No space engines detected, Orbital Hop not supported"
@@ -5020,7 +5020,9 @@ VERSION_NUMBER = 1.130
         if button then
             button.activate()
         end
-
+        local waypoint = zeroConvertToMapPosition(planet, worldPos)
+        waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
+        system.setWaypoint(waypoint)
     end
 
     function script.onTick(timerId)
@@ -5824,7 +5826,7 @@ VERSION_NUMBER = 1.130
                             aligned = AlignToWorldVector(vec3(constructVelocity),0.01) 
                         end
                         autoRoll = true
-                        if aligned and (mabs(roll) < 2 or mabs(adjustedPitch) > 85) and velMag >= adjustedAtmoSpeedLimit/3.6-1 then
+                        if aligned and (mabs(roll) < 2 or mabs(adjustedPitch) > 80) and velMag >= adjustedAtmoSpeedLimit/3.6-1 then
                                 -- Try to force it to get full speed toward target, so it goes straight to throttle and all is well
                             if (vec3(targetCoords) - worldPos):len() > 40000 then
                                 ProgradeIsOn = false
@@ -5942,7 +5944,7 @@ VERSION_NUMBER = 1.130
                         if (vTpitchPID == nil) then
                             vTpitchPID = pid.new(2 * 0.01, 0, 2 * 0.1)
                         end
-                        local vTpitchDiff = uclamp(VtPitch-adjustedPitch, -PitchStallAngle*0.85, PitchStallAngle*0.85)
+                        local vTpitchDiff = uclamp(VtPitch-adjustedPitch, -PitchStallAngle*0.80, PitchStallAngle*0.80)
                         vTpitchPID:inject(vTpitchDiff)
                         local vTPitchInput = uclamp(vTpitchPID:get(),-1,1)
                         pitchInput2 = vTPitchInput
@@ -5964,10 +5966,13 @@ VERSION_NUMBER = 1.130
                     local escapeVel, endSpeed = Kep(OrbitTargetPlanet):escapeAndOrbitalSpeed((worldPos-OrbitTargetPlanet.center):len()-OrbitTargetPlanet.radius)
                     local orbitalRoll = roll
 
-                    local function inRange()
+                    local function inRange(rangeOnly)
                         local targetVec = CustomTarget.position - worldPos
                         local brakeDistance, _ =  Kinematic.computeDistanceAndTime(velMag, adjustedAtmoSpeedLimit/3.6, constructMass(), 0, 0, LastMaxBrake)
-                        if constructVelocity:normalize():dot(targetVec:normalize()) > 0.5 and targetVec:len() > 15000 + brakeDistance+coreAltitude then
+
+                        if rangeOnly and targetVec:len() > 25000 + brakeDistance + coreAltitude then
+                            return false
+                        elseif constructVelocity:normalize():dot(targetVec:normalize()) > 0.5 and targetVec:len() > 25000 + brakeDistance + coreAltitude then
                             return false
                         end
                         -- We can skip prograde completely if we're approaching from an orbit?
@@ -6026,7 +6031,7 @@ VERSION_NUMBER = 1.130
 
                     -- Getting as close to orbit distance as comfortably possible
                     if orbitalParams.VectorToTarget or spaceLand then
-                        if inRange() then finishOrbit() end
+                        if inRange(true) then finishOrbit() end
                     end
 
 
@@ -6163,7 +6168,7 @@ VERSION_NUMBER = 1.130
                         pitchInput2 = orbitPitchInput
                     end
                     if orbitRoll ~= nil then
-                        if adjustedPitch < 85 then
+                        if adjustedPitch < 80 then
                             local rollFactor = math.max(autoRollFactor, 0.01)/4
                             if (OrbitRollPID == nil) then
                                 OrbitRollPID = pid.new(rollFactor * 0.01, 0, rollFactor * 0.1)
@@ -6689,11 +6694,11 @@ VERSION_NUMBER = 1.130
                             targetRoll = uclamp(targetYaw*2, -maxRoll, maxRoll)
                             local origTargetYaw = targetYaw
                             -- 4x weight to pitch consideration because yaw is often very weak compared and the pid needs help?
-                            targetYaw = uclamp(uclamp(targetYaw,-YawStallAngle*0.85,YawStallAngle*0.85)*math.cos(rollRad) + 4*(adjustedPitch-targetPitch)*math.sin(math.rad(roll)),-YawStallAngle*0.85,YawStallAngle*0.85) -- We don't want any yaw if we're rolled
-                            targetPitch = uclamp(uclamp(targetPitch*math.cos(rollRad),-PitchStallAngle*0.85,PitchStallAngle*0.85) + mabs(uclamp(mabs(origTargetYaw)*math.sin(rollRad),-PitchStallAngle*0.85,PitchStallAngle*0.85)),-PitchStallAngle*0.85,PitchStallAngle*0.85) -- Always yaw positive 
+                            targetYaw = uclamp(uclamp(targetYaw,-YawStallAngle*0.80,YawStallAngle*0.80)*math.cos(rollRad) + 4*(adjustedPitch-targetPitch)*math.sin(math.rad(roll)),-YawStallAngle*0.80,YawStallAngle*0.80) -- We don't want any yaw if we're rolled
+                            targetPitch = uclamp(uclamp(targetPitch*math.cos(rollRad),-PitchStallAngle*0.80,PitchStallAngle*0.80) + mabs(uclamp(mabs(origTargetYaw)*math.sin(rollRad),-PitchStallAngle*0.80,PitchStallAngle*0.80)),-PitchStallAngle*0.80,PitchStallAngle*0.80) -- Always yaw positive 
                         else
                             targetRoll = 0
-                            targetYaw = uclamp(targetYaw,-YawStallAngle*0.85,YawStallAngle*0.85)
+                            targetYaw = uclamp(targetYaw,-YawStallAngle*0.80,YawStallAngle*0.80)
                         end
         
 
@@ -6707,6 +6712,7 @@ VERSION_NUMBER = 1.130
                             local autoYawInput = uclamp(yawPID:get(),-1,1) -- Keep it reasonable so player can override
                             yawInput2 = yawInput2 + autoYawInput
                         elseif (inAtmo and hovGndDet > -1 or velMag < minRollVelocity) then
+
                             AlignToWorldVector(targetVec) -- Point to the target if on the ground and 'stalled'
                         elseif stalling and atmosDensity > 0.01 then
                             -- Do this if we're yaw stalling
@@ -6715,7 +6721,7 @@ VERSION_NUMBER = 1.130
                             end
                             -- Only do this if we're stalled for pitch
                             if (currentPitch < -PitchStallAngle or currentPitch > PitchStallAngle) and atmosDensity > 0.01 then
-                                targetPitch = uclamp(adjustedPitch-currentPitch,adjustedPitch - PitchStallAngle*0.85, adjustedPitch + PitchStallAngle*0.85) -- Just try to get within un-stalling range to not bounce too much
+                                targetPitch = uclamp(adjustedPitch-currentPitch,adjustedPitch - PitchStallAngle*0.80, adjustedPitch + PitchStallAngle*0.80) -- Just try to get within un-stalling range to not bounce too much
                             end
                         end
                         
@@ -6821,7 +6827,7 @@ VERSION_NUMBER = 1.130
 
                     if stalling and atmosDensity > 0.01 and hovGndDet == -1 and velMag > minRollVelocity and VectorStatus ~= "Finalizing Approach" then
                         AlignToWorldVector(constructVelocity) -- Otherwise try to pull out of the stall, and let it pitch into it
-                        targetPitch = uclamp(adjustedPitch-currentPitch,adjustedPitch - PitchStallAngle*0.85, adjustedPitch + PitchStallAngle*0.85) -- Just try to get within un-stalling range to not bounce too much
+                        targetPitch = uclamp(adjustedPitch-currentPitch,adjustedPitch - PitchStallAngle*0.80, adjustedPitch + PitchStallAngle*0.80) -- Just try to get within un-stalling range to not bounce too much
                     end
 
 
@@ -6991,7 +6997,7 @@ VERSION_NUMBER = 1.130
                         pitchToUse = adjustedPitch*mabs(math.cos(rollRad))+currentPitch*math.sin(rollRad)
                     end
                     -- TODO: These clamps need to be related to roll and YawStallAngle, we may be dealing with yaw?
-                    local pitchDiff = uclamp(targetPitch-pitchToUse, -PitchStallAngle*0.85, PitchStallAngle*0.85)
+                    local pitchDiff = uclamp(targetPitch-pitchToUse, -PitchStallAngle*0.80, PitchStallAngle*0.80)
                     if atmosDensity < 0.01 and VectorToTarget then
                         pitchDiff = uclamp(targetPitch-pitchToUse, -85, MaxPitch) -- I guess
                     elseif atmosDensity < 0.01 then

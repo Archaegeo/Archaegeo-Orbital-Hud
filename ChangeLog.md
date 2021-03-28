@@ -1,9 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.130 
+- Exiting ship sets waypoint to ship location
 - Full Harrier VTO automation - Alt-6 will VTO to normal auto-takeoff height then commence forward flight using vanilla cruise control.
     Alt-6-6 will VTO to 11% then commence forward flight using vanilla cruise control.
     To VTO to orbit, just use alt-spacebar to set height > atmosphere.
+- VTOL Autopilot is allowed but needs fine tuning, use alt-4 AP takeoff with close attention.
 - Cleaned up AGG code
 - Fixed VertEngine thinking on when no vertical engines (removed since last sit down)
 - more code reduction/cleanup
