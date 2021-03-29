@@ -4,7 +4,7 @@ Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.132
+VERSION_NUMBER = 1.134
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -555,24 +555,78 @@ VERSION_NUMBER = 1.132
         end
     end
 
+    local function ToggleIntoOrbit()
+        OrbitAchieved = false
+        orbitPitch = nil
+        orbitRoll = nil
+        OrbitTicks = 0
+        if atmosDensity == 0 then
+            if IntoOrbit then
+                IntoOrbit = false
+                orbitAligned = false
+                OrbitTargetPlanet = nil
+                autoRoll = autoRollPreference
+                if AltitudeHold then AltitudeHold = false AutoTakeoff = false end
+                orbitalParams.VectorToTarget = false
+                orbitalParams.AutopilotAlign = false
+                OrbitTargetSet = false
+            elseif unit.getClosestPlanetInfluence() > 0 then
+                IntoOrbit = true
+                autoRoll = true
+                if OrbitTargetPlanet == nil then
+                    OrbitTargetPlanet = planet
+                end
+                if AltitudeHold then AltitudeHold = false AutoTakeoff = false end
+            else
+                msgText = "Unable to engage orbiting, not near planet"
+            end
+        else
+            -- If this got called while in atmo, make sure it's all false
+            IntoOrbit = false
+            orbitAligned = false
+            OrbitTargetPlanet = nil
+            autoRoll = autoRollPreference
+            if AltitudeHold then AltitudeHold = false end
+            orbitalParams.VectorToTarget = false
+            orbitalParams.AutopilotAlign = false
+            OrbitTargetSet = false
+        end
+    end
+
     local function ToggleAltitudeHold()  
         if (time - ahDoubleClick) < 1.5 then
-            if planet.hasAtmosphere then
+            if planet.hasAtmosphere  then
                 if atmosDensity > 0 then
                     HoldAltitude = planet.spaceEngineMinAltitude - 50
                 else
                     if unit.getClosestPlanetInfluence() > 0 then
                         HoldAltitude = planet.noAtmosphericDensityAltitude + 1000
+                        OrbitTargetOrbit = HoldAltitude
+                        OrbitTargetSet = true
+                        if not IntoOrbit then ToggleIntoOrbit() end
+                        orbitAligned = true
                     end
                 end
                 ahDoubleClick = -1
-                if AltitudeHold or VertTakeOff then 
+                if AltitudeHold or IntoOrbit or VertTakeOff then 
                     return 
                 end
             end
         else
             ahDoubleClick = time
         end
+        if unit.getClosestPlanetInfluence() > 0 and atmosDensity == 0 then
+            OrbitTargetOrbit = coreAltitude
+            OrbitTargetSet = true
+            orbitAligned = true
+            ToggleIntoOrbit()
+            if IntoOrbit then
+                ahDoubleClick = time
+            else
+                ahDoubleClick = 0
+            end
+            return 
+        end        
         AltitudeHold = not AltitudeHold
         BrakeLanding = false
         Reentry = false
@@ -589,15 +643,6 @@ VERSION_NUMBER = 1.132
                 if ahDoubleClick > -1 then
                     if unit.getClosestPlanetInfluence() > 0 then
                         HoldAltitude = coreAltitude
-                    end
-                end
-                if not inAtmo then
-                    OrbitAchieved = false
-                    OrbitTargetSet = true
-                    OrbitTargetOrbit = HoldAltitude
-                    IntoOrbit = true
-                    if not spaceLaunch and throttleMode and not AtmoSpeedAssist then
-                        Nav.control.cancelCurrentControlMasterMode()
                     end
                 end
                 if VertTakeOff then ToggleVerticalTakeoff() end
@@ -621,34 +666,7 @@ VERSION_NUMBER = 1.132
             autoRoll = autoRollPreference
             AutoTakeoff = false
             VectorToTarget = false
-        end
-    end
-
-    local function ToggleIntoOrbit()
-        orbitAligned = false
-        orbitPitch = nil
-        orbitRoll = nil
-        OrbitTicks = 0
-        if IntoOrbit then
-            if OrbitAchieved then
-                CancelIntoOrbit = false
-            else
-                CancelIntoOrbit = true
-            end
-            OrbitAchieved = false
-            IntoOrbit = false
-            OrbitTargetPlanet = nil
-        elseif unit.getClosestPlanetInfluence() > 0 and atmosDensity == 0 then
-            IntoOrbit = true
-            OrbitAchieved = false
-            CancelIntoOrbit = false
-            if OrbitTargetPlanet == nil then
-                OrbitTargetPlanet = planet
-            end
-            OrbitTargetOrbit = HoldAltitude
-            OrbitTargetSet = true
-        else
-            msgText = "Unable to engage orbiting, not near planet or in atmosphere"
+            ahDoubleClick = 0
         end
     end
 
@@ -808,10 +826,7 @@ VERSION_NUMBER = 1.132
             end
             VectorStatus = "Proceeding to Waypoint"
         end
-        --if (hovGndDet ~= -1 and VertTakeOffEngine) or VertTakeOff then
-           -- msgText = "Vertical Takeoff autopilot not supported.\nFinish or Disable Vertical Takeoff"
-            --return
-        --end
+
         if (time - apDoubleClick) < 1.5 and atmosDensity > 0 then
             if not SpaceEngines then
                 msgText = "No space engines detected, Orbital Hop not supported"
@@ -831,7 +846,7 @@ VERSION_NUMBER = 1.132
         end
         TargetSet = false -- No matter what
         -- Toggle Autopilot, as long as the target isn't None
-        if AutopilotTargetIndex > 0 and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
+        if AutopilotTargetIndex > 0 and not Autopilot and not VectorToTarget and not spaceLaunch then
             UpdateAutopilotTarget() -- Make sure we're updated
             local waypoint = zeroConvertToMapPosition(autopilotTargetPlanet, AutopilotTargetCoords)
             waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
@@ -849,20 +864,22 @@ VERSION_NUMBER = 1.132
                 elseif planet.name  == CustomTarget.planetname then
                     StrongBrakes = true
                     if atmosDensity > 0 then
-                        OrbitAchieved = false
+                        --OrbitAchieved = false
                         if not VectorToTarget then
                             ToggleVectorToTarget(SpaceTarget)
                         end
                     else
-                        if coreAltitude > 100000 or coreAltitude == 0 then
+                        if coreAltitude > AutopilotTargetOrbit*1.5 or coreAltitude == 0 then
                             OrbitAchieved = false
                             Autopilot = true
                         elseif not inAtmo then
-                            spaceLand = true
-                            ProgradeIsOn = true
+                            if IntoOrbit then ToggleIntoOrbit() end -- Reset all appropriate vars
                             OrbitTargetOrbit = planet.noAtmosphericDensityAltitude + 1000
                             OrbitTargetSet = true
-                            if AltitudeHold then ToggleAltitudeHold() end -- Make sure to cancel this.
+                            orbitalParams.AutopilotAlign = true
+                            orbitalParams.VectorToTarget = true
+                            orbitAligned = false
+                            if not IntoOrbit then ToggleIntoOrbit() end
                         end
                     end
                 else
@@ -877,8 +894,9 @@ VERSION_NUMBER = 1.132
                 end
             elseif atmosDensity == 0 then -- Planetary autopilot
                 local nearPlanet = unit.getClosestPlanetInfluence() > 0
-                if CustomTarget == nil and (autopilotTargetPlanet.name == planet.name and nearPlanet) then
+                if CustomTarget == nil and (autopilotTargetPlanet.name == planet.name and nearPlanet) and not IntoOrbit then
                     OrbitAchieved = false
+                    orbitAligned = false
                     ToggleIntoOrbit() -- this works much better here
                 else
                     Autopilot = true
@@ -910,13 +928,7 @@ VERSION_NUMBER = 1.132
             HoldAltitude = coreAltitude
             TargetSet = false
             Reentry = false
-            if IntoOrbit then 
-                if not orbitalParams.VectorToTarget then 
-                    IntoOrbit = false
-                else
-                    orbitalParams.VectorToTarget = false
-                end
-            end
+            if IntoOrbit then ToggleIntoOrbit() end
         end
     end
 
@@ -1978,11 +1990,11 @@ VERSION_NUMBER = 1.132
             end                  
             if antigrav and not ExternalAGG and antigravOn and AntigravTargetAltitude ~= nil then
                 if mabs(coreAltitude - antigrav.getBaseAltitude()) < 501 then
-                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">AGG On - Target Altitude: %d Singluarity Altitude: %d</text>]],
-                        warningX, apY+20, mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude()))
+                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">AGG On - Target Altitude: %d Singularity Altitude: %d</text>]],
+                        warningX, apY+15, mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude()))
                 else
                     newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">AGG On - Target Altitude: %d Singluarity Altitude: %d</text>]],
-                        warningX, apY+20, mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude()))
+                        warningX, apY+15, mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude()))
                 end
             elseif Autopilot and AutopilotTargetName ~= "None" then
                 newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Autopilot %s</text>]],
@@ -2071,7 +2083,7 @@ VERSION_NUMBER = 1.132
             end
             if VectorToTarget and not IntoOrbit then
                 newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">%s</text>]], warningX,
-                                                apY+30, VectorStatus)
+                                                apY+35, VectorStatus)
             end
         
             newContent[#newContent + 1] = "</g>"
@@ -5821,20 +5833,16 @@ VERSION_NUMBER = 1.132
                             aligned = AlignToWorldVector(vec3(constructVelocity),0.01) 
                         end
                         autoRoll = true
-                        if aligned and (mabs(roll) < 2 or mabs(adjustedPitch) > 80) and velMag >= adjustedAtmoSpeedLimit/3.6-1 then
+                        if aligned and (mabs(roll) < 2 or mabs(adjustedPitch) > 85) and velMag >= adjustedAtmoSpeedLimit/3.6-1 then
                                 -- Try to force it to get full speed toward target, so it goes straight to throttle and all is well
-                            if (vec3(targetCoords) - worldPos):len() > 40000 then
-                                ProgradeIsOn = false
-                                IntoOrbit = true
-                            else    
                                 BrakeIsOn = false
                                 ProgradeIsOn = false
                                 reentryMode = true
                                 spaceLand = false
                                 finalLand = true
                                 Autopilot = false
+                                --autoRoll = autoRollPreference   
                                 BeginReentry()
-                            end
                         elseif inAtmo and AtmoSpeedAssist then 
                             cmdThrottle(1) -- Just let them full throttle if they're in atmo
                         else
@@ -5893,9 +5901,14 @@ VERSION_NUMBER = 1.132
                             upAmount = 15
                         elseif coreAltitude >= targetAltitude then
                             if antigravOn then 
-                                BrakeIsOn = true
+                                if Autopilot or VectorToTarget then
+                                    ToggleVerticalTakeoff()
+
+                                else
+                                    BrakeIsOn = true
+                                    VertTakeOff = false
+                                end
                                 msgText = "Takeoff complete. Singularity engaged"
-                                VertTakeOff = false
                             else
                                 BrakeIsOn = false
                                 msgText = "VTO complete. Engaging Horizontal Flight"
@@ -5946,7 +5959,6 @@ VERSION_NUMBER = 1.132
                 end
 
                 if IntoOrbit then
-
                     if OrbitTargetPlanet == nil then
                         if VectorToTarget then
                             OrbitTargetPlanet = autopilotTargetPlanet
@@ -5954,229 +5966,178 @@ VERSION_NUMBER = 1.132
                             OrbitTargetPlanet = planet
                         end
                     end
-
-                    local displaydist,displayunit = getDistanceDisplayString(OrbitTargetOrbit,2)
-                    local orbitTargetOrbitString = displaydist..displayunit
-                    local escapeVel, endSpeed = Kep(OrbitTargetPlanet):escapeAndOrbitalSpeed((worldPos-OrbitTargetPlanet.center):len()-OrbitTargetPlanet.radius)
-                    local orbitalRoll = roll
-
-                    local function inRange(rangeOnly)
-                        local targetVec = CustomTarget.position - worldPos
-                        local brakeDistance, _ =  Kinematic.computeDistanceAndTime(velMag, adjustedAtmoSpeedLimit/3.6, constructMass(), 0, 0, LastMaxBrake)
-
-                        if rangeOnly and targetVec:len() > 25000 + brakeDistance + coreAltitude then
-                            return false
-                        elseif constructVelocity:normalize():dot(targetVec:normalize()) > 0.5 and targetVec:len() > 25000 + brakeDistance + coreAltitude then
-                            return false
-                        end
-                        -- We can skip prograde completely if we're approaching from an orbit?
-                        --BrakeIsOn = false -- Leave brakes on to be safe while we align prograde
-                        AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
-                        reentryMode = true
-                        spaceLand = false
-                        finalLand = true
-                        BeginReentry()
-                        orbitalParams.VectorToTarget = false -- Let it disable orbit                        
-                        return true
-                    end
-
-                    local function finishOrbit()
-                        if not orbitalParams.VectorToTarget and not spaceLand then
-                            orbitMsg = nil
-                            orbitalRecover = false
-                            OrbitTargetSet = false
-                            OrbitTargetPlanet = nil
-                            autoRoll = autoRollPreference
-                            if not finalLand then
-                                msgText = "Orbit established"
-                            end
-                            orbitalParams.VectorToTarget = false
-                            CancelIntoOrbit = false
-                            IntoOrbit = false
-                            orbitAligned = false
-                            orbitPitch = nil
-                            orbitRoll = nil
-                            OrbitTargetPlanet = nil
-                            OrbitAchieved = false
-                            OrbitTicks = 0
-                        end
-                    end
-
                     if not OrbitTargetSet then
                         if OrbitTargetPlanet.hasAtmosphere then
-                            OrbitTargetOrbit = mfloor(OrbitTargetPlanet.radius*(TargetOrbitRadius-1) + OrbitTargetPlanet.noAtmosphericDensityAltitude)
+                            OrbitTargetOrbit = math.floor(OrbitTargetPlanet.radius + OrbitTargetPlanet.noAtmosphericDensityAltitude + 1000)
                         else
-                            OrbitTargetOrbit = mfloor(OrbitTargetPlanet.radius*(TargetOrbitRadius-1) + OrbitTargetPlanet.surfaceMaxAltitude)
+                            OrbitTargetOrbit = math.floor(OrbitTargetPlanet.radius + OrbitTargetPlanet.surfaceMaxAltitude + 1000)
                         end
                         OrbitTargetSet = true
+                    end     
+                    local targetVec
+                    local yawAligned = false
+                    local heightstring, heightunit = getDistanceDisplayString(OrbitTargetOrbit)
+                    local orbitHeightString = heightstring .. heightunit
+                    if orbitalParams.VectorToTarget then
+                        targetVec = CustomTarget.position - worldPos
                     end
- 
-                    if AltitudeHold or VectorToTarget then
-                        if not spaceLaunch then 
-                            OrbitTargetOrbit = round(HoldAltitude,1)
-                            orbitAligned = true
-                            AltitudeHold = false
-                        end
-                        if VectorToTarget then
-                            orbitalParams.VectorToTarget = VectorToTarget
-                            VectorToTarget = false
-                        end
-                    end
-
+                    local escapeVel, endSpeed = Kep(OrbitTargetPlanet):escapeAndOrbitalSpeed((worldPos -OrbitTargetPlanet.center):len()-OrbitTargetPlanet.radius)
+                    local orbitalRoll = roll
                     -- Getting as close to orbit distance as comfortably possible
-                    if orbitalParams.VectorToTarget or spaceLand then
-                        if inRange(true) then finishOrbit() end
-                    end
-
-
-                    if orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.eccentricity < 1 and coreAltitude > OrbitTargetOrbit*0.9 and coreAltitude < OrbitTargetOrbit*1.4 then
-                        if orbit.apoapsis ~= nil then
-                            if (orbit.periapsis.altitude >= OrbitTargetOrbit*0.99 and orbit.apoapsis.altitude >= OrbitTargetOrbit*0.99 and 
-                                orbit.periapsis.altitude < orbit.apoapsis.altitude and orbit.periapsis.altitude*1.05 >= orbit.apoapsis.altitude) or OrbitAchieved then -- This should get us a stable orbit within 10% with the way we do it
-                                if OrbitAchieved then
-                                    BrakeIsOn = false
-                                    cmdThrottle(0)
-                                    OrbitAchieved = true
-                                    orbitPitch = 0
-                                    if orbitalParams.VectorToTarget or spaceLand then
-                                        -- Orbit to target...
-                                        if not inRange() then -- Triggers when we get close to passing it or within 12km+height I guess
-                                            orbitMsg = "Orbiting to Target"
-                                        else 
-                                            msgText = "In Range, proceeding with reentry"
-                                        end
-                                    end
-                                    finishOrbit()
-                                else
-                                    OrbitTicks = OrbitTicks + 1 -- We want to see a good orbit for 2 consecutive ticks plz
-                                    if OrbitTicks >= 2 then
-                                        OrbitAchieved = true
-                                    end
-                                end
-                                
-                            else
-                                orbitMsg = "Adjusting Orbit - OrbitHeight: "..orbitTargetOrbitString
-                                orbitalRecover = true
-                                -- Just set cruise to endspeed...
-                                cmdCruise(endSpeed*3.6+1)
-                                -- And set pitch to something that scales with vSpd
-                                -- Well, a pid is made for this stuff
-                                if (VSpdPID == nil) then
-                                    VSpdPID = pid.new(0.5, 0, 10 * 0.1) -- Has to stay low at base to avoid overshoot
-                                end
-                                local speedToInject = vSpd
-                                local altdiff = coreAltitude - OrbitTargetOrbit
-                                local absAltdiff = mabs(altdiff)
-                                if vSpd < 10 and mabs(adjustedPitch) < 10 and absAltdiff < 100 then
-                                    speedToInject = vSpd*2 -- Force it to converge when it's close
-                                end
-                                if speedToInject < 10 and mabs(adjustedPitch) < 10 and absAltdiff < 100 then -- And do it again when it's even closer
-                                    speedToInject = speedToInject*2
-                                end
-                                -- I really hate this, but, it really needs it still/again... 
-                                if speedToInject < 5 and mabs(adjustedPitch) < 5 and absAltdiff < 100 then -- And do it again when it's even closer
-                                    speedToInject = speedToInject*4
-                                end
-                                -- TBH these might not be super necessary anymore after changes, might can remove at least one, but two tends to make everything smoother
-                                VSpdPID:inject(speedToInject)
-                                orbitPitch = uclamp(-VSpdPID:get(),-90,90)
-                                -- Also, add pitch to try to adjust us to our correct altitude
-                                -- Dammit, that's another PID I guess... I don't want another PID... 
-                                if (OrbitAltPID == nil) then
-                                    OrbitAltPID = pid.new(0.1, 0, 5 * 0.1)
-                                end
-                                OrbitAltPID:inject(altdiff) -- We clamp this to max 15 degrees so it doesn't screw us too hard
-                                -- And this will fight with the other PID to keep vspd reasonable
-                                orbitPitch = uclamp(orbitPitch - uclamp(OrbitAltPID:get(),-15,15),-90,90)
-                            end
+                    if not orbitAligned then
+                        cmdThrottle(0)
+                        orbitRoll = 0
+                        orbitMsg = "Aligning to orbital path - OrbitHeight: "..orbitHeightString
+                        local pitchAligned = false
+                        local rollAligned = false
+                        if orbitalParams.VectorToTarget then
+                            AlignToWorldVector(targetVec:normalize():project_on_plane(worldVertical)) -- Returns a value that wants both pitch and yaw to align, which we don't do
+                            yawAligned = constructForward:dot(targetVec:project_on_plane(constructUp):normalize()) > 0.95
+                        else
+                            AlignToWorldVector(constructVelocity)
+                            yawAligned = currentYaw < 0.5
+                            if velMag < 150 then yawAligned = true end-- Low velocities can never truly align yaw
+                        end
+                        pitchInput2 = 0
+                        orbitPitch = 0
+                        if adjustedPitch <= orbitPitch+1 and adjustedPitch >= orbitPitch-1 then
+                            pitchAligned = true
+                        else
+                            pitchAligned = false
+                        end
+                        if orbitalRoll <= orbitRoll+1 and orbitalRoll >= orbitRoll-1 then
+                            rollAligned = true
+                        else
+                            rollAligned = false
+                        end
+                        if pitchAligned and rollAligned and yawAligned then
+                            orbitPitch = nil
+                            orbitRoll = nil
+                            orbitAligned = true
                         end
                     else
-                        local orbitalMultiplier = 2.75
-                        local pcs = mabs(utilsround(escapeVel*orbitalMultiplier))
-                        local mod = pcs%50
-                        if mod > 0 then pcs = (pcs - mod) + 50 end
-                        BrakeIsOn = false
-                        if not orbitAligned then
-                            local pitchAligned = false
-                            local rollAligned = false
-                            if coreAltitude < OrbitTargetOrbit then
-                                orbitMsg = "Aligning to orbital path - OrbitHeight: "..orbitTargetOrbitString
-                            else
-                                -- TODO: Target a point in space at the proper distance and point there.
-                                orbitMsg = "Aligning to orbital point - OrbitHeight: "..orbitTargetOrbitString
+                        if orbitalParams.VectorToTarget then
+                            AlignToWorldVector(targetVec:normalize():project_on_plane(worldVertical))
+                        elseif velMag > 150 then
+                            AlignToWorldVector(constructVelocity)
+                        end
+                        pitchInput2 = 0
+                        if orbitalParams.VectorToTarget then
+                            -- Orbit to target...
+        
+                            local brakeDistance, _ =  Kinematic.computeDistanceAndTime(velMag, adjustedAtmoSpeedLimit/3.6, constructMass(), 0, 0, LastMaxBrake)
+                            if OrbitAchieved and targetVec:len() > 15000+brakeDistance+coreAltitude then -- Triggers when we get close to passing it or within 12km+height I guess
+                                orbitMsg = "Orbiting to Target"
+                            elseif OrbitAchieved or targetVec:len() < 15000+brakeDistance+coreAltitude then
+                                msgText = "Orbit complete, proceeding with reentry"
+                                -- We can skip prograde completely if we're approaching from an orbit?
+                                --BrakeIsOn = false -- Leave brakes on to be safe while we align prograde
+                                AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
+                                reentryMode = true
+                                finalLand = true
+                                orbitalParams.VectorToTarget, orbitalParams.AutopilotAlign = false, false -- Let it disable orbit
+                                ToggleIntoOrbit()
+                                BeginReentry()
                             end
-                            orbitPitch = 0
-                            orbitRoll = 0
-                            if adjustedPitch <= orbitPitch+1 and adjustedPitch >= orbitPitch-1 then
-                                pitchAligned = true
-                            else
-                                pitchAligned = false
-                            end
-                            if orbitalRoll <= orbitRoll+1 and orbitalRoll >= orbitRoll-1 then
-                                rollAligned = true
-                            else
-                                rollAligned = false
-                            end
-                            if pitchAligned and rollAligned then
-                                orbitPitch = nil
-                                orbitRoll = nil
-                                orbitAligned = true
+                        end
+                        if orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.eccentricity < 1 and coreAltitude > OrbitTargetOrbit*0.9 and coreAltitude < OrbitTargetOrbit*1.4 then
+                            if orbit.apoapsis ~= nil then
+                                if (orbit.periapsis.altitude >= OrbitTargetOrbit*0.99 and orbit.apoapsis.altitude >= OrbitTargetOrbit*0.99 and 
+                                    orbit.periapsis.altitude < orbit.apoapsis.altitude and orbit.periapsis.altitude*1.05 >= orbit.apoapsis.altitude) or OrbitAchieved then -- This should get us a stable orbit within 10% with the way we do it
+                                    if OrbitAchieved then
+                                        BrakeIsOn = false
+                                        PlayerThrottle = 0
+                                        cmdThrottle(0)
+                                        OrbitAchieved = true
+                                        orbitPitch = 0
+                                        
+                                        if not orbitalParams.VectorToTarget then
+                                            msgText = "Orbit complete"
+                                            ToggleIntoOrbit()
+                                        end
+                                    else
+                                        OrbitTicks = OrbitTicks + 1 -- We want to see a good orbit for 2 consecutive ticks plz
+                                        if OrbitTicks >= 2 then
+                                            OrbitAchieved = true
+                                        end
+                                    end
+                                    
+                                else
+                                    orbitMsg = "Adjusting Orbit - OrbitHeight: "..orbitHeightString
+                                    orbitalRecover = true
+                                    -- Just set cruise to endspeed...
+                                    cmdCruise(endSpeed*3.6+1)
+                                    -- And set pitch to something that scales with vSpd
+                                    -- Well, a pid is made for this stuff
+                                    if (VSpdPID == nil) then
+                                        VSpdPID = pid.new(0.5, 0, 10 * 0.1) -- Has to stay low at base to avoid overshoot
+                                    end
+                                    local speedToInject = vSpd
+                                    local altdiff = coreAltitude - OrbitTargetOrbit
+                                    local absAltdiff = mabs(altdiff)
+                                    if vSpd < 10 and mabs(adjustedPitch) < 10 and absAltdiff < 100 then
+                                        speedToInject = vSpd*2 -- Force it to converge when it's close
+                                    end
+                                    if speedToInject < 10 and mabs(adjustedPitch) < 10 and absAltdiff < 100 then -- And do it again when it's even closer
+                                        speedToInject = speedToInject*2
+                                    end
+                                    -- I really hate this, but, it really needs it still/again... 
+                                    if speedToInject < 5 and mabs(adjustedPitch) < 5 and absAltdiff < 100 then -- And do it again when it's even closer
+                                        speedToInject = speedToInject*4
+                                    end
+                                    -- TBH these might not be super necessary anymore after changes, might can remove at least one, but two tends to make everything smoother
+                                    VSpdPID:inject(speedToInject)
+                                    orbitPitch = uclamp(-VSpdPID:get(),-90,90)
+                                    -- Also, add pitch to try to adjust us to our correct altitude
+                                    -- Dammit, that's another PID I guess... I don't want another PID... 
+                                    if (OrbitAltPID == nil) then
+                                        OrbitAltPID = pid.new(0.15, 0, 5 * 0.1)
+                                    end
+                                    OrbitAltPID:inject(altdiff) -- We clamp this to max 15 degrees so it doesn't screw us too hard
+                                    -- And this will fight with the other PID to keep vspd reasonable
+                                    orbitPitch = uclamp(orbitPitch - uclamp(OrbitAltPID:get(),-15,15),-90,90)
+                                end
                             end
                         else
+                            local orbitalMultiplier = 2.75
+                            local pcs = mabs(utilsround(escapeVel*orbitalMultiplier))
+                            local mod = pcs%50
+                            if mod > 0 then pcs = (pcs - mod) + 50 end
+                            BrakeIsOn = false
                             if coreAltitude < OrbitTargetOrbit*0.8 then
-                                orbitMsg = "Escaping planet gravity - OrbitHeight: "..orbitTargetOrbitString
+                                orbitMsg = "Escaping planet gravity - OrbitHeight: "..orbitHeightString
                                 orbitPitch = utils.map(vSpd, 200, 0, -15, 80)
                             elseif coreAltitude >= OrbitTargetOrbit*0.8 and coreAltitude < OrbitTargetOrbit*1.15 then
-                                orbitMsg = "Approaching orbital corridor - OrbitHeight: "..orbitTargetOrbitString
+                                orbitMsg = "Approaching orbital corridor - OrbitHeight: "..orbitHeightString
                                 pcs = pcs*0.75
-                                -- if vSpd > 100 then
-                                --     orbitPitch = -30
-                                -- else
-                                --     orbitPitch = utils.map(coreAltitude, OrbitTargetOrbit*0.6, OrbitTargetOrbit, 45, 10)
-                                -- end
                                 orbitPitch = utils.map(vSpd, 100, -100, -15, 65)
                             elseif coreAltitude >= OrbitTargetOrbit*1.15 and coreAltitude < OrbitTargetOrbit*1.5 then
-                                orbitMsg = "Approaching orbital corridor - OrbitHeight: "..orbitTargetOrbitString
+                                orbitMsg = "Approaching orbital corridor - OrbitHeight: "..orbitHeightString
                                 pcs = pcs*0.75
                                 if vSpd < 0 or orbitalRecover then
                                     orbitPitch = utils.map(coreAltitude, OrbitTargetOrbit*1.5, OrbitTargetOrbit*1.01, -30, 0) -- Going down? pitch up.
+                                    --orbitPitch = utils.map(vSpd, 100, -100, -15, 65)
                                 else
                                     orbitPitch = utils.map(coreAltitude, OrbitTargetOrbit*0.99, OrbitTargetOrbit*1.5, 0, 30) -- Going up? pitch down.
                                 end
                             elseif coreAltitude > OrbitTargetOrbit*1.5 then
-                                orbitMsg = "Reentering orbital corridor - OrbitHeight: "..orbitTargetOrbitString
-                                orbitPitch = utils.map(vSpd, 100, -100, -65, 0)
-                                pcs = pcs*0.75
+                                orbitMsg = "Reentering orbital corridor - OrbitHeight: "..orbitHeightString
+                                orbitPitch = -85 --utils.map(vSpd, 25, -200, -65, -30)
+                                local pcsAdjust = utils.map(vSpd, -150, -400, 1, 0.55)
+                                pcs = pcs*pcsAdjust
                             end
+                            cmdCruise(mfloor(pcs))
                         end
-                        cmdCruise(mfloor(pcs))
                     end
                     if orbitPitch ~= nil then
                         if (OrbitPitchPID == nil) then
-                            OrbitPitchPID = pid.new(2 * 0.01, 0, 2 * 0.1)
+                            OrbitPitchPID = pid.new(1 * 0.01, 0, 5 * 0.1)
                         end
                         local orbitPitchDiff = orbitPitch - adjustedPitch
                         OrbitPitchPID:inject(orbitPitchDiff)
                         local orbitPitchInput = uclamp(OrbitPitchPID:get(),-0.5,0.5)
                         pitchInput2 = orbitPitchInput
                     end
-                    if orbitRoll ~= nil then
-                        if adjustedPitch < 80 then
-                            local rollFactor = math.max(autoRollFactor, 0.01)/4
-                            if (OrbitRollPID == nil) then
-                                OrbitRollPID = pid.new(rollFactor * 0.01, 0, rollFactor * 0.1)
-                            end
-                            local orbitalRollDiff = orbitRoll - orbitalRoll
-                            OrbitRollPID:inject(orbitalRollDiff)
-                            local orbitRollInput = uclamp(OrbitRollPID:get(),-0.5,0.5)
-                            rollInput2 = orbitRollInput
-                        end
-                    end
-                elseif CancelIntoOrbit then
-                    OrbitTargetSet = false
-                    OrbitTargetPlanet = nil
-                    cmdThrottle(0)
-                    CancelIntoOrbit = false
                 end
 
                 if Autopilot and atmosDensity == 0 and not spaceLand then
@@ -6612,7 +6573,7 @@ VERSION_NUMBER = 1.132
                         targetPitch = 0
                     end
                     if LockPitch ~= nil then 
-                        if inAtmo and not IntoOrbit then 
+                        if nearPlanet and not IntoOrbit then 
                             targetPitch = LockPitch 
                         else
                             LockPitch = nil
@@ -6636,7 +6597,7 @@ VERSION_NUMBER = 1.132
                         else
                             BrakeIsOn = false
                         end
-
+                        cmdCruise(ReentrySpeed, true)
                         if not reentryMode then
                             targetPitch = -80
                             if atmosDensity > 0.02 then
@@ -6752,7 +6713,6 @@ VERSION_NUMBER = 1.132
                             if not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance + (velMag*deltaTick)/2 and (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99 or VectorStatus == "Finalizing Approach") then 
                                 VectorStatus = "Finalizing Approach" 
                                 cmdThrottle(0) -- Kill throttle in case they weren't in cruise
-                                PlayerThrottle = 0
                                 if AltitudeHold then
                                     -- if not OrbitAchieved then
                                         ToggleAltitudeHold() -- Don't need this anymore
@@ -6764,7 +6724,7 @@ VERSION_NUMBER = 1.132
                                 BrakeIsOn = false
                             end
                             if VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget)) then
-                                BrakeLanding = true
+                                if not antigravOn then  BrakeLanding = true end
                                 
                                 VectorToTarget = false
                                 VectorStatus = "Proceeding to Waypoint"
@@ -6777,11 +6737,7 @@ VERSION_NUMBER = 1.132
                             local targetAltitude = planet:getAltitude(CustomTarget.position)
                             local distanceToTarget = math.sqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
                             local curBrake = LastMaxBrakeInAtmo
-                            if not OrbitAchieved then 
-                                OrbitTargetSet = false
-                                IntoOrbit = true
-                            else
-                                curBrake = LastMaxBrake
+                            if curBrake then
                                 --local hSpd = velocity:len() - mabs(vSpd)
                                 brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(velMag, 0, constructMass(), 0, 0, curBrake/2)
                                 StrongBrakes = true
@@ -6803,9 +6759,14 @@ VERSION_NUMBER = 1.132
                     end
 
                     -- Altitude hold and AutoTakeoff orbiting
-                    if atmosDensity == 0 and (AltitudeHold and HoldAltitude > planet.noAtmosphericDensityAltitude) and not (spaceLaunch or VectorToTarget or IntoOrbit or Reentry ) then
-                        if not OrbitAchieved then
-                            IntoOrbit = true
+                    if atmosDensity == 0 and (AltitudeHold and HoldAltitude > planet.noAtmosphericDensityAltitude) and not (spaceLaunch or IntoOrbit or Reentry ) then
+                        if not OrbitAchieved and not IntoOrbit then
+                            OrbitTargetOrbit = HoldAltitude -- If AP/VectorToTarget, AP already set this.  
+                            OrbitTargetSet = true
+                            if VectorToTarget then orbitalParams.VectorToTarget = true end
+                            ToggleIntoOrbit() -- Should turn off alt hold
+                            VectorToTarget = false -- WTF this gets stuck on? 
+                            orbitAligned = true
                         end
                     end
 
@@ -6934,9 +6895,10 @@ VERSION_NUMBER = 1.132
                         if antigravOn then
                             if coreAltitude >= (HoldAltitude-50) then
                                 AutoTakeoff = false
-                                BrakeIsOn = true
-                                cmdThrottle(0)
-                                PlayerThrottle = 0
+                                if not Autopilot and not VectorToTarget then
+                                    BrakeIsOn = true
+                                    cmdThrottle(0)
+                                end
                             else
                                 HoldAltitude = antigrav.getBaseAltitude()
                             end
@@ -7159,7 +7121,7 @@ VERSION_NUMBER = 1.132
             finalPitchInput * pitchSpeedFactor * constructRight + finalRollInput * rollSpeedFactor * constructForward +
                 finalYawInput * yawSpeedFactor * constructUp
 
-        if worldVertical:len() > 0.01 and (atmosDensity > 0.0 or ProgradeIsOn or Reentry or spaceLand or AltitudeHold) then
+        if worldVertical:len() > 0.01 and (atmosDensity > 0.0 or ProgradeIsOn or Reentry or spaceLand or AltitudeHold or IntoOrbit) then
             -- autoRoll on AND currentRollDeg is big enough AND player is not rolling
             local roll = getRoll(worldVertical, constructForward, constructRight) 
             local radianRoll = (roll / 180) * math.pi
@@ -7697,8 +7659,12 @@ VERSION_NUMBER = 1.132
                 else
                     AntigravTargetAltitude = desiredBaseAltitude + 100
                 end
-            elseif AltitudeHold or VertTakeOff then
-                HoldAltitude = HoldAltitude + holdAltitudeButtonModifier
+            elseif AltitudeHold or VertTakeOff or IntoOrbit then
+                if IntoOrbit then
+                    OrbitTargetOrbit = OrbitTargetOrbit + holdAltitudeButtonModifier
+                else
+                    HoldAltitude = HoldAltitude + holdAltitudeButtonModifier
+                end
             else
                 navCom:updateTargetGroundAltitudeFromActionStart(1.0)
             end
@@ -7718,8 +7684,12 @@ VERSION_NUMBER = 1.132
                 else
                     AntigravTargetAltitude = desiredBaseAltitude
                 end
-            elseif AltitudeHold or VertTakeOff then
-                HoldAltitude = HoldAltitude - holdAltitudeButtonModifier
+            elseif AltitudeHold or VertTakeOff or IntoOrbit then
+                if IntoOrbit then
+                    OrbitTargetOrbit = OrbitTargetOrbit - holdAltitudeButtonModifier
+                else
+                    HoldAltitude = HoldAltitude - holdAltitudeButtonModifier
+                end
             else
                 navCom:updateTargetGroundAltitudeFromActionStart(-1.0)
             end
@@ -7864,14 +7834,14 @@ VERSION_NUMBER = 1.132
             if not ExternalAGG and antigravOn then
                 antiGravButtonModifier = OldAntiMod
             end
-            if AltitudeHold or VertTakeOff then
+            if AltitudeHold or VertTakeOff or IntoOrbit then
                 holdAltitudeButtonModifier = OldButtonMod
             end
         elseif action == "groundaltitudedown" then
             if not ExternalAGG and antigravOn then
                 antiGravButtonModifier = OldAntiMod
             end
-            if AltitudeHold or VertTakeOff then
+            if AltitudeHold or VertTakeOff or IntoOrbit then
                 holdAltitudeButtonModifier = OldButtonMod
             end
         elseif action == "lshift" then
@@ -7927,8 +7897,12 @@ VERSION_NUMBER = 1.132
                     AntigravTargetAltitude = desiredBaseAltitude + 100
                     BrakeIsOn = false
                 end
-            elseif AltitudeHold or VertTakeOff then
-                HoldAltitude = HoldAltitude + holdAltitudeButtonModifier
+            elseif AltitudeHold or VertTakeOff or IntoOrbit then
+                if IntoOrbit then
+                    OrbitTargetOrbit = OrbitTargetOrbit + holdAltitudeButtonModifier
+                else
+                    HoldAltitude = HoldAltitude + holdAltitudeButtonModifier
+                end
                 holdAltitudeButtonModifier = holdAltitudeButtonModifier * 1.05
             else
                 navCom:updateTargetGroundAltitudeFromActionLoop(1.0)
@@ -7950,8 +7924,12 @@ VERSION_NUMBER = 1.132
                     AntigravTargetAltitude = desiredBaseAltitude - 100
                     BrakeIsOn = false
                 end
-            elseif AltitudeHold or VertTakeOff then
-                HoldAltitude = HoldAltitude - holdAltitudeButtonModifier
+            elseif AltitudeHold or VertTakeOff or IntoOrbit then
+                if IntoOrbit then
+                    OrbitTargetOrbit = OrbitTargetOrbit - holdAltitudeButtonModifier
+                else
+                    HoldAltitude = HoldAltitude - holdAltitudeButtonModifier
+                end
                 holdAltitudeButtonModifier = holdAltitudeButtonModifier * 1.05
             else
                 navCom:updateTargetGroundAltitudeFromActionLoop(-1.0)
