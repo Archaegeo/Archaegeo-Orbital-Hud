@@ -1,6 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.132
+Version 1.133
+- Fixed AGG ON Alt-4 takeoff to not brake or kill engines once AGG height is reached
+- Fixed AGG ON Alt-4 AP same planet to stop over target waypoint till AGG manually disabled.
 - Fixed no argument text command input. (ah-copydatabank and ah-wipedatabank)
 - More cleaning and localization of code.
 - Fixed planet atmosphere save value to use max atmosphere density if not using update position (fix SatNav issue)

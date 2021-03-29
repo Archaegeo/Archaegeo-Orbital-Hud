@@ -4,7 +4,7 @@ Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.132
+VERSION_NUMBER = 1.133
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -808,10 +808,6 @@ VERSION_NUMBER = 1.132
             end
             VectorStatus = "Proceeding to Waypoint"
         end
-        --if (hovGndDet ~= -1 and VertTakeOffEngine) or VertTakeOff then
-           -- msgText = "Vertical Takeoff autopilot not supported.\nFinish or Disable Vertical Takeoff"
-            --return
-        --end
         if (time - apDoubleClick) < 1.5 and atmosDensity > 0 then
             if not SpaceEngines then
                 msgText = "No space engines detected, Orbital Hop not supported"
@@ -854,7 +850,7 @@ VERSION_NUMBER = 1.132
                             ToggleVectorToTarget(SpaceTarget)
                         end
                     else
-                        if coreAltitude > 100000 or coreAltitude == 0 then
+                        if coreAltitude > AutopilotTargetOrbit*3 or coreAltitude == 0 then
                             OrbitAchieved = false
                             Autopilot = true
                         elseif not inAtmo then
@@ -1978,11 +1974,11 @@ VERSION_NUMBER = 1.132
             end                  
             if antigrav and not ExternalAGG and antigravOn and AntigravTargetAltitude ~= nil then
                 if mabs(coreAltitude - antigrav.getBaseAltitude()) < 501 then
-                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">AGG On - Target Altitude: %d Singluarity Altitude: %d</text>]],
-                        warningX, apY+20, mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude()))
+                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">AGG On - Target Altitude: %d Singularity Altitude: %d</text>]],
+                        warningX, apY+15, mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude()))
                 else
                     newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">AGG On - Target Altitude: %d Singluarity Altitude: %d</text>]],
-                        warningX, apY+20, mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude()))
+                        warningX, apY+15, mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude()))
                 end
             elseif Autopilot and AutopilotTargetName ~= "None" then
                 newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Autopilot %s</text>]],
@@ -2071,7 +2067,7 @@ VERSION_NUMBER = 1.132
             end
             if VectorToTarget and not IntoOrbit then
                 newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">%s</text>]], warningX,
-                                                apY+30, VectorStatus)
+                                                apY+35, VectorStatus)
             end
         
             newContent[#newContent + 1] = "</g>"
@@ -5893,9 +5889,14 @@ VERSION_NUMBER = 1.132
                             upAmount = 15
                         elseif coreAltitude >= targetAltitude then
                             if antigravOn then 
-                                BrakeIsOn = true
+                                if Autopilot or VectorToTarget then
+                                    ToggleVerticalTakeoff()
+
+                                else
+                                    BrakeIsOn = true
+                                    VertTakeOff = false
+                                end
                                 msgText = "Takeoff complete. Singularity engaged"
-                                VertTakeOff = false
                             else
                                 BrakeIsOn = false
                                 msgText = "VTO complete. Engaging Horizontal Flight"
@@ -5964,9 +5965,9 @@ VERSION_NUMBER = 1.132
                         local targetVec = CustomTarget.position - worldPos
                         local brakeDistance, _ =  Kinematic.computeDistanceAndTime(velMag, adjustedAtmoSpeedLimit/3.6, constructMass(), 0, 0, LastMaxBrake)
 
-                        if rangeOnly and targetVec:len() > 25000 + brakeDistance + coreAltitude then
+                        if rangeOnly and targetVec:len() > 20000 + brakeDistance + coreAltitude then
                             return false
-                        elseif constructVelocity:normalize():dot(targetVec:normalize()) > 0.5 and targetVec:len() > 25000 + brakeDistance + coreAltitude then
+                        elseif constructVelocity:normalize():dot(targetVec:normalize()) > 0.5 and targetVec:len() > 20000 + brakeDistance + coreAltitude then
                             return false
                         end
                         -- We can skip prograde completely if we're approaching from an orbit?
@@ -6122,19 +6123,14 @@ VERSION_NUMBER = 1.132
                                 orbitRoll = nil
                                 orbitAligned = true
                             end
-                        else
+                        else 
                             if coreAltitude < OrbitTargetOrbit*0.8 then
                                 orbitMsg = "Escaping planet gravity - OrbitHeight: "..orbitTargetOrbitString
-                                orbitPitch = utils.map(vSpd, 200, 0, -15, 80)
+                                orbitPitch = utils.map(vSpd, 500, 0, -15, 80)
                             elseif coreAltitude >= OrbitTargetOrbit*0.8 and coreAltitude < OrbitTargetOrbit*1.15 then
                                 orbitMsg = "Approaching orbital corridor - OrbitHeight: "..orbitTargetOrbitString
                                 pcs = pcs*0.75
-                                -- if vSpd > 100 then
-                                --     orbitPitch = -30
-                                -- else
-                                --     orbitPitch = utils.map(coreAltitude, OrbitTargetOrbit*0.6, OrbitTargetOrbit, 45, 10)
-                                -- end
-                                orbitPitch = utils.map(vSpd, 100, -100, -15, 65)
+                                orbitPitch = utils.map(vSpd, 150, -150, -15, 65)
                             elseif coreAltitude >= OrbitTargetOrbit*1.15 and coreAltitude < OrbitTargetOrbit*1.5 then
                                 orbitMsg = "Approaching orbital corridor - OrbitHeight: "..orbitTargetOrbitString
                                 pcs = pcs*0.75
@@ -6145,7 +6141,7 @@ VERSION_NUMBER = 1.132
                                 end
                             elseif coreAltitude > OrbitTargetOrbit*1.5 then
                                 orbitMsg = "Reentering orbital corridor - OrbitHeight: "..orbitTargetOrbitString
-                                orbitPitch = utils.map(vSpd, 100, -100, -65, 0)
+                                orbitPitch = utils.map(vSpd, 300, -300, -65, 0)
                                 pcs = pcs*0.75
                             end
                         end
@@ -6764,7 +6760,7 @@ VERSION_NUMBER = 1.132
                                 BrakeIsOn = false
                             end
                             if VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget)) then
-                                BrakeLanding = true
+                                if not antigravOn then  BrakeLanding = true end
                                 
                                 VectorToTarget = false
                                 VectorStatus = "Proceeding to Waypoint"
@@ -6934,9 +6930,10 @@ VERSION_NUMBER = 1.132
                         if antigravOn then
                             if coreAltitude >= (HoldAltitude-50) then
                                 AutoTakeoff = false
-                                BrakeIsOn = true
-                                cmdThrottle(0)
-                                PlayerThrottle = 0
+                                if not Autopilot and not VectorToTarget then
+                                    BrakeIsOn = true
+                                    cmdThrottle(0)
+                                end
                             else
                                 HoldAltitude = antigrav.getBaseAltitude()
                             end
@@ -7697,8 +7694,12 @@ VERSION_NUMBER = 1.132
                 else
                     AntigravTargetAltitude = desiredBaseAltitude + 100
                 end
-            elseif AltitudeHold or VertTakeOff then
-                HoldAltitude = HoldAltitude + holdAltitudeButtonModifier
+            elseif AltitudeHold or VertTakeOff or IntoOrbit then
+                if IntoOrbit then
+                    OrbitTargetOrbit = OrbitTargetOrbit + holdAltitudeButtonModifier
+                else
+                    HoldAltitude = HoldAltitude + holdAltitudeButtonModifier
+                end
             else
                 navCom:updateTargetGroundAltitudeFromActionStart(1.0)
             end
@@ -7718,8 +7719,12 @@ VERSION_NUMBER = 1.132
                 else
                     AntigravTargetAltitude = desiredBaseAltitude
                 end
-            elseif AltitudeHold or VertTakeOff then
-                HoldAltitude = HoldAltitude - holdAltitudeButtonModifier
+            elseif AltitudeHold or VertTakeOff or IntoOrbit then
+                if IntoOrbit then
+                    OrbitTargetOrbit = OrbitTargetOrbit - holdAltitudeButtonModifier
+                else
+                    HoldAltitude = HoldAltitude - holdAltitudeButtonModifier
+                end
             else
                 navCom:updateTargetGroundAltitudeFromActionStart(-1.0)
             end
@@ -7864,14 +7869,14 @@ VERSION_NUMBER = 1.132
             if not ExternalAGG and antigravOn then
                 antiGravButtonModifier = OldAntiMod
             end
-            if AltitudeHold or VertTakeOff then
+            if AltitudeHold or VertTakeOff or IntoOrbit then
                 holdAltitudeButtonModifier = OldButtonMod
             end
         elseif action == "groundaltitudedown" then
             if not ExternalAGG and antigravOn then
                 antiGravButtonModifier = OldAntiMod
             end
-            if AltitudeHold or VertTakeOff then
+            if AltitudeHold or VertTakeOff or IntoOrbit then
                 holdAltitudeButtonModifier = OldButtonMod
             end
         elseif action == "lshift" then
@@ -7927,8 +7932,12 @@ VERSION_NUMBER = 1.132
                     AntigravTargetAltitude = desiredBaseAltitude + 100
                     BrakeIsOn = false
                 end
-            elseif AltitudeHold or VertTakeOff then
-                HoldAltitude = HoldAltitude + holdAltitudeButtonModifier
+            elseif AltitudeHold or VertTakeOff or IntoOrbit then
+                if IntoOrbit then
+                    OrbitTargetOrbit = OrbitTargetOrbit + holdAltitudeButtonModifier
+                else
+                    HoldAltitude = HoldAltitude + holdAltitudeButtonModifier
+                end
                 holdAltitudeButtonModifier = holdAltitudeButtonModifier * 1.05
             else
                 navCom:updateTargetGroundAltitudeFromActionLoop(1.0)
@@ -7950,8 +7959,12 @@ VERSION_NUMBER = 1.132
                     AntigravTargetAltitude = desiredBaseAltitude - 100
                     BrakeIsOn = false
                 end
-            elseif AltitudeHold or VertTakeOff then
-                HoldAltitude = HoldAltitude - holdAltitudeButtonModifier
+            elseif AltitudeHold or VertTakeOff or IntoOrbit then
+                if IntoOrbit then
+                    OrbitTargetOrbit = OrbitTargetOrbit - holdAltitudeButtonModifier
+                else
+                    HoldAltitude = HoldAltitude - holdAltitudeButtonModifier
+                end
                 holdAltitudeButtonModifier = holdAltitudeButtonModifier * 1.05
             else
                 navCom:updateTargetGroundAltitudeFromActionLoop(-1.0)
