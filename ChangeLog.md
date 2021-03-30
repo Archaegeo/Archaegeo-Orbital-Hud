@@ -1,5 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.138
+- Imported Dimencia fix of runaway alt adjustment
+- More refactoring for cleaner code.
+- More reduction of duplicated code
+
 Version 1.135
 - Re-enabled LockPitch in space
 - Changed text input commands back to / from ah-   it was too confusing.  / will only respond to recognized commands.
