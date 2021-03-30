@@ -4,7 +4,7 @@ Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.135
+VERSION_NUMBER = 1.136
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -332,6 +332,8 @@ VERSION_NUMBER = 1.135
     local antigravOn = false
     local setCruiseSpeed = nil
     local throttleMode = true
+    local adjustedPitch = 0
+    local adjustedRoll = 0
 
 -- Function Definitions that are used in more than one area
 
@@ -352,22 +354,6 @@ VERSION_NUMBER = 1.135
         end
         navCom:setTargetSpeedCommand(axisCommandId.longitudinal, value)
         setCruiseSpeed = value
-    end
-
-    local function ConvertResolutionX (v)
-        if resolutionWidth == 1920 then 
-            return v
-        else
-            return round(resolutionWidth * v / 1920, 0)
-        end
-    end
-
-    local function ConvertResolutionY (v)
-        if resolutionHeight == 1080 then 
-            return v
-        else
-            return round(resolutionHeight * v / 1080, 0)
-        end
     end
 
     local function RefreshLastMaxBrake(gravity, force)
@@ -971,16 +957,6 @@ VERSION_NUMBER = 1.135
         end
     end
 
-    local function getPitch(gravityDirection, forward, right)
-        local horizontalForward = gravityDirection:cross(right):normalize_inplace() -- Cross forward?
-        local pitch = math.acos(uclamp(horizontalForward:dot(-forward), -1, 1)) * constants.rad2deg -- acos?
-        
-        if horizontalForward:cross(-forward):dot(right) < 0 then
-            pitch = -pitch
-        end -- Cross right dot forward?
-        return pitch
-    end
-
     local function signedRotationAngle(normal, vecA, vecB)
         vecA = vecA:project_on_plane(normal)
         vecB = vecB:project_on_plane(normal)
@@ -1279,6 +1255,22 @@ VERSION_NUMBER = 1.135
 
     local function Huds() -- Everything HUD releated
         local Hud = {}
+
+        local function ConvertResolutionX (v)
+            if resolutionWidth == 1920 then 
+                return v
+            else
+                return round(resolutionWidth * v / 1920, 0)
+            end
+        end
+    
+        local function ConvertResolutionY (v)
+            if resolutionHeight == 1080 then 
+                return v
+            else
+                return round(resolutionHeight * v / 1080, 0)
+            end
+        end
 
         local function IsInFreeLook()
             return sysIsVwLock() == 0 and userControlScheme ~= "keyboard" and isRemote() == 0
@@ -2324,13 +2316,10 @@ VERSION_NUMBER = 1.135
             local altitude = coreAltitude
             local velocity = core.getVelocity()
             local speed = vec3(velocity):len()
-            local roll = getRoll(worldVertical, constructForward, constructRight) 
-            local radianRoll = (roll / 180) * math.pi
-            local corrX = math.cos(radianRoll)
-            local corrY = math.sin(radianRoll)
-            local pitch = getPitch(worldVertical, constructForward, (constructRight * corrX) + (constructUp * corrY))  
+            local pitch = adjustedPitch
+            local roll = adjustedRoll
             local originalRoll = roll
-            local originalPitch = pitch
+            local originalPitch = adjustedPitch
             local throt = mfloor(unit.getThrottle())
             local spd = speed * 3.6
             local flightValue = unit.getAxisCommandValue(0)
@@ -2545,6 +2534,65 @@ VERSION_NUMBER = 1.135
             newContent[#newContent + 1] = stringf(
                                             [[<circle class="dim line" style="fill:none" cx="50%%" cy="50%%" r="%d"/>]],
                                             DeadZone)
+        end
+
+        function Hud.UpdateRadar()
+            if (radar_1) then
+                local radarContacts = radar_1.getEntries()
+                local radarData = radar_1.getData()
+                local radarX = ConvertResolutionX(1770)
+                local radarY = ConvertResolutionY(330)
+                if #radarContacts > 0 then
+                    local target = radarData:find('identifiedConstructs":%[%]')
+                    if target == nil and perisPanelID == nil then
+                        peris = 1
+                        ToggleRadarPanel()
+                    end
+                    if target ~= nil and perisPanelID ~= nil then
+                        ToggleRadarPanel()
+                    end
+                    if radarPanelID == nil then
+                        ToggleRadarPanel()
+                    end
+                    radarMessage = stringf(
+                                    [[<text class="pbright txtbig txtmid" x="%d" y="%d">Radar: %i contacts</text>]],
+                                    radarX, radarY, #radarContacts)
+                    local friendlies = {}
+                    for k, v in pairs(radarContacts) do
+                        if radar_1.hasMatchingTransponder(v) == 1 then
+                            table.insert(friendlies,v)
+                        end
+                    end
+                    if #friendlies > 0 then
+                        local y = ConvertResolutionY(15)
+                        local x = ConvertResolutionX(1370)
+                        radarMessage = stringf(
+                                        [[%s<text class="pbright txtbig txtmid" x="%d" y="%d">Friendlies In Range</text>]],
+                                        radarMessage, x, y)
+                        for k, v in pairs(friendlies) do
+                            y = y + 20
+                            radarMessage = stringf([[%s<text class="pdim txtmid" x="%d" y="%d">%s</text>]],
+                                            radarMessage, x, y, radar_1.getConstructName(v))
+                        end
+                    end
+                else
+                    local data
+                    data = radarData:find('worksInEnvironment":false')
+                    if data then
+                        radarMessage = stringf([[
+                            <text class="pbright txtbig txtmid" x="%d" y="%d">Radar: Jammed</text>]],
+                            radarX, radarY)
+                    else
+                        radarMessage = stringf([[
+                            <text class="pbright txtbig txtmid" x="%d" y="%d">Radar: No Contacts</text>]],
+                            radarX, radarY)
+                    end
+                    if radarPanelID ~= nil then
+                        peris = 0
+                        ToggleRadarPanel()
+                    end
+                end
+            end
         end
 
         return Hud
@@ -5268,65 +5316,6 @@ VERSION_NUMBER = 1.135
                 end
             end    
 
-            local function updateRadar()
-                if (radar_1) then
-                    local radarContacts = radar_1.getEntries()
-                    local radarData = radar_1.getData()
-                    local radarX = ConvertResolutionX(1770)
-                    local radarY = ConvertResolutionY(330)
-                    if #radarContacts > 0 then
-                        local target = radarData:find('identifiedConstructs":%[%]')
-                        if target == nil and perisPanelID == nil then
-                            peris = 1
-                            ToggleRadarPanel()
-                        end
-                        if target ~= nil and perisPanelID ~= nil then
-                            ToggleRadarPanel()
-                        end
-                        if radarPanelID == nil then
-                            ToggleRadarPanel()
-                        end
-                        radarMessage = stringf(
-                                        [[<text class="pbright txtbig txtmid" x="%d" y="%d">Radar: %i contacts</text>]],
-                                        radarX, radarY, #radarContacts)
-                        local friendlies = {}
-                        for k, v in pairs(radarContacts) do
-                            if radar_1.hasMatchingTransponder(v) == 1 then
-                                table.insert(friendlies,v)
-                            end
-                        end
-                        if #friendlies > 0 then
-                            local y = ConvertResolutionY(15)
-                            local x = ConvertResolutionX(1370)
-                            radarMessage = stringf(
-                                            [[%s<text class="pbright txtbig txtmid" x="%d" y="%d">Friendlies In Range</text>]],
-                                            radarMessage, x, y)
-                            for k, v in pairs(friendlies) do
-                                y = y + 20
-                                radarMessage = stringf([[%s<text class="pdim txtmid" x="%d" y="%d">%s</text>]],
-                                                radarMessage, x, y, radar_1.getConstructName(v))
-                            end
-                        end
-                    else
-                        local data
-                        data = radarData:find('worksInEnvironment":false')
-                        if data then
-                            radarMessage = stringf([[
-                                <text class="pbright txtbig txtmid" x="%d" y="%d">Radar: Jammed</text>]],
-                                radarX, radarY)
-                        else
-                            radarMessage = stringf([[
-                                <text class="pbright txtbig txtmid" x="%d" y="%d">Radar: No Contacts</text>]],
-                                radarX, radarY)
-                        end
-                        if radarPanelID ~= nil then
-                            peris = 0
-                            ToggleRadarPanel()
-                        end
-                    end
-                end
-            end
-
             local function updateDistance()
                 local curTime = systime()
                 local spd = velMag
@@ -5526,7 +5515,7 @@ VERSION_NUMBER = 1.135
                 clearAllCheck = false
                 RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
                 updateDistance()
-                updateRadar()
+                HUD.UpdateRadar()
                 updateWeapons()
                 -- Update odometer output string
                 local newContent = {}
@@ -5691,11 +5680,7 @@ VERSION_NUMBER = 1.135
                 time = systime()
                 local deltaTick = time - lastApTickTime
                 lastApTickTime = time
-                local roll = getRoll(worldVertical, constructForward, constructRight)
-                local radianRoll = (roll / 180) * math.pi
-                local corrX = math.cos(radianRoll)
-                local corrY = math.sin(radianRoll)
-                local adjustedPitch = getPitch(worldVertical, constructForward, (constructRight * corrX) + (constructUp * corrY)) 
+                local adjustedPitch = adjustedPitch
                 local currentYaw = -math.deg(signedRotationAngle(constructUp, constructVelocity, constructForward))
                 local currentPitch = math.deg(signedRotationAngle(constructRight, constructVelocity, constructForward)) -- Let's use a consistent func that uses global velocity
                 local MousePitchFactor = 1 -- Mouse control only
@@ -5831,7 +5816,7 @@ VERSION_NUMBER = 1.135
                             aligned = AlignToWorldVector(vec3(constructVelocity),0.01) 
                         end
                         autoRoll = true
-                        if aligned and (mabs(roll) < 2 or mabs(adjustedPitch) > 85) and velMag >= adjustedAtmoSpeedLimit/3.6-1 then
+                        if aligned and (mabs(adjustedRoll) < 2 or mabs(adjustedPitch) > 85) and velMag >= adjustedAtmoSpeedLimit/3.6-1 then
                                 -- Try to force it to get full speed toward target, so it goes straight to throttle and all is well
                                 BrakeIsOn = false
                                 ProgradeIsOn = false
@@ -5980,7 +5965,7 @@ VERSION_NUMBER = 1.135
                         targetVec = CustomTarget.position - worldPos
                     end
                     local escapeVel, endSpeed = Kep(OrbitTargetPlanet):escapeAndOrbitalSpeed((worldPos -OrbitTargetPlanet.center):len()-OrbitTargetPlanet.radius)
-                    local orbitalRoll = roll
+                    local orbitalRoll = adjustedRoll
                     -- Getting as close to orbit distance as comfortably possible
                     if not orbitAligned then
                         cmdThrottle(0)
@@ -6629,13 +6614,13 @@ VERSION_NUMBER = 1.135
                         end
 
                         local targetYaw = math.deg(signedRotationAngle(worldVertical:normalize(),constructVelocity,targetVec))*2
-                        local rollRad = math.rad(mabs(roll))
+                        local rollRad = math.rad(mabs(adjustedRoll))
                         if velMag > minRollVelocity and atmosDensity > 0.01 then
                             local maxRoll = uclamp(90-targetPitch*2,-90,90) -- No downwards roll allowed? :( 
                             targetRoll = uclamp(targetYaw*2, -maxRoll, maxRoll)
                             local origTargetYaw = targetYaw
                             -- 4x weight to pitch consideration because yaw is often very weak compared and the pid needs help?
-                            targetYaw = uclamp(uclamp(targetYaw,-YawStallAngle*0.80,YawStallAngle*0.80)*math.cos(rollRad) + 4*(adjustedPitch-targetPitch)*math.sin(math.rad(roll)),-YawStallAngle*0.80,YawStallAngle*0.80) -- We don't want any yaw if we're rolled
+                            targetYaw = uclamp(uclamp(targetYaw,-YawStallAngle*0.80,YawStallAngle*0.80)*math.cos(rollRad) + 4*(adjustedPitch-targetPitch)*math.sin(math.rad(adjustedRoll)),-YawStallAngle*0.80,YawStallAngle*0.80) -- We don't want any yaw if we're rolled
                             targetPitch = uclamp(uclamp(targetPitch*math.cos(rollRad),-PitchStallAngle*0.80,PitchStallAngle*0.80) + mabs(uclamp(mabs(origTargetYaw)*math.sin(rollRad),-PitchStallAngle*0.80,PitchStallAngle*0.80)),-PitchStallAngle*0.80,PitchStallAngle*0.80) -- Always yaw positive 
                         else
                             targetRoll = 0
@@ -6933,7 +6918,7 @@ VERSION_NUMBER = 1.135
                     local pitchToUse = adjustedPitch
 
                     if (VectorToTarget or spaceLaunch) and not onGround and velMag > minRollVelocity and atmosDensity > 0.01 then
-                        local rollRad = math.rad(mabs(roll))
+                        local rollRad = math.rad(mabs(adjustedRoll))
                         pitchToUse = adjustedPitch*mabs(math.cos(rollRad))+currentPitch*math.sin(rollRad)
                     end
                     -- TODO: These clamps need to be related to roll and YawStallAngle, we may be dealing with yaw?
@@ -6943,7 +6928,7 @@ VERSION_NUMBER = 1.135
                     elseif atmosDensity < 0.01 then
                         pitchDiff = uclamp(targetPitch-pitchToUse, -MaxPitch, MaxPitch) -- I guess
                     end
-                    if (((mabs(roll) < 5 or VectorToTarget)) or BrakeLanding or onGround or AltitudeHold) then
+                    if (((mabs(adjustedRoll) < 5 or VectorToTarget)) or BrakeLanding or onGround or AltitudeHold) then
                         if (pitchPID == nil) then -- Changed from 8 to 5 to help reduce problems?
                             pitchPID = pid.new(5 * 0.01, 0, 5 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
                         end
@@ -7057,6 +7042,17 @@ VERSION_NUMBER = 1.135
             return finalAcceleration
         end
 
+        local function getPitch(gravityDirection, forward, right)
+        
+            local horizontalForward = gravityDirection:cross(right):normalize_inplace() -- Cross forward?
+            local pitch = math.acos(uclamp(horizontalForward:dot(-forward), -1, 1)) * constants.rad2deg -- acos?
+            
+            if horizontalForward:cross(-forward):dot(right) < 0 then
+                pitch = -pitch
+            end -- Cross right dot forward?
+            return pitch
+        end
+
         if antigrav ~= nil and (antigrav and not ExternalAGG) then
             if not antigravOn and antigrav.getBaseAltitude() ~= AntigravTargetAltitude then 
                 antigrav.setBaseAltitude(AntigravTargetAltitude) 
@@ -7104,6 +7100,12 @@ VERSION_NUMBER = 1.135
         constructVelocity = vec3(core.getWorldVelocity())
         velMag = vec3(constructVelocity):len()
         
+        adjustedRoll = getRoll(worldVertical, constructForward, constructRight) 
+        local radianRoll = (adjustedRoll / 180) * math.pi
+        local corrX = math.cos(radianRoll)
+        local corrY = math.sin(radianRoll)
+        adjustedPitch = getPitch(worldVertical, constructForward, (constructRight * corrX) + (constructUp * corrY)) 
+
         local constructVelocityDir = constructVelocity:normalize()
         local currentRollDeg = getRoll(worldVertical, constructForward, constructRight)
         local currentRollDegAbs = mabs(currentRollDeg)
@@ -7117,11 +7119,6 @@ VERSION_NUMBER = 1.135
 
         if worldVertical:len() > 0.01 and (atmosDensity > 0.0 or ProgradeIsOn or Reentry or spaceLand or AltitudeHold or IntoOrbit) then
             -- autoRoll on AND currentRollDeg is big enough AND player is not rolling
-            local roll = getRoll(worldVertical, constructForward, constructRight) 
-            local radianRoll = (roll / 180) * math.pi
-            local corrX = math.cos(radianRoll)
-            local corrY = math.sin(radianRoll)
-            local adjustedPitch = getPitch(worldVertical, constructForward, (constructRight * corrX) + (constructUp * corrY)) -- Don't roll if pitch is basically straight up/down
             if autoRoll == true and mabs(targetRoll-currentRollDeg) > autoRollRollThreshold and finalRollInput == 0 and mabs(adjustedPitch) < 85 then
                 local targetRollDeg = targetRoll
                 local rollFactor = autoRollFactor
@@ -7534,7 +7531,7 @@ VERSION_NUMBER = 1.135
 
         local function ToggleLockPitch()
             if LockPitch == nil then
-                LockPitch = getPitch(worldVertical, constructForward, constructRight)
+                LockPitch = adjustedPitch
                 AutoTakeoff = false
                 AltitudeHold = false
                 BrakeLanding = false
