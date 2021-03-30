@@ -7533,7 +7533,7 @@ VERSION_NUMBER = 1.135
         end
 
         local function ToggleLockPitch()
-            if LockPitch == nil and inAtmo then
+            if LockPitch == nil then
                 LockPitch = getPitch(worldVertical, constructForward, constructRight)
                 AutoTakeoff = false
                 AltitudeHold = false
