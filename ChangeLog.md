@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.135
+- Changed text input commands back to / from ah-   it was too confusing.  / will only respond to recognized commands.
+To see a list, type /help or /commands
+- Fixed Turn and Burn braking to not mess with alignment going out
+- Changed indication that Turn and Burn is on to TB- in front of Travel mode
+- More cleaning
+
 Version 1.134
 - Fixed AGG ON Alt-4 takeoff to not brake or kill engines once AGG height is reached
 - Fixed AGG ON Alt-4 AP same planet to stop over target waypoint till AGG manually disabled.

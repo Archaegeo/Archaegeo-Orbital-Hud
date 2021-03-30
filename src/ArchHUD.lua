@@ -4,7 +4,7 @@ Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.134
+VERSION_NUMBER = 1.135
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -2069,10 +2069,7 @@ VERSION_NUMBER = 1.134
                 newContent[#newContent + 1] = stringf([[<text class="crit" x="%d" y="%d">Retrograde Alignment</text>]],
                                                 warningX, apY)
             end
-            if TurnBurn then
-                newContent[#newContent + 1] = stringf([[<text class="crit" x="%d" y="%d">Turn & Burn Braking</text>]],
-                                                warningX, turnBurnY)
-            elseif atmoDistance ~= nil and atmosDensity == 0 then
+            if atmoDistance ~= nil and atmosDensity == 0 then
                     local displayText, displayUnit = getDistanceDisplayString(atmoDistance)
                     local travelTime = Kinematic.computeTravelTime(velMag, 0, atmoDistance)
                     local displayCollisionType = "Collision"
@@ -2452,6 +2449,7 @@ VERSION_NUMBER = 1.134
             local brakeValue = 0
             local flightStyle = GetFlightStyle()
             if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
+            if TurnBurn then flightStyle = "TB-"..flightStyle end
             RefreshLastMaxBrake(gravity)
             if inAtmo then brakeValue = LastMaxBrakeInAtmo else brakeValue = LastMaxBrake end
             maxThrust = Nav:maxForceForward()
@@ -6046,7 +6044,6 @@ VERSION_NUMBER = 1.134
                                     orbit.periapsis.altitude < orbit.apoapsis.altitude and orbit.periapsis.altitude*1.05 >= orbit.apoapsis.altitude) or OrbitAchieved then -- This should get us a stable orbit within 10% with the way we do it
                                     if OrbitAchieved then
                                         BrakeIsOn = false
-                                        PlayerThrottle = 0
                                         cmdThrottle(0)
                                         OrbitAchieved = true
                                         orbitPitch = 0
@@ -6308,7 +6305,7 @@ VERSION_NUMBER = 1.134
 
                     if not AutopilotCruising and not AutopilotBraking and not skipAlign then
                         aligned = AlignToWorldVector((targetCoords - worldPos):normalize())
-                    elseif TurnBurn then
+                    elseif TurnBurn and (AutopilotBraking or AutopilotCruising) then
                         aligned = AlignToWorldVector(-vec3(constructVelocity):normalize())
                     end
                     if AutopilotAccelerating then
@@ -6343,7 +6340,6 @@ VERSION_NUMBER = 1.134
                         end
                         if TurnBurn then
                             cmdThrottle(1,true) -- This stays 100 to not mess up our calculations
-                            PlayerThrottle = 1
                         end
                         -- Check if an orbit has been established and cut brakes and disable autopilot if so
 
@@ -6914,10 +6910,8 @@ VERSION_NUMBER = 1.134
                                 AltitudeHold = false
                                 AutoTakeoff = false
                                 cmdThrottle(0)
-                                PlayerThrottle = 0
                             elseif spaceLaunch then
                                 cmdThrottle(0)
-                                PlayerThrottle = 0
                                 BrakeIsOn = true
                             end --coreAltitude > 75000
                         elseif spaceLaunch and atmosDensity == 0 and autopilotTargetPlanet ~= nil and (intersectBody == nil or intersectBody.name == autopilotTargetPlanet.name) then
@@ -8019,24 +8013,24 @@ VERSION_NUMBER = 1.134
         end
 
         local i
-        local commands = "ah-commands ah-setname ah-G ah-agg ah-addlocation ah-copydatabank ah-wipedatabank"
+        local commands = "/commands /setname /G /agg /addlocation /copydatabank /wipedatabank"
         local command, arguement = nil, nil
-        local commandhelp = "Command List:\nah-commands \nah-setname <newname> - Updates current selected saved position name\nah-G VariableName newValue - Updates global variable to new value\n"..
-                "ah-G dump - shows all updatable variables with ah-G\nah-agg <targetheight> - Manually set agg target height\n"..
-                "ah-addlocation savename ::pos{0,2,46.4596,-155.1799,22.6572} - adds a saved location by waypoint, not as accurate as making one at location\n"..
-                "ah-copydatabank - copies dbHud databank to a blank databank\nah-wipedatabank - wipes the databank of all hud variables but not save variables"
+        local commandhelp = "Command List:\n/commands \n/setname <newname> - Updates current selected saved position name\n/G VariableName newValue - Updates global variable to new value\n"..
+                "/G dump - shows all updatable variables with /G\n/agg <targetheight> - Manually set agg target height\n"..
+                "/addlocation savename ::pos{0,2,46.4596,-155.1799,22.6572} - adds a saved location by waypoint, not as accurate as making one at location\n"..
+                "/copydatabank - copies dbHud databank to a blank databank\n/wipedatabank - wipes the databank of all hud variables but not save variables"
         i = string.find(text, " ")
         command = text
         if i ~= nil then
             command = string.sub(text, 0, i-1)
             arguement = string.sub(text, i+1)
-        elseif string.find(commands, command) == -1 then
+        end
+        if command == "/help" or command == "/commands" then
             for str in string.gmatch(commandhelp, "([^\n]+)") do
                 system.print(str)
             end
-            return
-        end
-        if command == "ah-setname" then 
+            return   
+        elseif command == "/setname" then 
             if arguement == nil or arguement == "" then
                 msgText = "Usage: ah-setname Newname"
                 return
@@ -8046,7 +8040,7 @@ VERSION_NUMBER = 1.134
             else
                 msgText = "Select a saved target to rename first"
             end
-        elseif command == "ah-addlocation" then
+        elseif command == "/addlocation" then
             if arguement == nil or arguement == "" or string.find(arguement, "::") == nil then
                 msgText = "Usage: ah-addlocation savename ::pos{0,2,46.4596,-155.1799,22.6572}"
                 return
@@ -8061,7 +8055,7 @@ VERSION_NUMBER = 1.134
             AddNewLocationByWaypoint(savename, planet, pos)   
             msgText = "Added "..savename.." to saved locations,\nplanet "..planet.name.." at "..pos
             msgTimer = 5    
-        elseif command == "ah-agg" then
+        elseif command == "/agg" then
             if arguement == nil or arguement == "" then
                 msgText = "Usage: ah-agg targetheight"
                 return
@@ -8070,7 +8064,7 @@ VERSION_NUMBER = 1.134
             if arguement < 1000 then arguement = 1000 end
             AntigravTargetAltitude = arguement
             msgText = "AGG Target Height set to "..arguement
-        elseif command == "ah-G" then
+        elseif command == "/G" then
             if arguement == nil or arguement == "" then
                 msgText = "Usage: ah-G VariableName variablevalue\nah-G dump - shows all variables"
                 return
@@ -8112,13 +8106,13 @@ VERSION_NUMBER = 1.134
                 end
             end
             msgText = "No such global variable: "..globalVariableName
-        elseif command == "ah-copydatabank" then 
+        elseif command == "/copydatabank" then 
             if dbHud_2 then 
                 SaveDataBank(true) 
             else
                 msgText = "Spare Databank required to copy databank"
             end
-        elseif command == "ah-wipedatabank" then
+        elseif command == "/wipedatabank" then
             if dbHud_1 then
                 wipeSaveVariables()
             else
