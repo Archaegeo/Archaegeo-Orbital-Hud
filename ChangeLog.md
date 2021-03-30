@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.136
+Version 1.137
+- More refactoring for cleaner code.
 - More reduction of duplicated code
 
 Version 1.135
