@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.137
+VERSION_NUMBER = 1.138
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -224,6 +224,8 @@ VERSION_NUMBER = 1.137
     local msgText = "empty"
     local holdAltitudeButtonModifier = 5
     local antiGravButtonModifier = 5
+    local currentHoldAltModifier = holdAltitudeButtonModifier
+    local currentAggModifier = antiGravButtonModifier
     local isBoosting = false -- Dodgin's Don't Die Rocket Govenor
     local brakeDistance, brakeTime = 0
     local maxBrakeDistance, maxBrakeTime = 0
@@ -716,7 +718,7 @@ VERSION_NUMBER = 1.137
                 systemId = targetplanet.planetarySystemId
             }, MapPosition)
         end
-        local waypoint = zeroConvertToMapPosition(autopilotTargetPlanet, AutopilotTargetCoords)
+        local waypoint = zeroConvertToMapPosition(planet, coordinates)
         waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
         system.setWaypoint(waypoint)
     end
@@ -1120,1023 +1122,1025 @@ VERSION_NUMBER = 1.137
         end
     end
 
-    local function Huds() -- Everything HUD releated
-        local Hud = {}
-
-        local function ConvertResolutionX (v)
-            if resolutionWidth == 1920 then 
-                return v
-            else
-                return round(resolutionWidth * v / 1920, 0)
-            end
-        end
-    
-        local function ConvertResolutionY (v)
-            if resolutionHeight == 1080 then 
-                return v
-            else
-                return round(resolutionHeight * v / 1080, 0)
-            end
-        end
-
-        local function IsInFreeLook()
-            return sysIsVwLock() == 0 and userControlScheme ~= "keyboard" and isRemote() == 0
-        end
-
-        local function GetFlightStyle()
-            local flightType = navCom:getAxisCommandType(0)
-            local flightStyle = "TRAVEL"
-            if (flightType == 1) then
-                flightStyle = "CRUISE"
-            end
-            if Autopilot then
-                flightStyle = "AUTOPILOT"
-            end
-            return flightStyle
-        end
-
-        local function DrawTank(newContent, updateTanks, x, nameSearchPrefix, nameReplacePrefix, tankTable, fuelTimeLeftTable,
-            fuelPercentTable)
-            local tankID = 1
-            local tankName = 2
-            local tankMaxVol = 3
-            local tankMassEmpty = 4
-            local tankLastMass = 5
-            local tankLastTime = 6
-            local slottedTankType = ""
-            local slottedTanks = 0
-        
-            local y1 = fuelY
-            local y2 = fuelY+10
-            if isRemote() == 1 and not RemoteHud then
-                y1 = y1 - 50
-                y2 = y2 - 50
+    local function Huds() -- Everything HUD releated the is self contained
+        --Local Huds Functions
+            local function ConvertResolutionX (v)
+                if resolutionWidth == 1920 then 
+                    return v
+                else
+                    return round(resolutionWidth * v / 1920, 0)
+                end
             end
         
-            newContent[#newContent + 1] = [[<g class="pdim txtfuel">]]
-        
-            if nameReplacePrefix == "ATMO" then
-                slottedTankType = "atmofueltank"
-            elseif nameReplacePrefix == "SPACE" then
-                slottedTankType = "spacefueltank"
-            else
-                slottedTankType = "rocketfueltank"
+            local function ConvertResolutionY (v)
+                if resolutionHeight == 1080 then 
+                    return v
+                else
+                    return round(resolutionHeight * v / 1080, 0)
+                end
             end
-            slottedTanks = _G[slottedTankType .. "_size"]
-            if (#tankTable > 0) then
-                for i = 1, #tankTable do
-                    local name = string.sub(tankTable[i][tankName], 1, 12)
-                    local slottedIndex = 0
-                    for j = 1, slottedTanks do
-                        if tankTable[i][tankName] == jdecode(unit[slottedTankType .. "_" .. j].getData()).name then
-                            slottedIndex = j
-                            break
-                        end
-                    end
-                    if updateTanks or fuelTimeLeftTable[i] == nil or fuelPercentTable[i] == nil then
-                        local fuelMassMax = 0
-                        local fuelMassLast = 0
-                        local fuelMass = 0
-                        local fuelLastTime = 0
-                        local curTime = systime()
-                        if slottedIndex ~= 0 then
-                            fuelPercentTable[i] = jdecode(unit[slottedTankType .. "_" .. slottedIndex].getData())
-                                                    .percentage
-                            fuelTimeLeftTable[i] = jdecode(unit[slottedTankType .. "_" .. slottedIndex].getData())
-                                                    .timeLeft
-                            if fuelTimeLeftTable[i] == "n/a" then
-                                fuelTimeLeftTable[i] = 0
+
+            local function IsInFreeLook()
+                return sysIsVwLock() == 0 and userControlScheme ~= "keyboard" and isRemote() == 0
+            end
+
+            local function GetFlightStyle()
+                local flightType = navCom:getAxisCommandType(0)
+                local flightStyle = "TRAVEL"
+                if (flightType == 1) then
+                    flightStyle = "CRUISE"
+                end
+                if Autopilot then
+                    flightStyle = "AUTOPILOT"
+                end
+                return flightStyle
+            end
+
+            local function DrawTank(newContent, updateTanks, x, nameSearchPrefix, nameReplacePrefix, tankTable, fuelTimeLeftTable,
+                fuelPercentTable)
+                local tankID = 1
+                local tankName = 2
+                local tankMaxVol = 3
+                local tankMassEmpty = 4
+                local tankLastMass = 5
+                local tankLastTime = 6
+                local slottedTankType = ""
+                local slottedTanks = 0
+            
+                local y1 = fuelY
+                local y2 = fuelY+10
+                if isRemote() == 1 and not RemoteHud then
+                    y1 = y1 - 50
+                    y2 = y2 - 50
+                end
+            
+                newContent[#newContent + 1] = [[<g class="pdim txtfuel">]]
+            
+                if nameReplacePrefix == "ATMO" then
+                    slottedTankType = "atmofueltank"
+                elseif nameReplacePrefix == "SPACE" then
+                    slottedTankType = "spacefueltank"
+                else
+                    slottedTankType = "rocketfueltank"
+                end
+                slottedTanks = _G[slottedTankType .. "_size"]
+                if (#tankTable > 0) then
+                    for i = 1, #tankTable do
+                        local name = string.sub(tankTable[i][tankName], 1, 12)
+                        local slottedIndex = 0
+                        for j = 1, slottedTanks do
+                            if tankTable[i][tankName] == jdecode(unit[slottedTankType .. "_" .. j].getData()).name then
+                                slottedIndex = j
+                                break
                             end
-                        else
-                            fuelMass = (eleMass(tankTable[i][tankID]) - tankTable[i][tankMassEmpty])
-                            fuelMassMax = tankTable[i][tankMaxVol]
-                            fuelPercentTable[i] = mfloor(0.5 + fuelMass * 100 / fuelMassMax)
-                            fuelMassLast = tankTable[i][tankLastMass]
-                            fuelLastTime = tankTable[i][tankLastTime]
-                            if fuelMassLast <= fuelMass then
-                                fuelTimeLeftTable[i] = 0
+                        end
+                        if updateTanks or fuelTimeLeftTable[i] == nil or fuelPercentTable[i] == nil then
+                            local fuelMassMax = 0
+                            local fuelMassLast = 0
+                            local fuelMass = 0
+                            local fuelLastTime = 0
+                            local curTime = systime()
+                            if slottedIndex ~= 0 then
+                                fuelPercentTable[i] = jdecode(unit[slottedTankType .. "_" .. slottedIndex].getData())
+                                                        .percentage
+                                fuelTimeLeftTable[i] = jdecode(unit[slottedTankType .. "_" .. slottedIndex].getData())
+                                                        .timeLeft
+                                if fuelTimeLeftTable[i] == "n/a" then
+                                    fuelTimeLeftTable[i] = 0
+                                end
                             else
-                                fuelTimeLeftTable[i] = mfloor(
-                                                        0.5 + fuelMass /
-                                                            ((fuelMassLast - fuelMass) / (curTime - fuelLastTime)))
-                            end
-                            tankTable[i][tankLastMass] = fuelMass
-                            tankTable[i][tankLastTime] = curTime
-                        end
-                    end
-                    if name == nameSearchPrefix then
-                        name = stringf("%s %d", nameReplacePrefix, i)
-                    end
-                    if slottedIndex == 0 then
-                        name = name .. " *"
-                    end
-                    local fuelTimeDisplay
-                    if fuelTimeLeftTable[i] == 0 then
-                        fuelTimeDisplay = "n/a"
-                    else
-                        fuelTimeDisplay = FormatTimeString(fuelTimeLeftTable[i])
-                    end
-                    if fuelPercentTable[i] ~= nil then
-                        local colorMod = mfloor(fuelPercentTable[i] * 2.55)
-                        local color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
-                        local class = ""
-                        if ((fuelTimeDisplay ~= "n/a" and fuelTimeLeftTable[i] < 120) or fuelPercentTable[i] < 5) then
-                            if updateTanks then
-                                class = [[class="red"]]
+                                fuelMass = (eleMass(tankTable[i][tankID]) - tankTable[i][tankMassEmpty])
+                                fuelMassMax = tankTable[i][tankMaxVol]
+                                fuelPercentTable[i] = mfloor(0.5 + fuelMass * 100 / fuelMassMax)
+                                fuelMassLast = tankTable[i][tankLastMass]
+                                fuelLastTime = tankTable[i][tankLastTime]
+                                if fuelMassLast <= fuelMass then
+                                    fuelTimeLeftTable[i] = 0
+                                else
+                                    fuelTimeLeftTable[i] = mfloor(
+                                                            0.5 + fuelMass /
+                                                                ((fuelMassLast - fuelMass) / (curTime - fuelLastTime)))
+                                end
+                                tankTable[i][tankLastMass] = fuelMass
+                                tankTable[i][tankLastTime] = curTime
                             end
                         end
-                        newContent[#newContent + 1] = stringf(
-                                                        [[
-                            <text x=%d y="%d" %s>%s</text>
-                            <text x=%d y="%d" style="fill:%s">%d%% %s</text>
-                        ]], x, y1, class, name, x, y2, color, fuelPercentTable[i], fuelTimeDisplay)
-                        y1 = y1 + 30
-                        y2 = y2 + 30
+                        if name == nameSearchPrefix then
+                            name = stringf("%s %d", nameReplacePrefix, i)
+                        end
+                        if slottedIndex == 0 then
+                            name = name .. " *"
+                        end
+                        local fuelTimeDisplay
+                        if fuelTimeLeftTable[i] == 0 then
+                            fuelTimeDisplay = "n/a"
+                        else
+                            fuelTimeDisplay = FormatTimeString(fuelTimeLeftTable[i])
+                        end
+                        if fuelPercentTable[i] ~= nil then
+                            local colorMod = mfloor(fuelPercentTable[i] * 2.55)
+                            local color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
+                            local class = ""
+                            if ((fuelTimeDisplay ~= "n/a" and fuelTimeLeftTable[i] < 120) or fuelPercentTable[i] < 5) then
+                                if updateTanks then
+                                    class = [[class="red"]]
+                                end
+                            end
+                            newContent[#newContent + 1] = stringf(
+                                                            [[
+                                <text x=%d y="%d" %s>%s</text>
+                                <text x=%d y="%d" style="fill:%s">%d%% %s</text>
+                            ]], x, y1, class, name, x, y2, color, fuelPercentTable[i], fuelTimeDisplay)
+                            y1 = y1 + 30
+                            y2 = y2 + 30
+                        end
                     end
                 end
+                newContent[#newContent + 1] = "</g>"
             end
-            newContent[#newContent + 1] = "</g>"
-        end
 
-        local function DrawVerticalSpeed(newContent, altitude) -- Draw vertical speed indicator - Code by lisa-lionheart
-            if (altitude < 200000 and not inAtmo) or (altitude and inAtmo) then
-                local vSpd = -worldVertical:dot(constructVelocity)
-                local angle = 0
-                if mabs(vSpd) > 1 then
-                    angle = 45 * math.log(mabs(vSpd), 10)
-                    if vSpd < 0 then
-                        angle = -angle
-                    end
-                end
-                newContent[#newContent + 1] = stringf([[
-                    <g class="pbright txt txtvspd" transform="translate(%d %d) scale(0.6)">
-                            <text x="31" y="-41">1000</text>
-                            <text x="-10" y="-65">100</text>
-                            <text x="-54" y="-45">10</text>
-                            <text x="-73" y="3">O</text>
-                            <text x="-56" y="52">-10</text>
-                            <text x="-14" y="72">-100</text>
-                            <text x="29" y="50">-1000</text>
-                            <text x="85" y="0" class="txtvspdval txtend">%d m/s</text>
-                        <g class="linethick">
-                            <path d="m-41 75 2.5-4.4m17 12 1.2-4.9m20 7.5v-10m-75-34 4.4-2.5m-12-17 4.9-1.2m17 40 7-7m-32-53h10m34-75 2.5 4.4m17-12 1.2 4.9m20-7.5v10m-75 34 4.4 2.5m-12 17 4.9 1.2m17-40 7 7m-32 53h10m116 75-2.5-4.4m-17 12-1.2-4.9m40-17-7-7m-12-128-2.5 4.4m-17-12-1.2 4.9m40 17-7 7"/>
-                            <circle r="90" />
-                        </g>
-                        <path transform="rotate(%d)" d="m-0.094-7c-22 2.2-45 4.8-67 7 23 1.7 45 5.6 67 7 4.4-0.068 7.8-4.9 6.3-9.1-0.86-2.9-3.7-5-6.8-4.9z" />
-                    </g>
-                ]], vSpdMeterX, vSpdMeterY, mfloor(vSpd), mfloor(angle))
-            end
-            return newContent
-        end
-
-        local function getHeading(forward) -- code provided by tomisunlucky   
-            local up = -worldVertical
-            forward = forward - forward:project_on(up)
-            local north = vec3(0, 0, 1)
-            north = north - north:project_on(up)
-            local east = north:cross(up)
-            local angle = north:angle_between(forward) * constants.rad2deg
-            if forward:dot(east) < 0 then
-                angle = 360-angle
-            end
-            return angle
-        end
-
-        local function DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
-            local horizonRadius = circleRad -- Aliased global
-            local OFFSET = 20
-            OFFSET = mfloor(OFFSET )
-            local rollC = mfloor(originalRoll)
-            if nearPlanet then 
-                for i = -45, 45, 5 do
-                    local rot = i
-                    newContent[#newContent + 1] = stringf([[<g transform="rotate(%f,%d,%d)">]], rot, centerX, centerY)
-                    len = 5
-                    if (i % 15 == 0) then
-                        len = 15
-                    elseif (i % 10 == 0) then
-                        len = 10
-                    end
-                    newContent[#newContent + 1] = stringf([[<line x1=%d y1=%d x2=%d y2="%d"/></g>]], centerX, centerY + horizonRadius + OFFSET - len, centerX, centerY + horizonRadius + OFFSET)
-                end 
-                newContent[#newContent + 1] = stringf([["
-                    <g class="pdim txt txtmid">
-                        <text x="%d" y="%d">%s</text>
-                        <text x="%d" y="%d">%d deg</text>
-                    </g>
-                    ]], centerX, centerY+horizonRadius+OFFSET-35, bottomText, centerX, centerY+horizonRadius+OFFSET-25, rollC)
-                newContent[#newContent + 1] = stringf([[<g transform="rotate(%f,%d,%d)">]], -originalRoll, centerX, centerY)
-                newContent[#newContent + 1] = stringf([[<<polygon points="%d,%d %d,%d %d,%d"/>]],
-                    centerX-5, centerY+horizonRadius+OFFSET-20, centerX+5, centerY+horizonRadius+OFFSET-20, centerX, centerY+horizonRadius+OFFSET-15)
-                newContent[#newContent +1] = "</g>"
-            end
-            local yaw = rollC
-            if nearPlanet then yaw = getHeading(constructForward) end
-            local range = 20
-            local yawC = mfloor(yaw) 
-            local yawlen = 0
-            local yawy = (centerY + horizonRadius + OFFSET + 20)
-            local yawx = centerX
-            if bottomText ~= "YAW" then 
-                yawy = ConvertResolutionY(130)
-                yawx = ConvertResolutionX(960)
-            end
-            local tickerPath = [[<path class="txttick line" d="]]
-            for i = mfloor(yawC - (range+10) - yawC % 5 + 0.5), mfloor(yawC + (range+10) + yawC % 5 + 0.5), 5 do
-                local x = yawx + (-i * 5 + yaw * 5)
-                if (i % 10 == 0) then
-                    yawlen = 10
-                    local num = i
-                    if num == 360 then 
-                        num = 0
-                    elseif num  > 360 then  
-                        num = num - 360 
-                    elseif num < 0 then
-                        num = num + 360
+            local function DrawVerticalSpeed(newContent, altitude) -- Draw vertical speed indicator - Code by lisa-lionheart
+                if (altitude < 200000 and not inAtmo) or (altitude and inAtmo) then
+                    local vSpd = -worldVertical:dot(constructVelocity)
+                    local angle = 0
+                    if mabs(vSpd) > 1 then
+                        angle = 45 * math.log(mabs(vSpd), 10)
+                        if vSpd < 0 then
+                            angle = -angle
+                        end
                     end
                     newContent[#newContent + 1] = stringf([[
-                            <text x="%f" y="%f">%d</text>]],x+5,yawy-12, num)
-                elseif (i % 5 == 0) then
-                    yawlen = 5
+                        <g class="pbright txt txtvspd" transform="translate(%d %d) scale(0.6)">
+                                <text x="31" y="-41">1000</text>
+                                <text x="-10" y="-65">100</text>
+                                <text x="-54" y="-45">10</text>
+                                <text x="-73" y="3">O</text>
+                                <text x="-56" y="52">-10</text>
+                                <text x="-14" y="72">-100</text>
+                                <text x="29" y="50">-1000</text>
+                                <text x="85" y="0" class="txtvspdval txtend">%d m/s</text>
+                            <g class="linethick">
+                                <path d="m-41 75 2.5-4.4m17 12 1.2-4.9m20 7.5v-10m-75-34 4.4-2.5m-12-17 4.9-1.2m17 40 7-7m-32-53h10m34-75 2.5 4.4m17-12 1.2 4.9m20-7.5v10m-75 34 4.4 2.5m-12 17 4.9 1.2m17-40 7 7m-32 53h10m116 75-2.5-4.4m-17 12-1.2-4.9m40-17-7-7m-12-128-2.5 4.4m-17-12-1.2 4.9m40 17-7 7"/>
+                                <circle r="90" />
+                            </g>
+                            <path transform="rotate(%d)" d="m-0.094-7c-22 2.2-45 4.8-67 7 23 1.7 45 5.6 67 7 4.4-0.068 7.8-4.9 6.3-9.1-0.86-2.9-3.7-5-6.8-4.9z" />
+                        </g>
+                    ]], vSpdMeterX, vSpdMeterY, mfloor(vSpd), mfloor(angle))
                 end
-                if yawlen == 10 then
-                    tickerPath = stringf([[%s M %f %f v %d]], tickerPath, x, yawy-5, yawlen)
-                else
-                    tickerPath = stringf([[%s M %f %f v %d]], tickerPath, x, yawy-2.5, yawlen)
-                end
+                return newContent
             end
-            newContent[#newContent + 1] = tickerPath .. [["/>]]
-            newContent[#newContent + 1] = stringf([[<<polygon points="%d,%d %d,%d %d,%d"/>]],
-                yawx-5, yawy+10, yawx+5, yawy+10, yawx, yawy+5)
-            if nearPlanet then bottomText = "HDG" end
-            newContent[#newContent + 1] = stringf([["
-                <g class="pdim txt txtmid">
-                <text x="%d" y="%d">%d deg</text>
-                <text x="%d" y="%d">%s</text>
-                </g>
-                ]], yawx, yawy+25, yawC, yawx, yawy+35, bottomText)
-        end
 
-        local function DrawArtificialHorizon(newContent, originalPitch, originalRoll, centerX, centerY, nearPlanet, atmoYaw, speed)
-            -- ** CIRCLE ALTIMETER  - Base Code from Discord @Rainsome = Youtube CaptainKilmar** 
-            local horizonRadius = circleRad -- Aliased global
-            local pitchX = mfloor(horizonRadius * 3 / 5)
-            if horizonRadius > 0 then
-                local pitchC = mfloor(originalPitch)
-                local len = 0
-                local tickerPath = stringf([[<path transform="rotate(%f,%d,%d)" class="dim line" d="]], (-1 * originalRoll), centerX, centerY)
-                if not inAtmo then
-                    tickerPath = stringf([[<path transform="rotate(0,%d,%d)" class="dim line" d="]], centerX, centerY)
+            local function getHeading(forward) -- code provided by tomisunlucky   
+                local up = -worldVertical
+                forward = forward - forward:project_on(up)
+                local north = vec3(0, 0, 1)
+                north = north - north:project_on(up)
+                local east = north:cross(up)
+                local angle = north:angle_between(forward) * constants.rad2deg
+                if forward:dot(east) < 0 then
+                    angle = 360-angle
                 end
-                newContent[#newContent + 1] = stringf([[<clipPath id="cut"><circle r="%f" cx="%d" cy="%d"/></clipPath>]],(horizonRadius - 1), centerX, centerY)
-                newContent[#newContent + 1] = [[<g class="dim txttick" clip-path="url(#cut)">]]
-                for i = mfloor(pitchC - 30 - pitchC % 5 + 0.5), mfloor(pitchC + 30 + pitchC % 5 + 0.5), 5 do
+                return angle
+            end
+
+            local function DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
+                local horizonRadius = circleRad -- Aliased global
+                local OFFSET = 20
+                OFFSET = mfloor(OFFSET )
+                local rollC = mfloor(originalRoll)
+                if nearPlanet then 
+                    for i = -45, 45, 5 do
+                        local rot = i
+                        newContent[#newContent + 1] = stringf([[<g transform="rotate(%f,%d,%d)">]], rot, centerX, centerY)
+                        len = 5
+                        if (i % 15 == 0) then
+                            len = 15
+                        elseif (i % 10 == 0) then
+                            len = 10
+                        end
+                        newContent[#newContent + 1] = stringf([[<line x1=%d y1=%d x2=%d y2="%d"/></g>]], centerX, centerY + horizonRadius + OFFSET - len, centerX, centerY + horizonRadius + OFFSET)
+                    end 
+                    newContent[#newContent + 1] = stringf([["
+                        <g class="pdim txt txtmid">
+                            <text x="%d" y="%d">%s</text>
+                            <text x="%d" y="%d">%d deg</text>
+                        </g>
+                        ]], centerX, centerY+horizonRadius+OFFSET-35, bottomText, centerX, centerY+horizonRadius+OFFSET-25, rollC)
+                    newContent[#newContent + 1] = stringf([[<g transform="rotate(%f,%d,%d)">]], -originalRoll, centerX, centerY)
+                    newContent[#newContent + 1] = stringf([[<<polygon points="%d,%d %d,%d %d,%d"/>]],
+                        centerX-5, centerY+horizonRadius+OFFSET-20, centerX+5, centerY+horizonRadius+OFFSET-20, centerX, centerY+horizonRadius+OFFSET-15)
+                    newContent[#newContent +1] = "</g>"
+                end
+                local yaw = rollC
+                if nearPlanet then yaw = getHeading(constructForward) end
+                local range = 20
+                local yawC = mfloor(yaw) 
+                local yawlen = 0
+                local yawy = (centerY + horizonRadius + OFFSET + 20)
+                local yawx = centerX
+                if bottomText ~= "YAW" then 
+                    yawy = ConvertResolutionY(130)
+                    yawx = ConvertResolutionX(960)
+                end
+                local tickerPath = [[<path class="txttick line" d="]]
+                for i = mfloor(yawC - (range+10) - yawC % 5 + 0.5), mfloor(yawC + (range+10) + yawC % 5 + 0.5), 5 do
+                    local x = yawx + (-i * 5 + yaw * 5)
                     if (i % 10 == 0) then
-                        len = 30
+                        yawlen = 10
+                        local num = i
+                        if num == 360 then 
+                            num = 0
+                        elseif num  > 360 then  
+                            num = num - 360 
+                        elseif num < 0 then
+                            num = num + 360
+                        end
+                        newContent[#newContent + 1] = stringf([[
+                                <text x="%f" y="%f">%d</text>]],x+5,yawy-12, num)
                     elseif (i % 5 == 0) then
-                        len = 20
+                        yawlen = 5
                     end
-                    local y = centerY + (-i * 5 + originalPitch * 5)
-                    if len == 30 then
-                        tickerPath = stringf([[%s M %d %f h %d]], tickerPath, centerX-pitchX-len, y, len)
-                        if inAtmo then
-                            newContent[#newContent + 1] = stringf([[<g path transform="rotate(%f,%d,%d)" class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]],(-1 * originalRoll), centerX, centerY, centerX-pitchX+10, y, i)
-                            newContent[#newContent + 1] = stringf([[<g path transform="rotate(%f,%d,%d)" class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]],(-1 * originalRoll), centerX, centerY, centerX+pitchX-10, y, i)
-                            if i == 0 or i == 180 or i == -180 then 
-                                newContent[#newContent + 1] = stringf([[<path transform="rotate(%f,%d,%d)" d="m %d,%f %d,0" stroke-width="1" style="fill:none;stroke:#F5B800;" />]],
-                                    (-1 * originalRoll), centerX, centerY, centerX-pitchX+20, y, pitchX*2-40)
-                            end
-                        else
-                            newContent[#newContent + 1] = stringf([[<g class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]], centerX-pitchX+10, y, i)
-                            newContent[#newContent + 1] = stringf([[<g class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]], centerX+pitchX-10, y, i)
-                        end                            
-                        tickerPath = stringf([[%s M %d %f h %d]], tickerPath, centerX+pitchX, y, len)
+                    if yawlen == 10 then
+                        tickerPath = stringf([[%s M %f %f v %d]], tickerPath, x, yawy-5, yawlen)
                     else
-                        tickerPath = stringf([[%s M %d %f h %d]], tickerPath, centerX-pitchX-len, y, len)
-                        tickerPath = stringf([[%s M %d %f h %d]], tickerPath, centerX+pitchX, y, len)
+                        tickerPath = stringf([[%s M %f %f v %d]], tickerPath, x, yawy-2.5, yawlen)
                     end
                 end
                 newContent[#newContent + 1] = tickerPath .. [["/>]]
-                local pitchstring = "PITCH"                
-                if not nearPlanet then 
-                    pitchstring = "REL PITCH"
-                end
-                if originalPitch > 90 and not inAtmo then
-                    originalPitch = 90 - (originalPitch - 90)
-                elseif originalPitch < -90 and not inAtmo then
-                    originalPitch = -90 - (originalPitch + 90)
-                end
-                if horizonRadius > 200 then
-                    if inAtmo then
-                        if speed > minAutopilotSpeed then
+                newContent[#newContent + 1] = stringf([[<<polygon points="%d,%d %d,%d %d,%d"/>]],
+                    yawx-5, yawy+10, yawx+5, yawy+10, yawx, yawy+5)
+                if nearPlanet then bottomText = "HDG" end
+                newContent[#newContent + 1] = stringf([["
+                    <g class="pdim txt txtmid">
+                    <text x="%d" y="%d">%d deg</text>
+                    <text x="%d" y="%d">%s</text>
+                    </g>
+                    ]], yawx, yawy+25, yawC, yawx, yawy+35, bottomText)
+            end
+
+            local function DrawArtificialHorizon(newContent, originalPitch, originalRoll, centerX, centerY, nearPlanet, atmoYaw, speed)
+                -- ** CIRCLE ALTIMETER  - Base Code from Discord @Rainsome = Youtube CaptainKilmar** 
+                local horizonRadius = circleRad -- Aliased global
+                local pitchX = mfloor(horizonRadius * 3 / 5)
+                if horizonRadius > 0 then
+                    local pitchC = mfloor(originalPitch)
+                    local len = 0
+                    local tickerPath = stringf([[<path transform="rotate(%f,%d,%d)" class="dim line" d="]], (-1 * originalRoll), centerX, centerY)
+                    if not inAtmo then
+                        tickerPath = stringf([[<path transform="rotate(0,%d,%d)" class="dim line" d="]], centerX, centerY)
+                    end
+                    newContent[#newContent + 1] = stringf([[<clipPath id="cut"><circle r="%f" cx="%d" cy="%d"/></clipPath>]],(horizonRadius - 1), centerX, centerY)
+                    newContent[#newContent + 1] = [[<g class="dim txttick" clip-path="url(#cut)">]]
+                    for i = mfloor(pitchC - 30 - pitchC % 5 + 0.5), mfloor(pitchC + 30 + pitchC % 5 + 0.5), 5 do
+                        if (i % 10 == 0) then
+                            len = 30
+                        elseif (i % 5 == 0) then
+                            len = 20
+                        end
+                        local y = centerY + (-i * 5 + originalPitch * 5)
+                        if len == 30 then
+                            tickerPath = stringf([[%s M %d %f h %d]], tickerPath, centerX-pitchX-len, y, len)
+                            if inAtmo then
+                                newContent[#newContent + 1] = stringf([[<g path transform="rotate(%f,%d,%d)" class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]],(-1 * originalRoll), centerX, centerY, centerX-pitchX+10, y, i)
+                                newContent[#newContent + 1] = stringf([[<g path transform="rotate(%f,%d,%d)" class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]],(-1 * originalRoll), centerX, centerY, centerX+pitchX-10, y, i)
+                                if i == 0 or i == 180 or i == -180 then 
+                                    newContent[#newContent + 1] = stringf([[<path transform="rotate(%f,%d,%d)" d="m %d,%f %d,0" stroke-width="1" style="fill:none;stroke:#F5B800;" />]],
+                                        (-1 * originalRoll), centerX, centerY, centerX-pitchX+20, y, pitchX*2-40)
+                                end
+                            else
+                                newContent[#newContent + 1] = stringf([[<g class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]], centerX-pitchX+10, y, i)
+                                newContent[#newContent + 1] = stringf([[<g class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]], centerX+pitchX-10, y, i)
+                            end                            
+                            tickerPath = stringf([[%s M %d %f h %d]], tickerPath, centerX+pitchX, y, len)
+                        else
+                            tickerPath = stringf([[%s M %d %f h %d]], tickerPath, centerX-pitchX-len, y, len)
+                            tickerPath = stringf([[%s M %d %f h %d]], tickerPath, centerX+pitchX, y, len)
+                        end
+                    end
+                    newContent[#newContent + 1] = tickerPath .. [["/>]]
+                    local pitchstring = "PITCH"                
+                    if not nearPlanet then 
+                        pitchstring = "REL PITCH"
+                    end
+                    if originalPitch > 90 and not inAtmo then
+                        originalPitch = 90 - (originalPitch - 90)
+                    elseif originalPitch < -90 and not inAtmo then
+                        originalPitch = -90 - (originalPitch + 90)
+                    end
+                    if horizonRadius > 200 then
+                        if inAtmo then
+                            if speed > minAutopilotSpeed then
+                                newContent[#newContent + 1] = stringf([["
+                                <g class="pdim txt txtmid">
+                                <text x="%d" y="%d">%s</text>
+                                <text x="%d" y="%d">%d deg</text>
+                                </g>
+                                ]],  centerX, centerY-15, "Yaw", centerX, centerY+20, atmoYaw)                            
+                            end
+                            newContent[#newContent + 1] = stringf([[<g transform="rotate(%f,%d,%d)">]], -originalRoll, centerX, centerY)
+                        else
+                            newContent[#newContent + 1] = stringf([[<g transform="rotate(0,%d,%d)">]], centerX, centerY)
+                        end
+                        newContent[#newContent + 1] = stringf([[<<polygon points="%d,%d %d,%d %d,%d"/> class="pdim txtend"><text x="%d" y="%f">%d</text>]],
+                        centerX-pitchX+25, centerY-5, centerX-pitchX+20, centerY, centerX-pitchX+25, centerY+5, centerX-pitchX+50, centerY+4, pitchC)
+                        newContent[#newContent + 1] = stringf([[<<polygon points="%d,%d %d,%d %d,%d"/> class="pdim txtend"><text x="%d" y="%f">%d</text>]],
+                        centerX+pitchX-25, centerY-5, centerX+pitchX-20, centerY, centerX+pitchX-25, centerY+5, centerX+pitchX-30, centerY+4, pitchC)
+                        newContent[#newContent +1] = "</g>"
+                    end
+                    local thirdHorizontal = mfloor(horizonRadius/3)
+                    newContent[#newContent + 1] = stringf([[<path d="m %d,%d %d,0" stroke-width="2" style="fill:none;stroke:#F5B800;" />]],
+                        centerX-thirdHorizontal, centerY, horizonRadius-thirdHorizontal)
+                    if not inAtmo and nearPlanet then 
+                        newContent[#newContent + 1] = stringf([[<path transform="rotate(%f,%d,%d)" d="m %d,%f %d,0" stroke-width="1" style="fill:none;stroke:#F5B800;" />]],
+                            (-1 * originalRoll), centerX, centerY, centerX-pitchX+10, centerY, pitchX*2-20)
+                    end
+                    newContent[#newContent + 1] = "</g>"
+                    if horizonRadius < 200 then
+                        if inAtmo and speed > minAutopilotSpeed then 
+                            newContent[#newContent + 1] = stringf([["
+                            <g class="pdim txt txtmid">
+                            <text x="%d" y="%d">%s</text>
+                            <text x="%d" y="%d">%d deg</text>
+                            <text x="%d" y="%d">%s</text>
+                            <text x="%d" y="%d">%d deg</text>
+                            </g>
+                            ]], centerX, centerY-horizonRadius, pitchstring, centerX, centerY-horizonRadius+10, pitchC, centerX, centerY-15, "Yaw", centerX, centerY+20, atmoYaw)
+                        else
                             newContent[#newContent + 1] = stringf([["
                             <g class="pdim txt txtmid">
                             <text x="%d" y="%d">%s</text>
                             <text x="%d" y="%d">%d deg</text>
                             </g>
-                            ]],  centerX, centerY-15, "Yaw", centerX, centerY+20, atmoYaw)                            
+                            ]], centerX, centerY-horizonRadius, pitchstring, centerX, centerY-horizonRadius+15, pitchC )                       
                         end
-                        newContent[#newContent + 1] = stringf([[<g transform="rotate(%f,%d,%d)">]], -originalRoll, centerX, centerY)
-                    else
-                        newContent[#newContent + 1] = stringf([[<g transform="rotate(0,%d,%d)">]], centerX, centerY)
-                    end
-                    newContent[#newContent + 1] = stringf([[<<polygon points="%d,%d %d,%d %d,%d"/> class="pdim txtend"><text x="%d" y="%f">%d</text>]],
-                    centerX-pitchX+25, centerY-5, centerX-pitchX+20, centerY, centerX-pitchX+25, centerY+5, centerX-pitchX+50, centerY+4, pitchC)
-                    newContent[#newContent + 1] = stringf([[<<polygon points="%d,%d %d,%d %d,%d"/> class="pdim txtend"><text x="%d" y="%f">%d</text>]],
-                    centerX+pitchX-25, centerY-5, centerX+pitchX-20, centerY, centerX+pitchX-25, centerY+5, centerX+pitchX-30, centerY+4, pitchC)
-                    newContent[#newContent +1] = "</g>"
-                end
-                local thirdHorizontal = mfloor(horizonRadius/3)
-                newContent[#newContent + 1] = stringf([[<path d="m %d,%d %d,0" stroke-width="2" style="fill:none;stroke:#F5B800;" />]],
-                    centerX-thirdHorizontal, centerY, horizonRadius-thirdHorizontal)
-                if not inAtmo and nearPlanet then 
-                    newContent[#newContent + 1] = stringf([[<path transform="rotate(%f,%d,%d)" d="m %d,%f %d,0" stroke-width="1" style="fill:none;stroke:#F5B800;" />]],
-                        (-1 * originalRoll), centerX, centerY, centerX-pitchX+10, centerY, pitchX*2-20)
-                end
-                newContent[#newContent + 1] = "</g>"
-                if horizonRadius < 200 then
-                    if inAtmo and speed > minAutopilotSpeed then 
-                        newContent[#newContent + 1] = stringf([["
-                        <g class="pdim txt txtmid">
-                        <text x="%d" y="%d">%s</text>
-                        <text x="%d" y="%d">%d deg</text>
-                        <text x="%d" y="%d">%s</text>
-                        <text x="%d" y="%d">%d deg</text>
-                        </g>
-                        ]], centerX, centerY-horizonRadius, pitchstring, centerX, centerY-horizonRadius+10, pitchC, centerX, centerY-15, "Yaw", centerX, centerY+20, atmoYaw)
-                    else
-                        newContent[#newContent + 1] = stringf([["
-                        <g class="pdim txt txtmid">
-                        <text x="%d" y="%d">%s</text>
-                        <text x="%d" y="%d">%d deg</text>
-                        </g>
-                        ]], centerX, centerY-horizonRadius, pitchstring, centerX, centerY-horizonRadius+15, pitchC )                       
                     end
                 end
             end
-        end
 
-        local function DrawAltitudeDisplay(newContent, altitude, nearPlanet)
-            local rectX = altMeterX
-            local rectY = altMeterY
-            local rectW = 78
-            local rectH = 19
-        
-            local gndHeight = AboveGroundLevel()
-        
-            if gndHeight ~= -1 then
-                table.insert(newContent, stringf([[
-                <g class="pdim altsm txtend">
-                <text x="%d" y="%d">AGL: %.1fm</text>
-                </g>
-                ]], rectX+rectW, rectY+rectH+20, gndHeight))
-            end
-        
-            if nearPlanet and ((altitude < 200000 and not inAtmo) or (altitude and inAtmo)) then
-                table.insert(newContent, stringf([[
-                    <g class="pdim">                        
-                        <rect class="line" x="%d" y="%d" width="%d" height="%d"/> 
-                        <clipPath id="alt"><rect class="line" x="%d" y="%d" width="%d" height="%d"/></clipPath>
-                        <g clip-path="url(#alt)">]], 
-                        rectX - 1, rectY - 4, rectW + 2, rectH + 6,
-                        rectX + 1, rectY - 1, rectW - 4, rectH))
-        
-                local index = 0
-                local divisor = 1
-                local forwardFract = 0
-                local isNegative = altitude < 0
-                local rolloverDigit = 9
-                if isNegative then
-                    rolloverDigit = 0
-                end
-                local altitude = mabs(altitude)
-                while index < 6 do
-                    local glyphW = 11
-                    local glyphH = 16
-                    local glyphXOffset = 9
-                    local glyphYOffset = 14
-                    local class = "altsm"
-        
-                    if index > 2 then
-                        glyphH = glyphH + 3
-                        glyphW = glyphW + 2
-                        glyphYOffset = glyphYOffset + 2
-                        glyphXOffset = glyphXOffset - 6
-                        class = "altbig"
-                    end
-        
-                    if isNegative then  
-                        class = class .. " red"
-                    end
-        
-                    local digit = (altitude / divisor) % 10
-                    local intDigit = mfloor(digit)
-                    local fracDigit = mfloor((intDigit + 1) % 10)
-        
-                    local fract = forwardFract
-                    if index == 0 then
-                        fract = digit - intDigit
-                        if isNegative then
-                            fract = 1 - fract
-                        end
-                    end
-        
-                    if isNegative and (index == 0 or forwardFract ~= 0) then
-                        local temp = fracDigit
-                        fracDigit = intDigit
-                        intDigit = temp
-                    end
-        
-                    local topGlyphOffset = glyphH * (fract - 1) 
-                    local botGlyphOffset = topGlyphOffset + glyphH
-        
-                    local x = rectX + glyphXOffset + (6 - index) * glyphW
-                    local y = rectY + glyphYOffset
-                    
-                    -- <g class="%s" clip-path="url(#%s)">
+            local function DrawAltitudeDisplay(newContent, altitude, nearPlanet)
+                local rectX = altMeterX
+                local rectY = altMeterY
+                local rectW = 78
+                local rectH = 19
+            
+                local gndHeight = AboveGroundLevel()
+            
+                if gndHeight ~= -1 then
                     table.insert(newContent, stringf([[
-                        <g class="%s">
-                        <text x="%d" y="%f">%d</text>
-                        <text x="%d" y="%f">%d</text>
-                        </g>
-                    ]], class, x, y + topGlyphOffset, fracDigit, x, y + botGlyphOffset, intDigit))
-                    
-                    index = index + 1
-                    divisor = divisor * 10
-                    if intDigit == rolloverDigit then
-                        forwardFract = fract
-                    else
-                        forwardFract = 0
-                    end
-                end
-                table.insert(newContent, [[</g></g>]])
-            end
-        end
-
-        local function getRelativePitch(velocity)
-            velocity = vec3(velocity)
-            local pitch = -math.deg(atan(velocity.y, velocity.z)) + 180
-            -- This is 0-360 where 0 is straight up
-            pitch = pitch - 90
-            -- So now 0 is straight, but we can now get angles up to 420
-            if pitch < 0 then
-                pitch = 360 + pitch
-            end
-            -- Now, if it's greater than 180, say 190, make it go to like -170
-            if pitch > 180 then
-                pitch = -180 + (pitch - 180)
-            end
-            -- And it's backwards.  
-            return -pitch
-        end
-
-        local function getRelativeYaw(velocity)
-            velocity = vec3(velocity)
-            local yaw = math.deg(atan(velocity.y, velocity.x)) - 90
-            if yaw < -180 then
-                yaw = 360 + yaw
-            end
-            return yaw
-        end    
-
-        local function DrawPrograde (newContent, velocity, speed, centerX, centerY)
-            if (speed > 5 and not inAtmo) or (speed > minAutopilotSpeed) then
-                local horizonRadius = circleRad -- Aliased global
-                local pitchRange = 20
-                local yawRange = 20
-                local velo = vec3(velocity)
-                local relativePitch = getRelativePitch(velo)
-                local relativeYaw = getRelativeYaw(velo)
-        
-                local dotSize = 14
-                local dotRadius = dotSize/2
-                
-                local dx = (-relativeYaw/yawRange)*horizonRadius -- Values from -1 to 1 indicating offset from the center
-                local dy = (relativePitch/pitchRange)*horizonRadius
-                local x = centerX + dx
-                local y = centerY + dy
-        
-                local distance = math.sqrt((dx)^2 + (dy)^2)
-        
-                local progradeDot = [[<circle
-                cx="]] .. x .. [["
-                cy="]] .. y .. [["
-                r="]] .. dotRadius/dotSize .. [["
-                style="fill:#d7fe00;stroke:none;fill-opacity:1"/>
-            <circle
-                cx="]] .. x .. [["
-                cy="]] .. y .. [["
-                r="]] .. dotRadius .. [["
-                style="stroke:#d7fe00;stroke-opacity:1;fill:none" />
-            <path
-                d="M ]] .. x-dotSize .. [[,]] .. y .. [[ h ]] .. dotRadius .. [["
-                style="stroke:#d7fe00;stroke-opacity:1" />
-            <path
-                d="M ]] .. x+dotRadius .. [[,]] .. y .. [[ h ]] .. dotRadius .. [["
-                style="stroke:#d7fe00;stroke-opacity:1" />
-            <path
-                d="M ]] .. x .. [[,]] .. y-dotSize .. [[ v ]] .. dotRadius .. [["
-                style="stroke:#d7fe00;stroke-opacity:1" />]]
-                    
-                if distance < horizonRadius then
-                    newContent[#newContent + 1] = progradeDot
-                    -- Draw a dot or whatever at x,y, it's inside the AH
-                else
-                    -- x,y is outside the AH.  Figure out how to draw an arrow on the edge of the circle pointing to it.
-                    -- First get the angle
-                    -- tan(ang) = o/a, tan(ang) = x/y
-                    -- atan(x/y) = ang (in radians)
-                    -- This is a special overload for doing this on a circle and setting up the signs correctly for the quadrants
-                    local angle = atan(dy,dx)
-                    -- Project this onto the circle
-                    -- These are backwards from what they're supposed to be.  Don't know why, that's just what makes it work apparently
-                    local arrowSize = 4
-                    local projectedX = centerX + (horizonRadius)*math.cos(angle) -- Needs to be converted to deg?  Probably not
-                    local projectedY = centerY + (horizonRadius)*math.sin(angle)
-                    -- Draw an arrow that we will rotate by angle
-                    -- Convert angle to degrees
-                    newContent[#newContent + 1] = stringf('<g transform="rotate(%f %f %f)"><rect x="%f" y="%f" width="%f" height="%f" stroke="#d7fe00" fill="#d7fe00" /><path d="M %f %f l %f %f l %f %f z" fill="#d7fe00" stroke="#d7fe00"></g>', angle*(180/math.pi), projectedX, projectedY, projectedX-arrowSize, projectedY-arrowSize/2, arrowSize*2, arrowSize,
-                                                                                                                                                        projectedX+arrowSize, projectedY - arrowSize, arrowSize, arrowSize, -arrowSize, arrowSize)
-        
-                    --newContent[#newContent + 1] = stringf('<circle cx="%f" cy="%f" r="2" stroke="white" stroke-width="2" fill="white" />', projectedX, projectedY)
-                end
-        
-                if(not inAtmo) then
-                    relativePitch = getRelativePitch(-velo)
-                    relativeYaw = getRelativeYaw(-velo)
-                    
-                    dx = (-relativeYaw/yawRange)*horizonRadius -- Values from -1 to 1 indicating offset from the center
-                    dy = (relativePitch/pitchRange)*horizonRadius
-                    x = centerX + dx
-                    y = centerY + dy
-        
-                    distance = math.sqrt((dx)^2 + (dy)^2)
-                    -- Retrograde Dot
-                    
-                    if distance < horizonRadius then
-                        local retrogradeDot = [[<circle
-                        cx="]] .. x .. [["
-                        cy="]] .. y .. [["
-                        r="]] .. dotRadius .. [["
-                        style="stroke:#d7fe00;stroke-opacity:1;fill:none" />
-                    <path
-                        d="M ]] .. x .. [[,]] .. y-dotSize .. [[ v ]] .. dotRadius .. [["
-                        style="stroke:#d7fe00;stroke-opacity:1" id="l"/>
-                    <use
-                        xlink:href="#l"
-                        transform="rotate(120,]] .. x .. [[,]] .. y .. [[)" />
-                    <use
-                        xlink:href="#l"
-                        transform="rotate(-120,]] .. x .. [[,]] .. y .. [[)" />
-                    <path
-                        d="M ]] .. x-dotRadius .. [[,]] .. y .. [[ h ]] .. dotSize .. [["
-                        style="stroke-width:0.5;stroke:#d7fe00;stroke-opacity:1"
-                        transform="rotate(-45,]] .. x .. [[,]] .. y .. [[)" id="c"/>
-                    <use
-                        xlink:href="#c"
-                        transform="rotate(-90,]] .. x .. [[,]] .. y .. [[)"/>]]
-                        newContent[#newContent + 1] = retrogradeDot
-                        -- Draw a dot or whatever at x,y, it's inside the AH
-                    end -- Don't draw an arrow for this one, only prograde is that important
-        
-                end
-            end
-        end
-
-        local function DrawThrottle(newContent, flightStyle, throt, flightValue)
-            throt = mfloor(throt+0.5) -- Hard-round it to an int
-            local y1 = throtPosY+10
-            local y2 = throtPosY+20
-            if isRemote() == 1 and not RemoteHud then
-                y1 = 55
-                y2 = 65
-            end
-        
-            local label = "CRUISE"
-            local unit = "km/h"
-            local value = flightValue
-            if (flightStyle == "TRAVEL" or flightStyle == "AUTOPILOT") then
-                label = "THROT"
-                unit = "%"
-                value = throt
-                local throtclass = "dim"
-                if throt < 0 then
-                    throtclass = "red"
-                end
-                newContent[#newContent + 1] = stringf([[<g class="%s">
-                    <path class="linethick" d="M %d %d L %d %d L %d %d L %d %d"/>
-                    <g transform="translate(0 %.0f)">
-                        <polygon points="%d,%d %d,%d %d,%d"/>
-                    </g>]], throtclass, throtPosX-7, throtPosY-50, throtPosX, throtPosY-50, throtPosX, throtPosY+50, throtPosX-7, throtPosY+50, (1 - mabs(throt)), 
-                    throtPosX-10, throtPosY+50, throtPosX-15, throtPosY+53, throtPosX-15, throtPosY+47)
-            end
-            newContent[#newContent + 1] = stringf([[
-                <g class="pbright txtstart">
-                        <text x="%s" y="%s">%s</text>
-                        <text x="%s" y="%s">%.0f %s</text>
-                </g>
-            </g>]], throtPosX+10, y1, label, throtPosX+10, y2, value, unit)
-        
-            if inAtmo and AtmoSpeedAssist and throttleMode and ThrottleLimited then
-                -- Display a marker for where the AP throttle is putting it, calculatedThrottle
-        
-                throt = mfloor(calculatedThrottle*100+0.5)
-                local throtclass = "red"
-                if throt < 0 then
-                    throtclass = "red" -- TODO
-                end
-                newContent[#newContent + 1] = stringf([[<g class="%s">
-                    <g transform="translate(0 %d)">
-                        <polygon points="%d,%d %d,%d %d,%d"/>
-                    </g></g>]], throtclass, (1 - mabs(throt)), 
-                    throtPosX-10, throtPosY+50, throtPosX-15, throtPosY+53, throtPosX-15, throtPosY+47)
-                newContent[#newContent + 1] = stringf([[
-                        <g class="pbright txtstart">
-                                <text x="%s" y="%s">%s</text>
-                                <text x="%s" y="%s">%d %s</text>
-                        </g>]], throtPosX+10, y1+40, "LIMIT", throtPosX+10, y2+40, throt, "%")
-            end
-            if (inAtmo and AtmoSpeedAssist) or Reentry then
-                -- Display AtmoSpeedLimit above the throttle
-        
-                newContent[#newContent + 1] = stringf([[
-                    <g class="dim txtstart">
-                        <text x="%s" y="%s">%s %s</text>
+                    <g class="pdim altsm txtend">
+                    <text x="%d" y="%d">AGL: %.1fm</text>
                     </g>
-                ]], throtPosX+10, y1-40, "LIMIT: ", adjustedAtmoSpeedLimit .. " km/h")
-            elseif not inAtmo and Autopilot then
-                -- Display MaxGameVelocity above the throttle
-                newContent[#newContent + 1] = stringf([[
-                    <g class="dim txtstart">
-                        <text x="%s" y="%s">%s %s</text>
-                    </g>
-                ]], throtPosX+10, y1-40, "LIMIT: ", mfloor(MaxGameVelocity*3.6+0.5) .. " km/h")
-            end
-        end
-
-        local function DrawSpeed(newContent, spd)
-            local ys = throtPosY-10 
-            local x1 = throtPosX + 10
-            newContent[#newContent + 1] = [[<g class="pdim txt txtend">]]
-            if isRemote() == 1 and not RemoteHud then
-                ys = 75
-            end
-            newContent[#newContent + 1] = stringf([[
-                <g class="pbright txtstart">
-                    <text class="txtbig" x="%d" y="%d">%d km/h</text>
-                </g>
-            </g>]], x1, ys, mfloor(spd))
-        end
-
-        local function DrawWarnings(newContent)
-            newContent[#newContent + 1] = stringf(
-                                            [[<text class="hudver" x="%d" y="%d">ARCH Hud Version: %.3f</text>]], 
-                                            ConvertResolutionX(1900), ConvertResolutionY(1070), VERSION_NUMBER)
-            newContent[#newContent + 1] = [[<g class="warnings">]]
-            if unit.isMouseControlActivated() == 1 then
-                newContent[#newContent + 1] = stringf([[
-                    <text x="%d" y="%d">Warning: Invalid Control Scheme Detected</text>]],
-                    ConvertResolutionX(960), ConvertResolutionY(550))
-                newContent[#newContent + 1] = stringf([[
-                    <text x="%d" y="%d">Keyboard Scheme must be selected</text>]],
-                    ConvertResolutionX(960), ConvertResolutionY(600))
-                newContent[#newContent + 1] = stringf([[
-                    <text x="%d" y="%d">Set your preferred scheme in Lua Parameters instead</text>]],
-                    ConvertResolutionX(960), ConvertResolutionY(650))
-            end
-            local warningX = ConvertResolutionX(960)
-            local brakeY = ConvertResolutionY(860)
-            local gearY = ConvertResolutionY(880)
-            local hoverY = ConvertResolutionY(900)
-            local ewarpY = ConvertResolutionY(960)
-            local apY = ConvertResolutionY(200)
-            local turnBurnY = ConvertResolutionY(150)
-            local gyroY = ConvertResolutionY(960)
-            if isRemote() == 1 and not RemoteHud then
-                brakeY = ConvertResolutionY(135)
-                gearY = ConvertResolutionY(155)
-                hoverY = ConvertResolutionY(175)
-                apY = ConvertResolutionY(115)
-                turnBurnY = ConvertResolutionY(95)
-            end
-            if BrakeIsOn then
-                newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">Brake Engaged</text>]], warningX, brakeY)
-            elseif brakeInput2 > 0 then
-                newContent[#newContent + 1] = stringf([[<text x="%d" y="%d" style="opacity:%s">Auto-Brake Engaged</text>]], warningX, brakeY, brakeInput2)
-            end
-            if inAtmo and stalling and hovGndDet == -1 then
-                newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">** STALL WARNING **</text>]], warningX, apY+50)
-            end
-            if gyroIsOn then
-                newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">Gyro Enabled</text>]], warningX, gyroY)
-            end
-            if GearExtended then
-                if hasGear then
-                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Gear Extended</text>]],
-                                                    warningX, gearY)
-                else
-                    newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">Landed (G: Takeoff)</text>]], warningX,
-                                                    gearY)
+                    ]], rectX+rectW, rectY+rectH+20, gndHeight))
                 end
-                local displayText, displayUnit = getDistanceDisplayString(Nav:getTargetGroundAltitude())
-                newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Hover Height: %s</text>]],
-                                                warningX, hoverY,
-                                                displayText.. displayUnit)
-            end
-            if isBoosting then
-                newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">ROCKET BOOST ENABLED</text>]],
-                                                warningX, ewarpY+20)
-            end                  
-            if antigrav and not ExternalAGG and antigravOn and AntigravTargetAltitude ~= nil then
-                if mabs(coreAltitude - antigrav.getBaseAltitude()) < 501 then
-                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">AGG On - Target Altitude: %d Singularity Altitude: %d</text>]],
-                        warningX, apY+15, mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude()))
-                else
-                    newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">AGG On - Target Altitude: %d Singluarity Altitude: %d</text>]],
-                        warningX, apY+15, mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude()))
-                end
-            elseif Autopilot and AutopilotTargetName ~= "None" then
-                newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Autopilot %s</text>]],
-                                                warningX, apY+20, AutopilotStatus)
-            elseif LockPitch ~= nil then
-                newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">LockedPitch: %d</text>]],
-                                                    warningX, apY+20, mfloor(LockPitch))
-            elseif followMode then
-                newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Follow Mode Engaged</text>]],
-                                                warningX, apY+20)
-            elseif Reentry then
-                newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Re-entry in Progress</text>]],
-                                                    warningX, apY+20)
-            end
-            local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
-            local atmoDistance = farSide
-            if nearSide ~= nil and farSide ~= nil then
-                atmoDistance = math.min(nearSide,farSide)
-            end
-            if AltitudeHold or VertTakeOff then
-                local displayText, displayUnit = getDistanceDisplayString(HoldAltitude, 2)
-                if VertTakeOff then
-                    if antigravOn then
-                        displayText, displayUnit = getDistanceDisplayString(antigrav.getBaseAltitude(),2)
+            
+                if nearPlanet and ((altitude < 200000 and not inAtmo) or (altitude and inAtmo)) then
+                    table.insert(newContent, stringf([[
+                        <g class="pdim">                        
+                            <rect class="line" x="%d" y="%d" width="%d" height="%d"/> 
+                            <clipPath id="alt"><rect class="line" x="%d" y="%d" width="%d" height="%d"/></clipPath>
+                            <g clip-path="url(#alt)">]], 
+                            rectX - 1, rectY - 4, rectW + 2, rectH + 6,
+                            rectX + 1, rectY - 1, rectW - 4, rectH))
+            
+                    local index = 0
+                    local divisor = 1
+                    local forwardFract = 0
+                    local isNegative = altitude < 0
+                    local rolloverDigit = 9
+                    if isNegative then
+                        rolloverDigit = 0
                     end
-                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">VTO to %s</text>]],
-                                                warningX, apY, displayText.. displayUnit)   
-                elseif AutoTakeoff and not IntoOrbit then
-                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Takeoff to %s</text>]],
-                                                    warningX, apY, displayText.. displayUnit)
-                    if BrakeIsOn and not VertTakeOff then
-                        newContent[#newContent + 1] = stringf(
-                                                        [[<text class="crit" x="%d" y="%d">Throttle Up and Disengage Brake For Takeoff</text>]],
-                                                        warningX, apY + 50)
-                    end
-             
-                else
-                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Altitude Hold: %s</text>]],
-                                                    warningX, apY, displayText.. displayUnit)
-                end
-            end
-            if VertTakeOff and (antigrav ~= nil and antigrav) then
-                if atmosDensity > 0.1 then
-                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Beginning ascent</text>]],
-                    warningX, apY)
-                elseif atmosDensity < 0.09 and atmosDensity > 0.05 then
-                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Aligning trajectory</text>]],
-                    warningX, apY)
-                elseif atmosDensity < 0.05 then
-                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Leaving atmosphere</text>]],
-                    warningX, apY)
-                end
-            end
-            if IntoOrbit then
-                if orbitMsg ~= nil then
-                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">%s</text>]],
-                    warningX, apY, orbitMsg)
-                end
-            end
-            if BrakeLanding then
-                if StrongBrakes then
-                    newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">Brake-Landing</text>]], warningX, apY)
-                else
-                    newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">Coast-Landing</text>]], warningX, apY)
-                end
-            end
-            if ProgradeIsOn then
-                newContent[#newContent + 1] = stringf([[<text class="crit" x="%d" y="%d">Prograde Alignment</text>]],
-                                                warningX, apY)
-            end
-            if RetrogradeIsOn then
-                newContent[#newContent + 1] = stringf([[<text class="crit" x="%d" y="%d">Retrograde Alignment</text>]],
-                                                warningX, apY)
-            end
-            if atmoDistance ~= nil and atmosDensity == 0 then
-                    local displayText, displayUnit = getDistanceDisplayString(atmoDistance)
-                    local travelTime = Kinematic.computeTravelTime(velMag, 0, atmoDistance)
-                    local displayCollisionType = "Collision"
-                    if intersectBody.noAtmosphericDensityAltitude > 0 then displayCollisionType = "Atmosphere" end
-                    newContent[#newContent + 1] = stringf([[<text class="crit" x="%d" y="%d">%s %s In %s (%s)</text>]],
-                                                    warningX, turnBurnY,intersectBody.name,displayCollisionType, FormatTimeString(travelTime), displayText.. displayUnit)
-                
-            end
-            if VectorToTarget and not IntoOrbit then
-                newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">%s</text>]], warningX,
-                                                apY+35, VectorStatus)
-            end
-        
-            newContent[#newContent + 1] = "</g>"
-            return newContent
-        end
-
-        local function getSpeedDisplayString(speed) -- TODO: Allow options, for now just do kph
-            return mfloor(round(speed * 3.6, 0) + 0.5) .. " km/h" -- And generally it's not accurate enough to not twitch unless we round 0
-        end
-        
-        local function DisplayOrbitScreen(newContent)
-            if orbit ~= nil and atmosDensity < 0.2 and planet ~= nil and orbit.apoapsis ~= nil and
-                orbit.periapsis ~= nil and orbit.period ~= nil and orbit.apoapsis.speed > 5 and DisplayOrbit then
-                -- If orbits are up, let's try drawing a mockup
-                local orbitMapX = OrbitMapX
-                local orbitMapY = OrbitMapY
-                local orbitMapSize = OrbitMapSize -- Always square
-                local pad = 4
-                orbitMapY = orbitMapY + pad
-                local orbitInfoYOffset = 15
-                local x = orbitMapX + orbitMapSize + orbitMapX / 2 + pad
-                local y = orbitMapY + orbitMapSize / 2 + 5 + pad
-        
-                local rx, ry, scale, xOffset
-                rx = orbitMapSize / 4
-                xOffset = 0
-        
-                newContent[#newContent + 1] = [[<g class="pbright txtorb txtmid">]]
-                -- Draw a darkened box around it to keep it visible
-                newContent[#newContent + 1] = stringf(
-                                                '<rect width="%f" height="%d" rx="10" ry="10" x="%d" y="%d" style="fill:rgb(0,0,100);stroke-width:4;stroke:white;fill-opacity:0.3;" />',
-                                                orbitMapSize + orbitMapX * 2, orbitMapSize + orbitMapY, pad, pad)
-        
-                if orbit.periapsis ~= nil and orbit.apoapsis ~= nil then
-                    scale = (orbit.apoapsis.altitude + orbit.periapsis.altitude + planet.radius * 2) / (rx * 2)
-                    ry = (planet.radius + orbit.periapsis.altitude +
-                            (orbit.apoapsis.altitude - orbit.periapsis.altitude) / 2) / scale *
-                            (1 - orbit.eccentricity)
-                    xOffset = rx - orbit.periapsis.altitude / scale - planet.radius / scale
-        
-                    local ellipseColor = ""
-                    if orbit.periapsis.altitude <= 0 then
-                        ellipseColor = 'redout'
-                    end
-                    newContent[#newContent + 1] = stringf(
-                                                    [[<ellipse class="%s line" cx="%f" cy="%f" rx="%f" ry="%f"/>]],
-                                                    ellipseColor, orbitMapX + orbitMapSize / 2 + xOffset + pad,
-                                                    orbitMapY + orbitMapSize / 2 + pad, rx, ry)
-                    newContent[#newContent + 1] = stringf(
-                                                    '<circle cx="%f" cy="%f" r="%f" stroke="white" stroke-width="3" fill="blue" />',
-                                                    orbitMapX + orbitMapSize / 2 + pad,
-                                                    orbitMapY + orbitMapSize / 2 + pad, planet.radius / scale)
-                end
-        
-                if orbit.apoapsis ~= nil and orbit.apoapsis.speed < MaxGameVelocity and orbit.apoapsis.speed > 1 then
-                    newContent[#newContent + 1] = stringf(
-                                                    [[<line class="pdim op30 linethick" x1="%f" y1="%f" x2="%f" y2="%f"/>]],
-                                                    x - 35, y - 5, orbitMapX + orbitMapSize / 2 + rx + xOffset, y - 5)
-                    newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">Apoapsis</text>]], x, y)
-                    y = y + orbitInfoYOffset
-                    local displayText, displayUnit = getDistanceDisplayString(orbit.apoapsis.altitude)
-                    newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
-                                                    displayText.. displayUnit)
-                    y = y + orbitInfoYOffset
-                    newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
-                                                    FormatTimeString(orbit.timeToApoapsis))
-                    y = y + orbitInfoYOffset
-                    newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
-                                                    getSpeedDisplayString(orbit.apoapsis.speed))
-                end
-        
-                y = orbitMapY + orbitMapSize / 2 + 5 + pad
-                x = orbitMapX - orbitMapX / 2 + 10 + pad
-        
-                if orbit.periapsis ~= nil and orbit.periapsis.speed < MaxGameVelocity and orbit.periapsis.speed > 1 then
-                    newContent[#newContent + 1] = stringf(
-                                                    [[<line class="pdim op30 linethick" x1="%f" y1="%f" x2="%f" y2="%f"/>]],
-                                                    x + 35, y - 5, orbitMapX + orbitMapSize / 2 - rx + xOffset, y - 5)
-                    newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">Periapsis</text>]], x, y)
-                    y = y + orbitInfoYOffset
-                    local displayText, displayUnit = getDistanceDisplayString(orbit.periapsis.altitude)
-                    newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
-                                                    displayText.. displayUnit)
-                    y = y + orbitInfoYOffset
-                    newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
-                                                    FormatTimeString(orbit.timeToPeriapsis))
-                    y = y + orbitInfoYOffset
-                    newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
-                                                    getSpeedDisplayString(orbit.periapsis.speed))
-                end
-        
-                -- Add a label for the planet
-                newContent[#newContent + 1] = stringf([[<text class="txtorbbig" x="%f" y="%d">%s</text>]],
-                                                orbitMapX + orbitMapSize / 2 + pad, 20 + pad, planet.name)
-        
-                if orbit.period ~= nil and orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.apoapsis.speed > 1 then
-                    local apsisRatio = (orbit.timeToApoapsis / orbit.period) * 2 * math.pi
-                    -- x = xr * cos(t)
-                    -- y = yr * sin(t)
-                    local shipX = rx * math.cos(apsisRatio)
-                    local shipY = ry * math.sin(apsisRatio)
-        
-                    newContent[#newContent + 1] = stringf(
-                                                    '<circle cx="%f" cy="%f" r="5" stroke="white" stroke-width="3" fill="white" />',
-                                                    orbitMapX + orbitMapSize / 2 + shipX + xOffset + pad,
-                                                    orbitMapY + orbitMapSize / 2 + shipY + pad)
-                end
-        
-                newContent[#newContent + 1] = [[</g>]]
-                -- Once we have all that, we should probably rotate the entire thing so that the ship is always at the bottom so you can see AP and PE move?
-                return newContent
-            else
-                return newContent
-            end
-        end
-
-        local function DisplayHelp(newContent)
-            local function addTable(table1, table2)
-                for i = 1, #table2 do
-                    table.insert(table1, table2[i])
-                end
-                return table1
-            end
-            local x = 50
-            local y = 525
-            local help = {"Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-3: Toggle Vanilla Widget view"}
-            local helpAtmo = {  "Alt-4: Autopilot in atmo to target", "Alt-4-4: Autopilot to +1k over atmosphere and orbit to target", "Alt-5: Lock Pitch at current pitch",
-                                "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", "Alt-9: Activate Gyroscope"}
-            local helpSpace = {"Alt-4 (Alt < 100k): Autopilot to Orbit and land", "Alt-4 (Alt > 100k): Autopilot to target", "Alt-6: Orbit at current altitude",
-                                "Alt-6-6: Orbit at 1k over atmosphere", "Alt-9: Activate Gyroscope"}
-            local helpGeneral = {"CTRL: Toggle Brakes on and off, cancels active AP", "LeftAlt: Tap to shift freelook on and off", "Shift: Hold while not in freelook to see Buttons",
-                                "Type ah-commands in lua chat to see text commands"}
-            if inAtmo then 
-                addTable(help, helpAtmo)
-                table.insert(help, "---------------------------------------")
-                if VertTakeOff then
-                    table.insert(help,"Hit Alt-6 before exiting Atmosphere during VTO to hold in level flight")
-                elseif hovGndDet ~= -1 then
-                    if antigrav then
-                        if antigravOn then
-                            table.insert(help, "Alt-6: AGG is on, will takeoff to AGG Height")
+                    local altitude = mabs(altitude)
+                    while index < 6 do
+                        local glyphW = 11
+                        local glyphH = 16
+                        local glyphXOffset = 9
+                        local glyphYOffset = 14
+                        local class = "altsm"
+            
+                        if index > 2 then
+                            glyphH = glyphH + 3
+                            glyphW = glyphW + 2
+                            glyphYOffset = glyphYOffset + 2
+                            glyphXOffset = glyphXOffset - 6
+                            class = "altbig"
+                        end
+            
+                        if isNegative then  
+                            class = class .. " red"
+                        end
+            
+                        local digit = (altitude / divisor) % 10
+                        local intDigit = mfloor(digit)
+                        local fracDigit = mfloor((intDigit + 1) % 10)
+            
+                        local fract = forwardFract
+                        if index == 0 then
+                            fract = digit - intDigit
+                            if isNegative then
+                                fract = 1 - fract
+                            end
+                        end
+            
+                        if isNegative and (index == 0 or forwardFract ~= 0) then
+                            local temp = fracDigit
+                            fracDigit = intDigit
+                            intDigit = temp
+                        end
+            
+                        local topGlyphOffset = glyphH * (fract - 1) 
+                        local botGlyphOffset = topGlyphOffset + glyphH
+            
+                        local x = rectX + glyphXOffset + (6 - index) * glyphW
+                        local y = rectY + glyphYOffset
+                        
+                        -- <g class="%s" clip-path="url(#%s)">
+                        table.insert(newContent, stringf([[
+                            <g class="%s">
+                            <text x="%d" y="%f">%d</text>
+                            <text x="%d" y="%f">%d</text>
+                            </g>
+                        ]], class, x, y + topGlyphOffset, fracDigit, x, y + botGlyphOffset, intDigit))
+                        
+                        index = index + 1
+                        divisor = divisor * 10
+                        if intDigit == rolloverDigit then
+                            forwardFract = fract
                         else
-                            table.insert(help,  "Turn on AGG to takeoff to AGG Height")
+                            forwardFract = 0
                         end
                     end
-                    if VertTakeOffEngine then 
-                        table.insert(help, "Alt-6: Begins Vertical Takeoff.")
-                    else
-                        table.insert(help, "Alt-4/Alt-6: Autotakeoff if below hoverheight")
-                    end
-                else
-                    table.insert(help,"G: Begin BrakeLanding or Land")
+                    table.insert(newContent, [[</g></g>]])
                 end
-            else
-                addTable(help, helpSpace)
             end
-            if AltitudeHold then 
-                table.insert(help, "Alt-Spacebar/Alt-C will raise/lower target height")
-            end
-            table.insert(help, "---------------------------------------")   
-            addTable(help, helpGeneral)
-            newContent[#newContent + 1] = [[<g class="pdim txt txtstart">]]
-            for i = 1, #help do
-                y=y+10
-                newContent[#newContent + 1] = stringf([[<text x=%d y="%d">%s</text>]],
-                 x, y, help[i])
-            end
-            newContent[#newContent + 1] = "</g>"
-        end
 
-        local function ToggleRadarPanel()
-            if radarPanelID ~= nil and peris == 0 then
-                sysDestWid(radarPanelID)
-                radarPanelID = nil
-                if perisPanelID ~= nil then
-                    sysDestWid(perisPanelID)
-                    perisPanelID = nil
+            local function getRelativePitch(velocity)
+                velocity = vec3(velocity)
+                local pitch = -math.deg(atan(velocity.y, velocity.z)) + 180
+                -- This is 0-360 where 0 is straight up
+                pitch = pitch - 90
+                -- So now 0 is straight, but we can now get angles up to 420
+                if pitch < 0 then
+                    pitch = 360 + pitch
                 end
-            else
-                -- If radar is installed but no weapon, don't show periscope
-                if peris == 1 then
+                -- Now, if it's greater than 180, say 190, make it go to like -170
+                if pitch > 180 then
+                    pitch = -180 + (pitch - 180)
+                end
+                -- And it's backwards.  
+                return -pitch
+            end
+
+            local function getRelativeYaw(velocity)
+                velocity = vec3(velocity)
+                local yaw = math.deg(atan(velocity.y, velocity.x)) - 90
+                if yaw < -180 then
+                    yaw = 360 + yaw
+                end
+                return yaw
+            end    
+
+            local function DrawPrograde (newContent, velocity, speed, centerX, centerY)
+                if (speed > 5 and not inAtmo) or (speed > minAutopilotSpeed) then
+                    local horizonRadius = circleRad -- Aliased global
+                    local pitchRange = 20
+                    local yawRange = 20
+                    local velo = vec3(velocity)
+                    local relativePitch = getRelativePitch(velo)
+                    local relativeYaw = getRelativeYaw(velo)
+            
+                    local dotSize = 14
+                    local dotRadius = dotSize/2
+                    
+                    local dx = (-relativeYaw/yawRange)*horizonRadius -- Values from -1 to 1 indicating offset from the center
+                    local dy = (relativePitch/pitchRange)*horizonRadius
+                    local x = centerX + dx
+                    local y = centerY + dy
+            
+                    local distance = math.sqrt((dx)^2 + (dy)^2)
+            
+                    local progradeDot = [[<circle
+                    cx="]] .. x .. [["
+                    cy="]] .. y .. [["
+                    r="]] .. dotRadius/dotSize .. [["
+                    style="fill:#d7fe00;stroke:none;fill-opacity:1"/>
+                <circle
+                    cx="]] .. x .. [["
+                    cy="]] .. y .. [["
+                    r="]] .. dotRadius .. [["
+                    style="stroke:#d7fe00;stroke-opacity:1;fill:none" />
+                <path
+                    d="M ]] .. x-dotSize .. [[,]] .. y .. [[ h ]] .. dotRadius .. [["
+                    style="stroke:#d7fe00;stroke-opacity:1" />
+                <path
+                    d="M ]] .. x+dotRadius .. [[,]] .. y .. [[ h ]] .. dotRadius .. [["
+                    style="stroke:#d7fe00;stroke-opacity:1" />
+                <path
+                    d="M ]] .. x .. [[,]] .. y-dotSize .. [[ v ]] .. dotRadius .. [["
+                    style="stroke:#d7fe00;stroke-opacity:1" />]]
+                        
+                    if distance < horizonRadius then
+                        newContent[#newContent + 1] = progradeDot
+                        -- Draw a dot or whatever at x,y, it's inside the AH
+                    else
+                        -- x,y is outside the AH.  Figure out how to draw an arrow on the edge of the circle pointing to it.
+                        -- First get the angle
+                        -- tan(ang) = o/a, tan(ang) = x/y
+                        -- atan(x/y) = ang (in radians)
+                        -- This is a special overload for doing this on a circle and setting up the signs correctly for the quadrants
+                        local angle = atan(dy,dx)
+                        -- Project this onto the circle
+                        -- These are backwards from what they're supposed to be.  Don't know why, that's just what makes it work apparently
+                        local arrowSize = 4
+                        local projectedX = centerX + (horizonRadius)*math.cos(angle) -- Needs to be converted to deg?  Probably not
+                        local projectedY = centerY + (horizonRadius)*math.sin(angle)
+                        -- Draw an arrow that we will rotate by angle
+                        -- Convert angle to degrees
+                        newContent[#newContent + 1] = stringf('<g transform="rotate(%f %f %f)"><rect x="%f" y="%f" width="%f" height="%f" stroke="#d7fe00" fill="#d7fe00" /><path d="M %f %f l %f %f l %f %f z" fill="#d7fe00" stroke="#d7fe00"></g>', angle*(180/math.pi), projectedX, projectedY, projectedX-arrowSize, projectedY-arrowSize/2, arrowSize*2, arrowSize,
+                                                                                                                                                            projectedX+arrowSize, projectedY - arrowSize, arrowSize, arrowSize, -arrowSize, arrowSize)
+            
+                        --newContent[#newContent + 1] = stringf('<circle cx="%f" cy="%f" r="2" stroke="white" stroke-width="2" fill="white" />', projectedX, projectedY)
+                    end
+            
+                    if(not inAtmo) then
+                        relativePitch = getRelativePitch(-velo)
+                        relativeYaw = getRelativeYaw(-velo)
+                        
+                        dx = (-relativeYaw/yawRange)*horizonRadius -- Values from -1 to 1 indicating offset from the center
+                        dy = (relativePitch/pitchRange)*horizonRadius
+                        x = centerX + dx
+                        y = centerY + dy
+            
+                        distance = math.sqrt((dx)^2 + (dy)^2)
+                        -- Retrograde Dot
+                        
+                        if distance < horizonRadius then
+                            local retrogradeDot = [[<circle
+                            cx="]] .. x .. [["
+                            cy="]] .. y .. [["
+                            r="]] .. dotRadius .. [["
+                            style="stroke:#d7fe00;stroke-opacity:1;fill:none" />
+                        <path
+                            d="M ]] .. x .. [[,]] .. y-dotSize .. [[ v ]] .. dotRadius .. [["
+                            style="stroke:#d7fe00;stroke-opacity:1" id="l"/>
+                        <use
+                            xlink:href="#l"
+                            transform="rotate(120,]] .. x .. [[,]] .. y .. [[)" />
+                        <use
+                            xlink:href="#l"
+                            transform="rotate(-120,]] .. x .. [[,]] .. y .. [[)" />
+                        <path
+                            d="M ]] .. x-dotRadius .. [[,]] .. y .. [[ h ]] .. dotSize .. [["
+                            style="stroke-width:0.5;stroke:#d7fe00;stroke-opacity:1"
+                            transform="rotate(-45,]] .. x .. [[,]] .. y .. [[)" id="c"/>
+                        <use
+                            xlink:href="#c"
+                            transform="rotate(-90,]] .. x .. [[,]] .. y .. [[)"/>]]
+                            newContent[#newContent + 1] = retrogradeDot
+                            -- Draw a dot or whatever at x,y, it's inside the AH
+                        end -- Don't draw an arrow for this one, only prograde is that important
+            
+                    end
+                end
+            end
+
+            local function DrawThrottle(newContent, flightStyle, throt, flightValue)
+                throt = mfloor(throt+0.5) -- Hard-round it to an int
+                local y1 = throtPosY+10
+                local y2 = throtPosY+20
+                if isRemote() == 1 and not RemoteHud then
+                    y1 = 55
+                    y2 = 65
+                end
+            
+                local label = "CRUISE"
+                local unit = "km/h"
+                local value = flightValue
+                if (flightStyle == "TRAVEL" or flightStyle == "AUTOPILOT") then
+                    label = "THROT"
+                    unit = "%"
+                    value = throt
+                    local throtclass = "dim"
+                    if throt < 0 then
+                        throtclass = "red"
+                    end
+                    newContent[#newContent + 1] = stringf([[<g class="%s">
+                        <path class="linethick" d="M %d %d L %d %d L %d %d L %d %d"/>
+                        <g transform="translate(0 %.0f)">
+                            <polygon points="%d,%d %d,%d %d,%d"/>
+                        </g>]], throtclass, throtPosX-7, throtPosY-50, throtPosX, throtPosY-50, throtPosX, throtPosY+50, throtPosX-7, throtPosY+50, (1 - mabs(throt)), 
+                        throtPosX-10, throtPosY+50, throtPosX-15, throtPosY+53, throtPosX-15, throtPosY+47)
+                end
+                newContent[#newContent + 1] = stringf([[
+                    <g class="pbright txtstart">
+                            <text x="%s" y="%s">%s</text>
+                            <text x="%s" y="%s">%.0f %s</text>
+                    </g>
+                </g>]], throtPosX+10, y1, label, throtPosX+10, y2, value, unit)
+            
+                if inAtmo and AtmoSpeedAssist and throttleMode and ThrottleLimited then
+                    -- Display a marker for where the AP throttle is putting it, calculatedThrottle
+            
+                    throt = mfloor(calculatedThrottle*100+0.5)
+                    local throtclass = "red"
+                    if throt < 0 then
+                        throtclass = "red" -- TODO
+                    end
+                    newContent[#newContent + 1] = stringf([[<g class="%s">
+                        <g transform="translate(0 %d)">
+                            <polygon points="%d,%d %d,%d %d,%d"/>
+                        </g></g>]], throtclass, (1 - mabs(throt)), 
+                        throtPosX-10, throtPosY+50, throtPosX-15, throtPosY+53, throtPosX-15, throtPosY+47)
+                    newContent[#newContent + 1] = stringf([[
+                            <g class="pbright txtstart">
+                                    <text x="%s" y="%s">%s</text>
+                                    <text x="%s" y="%s">%d %s</text>
+                            </g>]], throtPosX+10, y1+40, "LIMIT", throtPosX+10, y2+40, throt, "%")
+                end
+                if (inAtmo and AtmoSpeedAssist) or Reentry then
+                    -- Display AtmoSpeedLimit above the throttle
+            
+                    newContent[#newContent + 1] = stringf([[
+                        <g class="dim txtstart">
+                            <text x="%s" y="%s">%s %s</text>
+                        </g>
+                    ]], throtPosX+10, y1-40, "LIMIT: ", adjustedAtmoSpeedLimit .. " km/h")
+                elseif not inAtmo and Autopilot then
+                    -- Display MaxGameVelocity above the throttle
+                    newContent[#newContent + 1] = stringf([[
+                        <g class="dim txtstart">
+                            <text x="%s" y="%s">%s %s</text>
+                        </g>
+                    ]], throtPosX+10, y1-40, "LIMIT: ", mfloor(MaxGameVelocity*3.6+0.5) .. " km/h")
+                end
+            end
+
+            local function DrawSpeed(newContent, spd)
+                local ys = throtPosY-10 
+                local x1 = throtPosX + 10
+                newContent[#newContent + 1] = [[<g class="pdim txt txtend">]]
+                if isRemote() == 1 and not RemoteHud then
+                    ys = 75
+                end
+                newContent[#newContent + 1] = stringf([[
+                    <g class="pbright txtstart">
+                        <text class="txtbig" x="%d" y="%d">%d km/h</text>
+                    </g>
+                </g>]], x1, ys, mfloor(spd))
+            end
+
+            local function DrawWarnings(newContent)
+                newContent[#newContent + 1] = stringf(
+                                                [[<text class="hudver" x="%d" y="%d">ARCH Hud Version: %.3f</text>]], 
+                                                ConvertResolutionX(1900), ConvertResolutionY(1070), VERSION_NUMBER)
+                newContent[#newContent + 1] = [[<g class="warnings">]]
+                if unit.isMouseControlActivated() == 1 then
+                    newContent[#newContent + 1] = stringf([[
+                        <text x="%d" y="%d">Warning: Invalid Control Scheme Detected</text>]],
+                        ConvertResolutionX(960), ConvertResolutionY(550))
+                    newContent[#newContent + 1] = stringf([[
+                        <text x="%d" y="%d">Keyboard Scheme must be selected</text>]],
+                        ConvertResolutionX(960), ConvertResolutionY(600))
+                    newContent[#newContent + 1] = stringf([[
+                        <text x="%d" y="%d">Set your preferred scheme in Lua Parameters instead</text>]],
+                        ConvertResolutionX(960), ConvertResolutionY(650))
+                end
+                local warningX = ConvertResolutionX(960)
+                local brakeY = ConvertResolutionY(860)
+                local gearY = ConvertResolutionY(880)
+                local hoverY = ConvertResolutionY(900)
+                local ewarpY = ConvertResolutionY(960)
+                local apY = ConvertResolutionY(200)
+                local turnBurnY = ConvertResolutionY(150)
+                local gyroY = ConvertResolutionY(960)
+                if isRemote() == 1 and not RemoteHud then
+                    brakeY = ConvertResolutionY(135)
+                    gearY = ConvertResolutionY(155)
+                    hoverY = ConvertResolutionY(175)
+                    apY = ConvertResolutionY(115)
+                    turnBurnY = ConvertResolutionY(95)
+                end
+                if BrakeIsOn then
+                    newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">Brake Engaged</text>]], warningX, brakeY)
+                elseif brakeInput2 > 0 then
+                    newContent[#newContent + 1] = stringf([[<text x="%d" y="%d" style="opacity:%s">Auto-Brake Engaged</text>]], warningX, brakeY, brakeInput2)
+                end
+                if inAtmo and stalling and hovGndDet == -1 then
+                    newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">** STALL WARNING **</text>]], warningX, apY+50)
+                end
+                if gyroIsOn then
+                    newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">Gyro Enabled</text>]], warningX, gyroY)
+                end
+                if GearExtended then
+                    if hasGear then
+                        newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Gear Extended</text>]],
+                                                        warningX, gearY)
+                    else
+                        newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">Landed (G: Takeoff)</text>]], warningX,
+                                                        gearY)
+                    end
+                    local displayText, displayUnit = getDistanceDisplayString(Nav:getTargetGroundAltitude())
+                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Hover Height: %s</text>]],
+                                                    warningX, hoverY,
+                                                    displayText.. displayUnit)
+                end
+                if isBoosting then
+                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">ROCKET BOOST ENABLED</text>]],
+                                                    warningX, ewarpY+20)
+                end                  
+                if antigrav and not ExternalAGG and antigravOn and AntigravTargetAltitude ~= nil then
+                    if mabs(coreAltitude - antigrav.getBaseAltitude()) < 501 then
+                        newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">AGG On - Target Altitude: %d Singularity Altitude: %d</text>]],
+                            warningX, apY+15, mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude()))
+                    else
+                        newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">AGG On - Target Altitude: %d Singluarity Altitude: %d</text>]],
+                            warningX, apY+15, mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude()))
+                    end
+                elseif Autopilot and AutopilotTargetName ~= "None" then
+                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Autopilot %s</text>]],
+                                                    warningX, apY+20, AutopilotStatus)
+                elseif LockPitch ~= nil then
+                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">LockedPitch: %d</text>]],
+                                                        warningX, apY+20, mfloor(LockPitch))
+                elseif followMode then
+                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Follow Mode Engaged</text>]],
+                                                    warningX, apY+20)
+                elseif Reentry then
+                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Re-entry in Progress</text>]],
+                                                        warningX, apY+20)
+                end
+                local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
+                local atmoDistance = farSide
+                if nearSide ~= nil and farSide ~= nil then
+                    atmoDistance = math.min(nearSide,farSide)
+                end
+                if AltitudeHold or VertTakeOff then
+                    local displayText, displayUnit = getDistanceDisplayString(HoldAltitude, 2)
+                    if VertTakeOff then
+                        if antigravOn then
+                            displayText, displayUnit = getDistanceDisplayString(antigrav.getBaseAltitude(),2)
+                        end
+                        newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">VTO to %s</text>]],
+                                                    warningX, apY, displayText.. displayUnit)   
+                    elseif AutoTakeoff and not IntoOrbit then
+                        newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Takeoff to %s</text>]],
+                                                        warningX, apY, displayText.. displayUnit)
+                        if BrakeIsOn and not VertTakeOff then
+                            newContent[#newContent + 1] = stringf(
+                                                            [[<text class="crit" x="%d" y="%d">Throttle Up and Disengage Brake For Takeoff</text>]],
+                                                            warningX, apY + 50)
+                        end
+                
+                    else
+                        newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Altitude Hold: %s</text>]],
+                                                        warningX, apY, displayText.. displayUnit)
+                    end
+                end
+                if VertTakeOff and (antigrav ~= nil and antigrav) then
+                    if atmosDensity > 0.1 then
+                        newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Beginning ascent</text>]],
+                        warningX, apY)
+                    elseif atmosDensity < 0.09 and atmosDensity > 0.05 then
+                        newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Aligning trajectory</text>]],
+                        warningX, apY)
+                    elseif atmosDensity < 0.05 then
+                        newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">Leaving atmosphere</text>]],
+                        warningX, apY)
+                    end
+                end
+                if IntoOrbit then
+                    if orbitMsg ~= nil then
+                        newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">%s</text>]],
+                        warningX, apY, orbitMsg)
+                    end
+                end
+                if BrakeLanding then
+                    if StrongBrakes then
+                        newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">Brake-Landing</text>]], warningX, apY)
+                    else
+                        newContent[#newContent + 1] = stringf([[<text x="%d" y="%d">Coast-Landing</text>]], warningX, apY)
+                    end
+                end
+                if ProgradeIsOn then
+                    newContent[#newContent + 1] = stringf([[<text class="crit" x="%d" y="%d">Prograde Alignment</text>]],
+                                                    warningX, apY)
+                end
+                if RetrogradeIsOn then
+                    newContent[#newContent + 1] = stringf([[<text class="crit" x="%d" y="%d">Retrograde Alignment</text>]],
+                                                    warningX, apY)
+                end
+                if atmoDistance ~= nil and atmosDensity == 0 then
+                        local displayText, displayUnit = getDistanceDisplayString(atmoDistance)
+                        local travelTime = Kinematic.computeTravelTime(velMag, 0, atmoDistance)
+                        local displayCollisionType = "Collision"
+                        if intersectBody.noAtmosphericDensityAltitude > 0 then displayCollisionType = "Atmosphere" end
+                        newContent[#newContent + 1] = stringf([[<text class="crit" x="%d" y="%d">%s %s In %s (%s)</text>]],
+                                                        warningX, turnBurnY,intersectBody.name,displayCollisionType, FormatTimeString(travelTime), displayText.. displayUnit)
+                    
+                end
+                if VectorToTarget and not IntoOrbit then
+                    newContent[#newContent + 1] = stringf([[<text class="warn" x="%d" y="%d">%s</text>]], warningX,
+                                                    apY+35, VectorStatus)
+                end
+            
+                newContent[#newContent + 1] = "</g>"
+                return newContent
+            end
+
+            local function getSpeedDisplayString(speed) -- TODO: Allow options, for now just do kph
+                return mfloor(round(speed * 3.6, 0) + 0.5) .. " km/h" -- And generally it's not accurate enough to not twitch unless we round 0
+            end
+            
+            local function DisplayOrbitScreen(newContent)
+                if orbit ~= nil and atmosDensity < 0.2 and planet ~= nil and orbit.apoapsis ~= nil and
+                    orbit.periapsis ~= nil and orbit.period ~= nil and orbit.apoapsis.speed > 5 and DisplayOrbit then
+                    -- If orbits are up, let's try drawing a mockup
+                    local orbitMapX = OrbitMapX
+                    local orbitMapY = OrbitMapY
+                    local orbitMapSize = OrbitMapSize -- Always square
+                    local pad = 4
+                    orbitMapY = orbitMapY + pad
+                    local orbitInfoYOffset = 15
+                    local x = orbitMapX + orbitMapSize + orbitMapX / 2 + pad
+                    local y = orbitMapY + orbitMapSize / 2 + 5 + pad
+            
+                    local rx, ry, scale, xOffset
+                    rx = orbitMapSize / 4
+                    xOffset = 0
+            
+                    newContent[#newContent + 1] = [[<g class="pbright txtorb txtmid">]]
+                    -- Draw a darkened box around it to keep it visible
+                    newContent[#newContent + 1] = stringf(
+                                                    '<rect width="%f" height="%d" rx="10" ry="10" x="%d" y="%d" style="fill:rgb(0,0,100);stroke-width:4;stroke:white;fill-opacity:0.3;" />',
+                                                    orbitMapSize + orbitMapX * 2, orbitMapSize + orbitMapY, pad, pad)
+            
+                    if orbit.periapsis ~= nil and orbit.apoapsis ~= nil then
+                        scale = (orbit.apoapsis.altitude + orbit.periapsis.altitude + planet.radius * 2) / (rx * 2)
+                        ry = (planet.radius + orbit.periapsis.altitude +
+                                (orbit.apoapsis.altitude - orbit.periapsis.altitude) / 2) / scale *
+                                (1 - orbit.eccentricity)
+                        xOffset = rx - orbit.periapsis.altitude / scale - planet.radius / scale
+            
+                        local ellipseColor = ""
+                        if orbit.periapsis.altitude <= 0 then
+                            ellipseColor = 'redout'
+                        end
+                        newContent[#newContent + 1] = stringf(
+                                                        [[<ellipse class="%s line" cx="%f" cy="%f" rx="%f" ry="%f"/>]],
+                                                        ellipseColor, orbitMapX + orbitMapSize / 2 + xOffset + pad,
+                                                        orbitMapY + orbitMapSize / 2 + pad, rx, ry)
+                        newContent[#newContent + 1] = stringf(
+                                                        '<circle cx="%f" cy="%f" r="%f" stroke="white" stroke-width="3" fill="blue" />',
+                                                        orbitMapX + orbitMapSize / 2 + pad,
+                                                        orbitMapY + orbitMapSize / 2 + pad, planet.radius / scale)
+                    end
+            
+                    if orbit.apoapsis ~= nil and orbit.apoapsis.speed < MaxGameVelocity and orbit.apoapsis.speed > 1 then
+                        newContent[#newContent + 1] = stringf(
+                                                        [[<line class="pdim op30 linethick" x1="%f" y1="%f" x2="%f" y2="%f"/>]],
+                                                        x - 35, y - 5, orbitMapX + orbitMapSize / 2 + rx + xOffset, y - 5)
+                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">Apoapsis</text>]], x, y)
+                        y = y + orbitInfoYOffset
+                        local displayText, displayUnit = getDistanceDisplayString(orbit.apoapsis.altitude)
+                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
+                                                        displayText.. displayUnit)
+                        y = y + orbitInfoYOffset
+                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
+                                                        FormatTimeString(orbit.timeToApoapsis))
+                        y = y + orbitInfoYOffset
+                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
+                                                        getSpeedDisplayString(orbit.apoapsis.speed))
+                    end
+            
+                    y = orbitMapY + orbitMapSize / 2 + 5 + pad
+                    x = orbitMapX - orbitMapX / 2 + 10 + pad
+            
+                    if orbit.periapsis ~= nil and orbit.periapsis.speed < MaxGameVelocity and orbit.periapsis.speed > 1 then
+                        newContent[#newContent + 1] = stringf(
+                                                        [[<line class="pdim op30 linethick" x1="%f" y1="%f" x2="%f" y2="%f"/>]],
+                                                        x + 35, y - 5, orbitMapX + orbitMapSize / 2 - rx + xOffset, y - 5)
+                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">Periapsis</text>]], x, y)
+                        y = y + orbitInfoYOffset
+                        local displayText, displayUnit = getDistanceDisplayString(orbit.periapsis.altitude)
+                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
+                                                        displayText.. displayUnit)
+                        y = y + orbitInfoYOffset
+                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
+                                                        FormatTimeString(orbit.timeToPeriapsis))
+                        y = y + orbitInfoYOffset
+                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
+                                                        getSpeedDisplayString(orbit.periapsis.speed))
+                    end
+            
+                    -- Add a label for the planet
+                    newContent[#newContent + 1] = stringf([[<text class="txtorbbig" x="%f" y="%d">%s</text>]],
+                                                    orbitMapX + orbitMapSize / 2 + pad, 20 + pad, planet.name)
+            
+                    if orbit.period ~= nil and orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.apoapsis.speed > 1 then
+                        local apsisRatio = (orbit.timeToApoapsis / orbit.period) * 2 * math.pi
+                        -- x = xr * cos(t)
+                        -- y = yr * sin(t)
+                        local shipX = rx * math.cos(apsisRatio)
+                        local shipY = ry * math.sin(apsisRatio)
+            
+                        newContent[#newContent + 1] = stringf(
+                                                        '<circle cx="%f" cy="%f" r="5" stroke="white" stroke-width="3" fill="white" />',
+                                                        orbitMapX + orbitMapSize / 2 + shipX + xOffset + pad,
+                                                        orbitMapY + orbitMapSize / 2 + shipY + pad)
+                    end
+            
+                    newContent[#newContent + 1] = [[</g>]]
+                    -- Once we have all that, we should probably rotate the entire thing so that the ship is always at the bottom so you can see AP and PE move?
+                    return newContent
+                else
+                    return newContent
+                end
+            end
+
+            local function ToggleRadarPanel()
+                if radarPanelID ~= nil and peris == 0 then
                     sysDestWid(radarPanelID)
                     radarPanelID = nil
-                    _autoconf.displayCategoryPanel(radar, radar_size, L_TEXT("ui_lua_widget_periscope", "Periscope"),
-                        "periscope")
-                    perisPanelID = _autoconf.panels[_autoconf.panels_size]
+                    if perisPanelID ~= nil then
+                        sysDestWid(perisPanelID)
+                        perisPanelID = nil
+                    end
+                else
+                    -- If radar is installed but no weapon, don't show periscope
+                    if peris == 1 then
+                        sysDestWid(radarPanelID)
+                        radarPanelID = nil
+                        _autoconf.displayCategoryPanel(radar, radar_size, L_TEXT("ui_lua_widget_periscope", "Periscope"),
+                            "periscope")
+                        perisPanelID = _autoconf.panels[_autoconf.panels_size]
+                    end
+                    placeRadar = true
+                    if radarPanelID == nil and placeRadar then
+                        _autoconf.displayCategoryPanel(radar, radar_size, L_TEXT("ui_lua_widget_radar", "Radar"), "radar")
+                        radarPanelID = _autoconf.panels[_autoconf.panels_size]
+                        placeRadar = false
+                    end
+                    peris = 0
                 end
-                placeRadar = true
-                if radarPanelID == nil and placeRadar then
-                    _autoconf.displayCategoryPanel(radar, radar_size, L_TEXT("ui_lua_widget_radar", "Radar"), "radar")
-                    radarPanelID = _autoconf.panels[_autoconf.panels_size]
-                    placeRadar = false
+            end            
+
+            local function DisplayHelp(newContent)
+                local function addTable(table1, table2)
+                    for i = 1, #table2 do
+                        table.insert(table1, table2[i])
+                    end
+                    return table1
                 end
-                peris = 0
+                local x = 50
+                local y = 525
+                local help = {"Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-3: Toggle Vanilla Widget view"}
+                local helpAtmo = {  "Alt-4: Autopilot in atmo to target", "Alt-4-4: Autopilot to +1k over atmosphere and orbit to target", "Alt-5: Lock Pitch at current pitch",
+                                    "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", "Alt-9: Activate Gyroscope"}
+                local helpSpace = {"Alt-4 (Alt < 100k): Autopilot to Orbit and land", "Alt-4 (Alt > 100k): Autopilot to target", "Alt-6: Orbit at current altitude",
+                                    "Alt-6-6: Orbit at 1k over atmosphere", "Alt-9: Activate Gyroscope"}
+                local helpGeneral = {"CTRL: Toggle Brakes on and off, cancels active AP", "LeftAlt: Tap to shift freelook on and off", "Shift: Hold while not in freelook to see Buttons",
+                                    "Type ah-commands in lua chat to see text commands"}
+                if inAtmo then 
+                    addTable(help, helpAtmo)
+                    table.insert(help, "---------------------------------------")
+                    if VertTakeOff then
+                        table.insert(help,"Hit Alt-6 before exiting Atmosphere during VTO to hold in level flight")
+                    end
+                    if hovGndDet ~= -1 then
+                        if antigrav then
+                            if antigravOn then
+                                table.insert(help, "Alt-6: AGG is on, will takeoff to AGG Height")
+                            else
+                                table.insert(help,  "Turn on AGG to takeoff to AGG Height")
+                            end
+                        end
+                        if VertTakeOffEngine then 
+                            table.insert(help, "Alt-6: Begins Vertical Takeoff.")
+                        else
+                            table.insert(help, "Alt-4/Alt-6: Autotakeoff if below hoverheight")
+                        end
+                    else
+                        table.insert(help,"G: Begin BrakeLanding or Land")
+                    end
+                else
+                    addTable(help, helpSpace)
+                end
+                if AltitudeHold then 
+                    table.insert(help, "Alt-Spacebar/Alt-C will raise/lower target height")
+                end
+                table.insert(help, "---------------------------------------")   
+                addTable(help, helpGeneral)
+                newContent[#newContent + 1] = [[<g class="pdim txt txtstart">]]
+                for i = 1, #help do
+                    y=y+10
+                    newContent[#newContent + 1] = stringf([[<text x=%d y="%d">%s</text>]],
+                    x, y, help[i])
+                end
+                newContent[#newContent + 1] = "</g>"
             end
-        end
-            
+
+        local Hud = {}
+        
         function Hud.HUDPrologue(newContent)
             if not notPvPZone then -- misnamed variable, fix later
                 PrimaryR = PvPR
@@ -5177,7 +5181,7 @@ VERSION_NUMBER = 1.137
                             system.removeDataFromWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
                             WasInAtmo = true
                         end
-                        if atmosphere() == 0 and WasInAtmo then
+                        if atmosDensity == 0 and WasInAtmo then
                             if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) == 1 then
                                 sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
                             if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) == 1 then
@@ -5651,7 +5655,7 @@ VERSION_NUMBER = 1.137
                 stalling = inAtmo and currentYaw < -YawStallAngle or currentYaw > YawStallAngle or currentPitch < -PitchStallAngle or currentPitch > PitchStallAngle
                 deltaX = system.getMouseDeltaX()
                 deltaY = system.getMouseDeltaY()
-                
+
                 if InvertMouse and not holdingCtrl then deltaY = -deltaY end
                 yawInput2 = 0
                 rollInput2 = 0
@@ -7434,7 +7438,44 @@ VERSION_NUMBER = 1.137
     end
 
     function script.onActionStart(action)
-      
+        -- Local function for onActionStart items in more than one
+            local mult=1
+            local function groundAltStart(down)
+                if down then mult = -1 end
+                if not ExternalAGG and antigravOn then
+                    if AntigravTargetAltitude ~= nil  then
+                        AntigravTargetAltitude = AntigravTargetAltitude + mult*antiGravButtonModifier
+                        if AntigravTargetAltitude < 1000 then AntigravTargetAltitude = 1000 end
+                        if AltitudeHold and AntigravTargetAltitude < HoldAltitude + 10 and AntigravTargetAltitude > HoldAltitude - 10 then 
+                            HoldAltitude = AntigravTargetAltitude
+                        end
+                    else
+                        AntigravTargetAltitude = desiredBaseAltitude + mult*100
+                    end
+                elseif AltitudeHold or VertTakeOff or IntoOrbit then
+                    if IntoOrbit then
+                        OrbitTargetOrbit = OrbitTargetOrbit + mult*holdAltitudeButtonModifier
+                        if OrbitTargetOrbit < planet.noAtmosphericDensityAltitude then OrbitTargetOrbit = planet.noAtmosphericDensityAltitude end
+                    else
+                        HoldAltitude = HoldAltitude + mult*holdAltitudeButtonModifier
+                    end
+                else
+                    navCom:updateTargetGroundAltitudeFromActionStart(mult*1.0)
+                end
+            end
+            local function changeSpd(down)
+                if down then mult = -1 end
+                if not holdingCtrl then
+                    if AtmoSpeedAssist and not AltIsOn then
+                        PlayerThrottle = uclamp(PlayerThrottle + mult*speedChangeLarge/100, -1, 1)
+                    else
+                        navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge)
+                    end
+                else
+                    if down then mult = 1 else mult = nil end
+                    adjustAutopilotTargetIndex(mult)
+                end
+            end
         if action == "gear" then
             GearExtended = not GearExtended
             if GearExtended then
@@ -7499,53 +7540,9 @@ VERSION_NUMBER = 1.137
             navCom:deactivateGroundEngineAltitudeStabilization()
             navCom:updateCommandFromActionStart(axisCommandId.vertical, -1.0)
         elseif action == "groundaltitudeup" then
-            OldButtonMod = holdAltitudeButtonModifier
-            OldAntiMod = antiGravButtonModifier
-            if not ExternalAGG and antigravOn then
-                if AntigravTargetAltitude ~= nil  then
-                    if AltitudeHold and AntigravTargetAltitude < HoldAltitude + 10 and AntigravTargetAltitude > HoldAltitude - 10 then 
-                        AntigravTargetAltitude = AntigravTargetAltitude + antiGravButtonModifier
-                        HoldAltitude = AntigravTargetAltitude
-                    else
-                        AntigravTargetAltitude = AntigravTargetAltitude + antiGravButtonModifier
-                    end
-                else
-                    AntigravTargetAltitude = desiredBaseAltitude + 100
-                end
-            elseif AltitudeHold or VertTakeOff or IntoOrbit then
-                if IntoOrbit then
-                    OrbitTargetOrbit = OrbitTargetOrbit + holdAltitudeButtonModifier
-                else
-                    HoldAltitude = HoldAltitude + holdAltitudeButtonModifier
-                end
-            else
-                navCom:updateTargetGroundAltitudeFromActionStart(1.0)
-            end
+            groundAltStart()
         elseif action == "groundaltitudedown" then
-            OldButtonMod = holdAltitudeButtonModifier
-            OldAntiMod = antiGravButtonModifier
-            if not ExternalAGG and antigravOn then
-                if AntigravTargetAltitude ~= nil then
-                    if AltitudeHold and AntigravTargetAltitude < HoldAltitude + 10 and AntigravTargetAltitude > HoldAltitude - 10 then 
-                        AntigravTargetAltitude = AntigravTargetAltitude - antiGravButtonModifier
-                        if AntigravTargetAltitude < 1000 then AntigravTargetAltitude = 1000 end
-                        HoldAltitude = AntigravTargetAltitude
-                    else
-                        AntigravTargetAltitude = AntigravTargetAltitude - antiGravButtonModifier
-                        if AntigravTargetAltitude < 1000 then AntigravTargetAltitude = 1000 end
-                    end
-                else
-                    AntigravTargetAltitude = desiredBaseAltitude
-                end
-            elseif AltitudeHold or VertTakeOff or IntoOrbit then
-                if IntoOrbit then
-                    OrbitTargetOrbit = OrbitTargetOrbit - holdAltitudeButtonModifier
-                else
-                    HoldAltitude = HoldAltitude - holdAltitudeButtonModifier
-                end
-            else
-                navCom:updateTargetGroundAltitudeFromActionStart(-1.0)
-            end
+            groundAltStart(true)
         elseif action == "option1" then
             adjustAutopilotTargetIndex()
             toggleView = false
@@ -7707,26 +7704,9 @@ VERSION_NUMBER = 1.137
             clearAll()
             PlayerThrottle = 0
         elseif action == "speedup" then
-            if not holdingCtrl then
-                if AtmoSpeedAssist and not AltIsOn then
-                    PlayerThrottle = uclamp(PlayerThrottle + speedChangeLarge/100, -1, 1)
-                else
-                    navCom:updateCommandFromActionStart(axisCommandId.longitudinal, speedChangeLarge)
-                end
-            else
-                adjustAutopilotTargetIndex()
-            end
+            changeSpd()
         elseif action == "speeddown" then
-            if not holdingCtrl then
-                if AtmoSpeedAssist and not AltIsOn then
-                    PlayerThrottle = uclamp(PlayerThrottle - speedChangeLarge/100, -1, 1)
-                else
-                    navCom:updateCommandFromActionStart(axisCommandId.longitudinal, -speedChangeLarge)
-                end
-                
-            else
-                adjustAutopilotTargetIndex(1)
-            end
+            changeSpd(true)
         elseif action == "antigravity" and not ExternalAGG then
             if antigrav ~= nil then
                 ToggleAntigrav()
@@ -7735,6 +7715,15 @@ VERSION_NUMBER = 1.137
     end
 
     function script.onActionStop(action)
+        -- Local function in more than one onActionStop
+            local function groundAltStop()
+                if not ExternalAGG and antigravOn then
+                    currentAggModifier = antiGravButtonModifier
+                end
+                if AltitudeHold or VertTakeOff or IntoOrbit then
+                    currentHoldAltModifier = holdAltitudeButtonModifier
+                end
+            end
         if action == "forward" then
             pitchInput = 0
         elseif action == "backward" then
@@ -7764,19 +7753,11 @@ VERSION_NUMBER = 1.137
             navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
             Nav:setEngineForceCommand('hover', vec3(), 1) 
         elseif action == "groundaltitudeup" then
-            if not ExternalAGG and antigravOn then
-                antiGravButtonModifier = OldAntiMod
-            end
-            if AltitudeHold or VertTakeOff or IntoOrbit then
-                holdAltitudeButtonModifier = OldButtonMod
-            end
+            groundAltStop()
+            toggleView = false
         elseif action == "groundaltitudedown" then
-            if not ExternalAGG and antigravOn then
-                antiGravButtonModifier = OldAntiMod
-            end
-            if AltitudeHold or VertTakeOff or IntoOrbit then
-                holdAltitudeButtonModifier = OldButtonMod
-            end
+            groundAltStop()
+            toggleView = false
         elseif action == "lshift" then
             if sysIsVwLock() == 1 then
                 holdingCtrl = false
@@ -7815,74 +7796,53 @@ VERSION_NUMBER = 1.137
     end
 
     function script.onActionLoop(action)
+        -- Local functions onActionLoop
+            local mult = 1
+            local function groundLoop(down)
+                if down then mult = -1 end
+                if not ExternalAGG and antigravOn then
+                    if AntigravTargetAltitude ~= nil then 
+                        AntigravTargetAltitude = AntigravTargetAltitude + mult*currentAggModifier
+                        if AntigravTargetAltitude < 1000 then AntigravTargetAltitude = 1000 end
+                        if AltitudeHold and AntigravTargetAltitude < HoldAltitude + 10 and AntigravTargetAltitude > HoldAltitude - 10 then 
+                            HoldAltitude = AntigravTargetAltitude
+                        end
+                        currentAggModifier = currentAggModifier * 1.05
+                        BrakeIsOn = false
+                    else
+                        AntigravTargetAltitude = desiredBaseAltitude + mult*100
+                        BrakeIsOn = false
+                    end
+                elseif AltitudeHold or VertTakeOff or IntoOrbit then
+                    if IntoOrbit then
+                        OrbitTargetOrbit = OrbitTargetOrbit + mult*currentHoldAltModifier
+                        if OrbitTargetOrbit < planet.noAtmosphericDensityAltitude then OrbitTargetOrbit = planet.noAtmosphericDensityAltitude end
+                    else
+                        HoldAltitude = HoldAltitude + mult*currentHoldAltModifier
+                    end
+                    currentHoldAltModifier = currentHoldAltModifier * 1.05
+                else
+                    navCom:updateTargetGroundAltitudeFromActionLoop(mult*1.0)
+                end                
+            end
+            local function spdLoop(down)
+                if down then mult = -1 end
+                if not holdingCtrl then
+                    if AtmoSpeedAssist and not AltIsOn then
+                        PlayerThrottle = uclamp(PlayerThrottle + mult*speedChangeSmall/100, -1, 1)
+                    else
+                        navCom:updateCommandFromActionLoop(axisCommandId.longitudinal, mult*speedChangeSmall)
+                    end
+                end
+            end
         if action == "groundaltitudeup" then
-            if not ExternalAGG and antigravOn then
-                if AntigravTargetAltitude ~= nil then 
-                    if AltitudeHold and AntigravTargetAltitude < HoldAltitude + 10 and AntigravTargetAltitude > HoldAltitude - 10 then 
-                        AntigravTargetAltitude = AntigravTargetAltitude + antiGravButtonModifier
-                        HoldAltitude = AntigravTargetAltitude
-                    else
-                        AntigravTargetAltitude = AntigravTargetAltitude + antiGravButtonModifier
-                    end
-                    antiGravButtonModifier = antiGravButtonModifier * 1.05
-                    BrakeIsOn = false
-                else
-                    AntigravTargetAltitude = desiredBaseAltitude + 100
-                    BrakeIsOn = false
-                end
-            elseif AltitudeHold or VertTakeOff or IntoOrbit then
-                if IntoOrbit then
-                    OrbitTargetOrbit = OrbitTargetOrbit + holdAltitudeButtonModifier
-                else
-                    HoldAltitude = HoldAltitude + holdAltitudeButtonModifier
-                end
-                holdAltitudeButtonModifier = holdAltitudeButtonModifier * 1.05
-            else
-                navCom:updateTargetGroundAltitudeFromActionLoop(1.0)
-            end
+            groundLoop()
         elseif action == "groundaltitudedown" then
-            if not ExternalAGG and antigravOn then
-                if AntigravTargetAltitude ~= nil then
-                    if AltitudeHold and AntigravTargetAltitude < HoldAltitude + 10 and AntigravTargetAltitude > HoldAltitude - 10 then 
-                        AntigravTargetAltitude = AntigravTargetAltitude - antiGravButtonModifier
-                        if AntigravTargetAltitude < 1000 then AntigravTargetAltitude = 1000 end
-                        HoldAltitude = AntigravTargetAltitude
-                    else
-                        AntigravTargetAltitude = AntigravTargetAltitude - antiGravButtonModifier
-                        if AntigravTargetAltitude < 1000 then AntigravTargetAltitude = 1000 end
-                    end
-                    antiGravButtonModifier = antiGravButtonModifier * 1.05
-                    BrakeIsOn = false
-                else
-                    AntigravTargetAltitude = desiredBaseAltitude - 100
-                    BrakeIsOn = false
-                end
-            elseif AltitudeHold or VertTakeOff or IntoOrbit then
-                if IntoOrbit then
-                    OrbitTargetOrbit = OrbitTargetOrbit - holdAltitudeButtonModifier
-                else
-                    HoldAltitude = HoldAltitude - holdAltitudeButtonModifier
-                end
-                holdAltitudeButtonModifier = holdAltitudeButtonModifier * 1.05
-            else
-                navCom:updateTargetGroundAltitudeFromActionLoop(-1.0)
-            end
+            groundLoop(true)
         elseif action == "speedup" then
-            if not holdingCtrl then
-                if AtmoSpeedAssist and not AltIsOn then
-                    PlayerThrottle = uclamp(PlayerThrottle + speedChangeSmall/100, -1, 1)
-                else
-                    navCom:updateCommandFromActionLoop(axisCommandId.longitudinal, speedChangeSmall)
-                end
-            end
+            spdLoop()
         elseif action == "speeddown" then
-            if not holdingCtrl then
-                if AtmoSpeedAssist and not AltIsOn then
-                    PlayerThrottle = uclamp(PlayerThrottle - speedChangeSmall/100, -1, 1)
-                else
-                    navCom:updateCommandFromActionLoop(axisCommandId.longitudinal, -speedChangeSmall)
-                end
-            end
+            spdLoop(true)
         end
     end
 

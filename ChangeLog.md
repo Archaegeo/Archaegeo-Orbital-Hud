@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.137
+Version 1.138
+- Imported Dimencia fix of runaway alt adjustment
 - More refactoring for cleaner code.
 - More reduction of duplicated code
 
