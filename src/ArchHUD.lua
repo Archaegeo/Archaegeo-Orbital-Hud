@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.138
+VERSION_NUMBER = 1.139
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -32,6 +32,7 @@ VERSION_NUMBER = 1.138
     hideHudOnToggleWidgets = true --export: (Default: true)
     ShiftShowsRemoteButtons = true --export: (Default: true)
     DisplayOrbit = true --export: (Default: true) 
+    SetWaypointOnExit = true --export (Default: true)
 
     -- Ship Handling variables
     YawStallAngle = 35 --export: (Default: 35)
@@ -110,7 +111,7 @@ VERSION_NUMBER = 1.138
                         "hideHudOnToggleWidgets", "DampingMultiplier", "fuelTankHandlingAtmo", "ExternalAGG", "ShouldCheckDamage",
                         "fuelTankHandlingSpace", "fuelTankHandlingRocket", "RemoteFreeze", "hudTickRate",
                         "speedChangeLarge", "speedChangeSmall", "brightHud", "brakeLandingRate", "MaxPitch",
-                        "AtmoSpeedLimit", "centerX", "centerY", "SpaceSpeedLimit", "AtmoSpeedAssist",
+                        "AtmoSpeedLimit", "centerX", "centerY", "SpaceSpeedLimit", "AtmoSpeedAssist", "SetWaypointOnExit",
                         "vSpdMeterX", "vSpdMeterY", "altMeterX", "altMeterY", "fuelX","fuelY", "LandingGearGroundHeight", "TrajectoryAlignmentStrength",
                         "RemoteHud", "YawStallAngle", "PitchStallAngle", "ResolutionX", "ResolutionY", "UseSatNav", "FuelTankOptimization", "ContainerOptimization",
                         "ExtraLongitudeTags", "ExtraLateralTags", "ExtraVerticalTags", "OrbitMapSize", "OrbitMapX", "OrbitMapY", "DisplayOrbit", "CalculateBrakeLandingSpeed",
@@ -2099,7 +2100,7 @@ VERSION_NUMBER = 1.138
                 local helpSpace = {"Alt-4 (Alt < 100k): Autopilot to Orbit and land", "Alt-4 (Alt > 100k): Autopilot to target", "Alt-6: Orbit at current altitude",
                                     "Alt-6-6: Orbit at 1k over atmosphere", "Alt-9: Activate Gyroscope"}
                 local helpGeneral = {"CTRL: Toggle Brakes on and off, cancels active AP", "LeftAlt: Tap to shift freelook on and off", "Shift: Hold while not in freelook to see Buttons",
-                                    "Type ah-commands in lua chat to see text commands"}
+                                    "Type /commands or /help in lua chat to see text commands"}
                 if inAtmo then 
                     addTable(help, helpAtmo)
                     table.insert(help, "---------------------------------------")
@@ -4976,7 +4977,7 @@ VERSION_NUMBER = 1.138
         if button then
             button.activate()
         end
-        showWaypoint(planet, worldPos)
+        if SetWaypointOnExit then showWaypoint(planet, worldPos) end
     end
 
     function script.onTick(timerId)
