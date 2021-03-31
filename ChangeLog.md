@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.140
+- More cleanup
+
 Version 1.139
 - Added `SetWaypointOnExit` user variable.  Default true.  If true, waypoint is set when you exit hud.
 - Imported Dimencia fix of runaway alt adjustment

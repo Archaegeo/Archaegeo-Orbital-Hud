@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.139
+VERSION_NUMBER = 1.140
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -1146,9 +1146,8 @@ VERSION_NUMBER = 1.139
             end
 
             local function GetFlightStyle()
-                local flightType = navCom:getAxisCommandType(0)
                 local flightStyle = "TRAVEL"
-                if (flightType == 1) then
+                if not throttleMode then
                     flightStyle = "CRUISE"
                 end
                 if Autopilot then
@@ -1307,7 +1306,6 @@ VERSION_NUMBER = 1.139
             local function DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
                 local horizonRadius = circleRad -- Aliased global
                 local OFFSET = 20
-                OFFSET = mfloor(OFFSET )
                 local rollC = mfloor(originalRoll)
                 if nearPlanet then 
                     for i = -45, 45, 5 do
@@ -1953,19 +1951,52 @@ VERSION_NUMBER = 1.139
             end
             
             local function DisplayOrbitScreen(newContent)
+                local orbitMapX = OrbitMapX
+                local orbitMapY = OrbitMapY
+                local orbitMapSize = OrbitMapSize -- Always square
+                local pad = 4
+
+                local orbitInfoYOffset = 15
+                local x = 0
+                local y = 0
+                local rx, ry, scale, xOffset
+
+                local function orbitInfo(type)
+                    local alt, time, speed, line
+                    if type == "Periapsis" then
+                        alt = orbit.periapsis.altitude
+                        time = orbit.timeToPeriapsis
+                        speed = orbit.periapsis.speed
+                        line = 35
+                    else
+                        alt = orbit.apoapsis.altitude
+                        time = orbit.timeToApoapsis
+                        speed = orbit.apoapsis.speed
+                        line = -35
+                    end
+                    newContent[#newContent + 1] = stringf(
+                        [[<line class="pdim op30 linethick" x1="%f" y1="%f" x2="%f" y2="%f"/>]],
+                        x + line, y - 5, orbitMapX + orbitMapSize / 2 - rx + xOffset, y - 5)
+                    newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y, type)
+                    y = y + orbitInfoYOffset
+                    local displayText, displayUnit = getDistanceDisplayString(alt)
+                    newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
+                                                    displayText.. displayUnit)
+                    y = y + orbitInfoYOffset
+                    newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
+                                                    FormatTimeString(time))
+                    y = y + orbitInfoYOffset
+                    newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
+                                                    getSpeedDisplayString(speed))
+                end
+
                 if orbit ~= nil and atmosDensity < 0.2 and planet ~= nil and orbit.apoapsis ~= nil and
                     orbit.periapsis ~= nil and orbit.period ~= nil and orbit.apoapsis.speed > 5 and DisplayOrbit then
                     -- If orbits are up, let's try drawing a mockup
-                    local orbitMapX = OrbitMapX
-                    local orbitMapY = OrbitMapY
-                    local orbitMapSize = OrbitMapSize -- Always square
-                    local pad = 4
+                    
                     orbitMapY = orbitMapY + pad
-                    local orbitInfoYOffset = 15
-                    local x = orbitMapX + orbitMapSize + orbitMapX / 2 + pad
-                    local y = orbitMapY + orbitMapSize / 2 + 5 + pad
-            
-                    local rx, ry, scale, xOffset
+                    x = orbitMapX + orbitMapSize + orbitMapX / 2 + pad
+                    y = orbitMapY + orbitMapSize / 2 + 5 + pad
                     rx = orbitMapSize / 4
                     xOffset = 0
             
@@ -1997,40 +2028,14 @@ VERSION_NUMBER = 1.139
                     end
             
                     if orbit.apoapsis ~= nil and orbit.apoapsis.speed < MaxGameVelocity and orbit.apoapsis.speed > 1 then
-                        newContent[#newContent + 1] = stringf(
-                                                        [[<line class="pdim op30 linethick" x1="%f" y1="%f" x2="%f" y2="%f"/>]],
-                                                        x - 35, y - 5, orbitMapX + orbitMapSize / 2 + rx + xOffset, y - 5)
-                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">Apoapsis</text>]], x, y)
-                        y = y + orbitInfoYOffset
-                        local displayText, displayUnit = getDistanceDisplayString(orbit.apoapsis.altitude)
-                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
-                                                        displayText.. displayUnit)
-                        y = y + orbitInfoYOffset
-                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
-                                                        FormatTimeString(orbit.timeToApoapsis))
-                        y = y + orbitInfoYOffset
-                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
-                                                        getSpeedDisplayString(orbit.apoapsis.speed))
+                        orbitInfo("Apoapsis")
                     end
             
                     y = orbitMapY + orbitMapSize / 2 + 5 + pad
                     x = orbitMapX - orbitMapX / 2 + 10 + pad
             
                     if orbit.periapsis ~= nil and orbit.periapsis.speed < MaxGameVelocity and orbit.periapsis.speed > 1 then
-                        newContent[#newContent + 1] = stringf(
-                                                        [[<line class="pdim op30 linethick" x1="%f" y1="%f" x2="%f" y2="%f"/>]],
-                                                        x + 35, y - 5, orbitMapX + orbitMapSize / 2 - rx + xOffset, y - 5)
-                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">Periapsis</text>]], x, y)
-                        y = y + orbitInfoYOffset
-                        local displayText, displayUnit = getDistanceDisplayString(orbit.periapsis.altitude)
-                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
-                                                        displayText.. displayUnit)
-                        y = y + orbitInfoYOffset
-                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
-                                                        FormatTimeString(orbit.timeToPeriapsis))
-                        y = y + orbitInfoYOffset
-                        newContent[#newContent + 1] = stringf([[<text x="%f" y="%f">%s</text>]], x, y,
-                                                        getSpeedDisplayString(orbit.periapsis.speed))
+                        orbitInfo("Periapsis")
                     end
             
                     -- Add a label for the planet
@@ -2131,9 +2136,9 @@ VERSION_NUMBER = 1.139
                 end
                 table.insert(help, "---------------------------------------")   
                 addTable(help, helpGeneral)
-                newContent[#newContent + 1] = [[<g class="pdim txt txtstart">]]
+                newContent[#newContent + 1] = [[<g class="pdim txttick txtstart">]]
                 for i = 1, #help do
-                    y=y+10
+                    y=y+12
                     newContent[#newContent + 1] = stringf([[<text x=%d y="%d">%s</text>]],
                     x, y, help[i])
                 end

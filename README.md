@@ -229,6 +229,7 @@ Right click the seat and go to _Advanced_ -> _Edit Lua Parameters_ to see them a
 * minRollVelocity = 150 -- (Default: 150) Min velocity, in m/s, over which advanced rolling can occur
 * VertTakeOffEngine = false -- (Default: false) Set this to true if you have VTOL engines on your construct. Changes Auto Takeoff to Vertical Takeoff.
 * DisplayDeadZone = true -- (Default: true) Set this to false to not display deadzone while in virtual joystick mode.
+* SetWaypointOnExit = true --export (Default: true) Set the to false to not set a waypoint when you exit hud.
     
 [Return to Table of Contents](#table-of-contents)
 
