@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.140
+VERSION_NUMBER = 1.141
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -329,6 +329,7 @@ VERSION_NUMBER = 1.140
     local constructVelocity = vec3(core.getWorldVelocity())
     local velMag = vec3(constructVelocity):len()
     local worldVertical = vec3(core.getWorldVertical())
+    local vSpd = -worldVertical:dot(constructVelocity)
     local worldPos = vec3(core.getConstructWorldPos())
     local UpVertAtmoEngine = false
     local antigravOn = false
@@ -1261,7 +1262,7 @@ VERSION_NUMBER = 1.140
 
             local function DrawVerticalSpeed(newContent, altitude) -- Draw vertical speed indicator - Code by lisa-lionheart
                 if (altitude < 200000 and not inAtmo) or (altitude and inAtmo) then
-                    local vSpd = -worldVertical:dot(constructVelocity)
+
                     local angle = 0
                     if mabs(vSpd) > 1 then
                         angle = 45 * math.log(mabs(vSpd), 10)
@@ -5656,7 +5657,7 @@ VERSION_NUMBER = 1.140
                 local deltaTick = time - lastApTickTime
                 local currentYaw = -math.deg(signedRotationAngle(constructUp, constructVelocity, constructForward))
                 local currentPitch = math.deg(signedRotationAngle(constructRight, constructVelocity, constructForward)) -- Let's use a consistent func that uses global velocity
-
+                local up = worldVertical * -1
 
                 stalling = inAtmo and currentYaw < -YawStallAngle or currentYaw > YawStallAngle or currentPitch < -PitchStallAngle or currentPitch > PitchStallAngle
                 deltaX = system.getMouseDeltaX()
@@ -5684,23 +5685,18 @@ VERSION_NUMBER = 1.140
                     notPvPZone = true
                 end
 
+                simulatedX = simulatedX + deltaX
+                simulatedY = simulatedY + deltaY
                 if isRemote() == 1 and screen_1 and screen_1.getMouseY() ~= -1 then
                     simulatedX = screen_1.getMouseX() * resolutionWidth
                     simulatedY = screen_1.getMouseY() * resolutionHeight
                 elseif sysIsVwLock() == 0 then
-                    if isRemote() == 1 and holdingCtrl then
-                        if not Animating then
-                            simulatedX = simulatedX + deltaX
-                            simulatedY = simulatedY + deltaY
-                        end
-                    else
+                    if not isRemote() == 1 and not holdingCtrl then
                         simulatedX = 0
                         simulatedY = 0 -- Reset after they do view things, and don't keep sending inputs while unlocked view
                         -- Except of course autopilot, which is later.
                     end
                 else
-                    simulatedX = simulatedX + deltaX
-                    simulatedY = simulatedY + deltaY
                     distance = math.sqrt(simulatedX * simulatedX + simulatedY * simulatedY)
                     if not holdingCtrl and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                         if userControlScheme == "virtual joystick" then -- Virtual Joystick
@@ -5721,28 +5717,14 @@ VERSION_NUMBER = 1.140
                             else
                                 pitchInput2 = 0
                             end
-                        elseif userControlScheme == "mouse" then -- Mouse Direct
+                        else
                             simulatedX = 0
                             simulatedY = 0
-                            -- pitchInput2 = pitchInput2 - deltaY * MousePitchFactor
-                            -- yawInput2 = yawInput2 - deltaX * MouseYawFactor
-                            -- So... this is weird.  
-                            -- It's doing some odd things and giving us some weird values. 
-
-                            -- utils.smoothstep(progress, low, high)*2-1
-                            pitchInput2 = (-utils.smoothstep(deltaY, -100, 100) + 0.5) * 2 * MousePitchFactor
-                            yawInput2 = (-utils.smoothstep(deltaX, -100, 100) + 0.5) * 2 * MouseYawFactor
-                        else -- Keyboard mode
-                            simulatedX = 0
-                            simulatedY = 0
-                            -- Don't touch anything, they have it with kb only.  
+                            if userControlScheme == "mouse" then -- Mouse Direct
+                                pitchInput2 = (-utils.smoothstep(deltaY, -100, 100) + 0.5) * 2 * MousePitchFactor
+                                yawInput2 = (-utils.smoothstep(deltaX, -100, 100) + 0.5) * 2 * MouseYawFactor
+                            end 
                         end
-                        -- Right so.  We can't detect a mouse click.  That's stupid.  
-                        -- We have two options.  1. Use mouse wheel movement as a click, or 2. If you're hovered over a button and let go of Ctrl, it's a click
-                        -- I think 2 is a much smoother solution.  Even if we later want to have them input some coords
-                        -- We'd have to hook 0-9 in their events, and they'd have to point at the target, so it wouldn't be while this screen is open
-
-                        -- What that means is, if we get here, check our hovers.  If one of them is active, trigger the thing and deactivate the hover
                     end
                 end
 
@@ -5824,8 +5806,8 @@ VERSION_NUMBER = 1.140
                         ToggleAutopilot()
                     end
                 end
-                local up = worldVertical * -1
-                local vSpd = (constructVelocity.x * up.x) + (constructVelocity.y * up.y) + (constructVelocity.z * up.z)
+
+
                 if finalLand and CustomTarget ~= nil and (coreAltitude < (HoldAltitude + 200) and coreAltitude > (HoldAltitude - 200)) and ((velMag*3.6) > (adjustedAtmoSpeedLimit-100)) and mabs(vSpd) < 20 and atmosDensity >= 0.1
                     and (CustomTarget.position-worldPos):len() > 2000 + coreAltitude then -- Only engage if far enough away to be able to turn back for it
                     ToggleAutopilot()
@@ -5913,25 +5895,25 @@ VERSION_NUMBER = 1.140
                 end
 
                 if IntoOrbit then
-                    if OrbitTargetPlanet == nil then
-                        if VectorToTarget then
-                            OrbitTargetPlanet = autopilotTargetPlanet
-                        else
-                            OrbitTargetPlanet = planet
-                        end
-                    end
-                    if not OrbitTargetSet then
-                        if OrbitTargetPlanet.hasAtmosphere then
-                            OrbitTargetOrbit = math.floor(OrbitTargetPlanet.radius + OrbitTargetPlanet.noAtmosphericDensityAltitude + 1000)
-                        else
-                            OrbitTargetOrbit = math.floor(OrbitTargetPlanet.radius + OrbitTargetPlanet.surfaceMaxAltitude + 1000)
-                        end
-                        OrbitTargetSet = true
-                    end     
                     local targetVec
                     local yawAligned = false
                     local heightstring, heightunit = getDistanceDisplayString(OrbitTargetOrbit)
                     local orbitHeightString = heightstring .. heightunit
+
+                    if OrbitTargetPlanet == nil then
+                        OrbitTargetPlanet = planet
+                        if VectorToTarget then
+                            OrbitTargetPlanet = autopilotTargetPlanet
+                        end
+                    end
+                    if not OrbitTargetSet then
+                        OrbitTargetOrbit = math.floor(OrbitTargetPlanet.radius + OrbitTargetPlanet.surfaceMaxAltitude + 1000)
+                        if OrbitTargetPlanet.hasAtmosphere then
+                            OrbitTargetOrbit = math.floor(OrbitTargetPlanet.radius + OrbitTargetPlanet.noAtmosphericDensityAltitude + 1000)
+                        end
+                        OrbitTargetSet = true
+                    end     
+
                     if orbitalParams.VectorToTarget then
                         targetVec = CustomTarget.position - worldPos
                     end
@@ -5939,11 +5921,13 @@ VERSION_NUMBER = 1.140
                     local orbitalRoll = adjustedRoll
                     -- Getting as close to orbit distance as comfortably possible
                     if not orbitAligned then
+                        local pitchAligned = false
+                        local rollAligned = false
+
                         cmdThrottle(0)
                         orbitRoll = 0
                         orbitMsg = "Aligning to orbital path - OrbitHeight: "..orbitHeightString
-                        local pitchAligned = false
-                        local rollAligned = false
+
                         if orbitalParams.VectorToTarget then
                             AlignToWorldVector(targetVec:normalize():project_on_plane(worldVertical)) -- Returns a value that wants both pitch and yaw to align, which we don't do
                             yawAligned = constructForward:dot(targetVec:project_on_plane(constructUp):normalize()) > 0.95
@@ -5982,6 +5966,7 @@ VERSION_NUMBER = 1.140
                             local brakeDistance, _ =  Kinematic.computeDistanceAndTime(velMag, adjustedAtmoSpeedLimit/3.6, constructMass(), 0, 0, LastMaxBrake)
                             if OrbitAchieved and targetVec:len() > 15000+brakeDistance+coreAltitude then -- Triggers when we get close to passing it or within 12km+height I guess
                                 orbitMsg = "Orbiting to Target"
+                                if orbit.periapsis.altitude < OrbitTargetPlanet.noAtmosphericDensityAltitude then OrbitAchieved = false end
                             elseif OrbitAchieved or targetVec:len() < 15000+brakeDistance+coreAltitude then
                                 msgText = "Orbit complete, proceeding with reentry"
                                 -- We can skip prograde completely if we're approaching from an orbit?
@@ -6001,7 +5986,6 @@ VERSION_NUMBER = 1.140
                                     if OrbitAchieved then
                                         BrakeIsOn = false
                                         cmdThrottle(0)
-                                        OrbitAchieved = true
                                         orbitPitch = 0
                                         
                                         if not orbitalParams.VectorToTarget then
@@ -6627,7 +6611,7 @@ VERSION_NUMBER = 1.140
                             if atmosDensity < 0.01 then
                                 curBrake = LastMaxBrake -- Assume space brakes
                             end
-                            --local vSpd = (velocity.x * up.x) + (velocity.y * up.y) + (velocity.z * up.z)
+
                             local hSpd = constructVelocity:len() - mabs(vSpd)
                             local airFrictionVec = vec3(core.getWorldAirFrictionAcceleration())
                             local airFriction = math.sqrt(airFrictionVec:len() - airFrictionVec:project_on(up):len()) * constructMass()
@@ -6676,7 +6660,7 @@ VERSION_NUMBER = 1.140
                             local distanceToTarget = math.sqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
                             local curBrake = LastMaxBrakeInAtmo
                             if curBrake then
-                                --local hSpd = velocity:len() - mabs(vSpd)
+
                                 brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(velMag, 0, constructMass(), 0, 0, curBrake/2)
                                 StrongBrakes = true
                                 if distanceToTarget <= brakeDistance + (velMag*deltaTick)/2 and constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99 then 
@@ -6716,11 +6700,10 @@ VERSION_NUMBER = 1.140
 
                     pitchInput2 = oldInput
                     local groundDistance = -1
-                    --local autoPitchThreshold = 0.1
 
                     if BrakeLanding then
                         targetPitch = 0
-                        --local vSpd = (velocity.x * up.x) + (velocity.y * up.y) + (velocity.z * up.z)
+
                         local skipLandingRate = false
                         local distanceToStop = 30 
                         if maxKinematicUp ~= nil and maxKinematicUp > 0 then
@@ -7054,7 +7037,7 @@ VERSION_NUMBER = 1.140
         constructRight = vec3(core.getConstructWorldOrientationRight())
         constructVelocity = vec3(core.getWorldVelocity())
         velMag = vec3(constructVelocity):len()
-        
+        vSpd = -worldVertical:dot(constructVelocity)
         adjustedRoll = getRoll(worldVertical, constructForward, constructRight) 
         local radianRoll = (adjustedRoll / 180) * math.pi
         local corrX = math.cos(radianRoll)
@@ -7147,7 +7130,7 @@ VERSION_NUMBER = 1.140
         end
 
         brakeInput2 = 0
-        local vSpd = -worldVertical:dot(constructVelocity)
+
 
         if inAtmo and AtmoSpeedAssist and throttleMode then
             -- This is meant to replace cruise

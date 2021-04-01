@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.140
+Version 1.141
+- AP same Planet w/ Orbital hop: After achieving orbit, if periapsis altitude drops into atmosphere, orbit will adjust.
 - More cleanup
 
 Version 1.139
