@@ -1,6 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.141
+Version 1.142
+- First pass on in game settings control.  Hold LShift and release over Settings to swap buttons to settings.  Hold LShift and mouse over a button to toggle true/false.
+Hold LShift and release over Control to swap back to normal.
+- Added missing user variables to databank save list.
 - AP same Planet w/ Orbital hop: After achieving orbit, if periapsis altitude drops into atmosphere, orbit will adjust.
 - More cleanup
 
