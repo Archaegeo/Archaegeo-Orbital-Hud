@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.142
+VERSION_NUMBER = 1.143
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -14,7 +14,7 @@ VERSION_NUMBER = 1.142
     freeLookToggle = true --export: (Default: true)
     BrakeToggleDefault = true --export: (Default: true)
     RemoteFreeze = false --export: (Default: false)
-    RemoteHud = false --export: (Default: false)
+    RemoteHud = true --export: (Default: true)
     brightHud = false --export: (Default: false)
     VanillaRockets = false --export: (Default: false)
     InvertMouse = false --export: (Default: false)
@@ -82,11 +82,12 @@ VERSION_NUMBER = 1.142
     --Ship flight physics variables 
     speedChangeLarge = 5 --export: (Default: 5)
     speedChangeSmall = 1 --export: (Default: 1)
-    MouseYSensitivity = 0.003 --export: (Default: 0.003)
     MouseXSensitivity = 0.003 --export: (Default: 0.003)
+    MouseYSensitivity = 0.003 --export: (Default: 0.003)
     autoRollFactor = 2 --export: (Default: 2)
     rollSpeedFactor = 1.5 --export: (Default: 1.5)
     autoRollRollThreshold = 0 --export: (Default: 0)
+    minRollVelocity = 150 --export: (Default: 150)    
     turnAssistFactor = 2 --export: (Default: 2)
     TrajectoryAlignmentStrength = 0.002 --export: (Default: 0.002)
     torqueFactor = 2 --export: (Default: 2)
@@ -95,30 +96,12 @@ VERSION_NUMBER = 1.142
     brakeSpeedFactor = 3 --export: (Default: 3)
     brakeFlatFactor = 1 --export: (Default: 1)
     DampingMultiplier = 40 --export: (Default: 40) 
-    minRollVelocity = 150 --export: (Default: 150)
     apTickRate = 0.0166667 --export: (Default: 0.0166667)  
     hudTickRate = 0.0666667 --export: (Default: 0.0666667)
     ExtraLongitudeTags = "none" --export: (Default: "none")
     ExtraLateralTags = "none" --export: (Default: "none")
     ExtraVerticalTags = "none" --export: (Default: "none")
-    -- Complete list of user variables above, must be in savableVariables to be stored on databank
-        local saveableVariables = {"freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
-                        "InvertMouse", "autoRollPreference", "turnAssist", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
-                        "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", 
-                        "showHud", "ShowOdometer", "hideHudOnToggleWidgets", "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit",
-                        "userControlScheme", "TargetOrbitRadius", "apTickRate", "SafeR", "SafeG", "SafeB", 
-                        "warmup", "DeadZone", "circleRad", "MouseXSensitivity", "MouseYSensitivity", "MaxGameVelocity", 
-                        "pitchSpeedFactor", "yawSpeedFactor", "rollSpeedFactor", "brakeSpeedFactor",
-                        "brakeFlatFactor", "autoRollFactor", "turnAssistFactor", "torqueFactor",
-                        "AutoTakeoffAltitude", "TargetHoverHeight", "AutopilotInterplanetaryThrottle",
-                        "DampingMultiplier", "fuelTankHandlingAtmo", "fuelTankHandlingSpace", "fuelTankHandlingRocket",
-                        "RemoteFreeze", "hudTickRate", "speedChangeLarge", "speedChangeSmall", "brakeLandingRate", "MaxPitch",
-                        "AtmoSpeedLimit", "centerX", "centerY", "SpaceSpeedLimit", "vSpdMeterX", "vSpdMeterY", "altMeterX", 
-                        "altMeterY", "fuelX","fuelY", "LandingGearGroundHeight", "TrajectoryAlignmentStrength",
-                        "YawStallAngle", "PitchStallAngle", "ResolutionX", "ResolutionY",  "FuelTankOptimization", "ContainerOptimization",
-                        "ExtraLongitudeTags", "ExtraLateralTags", "ExtraVerticalTags", "OrbitMapSize", "OrbitMapX", "OrbitMapY", 
-                         "autoRollRollThreshold", "minRollVelocity", "PvPR", "PvPG", "PvPB"}
-    
+
 -- Auto Variable declarations that store status of ship. Must be global because they get saved/read to Databank due to using _G assignment
     BrakeToggleStatus = BrakeToggleDefault
     VertTakeOffEngine = false 
@@ -303,8 +286,6 @@ VERSION_NUMBER = 1.142
     local Animated = false
     local autoRoll = autoRollPreference
     local targetGroundAltitude = LandingGearGroundHeight -- So it can tell if one loaded or not
-    local deltaX = system.getMouseDeltaX()
-    local deltaY = system.getMouseDeltaY()
     local stalling = false
     local lastApTickTime = systime()
     local targetRoll = 0
@@ -342,10 +323,56 @@ VERSION_NUMBER = 1.142
     local adjustedPitch = 0
     local adjustedRoll = 0
     local showSettings = false
+    local settingsVariables = {}
+    local oldShowHud = showHud
 
 -- Function Definitions that are used in more than one area
+    local function addTable(table1, table2)
+        for i = 1, #table2 do
+            table.insert(table1, table2[i])
+        end
+        return table1
+    end
 
-    local function svgText(class, x, y, style, text)
+    local function saveableVariables(subset)
+        local returnSet = {}
+            -- Complete list of user variables above, must be in saveableVariables to be stored on databank
+            local saveableVariablesBoolean = {"userControlScheme","freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
+                "InvertMouse", "autoRollPreference", "turnAssist", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
+                "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", 
+                "showHud", "ShowOdometer", "hideHudOnToggleWidgets", "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit"}
+            local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch",
+                "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight",
+                "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
+                "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization"}
+            local savableVariablesHud = {"ResolutionX","ResolutionY","circleRad","SafeR", "SafeG", "SafeB", 
+                "PvPR", "PvPG", "PvPB","centerX", "centerY", "throtPosX", "throtPosY",
+                "vSpdMeterX", "vSpdMeterY","altMeterX", "altMeterY","fuelX", "fuelY","DeadZone",
+                "OrbitMapSize", "OrbitMapX", "OrbitMapY"}
+            local savableVariablesPhysics = {"speedChangeLarge", "speedChangeSmall", "MouseXSensitivity", "MouseYSensitivity", "autoRollFactor",
+                "rollSpeedFactor", "autoRollRollThreshold", "minRollVelocity", "turnAssistFactor", "TrajectoryAlignmentStrength",
+                "torqueFactor", "pitchSpeedFactor", "yawSpeedFactor", "brakeSpeedFactor", "brakeFlatFactor", "DampingMultiplier", 
+                "apTickRate",  "hudTickRate", "ExtraLongitudeTags", "ExtraLateralTags", "ExtraVerticalTags"}
+        if not subset then
+            addTable(returnSet, saveableVariablesBoolean)
+            addTable(returnSet, savableVariablesHandling)
+            addTable(returnSet, savableVariablesHud)
+            addTable(returnSet, savableVariablesPhysics)
+            return returnSet
+        elseif subset == "boolean" then
+            return saveableVariablesBoolean
+        elseif subset == "handling" then
+            return savableVariablesHandling
+        elseif subset == "hud" then
+            return savableVariablesHud
+        elseif subset == "physics" then
+            return savableVariablesPhysics
+        end            
+    end
+
+    local function svgText(x, y, text, class, style)
+        if class == nil then class = "" end
+        if style == nil then style = "" end
         return stringf([[<text class="%s" x=%s y=%s style="%s">%s</text>]],
                                                 class,x, y, style, text)
     end
@@ -1125,7 +1152,7 @@ VERSION_NUMBER = 1.142
         if dbHud_1 then
             if not wipedDatabank then
                 writeData(autoVariables) 
-                writeData(saveableVariables)
+                writeData(saveableVariables())
                 system.print("Saved Variables to Datacore")
                 if copy and dbHud_2 then
                     msgText = "Databank copied.  Remove copy when ready."
@@ -1176,8 +1203,6 @@ VERSION_NUMBER = 1.142
                 end
             end
 
-
-
             local function IsInFreeLook()
                 return sysIsVwLock() == 0 and userControlScheme ~= "keyboard" and isRemote() == 0
             end
@@ -1210,8 +1235,6 @@ VERSION_NUMBER = 1.142
                     y1 = y1 - 50
                     y2 = y2 - 50
                 end
-            
-                newContent[#newContent + 1] = [[<g class="pdim txtfuel">]]
             
                 if nameReplacePrefix == "ATMO" then
                     slottedTankType = "atmofueltank"
@@ -1283,14 +1306,13 @@ VERSION_NUMBER = 1.142
                                     class = [[class="red"]]
                                 end
                             end
-                            newContent[#newContent + 1] = svgText("", x, y1, class, name) 
-                            newContent[#newContent + 1] = svgText("", x, y2, "fill:"..color, stringf("%d%% %s", fuelPercentTable[i], fuelTimeDisplay))
+                            newContent[#newContent + 1] = svgText(x, y1, name, class.." pdim txtfuel") 
+                            newContent[#newContent + 1] = svgText( x, y2, stringf("%d%% %s", fuelPercentTable[i], fuelTimeDisplay), "pdim txtfuel","fill:"..color)
                             y1 = y1 + 30
                             y2 = y2 + 30
                         end
                     end
                 end
-                newContent[#newContent + 1] = "</g>"
             end
 
             local function DrawVerticalSpeed(newContent, altitude) -- Draw vertical speed indicator - Code by lisa-lionheart
@@ -1353,8 +1375,8 @@ VERSION_NUMBER = 1.142
                         end
                         newContent[#newContent + 1] = stringf([[<line x1=%d y1=%d x2=%d y2="%d"/></g>]], centerX, centerY + horizonRadius + OFFSET - len, centerX, centerY + horizonRadius + OFFSET)
                     end 
-                    newContent[#newContent + 1] = svgText("pdim txt txtmid", centerX, centerY+horizonRadius+OFFSET-35, "", bottomText)
-                    newContent[#newContent + 1] = svgText("pdim txt txtmid", centerX, centerY+horizonRadius+OFFSET-25, "", rollC.." deg")
+                    newContent[#newContent + 1] = svgText(centerX, centerY+horizonRadius+OFFSET-35, bottomText, "pdim txt txtmid")
+                    newContent[#newContent + 1] = svgText(centerX, centerY+horizonRadius+OFFSET-25, rollC.." deg", "pdim txt txtmid")
                     newContent[#newContent + 1] = stringf([[<g transform="rotate(%f,%d,%d)">]], -originalRoll, centerX, centerY)
                     newContent[#newContent + 1] = stringf([[<<polygon points="%d,%d %d,%d %d,%d"/>]],
                         centerX-5, centerY+horizonRadius+OFFSET-20, centerX+5, centerY+horizonRadius+OFFSET-20, centerX, centerY+horizonRadius+OFFSET-15)
@@ -1384,7 +1406,7 @@ VERSION_NUMBER = 1.142
                         elseif num < 0 then
                             num = num + 360
                         end
-                        newContent[#newContent + 1] = svgText("",x+5,yawy-12, "", num )
+                        newContent[#newContent + 1] = svgText(x+5,yawy-12, num )
                     elseif (i % 5 == 0) then
                         yawlen = 5
                     end
@@ -1398,12 +1420,8 @@ VERSION_NUMBER = 1.142
                 newContent[#newContent + 1] = stringf([[<<polygon points="%d,%d %d,%d %d,%d"/>]],
                     yawx-5, yawy+10, yawx+5, yawy+10, yawx, yawy+5)
                 if nearPlanet then bottomText = "HDG" end
-                newContent[#newContent + 1] = stringf([["
-                    <g class="pdim txt txtmid">
-                    <text x="%d" y="%d">%d deg</text>
-                    <text x="%d" y="%d">%s</text>
-                    </g>
-                    ]], yawx, yawy+25, yawC, yawx, yawy+35, bottomText)
+                newContent[#newContent + 1] = svgText(yawx, yawy+25, yawC.."deg" , "pdim txt txtmid", "")
+                newContent[#newContent + 1] = svgText( yawx, yawy+35, bottomText, "pdim txt txtmid","")
             end
 
             local function DrawArtificialHorizon(newContent, originalPitch, originalRoll, centerX, centerY, nearPlanet, atmoYaw, speed)
@@ -1436,8 +1454,8 @@ VERSION_NUMBER = 1.142
                                         (-1 * originalRoll), centerX, centerY, centerX-pitchX+20, y, pitchX*2-40)
                                 end
                             else
-                                newContent[#newContent + 1] = stringf([[<g class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]], centerX-pitchX+10, y, i)
-                                newContent[#newContent + 1] = stringf([[<g class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]], centerX+pitchX-10, y, i)
+                                newContent[#newContent + 1] = svgText(centerX-pitchX+10, y, i, "pdim txt txtmid")
+                                newContent[#newContent + 1] = svgText(centerX+pitchX-10, y, i , "pdim txt txtmid")
                             end                            
                             tickerPath = stringf([[%s M %d %f h %d]], tickerPath, centerX+pitchX, y, len)
                         else
@@ -1458,12 +1476,8 @@ VERSION_NUMBER = 1.142
                     if horizonRadius > 200 then
                         if inAtmo then
                             if speed > minAutopilotSpeed then
-                                newContent[#newContent + 1] = stringf([["
-                                <g class="pdim txt txtmid">
-                                <text x="%d" y="%d">%s</text>
-                                <text x="%d" y="%d">%d deg</text>
-                                </g>
-                                ]],  centerX, centerY-15, "Yaw", centerX, centerY+20, atmoYaw)                            
+                                newContent[#newContent + 1] = svgText(centerX, centerY-15, "Yaw", "pdim txt txtmid")
+                                newContent[#newContent + 1] = svgText(centerX, centerY+20, atmoYaw, "pdim txt txtmid")
                             end
                             newContent[#newContent + 1] = stringf([[<g transform="rotate(%f,%d,%d)">]], -originalRoll, centerX, centerY)
                         else
@@ -1485,21 +1499,13 @@ VERSION_NUMBER = 1.142
                     newContent[#newContent + 1] = "</g>"
                     if horizonRadius < 200 then
                         if inAtmo and speed > minAutopilotSpeed then 
-                            newContent[#newContent + 1] = stringf([["
-                            <g class="pdim txt txtmid">
-                            <text x="%d" y="%d">%s</text>
-                            <text x="%d" y="%d">%d deg</text>
-                            <text x="%d" y="%d">%s</text>
-                            <text x="%d" y="%d">%d deg</text>
-                            </g>
-                            ]], centerX, centerY-horizonRadius, pitchstring, centerX, centerY-horizonRadius+10, pitchC, centerX, centerY-15, "Yaw", centerX, centerY+20, atmoYaw)
+                            newContent[#newContent + 1] = svgText(centerX, centerY-horizonRadius, pitchstring, "pdim txt txtmid")
+                            newContent[#newContent + 1] = svgText(centerX, centerY-horizonRadius+10, pitchC, "pdim txt txtmid")
+                            newContent[#newContent + 1] = svgText(centerX, centerY-15, "Yaw", "pdim txt txtmid")
+                            newContent[#newContent + 1] = svgText(centerX, centerY+20, atmoYaw, "pdim txt txtmid")
                         else
-                            newContent[#newContent + 1] = stringf([["
-                            <g class="pdim txt txtmid">
-                            <text x="%d" y="%d">%s</text>
-                            <text x="%d" y="%d">%d deg</text>
-                            </g>
-                            ]], centerX, centerY-horizonRadius, pitchstring, centerX, centerY-horizonRadius+15, pitchC )                       
+                            newContent[#newContent + 1] = svgText(centerX, centerY-horizonRadius, pitchstring, "pdim txt txtmid")
+                            newContent[#newContent + 1] = svgText(centerX, centerY-horizonRadius+15, pitchC, "pdim txt txtmid")
                         end
                     end
                 end
@@ -1514,11 +1520,7 @@ VERSION_NUMBER = 1.142
                 local gndHeight = AboveGroundLevel()
             
                 if gndHeight ~= -1 then
-                    table.insert(newContent, stringf([[
-                    <g class="pdim altsm txtend">
-                    <text x="%d" y="%d">AGL: %.1fm</text>
-                    </g>
-                    ]], rectX+rectW, rectY+rectH+20, gndHeight))
+                    newContent[#newContent + 1] = svgText(rectX+rectW, rectY+rectH+20, stringf("AGL: %.1fm", gndHeight), "pdim altsm txtend")
                 end
             
                 if nearPlanet and ((altitude < 200000 and not inAtmo) or (altitude and inAtmo)) then
@@ -1582,13 +1584,8 @@ VERSION_NUMBER = 1.142
                         local x = rectX + glyphXOffset + (6 - index) * glyphW
                         local y = rectY + glyphYOffset
                         
-                        -- <g class="%s" clip-path="url(#%s)">
-                        table.insert(newContent, stringf([[
-                            <g class="%s">
-                            <text x="%d" y="%f">%d</text>
-                            <text x="%d" y="%f">%d</text>
-                            </g>
-                        ]], class, x, y + topGlyphOffset, fracDigit, x, y + botGlyphOffset, intDigit))
+                        newContent[#newContent + 1] = svgText(x, y + topGlyphOffset,fracDigit, class)
+                        newContent[#newContent + 1] = svgText(x, y + botGlyphOffset,intDigit , class)
                         
                         index = index + 1
                         divisor = divisor * 10
@@ -1739,8 +1736,7 @@ VERSION_NUMBER = 1.142
                 if isRemote() == 1 and not RemoteHud then
                     y1 = 55
                     y2 = 65
-                end
-            
+                end            
                 local label = "CRUISE"
                 local unit = "km/h"
                 local value = flightValue
@@ -1759,13 +1755,8 @@ VERSION_NUMBER = 1.142
                         </g>]], throtclass, throtPosX-7, throtPosY-50, throtPosX, throtPosY-50, throtPosX, throtPosY+50, throtPosX-7, throtPosY+50, (1 - mabs(throt)), 
                         throtPosX-10, throtPosY+50, throtPosX-15, throtPosY+53, throtPosX-15, throtPosY+47)
                 end
-                newContent[#newContent + 1] = stringf([[
-                    <g class="pbright txtstart">
-                            <text x="%s" y="%s">%s</text>
-                            <text x="%s" y="%s">%.0f %s</text>
-                    </g>
-                </g>]], throtPosX+10, y1, label, throtPosX+10, y2, value, unit)
-            
+                newContent[#newContent + 1] = svgText(throtPosX+10, y1, label , "pbright txtstart")
+                newContent[#newContent + 1] = svgText(throtPosX+10, y2, stringf("%.0f %s", value, unit), "pbright txtstart")
                 if inAtmo and AtmoSpeedAssist and throttleMode and ThrottleLimited then
                     -- Display a marker for where the AP throttle is putting it, calculatedThrottle
             
@@ -1779,45 +1770,35 @@ VERSION_NUMBER = 1.142
                             <polygon points="%d,%d %d,%d %d,%d"/>
                         </g></g>]], throtclass, (1 - mabs(throt)), 
                         throtPosX-10, throtPosY+50, throtPosX-15, throtPosY+53, throtPosX-15, throtPosY+47)
-                    newContent[#newContent + 1] = svgText("pbright txtstart", throtPosX+10, y1+40, "", "LIMIT")
-                    newContent[#newContent + 1] = svgText("pbright txtstart", throtPosX+10, y2+40, "", throt.."%")
+                    newContent[#newContent + 1] = svgText( throtPosX+10, y1+40, "LIMIT", "pbright txtstart")
+                    newContent[#newContent + 1] = svgText(throtPosX+10, y2+40, throt.."%", "pbright txtstart")
                 end
                 if (inAtmo and AtmoSpeedAssist) or Reentry then
                     -- Display AtmoSpeedLimit above the throttle
-                    newContent[#newContent + 1] = svgText("dim txtstart", throtPosX+10, y1-40, "", "LIMIT: ".. adjustedAtmoSpeedLimit .. " km/h")
+                    newContent[#newContent + 1] = svgText(throtPosX+10, y1-40, "LIMIT: ".. adjustedAtmoSpeedLimit .. " km/h", "dim txtstart")
                 elseif not inAtmo and Autopilot then
                     -- Display MaxGameVelocity above the throttle
-                    newContent[#newContent + 1] = svgText("dim txtstart", throtPosX+10, y1-40, "", "LIMIT: ".. mfloor(MaxGameVelocity*3.6+0.5) .. " km/h")
+                    newContent[#newContent + 1] = svgText(throtPosX+10, y1-40, "LIMIT: ".. mfloor(MaxGameVelocity*3.6+0.5) .. " km/h", "dim txtstart")
                 end
             end
 
             local function DrawSpeed(newContent, spd)
                 local ys = throtPosY-10 
                 local x1 = throtPosX + 10
-                newContent[#newContent + 1] = [[<g class="pdim txt txtend">]]
+                newContent[#newContent + 1] = svgText(0,0,"", "pdim txt txtend")
                 if isRemote() == 1 and not RemoteHud then
                     ys = 75
                 end
-                newContent[#newContent + 1] = stringf([[
-                    <g class="pbright txtstart">
-                        <text class="txtbig" x="%d" y="%d">%d km/h</text>
-                    </g>
-                </g>]], x1, ys, mfloor(spd))
+                newContent[#newContent + 1] = svgText( x1, ys, mfloor(spd).." km/h" , "pbright txtbig txtstart")
             end
 
             local function DrawWarnings(newContent)
-                newContent[#newContent + 1] = svgText("hudver", ConvertResolutionX(1900), ConvertResolutionY(1070), "", stringf("ARCH Hud Version: %.3f", VERSION_NUMBER))
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(1900), ConvertResolutionY(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
                 newContent[#newContent + 1] = [[<g class="warnings">]]
                 if unit.isMouseControlActivated() == 1 then
-                    newContent[#newContent + 1] = stringf([[
-                        <text x="%d" y="%d">Warning: Invalid Control Scheme Detected</text>]],
-                        ConvertResolutionX(960), ConvertResolutionY(550))
-                    newContent[#newContent + 1] = stringf([[
-                        <text x="%d" y="%d">Keyboard Scheme must be selected</text>]],
-                        ConvertResolutionX(960), ConvertResolutionY(600))
-                    newContent[#newContent + 1] = stringf([[
-                        <text x="%d" y="%d">Set your preferred scheme in Lua Parameters instead</text>]],
-                        ConvertResolutionX(960), ConvertResolutionY(650))
+                    newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(550), "Warning: Invalid Control Scheme Detected", "warnings")
+                    newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(600), "Keyboard Scheme must be selected", "warnings")
+                    newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(650), "Set your preferred scheme in Lua Parameters instead", "warnings")
                 end
                 local warningX = ConvertResolutionX(960)
                 local brakeY = ConvertResolutionY(860)
@@ -1835,43 +1816,43 @@ VERSION_NUMBER = 1.142
                     turnBurnY = ConvertResolutionY(95)
                 end
                 if BrakeIsOn then
-                    newContent[#newContent + 1] = svgText("warnings", warningX, brakeY, "", "Brake Engaged")
+                    newContent[#newContent + 1] = svgText(warningX, brakeY, "Brake Engaged", "warnings")
 
                 elseif brakeInput2 > 0 then
-                    newContent[#newContent + 1] = svgText("warnings", warningX, brakeY, "opacity:"..brakeInput2, "Auto-Brake Engaged")
+                    newContent[#newContent + 1] = svgText(warningX, brakeY, "Auto-Brake Engaged", "warnings", "opacity:"..brakeInput2)
                 end
                 if inAtmo and stalling and hovGndDet == -1 then
-                    newContent[#newContent + 1] = svgText("warnings", warningX, apY+50, "", "** STALL WARNING **")
+                    newContent[#newContent + 1] = svgText(warningX, apY+50, "** STALL WARNING **", "warnings")
                 end
                 if gyroIsOn then
-                    newContent[#newContent + 1] = svgText("warnings", warningX, gyroY, "", "Gyro Enabled")
+                    newContent[#newContent + 1] = svgText(warningX, gyroY, "Gyro Enabled", "warnings")
                 end
                 if GearExtended then
                     if hasGear then
-                        newContent[#newContent + 1] = svgText("warn", warningX, gearY, "", "Gear Extended")
+                        newContent[#newContent + 1] = svgText(warningX, gearY, "Gear Extended", "warn")
                     else
-                        newContent[#newContent + 1] = svgText("warnings", warningX, gearY, "", "Landed (G: Takeoff)")
+                        newContent[#newContent + 1] = svgText(warningX, gearY, "Landed (G: Takeoff)", "warnings")
                     end
                     local displayText, displayUnit = getDistanceDisplayString(Nav:getTargetGroundAltitude())
-                    newContent[#newContent + 1] = svgText("warn", warningX, hoverY,"", stringf("Hover Height: %s", displayText.. displayUnit))
+                    newContent[#newContent + 1] = svgText(warningX, hoverY,"Hover Height: ".. displayText.. displayUnit,"warn")
                 end
                 if isBoosting then
-                    newContent[#newContent + 1] = svgText("warn",warningX, ewarpY+20,"", "ROCKET BOOST ENABLED")
+                    newContent[#newContent + 1] = svgText(warningX, ewarpY+20, "ROCKET BOOST ENABLED", "warn")
                 end                  
                 if antigrav and not ExternalAGG and antigravOn and AntigravTargetAltitude ~= nil then
                     if mabs(coreAltitude - antigrav.getBaseAltitude()) < 501 then
-                        newContent[#newContent + 1] = svgText("warn", warningX, apY+15, "", stringf("AGG On - Target Altitude: %d Singularity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())))
+                        newContent[#newContent + 1] = svgText(warningX, apY+15, stringf("AGG On - Target Altitude: %d Singularity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), "warn")
                     else
-                        newContent[#newContent + 1] = svgText("warnings", warningX, apY+15, "", stringf("AGG On - Target Altitude: %d Singluarity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())))
+                        newContent[#newContent + 1] = svgText( warningX, apY+15, stringf("AGG On - Target Altitude: %d Singluarity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), "warnings")
                     end
                 elseif Autopilot and AutopilotTargetName ~= "None" then
-                    newContent[#newContent + 1] = svgText("warn", warningX, apY+20, "", stringf("Autopilot %s", AutopilotStatus))
+                    newContent[#newContent + 1] = svgText(warningX, apY+20,  "Autopilot "..AutopilotStatus, "warn")
                 elseif LockPitch ~= nil then
-                    newContent[#newContent + 1] = svgText("warn", warningX, apY+20,"", stringf("LockedPitch: %d", mfloor(LockPitch)))
+                    newContent[#newContent + 1] = svgText(warningX, apY+20, stringf("LockedPitch: %d", mfloor(LockPitch)), "warn")
                 elseif followMode then
-                    newContent[#newContent + 1] = svgText("warn", warningX, apY+20, "", "Follow Mode Engaged")
+                    newContent[#newContent + 1] = svgText(warningX, apY+20, "Follow Mode Engaged", "warn")
                 elseif Reentry then
-                    newContent[#newContent + 1] = svgText("warn", warningX, apY+20, "", "Re-entry in Progress")
+                    newContent[#newContent + 1] = svgText(warningX, apY+20, "Re-entry in Progress", "warn")
                 end
                 local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
                 local atmoDistance = farSide
@@ -1884,55 +1865,54 @@ VERSION_NUMBER = 1.142
                         if antigravOn then
                             displayText, displayUnit = getDistanceDisplayString(antigrav.getBaseAltitude(),2)
                         end
-                        newContent[#newContent + 1] = svgText("warn", warningX, apY, "", stringf("VTO to %s", displayText.. displayUnit))
+                        newContent[#newContent + 1] = svgText(warningX, apY, "VTO to %s"..displayText.. displayUnit, "warn")
                     elseif AutoTakeoff and not IntoOrbit then
-                        newContent[#newContent + 1] = svgText("warn", warningX, apY, "", stringf("Takeoff to %s", displayText.. displayUnit))
+                        newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to %s"..displayText.. displayUnit, "warn")
                         if BrakeIsOn and not VertTakeOff then
-                            newContent[#newContent + 1] = svgText("crit", warningX, apY + 50, "", "Throttle Up and Disengage Brake For Takeoff")
+                            newContent[#newContent + 1] = svgText( warningX, apY + 50,"Throttle Up and Disengage Brake For Takeoff", "crit")
                         end
                 
                     else
-                        newContent[#newContent + 1] = svgText("warn", warningX, apY,"", stringf("Altitude Hold: %s", displayText.. displayUnit))
+                        newContent[#newContent + 1] = svgText("warn", warningX, apY, "Altitude Hold: %s".. displayText.. displayUnit, "warn")
                     end
                 end
                 if VertTakeOff and (antigrav ~= nil and antigrav) then
                     if atmosDensity > 0.1 then
-                        newContent[#newContent + 1] = svgText("warn", warningX, apY, "", "Beginning ascent")
+                        newContent[#newContent + 1] = svgText(warningX, apY, "Beginning ascent", "warn")
                     elseif atmosDensity < 0.09 and atmosDensity > 0.05 then
-                        newContent[#newContent + 1] = svgText("warn", warningX, apY, "", "Aligning trajectory")
+                        newContent[#newContent + 1] = svgText(warningX, apY,  "Aligning trajectory", "warn")
                     elseif atmosDensity < 0.05 then
-                        newContent[#newContent + 1] = svgText("warn", warningX, apY, "", "Leaving atmosphere")
+                        newContent[#newContent + 1] = svgText(warningX, apY,  "Leaving atmosphere", "warn")
                     end
                 end
                 if IntoOrbit then
                     if orbitMsg ~= nil then
-                        newContent[#newContent + 1] = svgText("warn",warningX, apY, "", orbitMsg)
+                        newContent[#newContent + 1] = svgText(warningX, apY, orbitMsg, "warn")
                     end
                 end
                 if BrakeLanding then
                     if StrongBrakes then
-                        newContent[#newContent + 1] = svgText("warnings", warningX, apY, "", "Brake-Landing")
+                        newContent[#newContent + 1] = svgText(warningX, apY, "Brake-Landing", "warnings")
                     else
-                        newContent[#newContent + 1] = svgText("warnings", warningX, apY,"","Coast-Landing")
+                        newContent[#newContent + 1] = svgText(warningX, apY, "Coast-Landing", "warnings")
                     end
                 end
                 if ProgradeIsOn then
-                    newContent[#newContent + 1] = svgText("crit", warningX, apY, "", "Prograde Alignment")
+                    newContent[#newContent + 1] = svgText(warningX, apY, "Prograde Alignment", "crit")
                 end
                 if RetrogradeIsOn then
-                    newContent[#newContent + 1] = svgText("crit", warningX, apY, "", "Retrograde Alignment")
+                    newContent[#newContent + 1] = svgText(warningX, apY, "Retrograde Alignment", "crit")
                 end
                 if atmoDistance ~= nil and atmosDensity == 0 then
                         local displayText, displayUnit = getDistanceDisplayString(atmoDistance)
                         local travelTime = Kinematic.computeTravelTime(velMag, 0, atmoDistance)
                         local displayCollisionType = "Collision"
                         if intersectBody.noAtmosphericDensityAltitude > 0 then displayCollisionType = "Atmosphere" end
-                        newContent[#newContent + 1] = svgText("crit", warningX, turnBurnY,"", stringf("%s %s In %s (%s)", 
-                            intersectBody.name,displayCollisionType, FormatTimeString(travelTime), displayText.. displayUnit))
+                        newContent[#newContent + 1] = svgText(warningX, turnBurnY, intersectBody.name,displayCollisionType..FormatTimeString(travelTime).." In "..displayText.. displayUnit, "crit")
                     
                 end
                 if VectorToTarget and not IntoOrbit then
-                    newContent[#newContent + 1] = svgText("warn", warningX, apY+35,"", VectorStatus)
+                    newContent[#newContent + 1] = svgText(warningX, apY+35, VectorStatus, "warn")
                 end
             
                 newContent[#newContent + 1] = "</g>"
@@ -1970,14 +1950,14 @@ VERSION_NUMBER = 1.142
                     newContent[#newContent + 1] = stringf(
                         [[<line class="pdim op30 linethick" x1="%f" y1="%f" x2="%f" y2="%f"/>]],
                         x + line, y - 5, orbitMapX + orbitMapSize / 2 - rx + xOffset, y - 5)
-                    newContent[#newContent + 1] = svgText("", x, y, "", type)
+                    newContent[#newContent + 1] = svgText(x, y, type)
                     y = y + orbitInfoYOffset
                     local displayText, displayUnit = getDistanceDisplayString(alt)
-                    newContent[#newContent + 1] = svgText("", x, y, "", displayText.. displayUnit)
+                    newContent[#newContent + 1] = svgText(x, y, displayText.. displayUnit)
                     y = y + orbitInfoYOffset
-                    newContent[#newContent + 1] = svgText("", x, y, "", FormatTimeString(time))
+                    newContent[#newContent + 1] = svgText(x, y, FormatTimeString(time))
                     y = y + orbitInfoYOffset
-                    newContent[#newContent + 1] = svgText("", x, y, "", getSpeedDisplayString(speed))
+                    newContent[#newContent + 1] = svgText(x, y, getSpeedDisplayString(speed))
                 end
 
                 if orbit ~= nil and atmosDensity < 0.2 and planet ~= nil and orbit.apoapsis ~= nil and
@@ -2029,7 +2009,7 @@ VERSION_NUMBER = 1.142
                     end
             
                     -- Add a label for the planet
-                    newContent[#newContent + 1] = svgText("txtorbbig", orbitMapX + orbitMapSize / 2 + pad, 20 + pad, "", planet.name)
+                    newContent[#newContent + 1] = svgText(orbitMapX + orbitMapSize / 2 + pad, planet.name, 20 + pad, "txtorbbig")
             
                     if orbit.period ~= nil and orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.apoapsis.speed > 1 then
                         local apsisRatio = (orbit.timeToApoapsis / orbit.period) * 2 * math.pi
@@ -2080,12 +2060,6 @@ VERSION_NUMBER = 1.142
             end            
 
             local function DisplayHelp(newContent)
-                local function addTable(table1, table2)
-                    for i = 1, #table2 do
-                        table.insert(table1, table2[i])
-                    end
-                    return table1
-                end
                 local x = 50
                 local y = 525
                 local help = {"Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-3: Toggle Vanilla Widget view"}
@@ -2125,12 +2099,10 @@ VERSION_NUMBER = 1.142
                 end
                 table.insert(help, "---------------------------------------")   
                 addTable(help, helpGeneral)
-                newContent[#newContent + 1] = [[<g class="pdim txttick txtstart">]]
                 for i = 1, #help do
                     y=y+12
-                    newContent[#newContent + 1] = svgText("pdim txttick txtstart", x, y, "", help[i])
+                    newContent[#newContent + 1] = svgText( x, y, help[i], "pdim txttick txtstart")
                 end
-                newContent[#newContent + 1] = "</g>"
             end
 
         local Hud = {}
@@ -2246,9 +2218,9 @@ VERSION_NUMBER = 1.142
                 else
                     dist = round((pvpDist/1000),1).." km"
                 end
-                newContent[#newContent + 1] = svgText("pbright txtbig txtmid", pvpBoundaryX, pvpBoundaryY, "", stringf("PvP Boundary: %s", dist))
+                newContent[#newContent + 1] = svgText(pvpBoundaryX, pvpBoundaryY, "PvP Boundary: "..dist, "pbright txtbig txtmid")
             end
-        
+
             -- CRUISE/ODOMETER
         
             newContent[#newContent + 1] = lastOdometerOutput
@@ -2285,7 +2257,7 @@ VERSION_NUMBER = 1.142
         
             if isRemote() == 0 or RemoteHud then
                 -- Don't even draw this in freelook
-            if not IsInFreeLook() or brightHud then
+                if not IsInFreeLook() or brightHud then
                     if nearPlanet then -- use real pitch, roll, and heading
                         DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
                         DrawArtificialHorizon(newContent, originalPitch, originalRoll, centerX, centerY, nearPlanet, mfloor(getRelativeYaw(velocity)), speed)
@@ -2297,6 +2269,7 @@ VERSION_NUMBER = 1.142
                     DrawPrograde(newContent, velocity, speed, centerX, centerY)
                 end
             end
+
             DrawThrottle(newContent, flightStyle, throt, flightValue)
         
             -- PRIMARY DATA DISPLAYS
@@ -2305,6 +2278,7 @@ VERSION_NUMBER = 1.142
         
             DrawWarnings(newContent)
             DisplayOrbitScreen(newContent)
+
             if showHelp then DisplayHelp(newContent) end
             if screen_2 then
                 local pos = worldPos
@@ -2320,26 +2294,19 @@ VERSION_NUMBER = 1.142
             return newContent
         end
 
-        function Hud.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime, atmos)
+        function Hud.ExtraData(newContent)
             local xg = ConvertResolutionX(1240)
             local yg1 = ConvertResolutionY(55)
             local yg2 = yg1+10
-            local gravity = core.g()
-            local maxMass = 0
-            local reqThrust = 0
+            local gravity 
+
             local brakeValue = 0
             local flightStyle = GetFlightStyle()
             if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
             if TurnBurn then flightStyle = "TB-"..flightStyle end
-            if inAtmo then brakeValue = LastMaxBrakeInAtmo else brakeValue = LastMaxBrake end
-            maxThrust = Nav:maxForceForward()
-            totalMass = constructMass()
+
             local accel = (vec3(core.getWorldAcceleration()):len() / 9.80665)
             gravity =  (planet:getGravity(planet.center + (vec3(0, 0, 1) * planet.radius)):len())
-            if gravity > 0.1 then
-                reqThrust = totalMass * gravity
-                maxMass = maxThrust / gravity
-            end
             newContent[#newContent + 1] = [[<g class="pdim txt txtend">]]
             if isRemote() == 1 and not RemoteHud then
                 xg = ConvertResolutionX(1120)
@@ -2347,51 +2314,49 @@ VERSION_NUMBER = 1.142
                 yg2 = yg1+10
             elseif inAtmo then -- We only show atmo when not remote
                 local atX = ConvertResolutionX(770)
-                newContent[#newContent + 1] = stringf([[
-                    <text x="%d" y="%d">ATMOSPHERE</text>
-                    <text x="%d" y="%d">%.2f</text>
-                ]], atX, yg1, atX, yg2, atmosDensity)
+                newContent[#newContent + 1] = svgText(atX, yg1, "ATMOSPHERE", "pdim txt txtend")
+                newContent[#newContent + 1] = svgText( atX, yg2, stringf("%.2f", atmosDensity), "pdim txt txtend","")
             end
-            newContent[#newContent + 1] = stringf([[
-                <g class="pbright txtend">
-                </g>
-                <text x="%d" y="%d">GRAVITY</text>
-                <text x="%d" y="%d">%.2f g</text>
-                <text x="%d" y="%d">ACCEL</text>
-                <text x="%d" y="%d">%.2f g</text>
-                ]], xg, yg1, xg, yg2, (gravity / 9.80665), xg, yg1 + 20, xg, yg2 + 20, accel)
+            newContent[#newContent + 1] = svgText(xg, yg1, "GRAVITY", "pdim txt txtend")
+            newContent[#newContent + 1] = svgText(xg, yg2, stringf("%.2f", (gravity / 9.80665)), "pdim txt txtend")
+            newContent[#newContent + 1] = svgText(xg, yg1 + 20, "ACCEL", "pdim txt txtend")
+            newContent[#newContent + 1] = svgText(xg, yg2 + 20, stringf("%.2f", accel), "pdim txt txtend") 
+            newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(180), flightStyle, "txtbig txtmid")
+        end
+
+        function Hud.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
+            local gravity 
+            local maxMass = 0
+            local reqThrust = 0
+            local brakeValue = 0
+            if inAtmo then brakeValue = LastMaxBrakeInAtmo else brakeValue = LastMaxBrake end
+            maxThrust = Nav:maxForceForward()
+            totalMass = constructMass()
+            gravity =  (planet:getGravity(planet.center + (vec3(0, 0, 1) * planet.radius)):len())
+            if gravity > 0.1 then
+                reqThrust = totalMass * gravity
+                maxMass = maxThrust / gravity
+            end
             newContent[#newContent + 1] = stringf([[
                 <g class="pbright txt">
                 <path class="linethick" d="M %d 0 L %d %d Q %d %d %d %d L %d 0"/>]],
                 ConvertResolutionX(660), ConvertResolutionX(700), ConvertResolutionY(35), ConvertResolutionX(960), ConvertResolutionY(55),
                 ConvertResolutionX(1240), ConvertResolutionY(35), ConvertResolutionX(1280))
             if isRemote() == 0 or RemoteHud then
-                newContent[#newContent + 1] = stringf([[
-                    <text class="txtstart" x="%d" y="%d" >Trip: %.2f km</text>
-                    <text class="txtstart" x="%d" y="%d">Lifetime: %.2f Mm</text>
-                    <text class="txtstart" x="%d" y="%d">Trip Time: %s</text>
-                    <text class="txtstart" x="%d" y="%d">Total Time: %s</text>
-                    <text class="txtstart" x="%d" y="%d">Mass: %.2f Tons</text>
-                    <text class="txtend" x="%d" y="%d">Max Brake: %.2f kN</text>
-                    <text class="txtend" x="%d" y="%d">Max Thrust: %.2f kN</text>
-                    <text class="txtbig txtmid" x="%d" y="%d">%s</text>]],
-                    ConvertResolutionX(700), ConvertResolutionY(20), totalDistanceTrip, ConvertResolutionX(700), ConvertResolutionY(30), (TotalDistanceTravelled / 1000),
-                    ConvertResolutionX(830), ConvertResolutionY(20), FormatTimeString(flightTime), ConvertResolutionX(830), ConvertResolutionY(30), FormatTimeString(TotalFlightTime),
-                    ConvertResolutionX(970), ConvertResolutionY(20), (totalMass / 1000), ConvertResolutionX(1240), ConvertResolutionY(10), (brakeValue / 1000),
-                    ConvertResolutionX(1240), ConvertResolutionY(30), (maxThrust / 1000), ConvertResolutionX(960), ConvertResolutionY(180), flightStyle)
-                if gravity > 0.1 then
-                    newContent[#newContent + 1] = stringf([[
-                            <text class="txtstart" x="%d" y="%d">Max Mass: %.2f Tons</text>
-                            <text class="txtend" x="%d" y="%d">Req Thrust: %.2f kN</text>
-                    ]], ConvertResolutionX(970), ConvertResolutionY(30), (maxMass / 1000), ConvertResolutionX(1240), ConvertResolutionY(20), (reqThrust / 1000))
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(20), stringf("Trip: %.2f km", totalDistanceTrip), "txtstart") 
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(30), stringf("Lifetime: %.2f Mm", (TotalDistanceTravelled / 1000)), "txtstart") 
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(20), "Trip Time: "..FormatTimeString(flightTime), "txtstart") 
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(30), "Total Time: "..FormatTimeString(TotalFlightTime), "txtstart") 
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(20), stringf("Mass: %.2f Tons", (totalMass / 1000)), "txtstart") 
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(10), stringf("Max Brake: %.2f kN",  (brakeValue / 1000)), "txtend") 
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(30), stringf("Max Thrust: %.2f kN", (maxThrust / 1000)), "txtend") 
+                 if gravity > 0.1 then
+                    newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(30), stringf("Max Mass: %.2f Tons", (maxMass / 1000)), "txtstart") 
+                    newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(20), stringf("Req Thrust: %.2f kN", (reqThrust / 1000)), "txtend") 
                 else
-                    newContent[#newContent + 1] = stringf([[
-                        <text class="txtstart" x="%d" y="%d" text-anchor="start">Max Mass: n/a</text>
-                        <text class="txtend" x="%d" y="%d" text-anchor="end">Req Thrust: n/a</text>
-                    ]], ConvertResolutionX(970), ConvertResolutionY(30), ConvertResolutionX(1240), ConvertResolutionY(20))
+                    newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(30), "Max Mass: n/a", "txtstart") 
+                    newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(20), "Req Thrust: n/a", "txtend") 
                 end
-            else -- If remote controlled, draw stuff near the top so it's out of the way
-                newContent[#newContent + 1] = svgText("txtbig txtmid", ConvertResolutionX(960), ConvertResolutionY(33), "", flightStyle)
             end
             newContent[#newContent + 1] = "</g>"
             return newContent
@@ -2407,11 +2372,11 @@ VERSION_NUMBER = 1.142
 
         function Hud.DisplayMessage(newContent, displayText)
             if displayText ~= "empty" then
-                newContent[#newContent + 1] = [[<text class="msg" x="50%%" y="310" >]]
+                local y = 310
                 for str in string.gmatch(displayText, "([^\n]+)") do
-                    newContent[#newContent + 1] = stringf([[<tspan x="50%%" dy="35">%s</tspan>]], str)
+                    y = y + 35
+                    newContent[#newContent + 1] = svgText("50%", y, str, "msg")
                 end
-                newContent[#newContent + 1] = [[</text>]]
             end
             if msgTimer ~= 0 then
                 unit.setTimer("msgTick", msgTimer)
@@ -2443,7 +2408,7 @@ VERSION_NUMBER = 1.142
                     if radarPanelID == nil then
                         ToggleRadarPanel()
                     end
-                    radarMessage = svgText("pbright txtbig txtmid", radarX, radarY, "", stringf("Radar: %i contacts", #radarContacts))
+                    radarMessage = svgText(radarX, radarY, "Radar: "..#radarContacts.." contacts", "pbright txtbig txtmid")
                     local friendlies = {}
                     for k, v in pairs(radarContacts) do
                         if radar_1.hasMatchingTransponder(v) == 1 then
@@ -2453,19 +2418,19 @@ VERSION_NUMBER = 1.142
                     if #friendlies > 0 then
                         local y = ConvertResolutionY(15)
                         local x = ConvertResolutionX(1370)
-                        radarMessage = radarMessage..svgText("pbright txtbig txtmid", x, y, "", "Friendlies In Range")
+                        radarMessage = radarMessage..svgText( x, y, "Friendlies In Range", "pbright txtbig txtmid")
                         for k, v in pairs(friendlies) do
                             y = y + 20
-                            radarMessage = radarMessage..svgText("pdim txtmid", x, y, "", radar_1.getConstructName(v))
+                            radarMessage = radarMessage..svgText(x, y, radar_1.getConstructName(v), "pdim txtmid")
                         end
                     end
                 else
                     local data
                     data = radarData:find('worksInEnvironment":false')
                     if data then
-                        radarMessage = svgText("pbright txtbig txtmid", radarX, radarY, "", "Radar: Jammed")
+                        radarMessage = svgText(radarX, radarY, "Radar: Jammed", "pbright txtbig txtmid")
                     else
-                        radarMessage = svgText("pbright txtbig txtmid", radarX, radarY, "", "Radar: No Contacts")
+                        radarMessage = svgText(radarX, radarY, "Radar: No Contacts", "pbright txtbig txtmid")
                     end
                     if radarPanelID ~= nil then
                         peris = 0
@@ -2475,6 +2440,24 @@ VERSION_NUMBER = 1.142
             end
         end
 
+        function Hud.DrawSettings(newContent)
+            if #settingsVariables > 0  then
+                local x = ConvertResolutionX(640)
+                local y = ConvertResolutionY(200)
+                newContent[#newContent + 1] = [[<g class="pbright txtvspd txtstart">]]
+                for k, v in pairs(settingsVariables) do
+                    newContent[#newContent + 1] = svgText(x, y, v..": ".._G[v])
+                    y = y + 20
+                    if k%12 == 0 then
+                        x = x + ConvertResolutionX(350)
+                        y = ConvertResolutionY(200)
+                    end
+                end
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(640), ConvertResolutionY(200)+260, "To Change: In Lua Chat, enter /G VariableName Value")
+                newContent[#newContent + 1] = "</g>"
+            end
+            return newContent
+        end
         return Hud
     end     
 
@@ -4071,7 +4054,7 @@ VERSION_NUMBER = 1.142
                 if dbHud_1 then
                     local hasKey = dbHud_1.hasKey
                     if not useTheseSettings then 
-                        processVariableList(saveableVariables)
+                        processVariableList(saveableVariables())
                     else
                         msgText = "Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use saved values"
                         msgTimer = 5
@@ -4079,7 +4062,7 @@ VERSION_NUMBER = 1.142
                     coroutine.yield()
                     processVariableList(autoVariables)
                     if valuesAreSet then
-                        msgText = "Loaded Saved Variables (see Lua Chat Tab for list)"
+                        msgText = "Loaded Saved Variables\n(see Lua Chat Tab for list)"
                         halfResolutionX = round(ResolutionX / 2,0)
                         halfResolutionY = round(ResolutionY / 2,0)
                         resolutionWidth = ResolutionX
@@ -4346,35 +4329,81 @@ VERSION_NUMBER = 1.142
                 
             end
 
+            local function ToggleShownSettings(whichVar)
+                if not showSettings then
+                    showHandlingVariables = false
+                    showHudVariables = false
+                    showPhysicsVariables = false
+                    showHud = true
+                    return
+                elseif whichVar == "handling" then
+                    showHandlingVariables = not showHandlingVariables
+                    showHudVariables = false
+                    showPhysicsVariables = false
+                elseif whichVar == "hud" then 
+                    showHudVariables = not showHudVariables
+                    showHandlingVariables = false
+                    showPhysicsVariables = false
+                elseif whichVar == "physics" then
+                    showPhysicsVariables = not showPhysicsVariables
+                    showHandlingVariables = false
+                    showHudVariables = false
+                end
+                if showPhysicsVariables or showHudVariables or showHandlingVariables then 
+                    settingsVariables = saveableVariables(whichVar)
+                    showHud = false 
+                else
+                    settingsVariables = {}
+                    showHud = true
+                end
+            end
+
             local function ToggleButtons()
                 showSettings = not showSettings 
                 if showSettings then 
                     Buttons = SettingButtons
                     msgText = "Hold SHIFT to see Settings" 
+                    oldShowHud = showHud
                 else
                     Buttons = ControlButtons
                     msgText = "Hold SHIFT to see Control Buttons"
+                    ToggleShownSettings()
+                    showHud = oldShowHud
                 end
             end
-
+            
             local function SettingsButtons()
                 local buttonHeight = 50
-                local buttonWidth = 400 -- Defaults
-                local x = 200
+                local buttonWidth = 340 -- Defaults
+                local x = 500
                 local y = resolutionHeight / 2 - 400
                 local cnt = 0
-                for k, v in pairs(saveableVariables) do
+                for k, v in pairs(saveableVariables("boolean")) do
                     if type(_G[v]) == "boolean" then
-                        MakeButton(v, v, buttonWidth, buttonHeight, x, y,
-                            function() return _G[v] end, 
-                            function () 
-                                _G[v] = not _G[v]
-                                if _G[v] then 
-                                    msgText = v.." set to true"
-                                else
-                                    msgText = v.." set to false"
-                                end
-                            end, function() return true end, true)   
+                        if v ~= "showHud" then 
+                            MakeButton(v, v, buttonWidth, buttonHeight, x, y,
+                                function() return _G[v] end, 
+                                function () 
+                                    _G[v] = not _G[v]
+                                    if _G[v] then 
+                                        msgText = v.." set to true"
+                                    else
+                                        msgText = v.." set to false"
+                                    end
+                                end, function() return true end, true)   
+                        else
+                            MakeButton(v, v, buttonWidth, buttonHeight, x, y,
+                                function() return _G[v] end, 
+                                function () 
+                                    _G[v] = not _G[v]
+                                    if _G[v] then 
+                                        msgText = v.." set to true"
+                                    else
+                                        msgText = v.." set to false"
+                                    end
+                                    oldShowHud = _G[v]
+                                end, function() return true end, true) 
+                        end
                         y = y + buttonHeight + 20
                         if cnt == 7 then 
                             x = x + buttonWidth + 20 
@@ -4386,7 +4415,16 @@ VERSION_NUMBER = 1.142
                     end
                 end
                 MakeButton("Control View", "Control View", buttonWidth, buttonHeight, 10, resolutionHeight / 2 - 500, function() return true end, 
-                ToggleButtons, function() return true end, true)
+                    ToggleButtons, function() return true end, true)
+                MakeButton("View Handling Settings", 'Hide Handling Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight), 
+                    function() return showHandlingVariables end, function() ToggleShownSettings("handling") end, 
+                    function() return true end, true)
+                MakeButton("View Hud Settings", 'Hide Hud Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight*2), 
+                    function() return showHudVariables end, function() ToggleShownSettings("hud") end, 
+                    function() return true end, true)
+                MakeButton("View Physics Settings", 'Hide Physics Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight*3), 
+                    function() return showPhysicsVariables end, function() ToggleShownSettings("physics") end, 
+                    function() return true end, true)
             end
             
             local function ControlsButtons()
@@ -4589,21 +4627,21 @@ VERSION_NUMBER = 1.142
                 y = y + buttonHeight + 20
                 MakeButton("Engage Follow Mode", "Disable Follow Mode", buttonWidth, buttonHeight, x, y, function()
                     return followMode
-                end, ToggleFollowMode, function()
-                    return isRemote() == 1
-                end)
-                MakeButton("Enable Repair Arrows", "Disable Repair Arrows", buttonWidth, buttonHeight, x + buttonWidth + 20, y, function()
-                    return repairArrows
-                end, function()
-                    repairArrows = not repairArrows
-                    if (repairArrows) then
-                        msgText = "Repair Arrows Enabled"
-                    else
-                        msgText = "Repair Arrows Diabled"
-                    end
-                end, function()
-                    return isRemote() == 1
-                end)
+                    end, ToggleFollowMode, function()
+                        return isRemote() == 1
+                    end)
+                    MakeButton("Enable Repair Arrows", "Disable Repair Arrows", buttonWidth, buttonHeight, x + buttonWidth + 20, y, function()
+                        return repairArrows
+                    end, function()
+                        repairArrows = not repairArrows
+                        if (repairArrows) then
+                            msgText = "Repair Arrows Enabled"
+                        else
+                            msgText = "Repair Arrows Diabled"
+                        end
+                    end, function()
+                        return isRemote() == 1
+                    end)
                 y = y + buttonHeight + 20
                 if not ExternalAGG then
                     MakeButton("Enable AGG", "Disable AGG", buttonWidth, buttonHeight, x, y, function()
@@ -4611,21 +4649,20 @@ VERSION_NUMBER = 1.142
                     return antigrav ~= nil end)
                 end   
                 y = y + buttonHeight + 20
-                MakeButton(function()
-                    return stringf("Toggle Control Scheme - Current: %s", userControlScheme)
-                end, function()
-                    return stringf("Control Scheme: %s", userControlScheme)
-                end, buttonWidth * 2, buttonHeight, x, y, function()
-                    return false
-                end, function()
-                    if userControlScheme == "keyboard" then
-                        userControlScheme = "mouse"
-                    elseif userControlScheme == "mouse" then
-                        userControlScheme = "virtual joystick"
-                    else
-                        userControlScheme = "keyboard"
-                    end
-                end)
+                MakeButton(function() return stringf("Toggle Control Scheme - Current: %s", userControlScheme)
+                    end, function()
+                        return stringf("Control Scheme: %s", userControlScheme)
+                    end, buttonWidth * 2, buttonHeight, x, y, function()
+                        return false
+                    end, function()
+                        if userControlScheme == "keyboard" then
+                            userControlScheme = "mouse"
+                        elseif userControlScheme == "mouse" then
+                            userControlScheme = "virtual joystick"
+                        else
+                            userControlScheme = "keyboard"
+                        end
+                    end)
             end
 
             local function SetupAtlas()
@@ -5326,18 +5363,17 @@ VERSION_NUMBER = 1.142
                         end
                         percentDam = mfloor((curShipHP / maxShipHP)*100)
                         if percentDam < 100 then
-                            newContent[#newContent + 1] = [[<g class="pbright txt">]]
+                            newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
                             colorMod = mfloor(percentDam * 2.55)
                             color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
                             if percentDam < 100 then
-                                newContent[#newContent + 1] = svgText("txtbig txtmid","50%", 1035, "fill:"..color , stringf("Elemental Integrity: %i %%", percentDam))
+                                newContent[#newContent + 1] = svgText("50%", 1035, "Elemental Integrity: "..percentDam.."%", "txtbig txtmid","fill:"..color )
                                 if (disabledElements > 0) then
-                                    newContent[#newContent + 1] = svgText("txtbig txtmid","50%",1055,"fill:" .. color, stringf("Disabled Modules: %i Damaged Modules: %i",disabledElements, damagedElements))
+                                    newContent[#newContent + 1] = svgText("50%",1055, "Disabled Modules: "..disabledElements.." Damaged Modules: "..damagedElements, "txtbig txtmid","fill:"..color)
                                 elseif damagedElements > 0 then
-                                    newContent[#newContent + 1] = svgText("txtbig txtmid","50%", 1055, "fill:" .. color, stringf("Damaged Modules: %i", damagedElements))
+                                    newContent[#newContent + 1] = svgText("50%", 1055, "Damaged Modules: "..damagedElements, "txtbig txtmid", "fill:" .. color)
                                 end
                             end
-                            newContent[#newContent + 1] = [[<\g>]]
                         end
                     end
                     local function updateWeapons()
@@ -5374,6 +5410,7 @@ VERSION_NUMBER = 1.142
                 updateWeapons()
                 -- Update odometer output string
                 local newContent = {}
+                HUD.ExtraData(newContent)
                 if ShowOdometer then 
                     newContent = HUD.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime) 
                 end
@@ -5537,6 +5574,9 @@ VERSION_NUMBER = 1.142
                     HUD.DisplayOrbitScreen(newContent)
                     HUD.DrawWarnings(newContent)
                 end
+                if showSettings and settingsVariables ~= {} then 
+                    HUD.DrawSettings(newContent) 
+                end
                 HUD.HUDEpilogue(newContent)
                 newContent[#newContent + 1] = stringf(
                     [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
@@ -5663,8 +5703,8 @@ VERSION_NUMBER = 1.142
                 local up = worldVertical * -1
 
                 stalling = inAtmo and currentYaw < -YawStallAngle or currentYaw > YawStallAngle or currentPitch < -PitchStallAngle or currentPitch > PitchStallAngle
-                deltaX = system.getMouseDeltaX()
-                deltaY = system.getMouseDeltaY()
+                local deltaX = system.getMouseDeltaX()
+                local deltaY = system.getMouseDeltaY()
 
                 if InvertMouse and not holdingCtrl then deltaY = -deltaY end
                 yawInput2 = 0
@@ -7842,7 +7882,7 @@ VERSION_NUMBER = 1.142
     function script.onInputText(text)
         -- Local functions for onInputText
             local function wipeSaveVariables()
-                for k, v in pairs(saveableVariables) do
+                for k, v in pairs(saveableVariables()) do
                     dbHud_1.setStringValue(v, jencode(nil))
                 end
                 for k, v in pairs(autoVariables) do
@@ -7962,7 +8002,7 @@ VERSION_NUMBER = 1.142
                 return
             end
             if arguement == "dump" then
-                for k, v in pairs(saveableVariables) do
+                for k, v in pairs(saveableVariables()) do
                     if type(_G[v]) == "boolean" then
                         if _G[v] == true then
                             system.print(v.." true")
@@ -7980,7 +8020,7 @@ VERSION_NUMBER = 1.142
             i = string.find(arguement, " ")
             local globalVariableName = string.sub(arguement,0, i-1)
             local newGlobalValue = string.sub(arguement,i+1)
-            for k, v in pairs(saveableVariables) do
+            for k, v in pairs(saveableVariables()) do
                 if v == globalVariableName then
                     msgText = "Variable "..globalVariableName.." changed to "..newGlobalValue
                     local varType = type(_G[v])
