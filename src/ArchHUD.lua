@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.142
+VERSION_NUMBER = 1.143
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -1398,12 +1398,8 @@ VERSION_NUMBER = 1.142
                 newContent[#newContent + 1] = stringf([[<<polygon points="%d,%d %d,%d %d,%d"/>]],
                     yawx-5, yawy+10, yawx+5, yawy+10, yawx, yawy+5)
                 if nearPlanet then bottomText = "HDG" end
-                newContent[#newContent + 1] = stringf([["
-                    <g class="pdim txt txtmid">
-                    <text x="%d" y="%d">%d deg</text>
-                    <text x="%d" y="%d">%s</text>
-                    </g>
-                    ]], yawx, yawy+25, yawC, yawx, yawy+35, bottomText)
+                newContent[#newContent + 1] = svgText("pdim txt txtmid", yawx, yawy+25, "", yawC.."deg" )
+                newContent[#newContent + 1] = svgText("pdim txt txtmid", yawx, yawy+35, "", bottomText)
             end
 
             local function DrawArtificialHorizon(newContent, originalPitch, originalRoll, centerX, centerY, nearPlanet, atmoYaw, speed)
@@ -1436,8 +1432,8 @@ VERSION_NUMBER = 1.142
                                         (-1 * originalRoll), centerX, centerY, centerX-pitchX+20, y, pitchX*2-40)
                                 end
                             else
-                                newContent[#newContent + 1] = stringf([[<g class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]], centerX-pitchX+10, y, i)
-                                newContent[#newContent + 1] = stringf([[<g class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]], centerX+pitchX-10, y, i)
+                                newContent[#newContent + 1] = svgText("pdim txt txtmid", centerX-pitchX+10, y, "", i )
+                                newContent[#newContent + 1] = svgText("pdim txt txtmid", centerX+pitchX-10, y, "", i )
                             end                            
                             tickerPath = stringf([[%s M %d %f h %d]], tickerPath, centerX+pitchX, y, len)
                         else
@@ -1458,12 +1454,8 @@ VERSION_NUMBER = 1.142
                     if horizonRadius > 200 then
                         if inAtmo then
                             if speed > minAutopilotSpeed then
-                                newContent[#newContent + 1] = stringf([["
-                                <g class="pdim txt txtmid">
-                                <text x="%d" y="%d">%s</text>
-                                <text x="%d" y="%d">%d deg</text>
-                                </g>
-                                ]],  centerX, centerY-15, "Yaw", centerX, centerY+20, atmoYaw)                            
+                                newContent[#newContent + 1] = svgText("pdim txt txtmid", centerX, centerY-15, "", "Yaw")
+                                newContent[#newContent + 1] = svgText("pdim txt txtmid", centerX, centerY+20, "", atmoYaw)
                             end
                             newContent[#newContent + 1] = stringf([[<g transform="rotate(%f,%d,%d)">]], -originalRoll, centerX, centerY)
                         else
@@ -1485,14 +1477,10 @@ VERSION_NUMBER = 1.142
                     newContent[#newContent + 1] = "</g>"
                     if horizonRadius < 200 then
                         if inAtmo and speed > minAutopilotSpeed then 
-                            newContent[#newContent + 1] = stringf([["
-                            <g class="pdim txt txtmid">
-                            <text x="%d" y="%d">%s</text>
-                            <text x="%d" y="%d">%d deg</text>
-                            <text x="%d" y="%d">%s</text>
-                            <text x="%d" y="%d">%d deg</text>
-                            </g>
-                            ]], centerX, centerY-horizonRadius, pitchstring, centerX, centerY-horizonRadius+10, pitchC, centerX, centerY-15, "Yaw", centerX, centerY+20, atmoYaw)
+                            newContent[#newContent + 1] = svgText("pdim txt txtmid", centerX, centerY-horizonRadius, "", pitchstring)
+                            newContent[#newContent + 1] = svgText("pdim txt txtmid", centerX, centerY-horizonRadius+10, "", pitchC)
+                            newContent[#newContent + 1] = svgText("pdim txt txtmid", centerX, centerY-15, "", "Yaw")
+                            newContent[#newContent + 1] = svgText("pdim txt txtmid", centerX, centerY+20, "", atmoYaw)
                         else
                             newContent[#newContent + 1] = stringf([["
                             <g class="pdim txt txtmid">
@@ -1514,11 +1502,7 @@ VERSION_NUMBER = 1.142
                 local gndHeight = AboveGroundLevel()
             
                 if gndHeight ~= -1 then
-                    table.insert(newContent, stringf([[
-                    <g class="pdim altsm txtend">
-                    <text x="%d" y="%d">AGL: %.1fm</text>
-                    </g>
-                    ]], rectX+rectW, rectY+rectH+20, gndHeight))
+                    newContent[#newContent + 1] = svgText("pdim altsm txtend", rectX+rectW, rectY+rectH+20, "", stringf("AGL: %.1fm", gndHeight))
                 end
             
                 if nearPlanet and ((altitude < 200000 and not inAtmo) or (altitude and inAtmo)) then
@@ -1582,13 +1566,8 @@ VERSION_NUMBER = 1.142
                         local x = rectX + glyphXOffset + (6 - index) * glyphW
                         local y = rectY + glyphYOffset
                         
-                        -- <g class="%s" clip-path="url(#%s)">
-                        table.insert(newContent, stringf([[
-                            <g class="%s">
-                            <text x="%d" y="%f">%d</text>
-                            <text x="%d" y="%f">%d</text>
-                            </g>
-                        ]], class, x, y + topGlyphOffset, fracDigit, x, y + botGlyphOffset, intDigit))
+                        newContent[#newContent + 1] = svgText(class, x, y + topGlyphOffset, "",fracDigit )
+                        newContent[#newContent + 1] = svgText(class, x, y + botGlyphOffset, "",intDigit )
                         
                         index = index + 1
                         divisor = divisor * 10
@@ -1759,13 +1738,8 @@ VERSION_NUMBER = 1.142
                         </g>]], throtclass, throtPosX-7, throtPosY-50, throtPosX, throtPosY-50, throtPosX, throtPosY+50, throtPosX-7, throtPosY+50, (1 - mabs(throt)), 
                         throtPosX-10, throtPosY+50, throtPosX-15, throtPosY+53, throtPosX-15, throtPosY+47)
                 end
-                newContent[#newContent + 1] = stringf([[
-                    <g class="pbright txtstart">
-                            <text x="%s" y="%s">%s</text>
-                            <text x="%s" y="%s">%.0f %s</text>
-                    </g>
-                </g>]], throtPosX+10, y1, label, throtPosX+10, y2, value, unit)
-            
+                newContent[#newContent + 1] = svgText("pbright txtstart", throtPosX+10, y1, "",label )
+                newContent[#newContent + 1] = svgText("pbright txtstart", throtPosX+10, y2, "",stringf("%.0f %s", value, unit))
                 if inAtmo and AtmoSpeedAssist and throttleMode and ThrottleLimited then
                     -- Display a marker for where the AP throttle is putting it, calculatedThrottle
             
@@ -1798,26 +1772,16 @@ VERSION_NUMBER = 1.142
                 if isRemote() == 1 and not RemoteHud then
                     ys = 75
                 end
-                newContent[#newContent + 1] = stringf([[
-                    <g class="pbright txtstart">
-                        <text class="txtbig" x="%d" y="%d">%d km/h</text>
-                    </g>
-                </g>]], x1, ys, mfloor(spd))
+                newContent[#newContent + 1] = svgText("pbright txtbig txtstart",  x1, ys, "",mfloor(spd).." km/h" )
             end
 
             local function DrawWarnings(newContent)
                 newContent[#newContent + 1] = svgText("hudver", ConvertResolutionX(1900), ConvertResolutionY(1070), "", stringf("ARCH Hud Version: %.3f", VERSION_NUMBER))
                 newContent[#newContent + 1] = [[<g class="warnings">]]
                 if unit.isMouseControlActivated() == 1 then
-                    newContent[#newContent + 1] = stringf([[
-                        <text x="%d" y="%d">Warning: Invalid Control Scheme Detected</text>]],
-                        ConvertResolutionX(960), ConvertResolutionY(550))
-                    newContent[#newContent + 1] = stringf([[
-                        <text x="%d" y="%d">Keyboard Scheme must be selected</text>]],
-                        ConvertResolutionX(960), ConvertResolutionY(600))
-                    newContent[#newContent + 1] = stringf([[
-                        <text x="%d" y="%d">Set your preferred scheme in Lua Parameters instead</text>]],
-                        ConvertResolutionX(960), ConvertResolutionY(650))
+                    newContent[#newContent + 1] = svgText("warnings", ConvertResolutionX(960), ConvertResolutionY(550), "", "Warning: Invalid Control Scheme Detected")
+                    newContent[#newContent + 1] = svgText("warnings", ConvertResolutionX(960), ConvertResolutionY(600), "", "Keyboard Scheme must be selected")
+                    newContent[#newContent + 1] = svgText("warnings", ConvertResolutionX(960), ConvertResolutionY(650), "", "Set your preferred scheme in Lua Parameters instead")
                 end
                 local warningX = ConvertResolutionX(960)
                 local brakeY = ConvertResolutionY(860)
@@ -2347,48 +2311,34 @@ VERSION_NUMBER = 1.142
                 yg2 = yg1+10
             elseif inAtmo then -- We only show atmo when not remote
                 local atX = ConvertResolutionX(770)
-                newContent[#newContent + 1] = stringf([[
-                    <text x="%d" y="%d">ATMOSPHERE</text>
-                    <text x="%d" y="%d">%.2f</text>
-                ]], atX, yg1, atX, yg2, atmosDensity)
+                newContent[#newContent + 1] = svgText("pdim txt txtend", atX, yg1, "", "ATMOSPHERE")
+                newContent[#newContent + 1] = svgText("pdim txt txtend", atX, yg2, "", stringf("%.2f", atmosDensity))
             end
-            newContent[#newContent + 1] = stringf([[
-                <g class="pbright txtend">
-                </g>
-                <text x="%d" y="%d">GRAVITY</text>
-                <text x="%d" y="%d">%.2f g</text>
-                <text x="%d" y="%d">ACCEL</text>
-                <text x="%d" y="%d">%.2f g</text>
-                ]], xg, yg1, xg, yg2, (gravity / 9.80665), xg, yg1 + 20, xg, yg2 + 20, accel)
+            newContent[#newContent + 1] = svgText("pdim txt txtend", xg, yg1, "", "GRAVITY")
+            newContent[#newContent + 1] = svgText("pdim txt txtend", xg, yg2, "", stringf("%.2f", (gravity / 9.80665)))
+            newContent[#newContent + 1] = svgText("pdim txt txtend", xg, yg1 + 20, "", "ACCEL")
+            newContent[#newContent + 1] = svgText("pdim txt txtend", xg, yg2 + 20, "", stringf("%.2f", accel)) 
             newContent[#newContent + 1] = stringf([[
                 <g class="pbright txt">
                 <path class="linethick" d="M %d 0 L %d %d Q %d %d %d %d L %d 0"/>]],
                 ConvertResolutionX(660), ConvertResolutionX(700), ConvertResolutionY(35), ConvertResolutionX(960), ConvertResolutionY(55),
                 ConvertResolutionX(1240), ConvertResolutionY(35), ConvertResolutionX(1280))
             if isRemote() == 0 or RemoteHud then
-                newContent[#newContent + 1] = stringf([[
-                    <text class="txtstart" x="%d" y="%d" >Trip: %.2f km</text>
-                    <text class="txtstart" x="%d" y="%d">Lifetime: %.2f Mm</text>
-                    <text class="txtstart" x="%d" y="%d">Trip Time: %s</text>
-                    <text class="txtstart" x="%d" y="%d">Total Time: %s</text>
-                    <text class="txtstart" x="%d" y="%d">Mass: %.2f Tons</text>
-                    <text class="txtend" x="%d" y="%d">Max Brake: %.2f kN</text>
-                    <text class="txtend" x="%d" y="%d">Max Thrust: %.2f kN</text>
-                    <text class="txtbig txtmid" x="%d" y="%d">%s</text>]],
-                    ConvertResolutionX(700), ConvertResolutionY(20), totalDistanceTrip, ConvertResolutionX(700), ConvertResolutionY(30), (TotalDistanceTravelled / 1000),
-                    ConvertResolutionX(830), ConvertResolutionY(20), FormatTimeString(flightTime), ConvertResolutionX(830), ConvertResolutionY(30), FormatTimeString(TotalFlightTime),
-                    ConvertResolutionX(970), ConvertResolutionY(20), (totalMass / 1000), ConvertResolutionX(1240), ConvertResolutionY(10), (brakeValue / 1000),
-                    ConvertResolutionX(1240), ConvertResolutionY(30), (maxThrust / 1000), ConvertResolutionX(960), ConvertResolutionY(180), flightStyle)
+                newContent[#newContent + 1] = svgText("txtstart", ConvertResolutionX(700), ConvertResolutionY(20), "", stringf("Trip: %.2f km", totalDistanceTrip)) 
+                newContent[#newContent + 1] = svgText("txtstart", ConvertResolutionX(700), ConvertResolutionY(30), "", stringf("Lifetime: %.2f Mm", (TotalDistanceTravelled / 1000))) 
+                newContent[#newContent + 1] = svgText("txtstart", ConvertResolutionX(830), ConvertResolutionY(20), "", "Trip Time: "..FormatTimeString(flightTime)) 
+                newContent[#newContent + 1] = svgText("txtstart", ConvertResolutionX(830), ConvertResolutionY(30), "", "Total Time: "..FormatTimeString(TotalFlightTime)) 
+                newContent[#newContent + 1] = svgText("txtstart", ConvertResolutionX(970), ConvertResolutionY(20), "", stringf("Mass: %.2f Tons", (totalMass / 1000))) 
+                newContent[#newContent + 1] = svgText("txtend", ConvertResolutionX(1240), ConvertResolutionY(10), "", stringf("Max Brake: %.2f kN",  (brakeValue / 1000))) 
+                newContent[#newContent + 1] = svgText("txtend", ConvertResolutionX(1240), ConvertResolutionY(30), "", stringf("Max Thrust: %.2f kN", (maxThrust / 1000))) 
+                newContent[#newContent + 1] = svgText("txtbig txtmid", ConvertResolutionX(960), ConvertResolutionY(180), "", flightStyle) 
                 if gravity > 0.1 then
-                    newContent[#newContent + 1] = stringf([[
-                            <text class="txtstart" x="%d" y="%d">Max Mass: %.2f Tons</text>
-                            <text class="txtend" x="%d" y="%d">Req Thrust: %.2f kN</text>
-                    ]], ConvertResolutionX(970), ConvertResolutionY(30), (maxMass / 1000), ConvertResolutionX(1240), ConvertResolutionY(20), (reqThrust / 1000))
+                    newContent[#newContent + 1] = svgText("txtstart", ConvertResolutionX(970), ConvertResolutionY(30), "", stringf("Max Mass: %.2f Tons", (maxMass / 1000))) 
+                    newContent[#newContent + 1] = svgText("txtend", ConvertResolutionX(1240), ConvertResolutionY(20), "", stringf("Req Thrust: %.2f kN", (reqThrust / 1000))) 
                 else
-                    newContent[#newContent + 1] = stringf([[
-                        <text class="txtstart" x="%d" y="%d" text-anchor="start">Max Mass: n/a</text>
-                        <text class="txtend" x="%d" y="%d" text-anchor="end">Req Thrust: n/a</text>
-                    ]], ConvertResolutionX(970), ConvertResolutionY(30), ConvertResolutionX(1240), ConvertResolutionY(20))
+                    newContent[#newContent + 1] = svgText("txtstart", ConvertResolutionX(970), ConvertResolutionY(30), "", "Max Mass: n/a") 
+                    newContent[#newContent + 1] = svgText("txtend", ConvertResolutionX(1240), ConvertResolutionY(20), "", "Req Thrust: n/a") 
+
                 end
             else -- If remote controlled, draw stuff near the top so it's out of the way
                 newContent[#newContent + 1] = svgText("txtbig txtmid", ConvertResolutionX(960), ConvertResolutionY(33), "", flightStyle)
