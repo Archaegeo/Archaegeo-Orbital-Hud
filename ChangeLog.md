@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.145
+- Fixed issue with wrong message display if useTheseSettings checked.
+
 Version 1.144
 - Fix minor hud display errors that came with svg refactor.
 

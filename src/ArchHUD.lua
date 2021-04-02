@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.144
+VERSION_NUMBER = 1.145
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -4055,14 +4055,17 @@ VERSION_NUMBER = 1.144
                     local hasKey = dbHud_1.hasKey
                     if not useTheseSettings then 
                         processVariableList(saveableVariables())
+                        coroutine.yield()
+                        processVariableList(autoVariables)
                     else
+                        processVariableList(autoVariables)
                         msgText = "Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use saved values"
                         msgTimer = 5
+                        valuesAreSet = false
                     end
                     coroutine.yield()
-                    processVariableList(autoVariables)
                     if valuesAreSet then
-                        msgText = "Loaded Saved Variables\n(see Lua Chat Tab for list)"
+                        msgText = "Loaded Saved Variables"
                         halfResolutionX = round(ResolutionX / 2,0)
                         halfResolutionY = round(ResolutionY / 2,0)
                         resolutionWidth = ResolutionX
@@ -4075,11 +4078,11 @@ VERSION_NUMBER = 1.144
                         [[)]]
                         rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..
                         mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]  
-                    else
-                        msgText = "No Saved Variables Found - Stand up / leave remote to save settings"
+                    elseif not useTheseSettings then
+                        msgText = "No Saved Variables Found - Exit HUD to save settings"
                     end
                 else
-                    msgText = "No databank found, install one anywhere and rerun the autoconfigure to save variables"
+                    msgText = "No databank found. Attach one to control unit and rerun the autoconfigure to save preferences and locations"
                 end
             
                 if (LastStartTime + 180) < time then -- Variables to reset if out of seat (and not on hud) for more than 3 min
