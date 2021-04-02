@@ -1,6 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.143
+- In Hud Settings control - version 2: Not in freelook, hold LShift and release over Settings button in upper left to swap buttons to boolean settings.
+hold LShift and release over boolean value to change.  hold Lshift and release of type of non-boolean to see current values.  Use /G VariableName Value to update
 - More cleanup
 
 Version 1.142
