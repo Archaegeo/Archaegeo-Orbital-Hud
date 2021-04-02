@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.143
+VERSION_NUMBER = 1.144
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -1865,15 +1865,15 @@ VERSION_NUMBER = 1.143
                         if antigravOn then
                             displayText, displayUnit = getDistanceDisplayString(antigrav.getBaseAltitude(),2)
                         end
-                        newContent[#newContent + 1] = svgText(warningX, apY, "VTO to %s"..displayText.. displayUnit, "warn")
+                        newContent[#newContent + 1] = svgText(warningX, apY, "VTO to "..displayText.. displayUnit, "warn")
                     elseif AutoTakeoff and not IntoOrbit then
-                        newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to %s"..displayText.. displayUnit, "warn")
+                        newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..displayText.. displayUnit, "warn")
                         if BrakeIsOn and not VertTakeOff then
                             newContent[#newContent + 1] = svgText( warningX, apY + 50,"Throttle Up and Disengage Brake For Takeoff", "crit")
                         end
                 
                     else
-                        newContent[#newContent + 1] = svgText("warn", warningX, apY, "Altitude Hold: %s".. displayText.. displayUnit, "warn")
+                        newContent[#newContent + 1] = svgText(warningX, apY, "Altitude Hold: ".. displayText.. displayUnit, "warn")
                     end
                 end
                 if VertTakeOff and (antigrav ~= nil and antigrav) then
@@ -1908,7 +1908,7 @@ VERSION_NUMBER = 1.143
                         local travelTime = Kinematic.computeTravelTime(velMag, 0, atmoDistance)
                         local displayCollisionType = "Collision"
                         if intersectBody.noAtmosphericDensityAltitude > 0 then displayCollisionType = "Atmosphere" end
-                        newContent[#newContent + 1] = svgText(warningX, turnBurnY, intersectBody.name,displayCollisionType..FormatTimeString(travelTime).." In "..displayText.. displayUnit, "crit")
+                        newContent[#newContent + 1] = svgText(warningX, turnBurnY, intersectBody.name.." "..displayCollisionType.." "..FormatTimeString(travelTime).." In "..displayText.. displayUnit, "crit")
                     
                 end
                 if VectorToTarget and not IntoOrbit then
