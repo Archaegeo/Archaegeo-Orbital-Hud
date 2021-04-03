@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.144
+VERSION_NUMBER = 1.145
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -142,7 +142,7 @@ VERSION_NUMBER = 1.144
     LeftAmount = 0
     IntoOrbit = false
     showHelp = true
-    -- autoVariables are those that are stored on databank to save ships status but are not user settable
+    -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
         local autoVariables = {"showHelp","VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
                     "Autopilot", "TurnBurn", "AltitudeHold", "BrakeLanding",
                     "Reentry", "AutoTakeoff", "HoldAltitude", "AutopilotAccelerating", "AutopilotBraking",
@@ -269,7 +269,6 @@ VERSION_NUMBER = 1.144
     local fuelTimeLeft = {}
     local fuelPercent = {}
     local updateTanks = false
-    local coreOffset = 16
     local updateCount = 0
     local atlas = nil
     local GalaxyMapHTML = ""
@@ -325,11 +324,12 @@ VERSION_NUMBER = 1.144
     local showSettings = false
     local settingsVariables = {}
     local oldShowHud = showHud
+    local AtlasOrdered = {}
 
 -- Function Definitions that are used in more than one area
     local function addTable(table1, table2)
         for i = 1, #table2 do
-            table.insert(table1, table2[i])
+            table1[#table1 + 1 ] = table2[i]
         end
         return table1
     end
@@ -341,7 +341,7 @@ VERSION_NUMBER = 1.144
                 "InvertMouse", "autoRollPreference", "turnAssist", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", 
                 "showHud", "ShowOdometer", "hideHudOnToggleWidgets", "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit"}
-            local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch",
+            local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "TargetOrbitRadius",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
                 "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization"}
@@ -396,7 +396,7 @@ VERSION_NUMBER = 1.144
     local function UpdateAtlasLocationsList()
         AtlasOrdered = {}
         for k, v in pairs(atlas[0]) do
-            table.insert(AtlasOrdered, { name = v.name, index = k} )
+            AtlasOrdered[#AtlasOrdered + 1] = { name = v.name, index = k}
         end
         local function atlasCmp (left, right)
             return left.name < right.name
@@ -4035,6 +4035,7 @@ VERSION_NUMBER = 1.144
 
 -- DU Events written for wrap and minimization. Written by Dimencia and Archaegeo. Optimization and Automation of scripting by ChronosWS  Linked sources where appropriate, most have been modified.
     function script.onStart()
+        local coreOffset = 16
         -- Local functions for onStart
             local function LoadVariables()
 
@@ -4055,14 +4056,17 @@ VERSION_NUMBER = 1.144
                     local hasKey = dbHud_1.hasKey
                     if not useTheseSettings then 
                         processVariableList(saveableVariables())
+                        coroutine.yield()
+                        processVariableList(autoVariables)
                     else
+                        processVariableList(autoVariables)
                         msgText = "Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use saved values"
                         msgTimer = 5
+                        valuesAreSet = false
                     end
                     coroutine.yield()
-                    processVariableList(autoVariables)
                     if valuesAreSet then
-                        msgText = "Loaded Saved Variables\n(see Lua Chat Tab for list)"
+                        msgText = "Loaded Saved Variables"
                         halfResolutionX = round(ResolutionX / 2,0)
                         halfResolutionY = round(ResolutionY / 2,0)
                         resolutionWidth = ResolutionX
@@ -4075,11 +4079,11 @@ VERSION_NUMBER = 1.144
                         [[)]]
                         rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..
                         mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]  
-                    else
-                        msgText = "No Saved Variables Found - Stand up / leave remote to save settings"
+                    elseif not useTheseSettings then
+                        msgText = "No Saved Variables Found - Exit HUD to save settings"
                     end
                 else
-                    msgText = "No databank found, install one anywhere and rerun the autoconfigure to save variables"
+                    msgText = "No databank found. Attach one to control unit and rerun the autoconfigure to save preferences and locations"
                 end
             
                 if (LastStartTime + 180) < time then -- Variables to reset if out of seat (and not on hud) for more than 3 min
