@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.145
+VERSION_NUMBER = 1.146
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -5732,18 +5732,23 @@ VERSION_NUMBER = 1.145
                     notPvPZone = true
                 end
 
-                simulatedX = simulatedX + deltaX
-                simulatedY = simulatedY + deltaY
                 if isRemote() == 1 and screen_1 and screen_1.getMouseY() ~= -1 then
                     simulatedX = screen_1.getMouseX() * resolutionWidth
                     simulatedY = screen_1.getMouseY() * resolutionHeight
                 elseif sysIsVwLock() == 0 then
-                    if not isRemote() == 1 and not holdingCtrl then
+                    if isRemote() == 1 and holdingCtrl then
+                        if not Animating then
+                            simulatedX = simulatedX + deltaX
+                            simulatedY = simulatedY + deltaY
+                        end
+                    else
                         simulatedX = 0
                         simulatedY = 0 -- Reset after they do view things, and don't keep sending inputs while unlocked view
                         -- Except of course autopilot, which is later.
                     end
                 else
+                    simulatedX = simulatedX + deltaX
+                    simulatedY = simulatedY + deltaY
                     distance = math.sqrt(simulatedX * simulatedX + simulatedY * simulatedY)
                     if not holdingCtrl and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                         if userControlScheme == "virtual joystick" then -- Virtual Joystick
@@ -5770,7 +5775,7 @@ VERSION_NUMBER = 1.145
                             if userControlScheme == "mouse" then -- Mouse Direct
                                 pitchInput2 = (-utils.smoothstep(deltaY, -100, 100) + 0.5) * 2 * MousePitchFactor
                                 yawInput2 = (-utils.smoothstep(deltaX, -100, 100) + 0.5) * 2 * MouseYawFactor
-                            end 
+                            end
                         end
                     end
                 end
