@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.145
+Version 1.146
+- Fixed virtual joystick reset after freelook.
 - Fixed issue with wrong message display if useTheseSettings checked.
 - Fixed TargetOrbitRadius missing from saved user variables.
 
