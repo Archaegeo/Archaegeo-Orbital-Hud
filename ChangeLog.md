@@ -2,6 +2,7 @@
 
 Version 1.145
 - Fixed issue with wrong message display if useTheseSettings checked.
+- Fixed TargetOrbitRadius missing from saved user variables.
 
 Version 1.144
 - Fix minor hud display errors that came with svg refactor.

@@ -142,7 +142,7 @@ VERSION_NUMBER = 1.145
     LeftAmount = 0
     IntoOrbit = false
     showHelp = true
-    -- autoVariables are those that are stored on databank to save ships status but are not user settable
+    -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
         local autoVariables = {"showHelp","VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
                     "Autopilot", "TurnBurn", "AltitudeHold", "BrakeLanding",
                     "Reentry", "AutoTakeoff", "HoldAltitude", "AutopilotAccelerating", "AutopilotBraking",
@@ -269,7 +269,6 @@ VERSION_NUMBER = 1.145
     local fuelTimeLeft = {}
     local fuelPercent = {}
     local updateTanks = false
-    local coreOffset = 16
     local updateCount = 0
     local atlas = nil
     local GalaxyMapHTML = ""
@@ -325,11 +324,12 @@ VERSION_NUMBER = 1.145
     local showSettings = false
     local settingsVariables = {}
     local oldShowHud = showHud
+    local AtlasOrdered = {}
 
 -- Function Definitions that are used in more than one area
     local function addTable(table1, table2)
         for i = 1, #table2 do
-            table.insert(table1, table2[i])
+            table1[#table1 + 1 ] = table2[i]
         end
         return table1
     end
@@ -341,7 +341,7 @@ VERSION_NUMBER = 1.145
                 "InvertMouse", "autoRollPreference", "turnAssist", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", 
                 "showHud", "ShowOdometer", "hideHudOnToggleWidgets", "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit"}
-            local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch",
+            local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "TargetOrbitRadius",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
                 "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization"}
@@ -396,7 +396,7 @@ VERSION_NUMBER = 1.145
     local function UpdateAtlasLocationsList()
         AtlasOrdered = {}
         for k, v in pairs(atlas[0]) do
-            table.insert(AtlasOrdered, { name = v.name, index = k} )
+            AtlasOrdered[#AtlasOrdered + 1] = { name = v.name, index = k}
         end
         local function atlasCmp (left, right)
             return left.name < right.name
@@ -4035,6 +4035,7 @@ VERSION_NUMBER = 1.145
 
 -- DU Events written for wrap and minimization. Written by Dimencia and Archaegeo. Optimization and Automation of scripting by ChronosWS  Linked sources where appropriate, most have been modified.
     function script.onStart()
+        local coreOffset = 16
         -- Local functions for onStart
             local function LoadVariables()
 
