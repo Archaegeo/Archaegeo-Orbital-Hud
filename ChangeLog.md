@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.147
+- Fixed changes to BrakeToggleDefault to update on the fly without exiting seat (vanilla vs toggle brakes)
+- Fixed brake being on when getting in seat while within ground detection
+- Removed support for Screens in remote mode and the galaxymap.  Beyond the scope of the hud  
+(There are other screen scripts for these purposes)
+- Further organization of code into classes.
+
 Version 1.146
 - Fixed virtual joystick reset after freelook.
 - Fixed issue with wrong message display if useTheseSettings checked.
