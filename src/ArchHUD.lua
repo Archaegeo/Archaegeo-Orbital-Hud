@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.147
+VERSION_NUMBER = 1.148
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -4252,6 +4252,35 @@ VERSION_NUMBER = 1.147
     end
     local function APClass()
         local ap = {}
+            local function GetAutopilotBrakeDistanceAndTime(speed)
+                    -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
+            -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
+                if not inAtmo then
+                    return Kinematic.computeDistanceAndTime(speed, AutopilotEndSpeed, constructMass(), 0, 0,
+                            LastMaxBrake - (AutopilotPlanetGravity * constructMass()))
+                else
+                    if LastMaxBrakeInAtmo and LastMaxBrakeInAtmo > 0 then
+                        return Kinematic.computeDistanceAndTime(speed, AutopilotEndSpeed, constructMass(), 0, 0,
+                                LastMaxBrakeInAtmo - (AutopilotPlanetGravity * constructMass()))
+                    else
+                        return 0, 0
+                    end
+                end
+            end
+
+            local function GetAutopilotTBBrakeDistanceAndTime(speed)
+                return Kinematic.computeDistanceAndTime(speed, AutopilotEndSpeed, constructMass(), Nav:maxForceForward(),
+                        warmup, LastMaxBrake - (AutopilotPlanetGravity * constructMass()))
+            end
+
+        function ap.GetAutopilotBrakeDistanceAndTime(speed)
+            return GetAutopilotBrakeDistanceAndTime(speed)
+        end
+
+        function ap.GetAutopilotTBBrakeDistanceAndTime(speed)
+            return GetAutopilotTBBrakeDistanceAndTime(speed)
+        end
+
         -- Local Functions used in apTick
             local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
                 local radius = 500000
@@ -6271,26 +6300,6 @@ VERSION_NUMBER = 1.147
 
     function script.onTick(timerId)
         --Local functions use in more than one onTick
-            local function GetAutopilotBrakeDistanceAndTime(speed)
-                -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
-                -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
-                if not inAtmo then
-                    return Kinematic.computeDistanceAndTime(speed, AutopilotEndSpeed, constructMass(), 0, 0,
-                            LastMaxBrake - (AutopilotPlanetGravity * constructMass()))
-                else
-                    if LastMaxBrakeInAtmo and LastMaxBrakeInAtmo > 0 then
-                        return Kinematic.computeDistanceAndTime(speed, AutopilotEndSpeed, constructMass(), 0, 0,
-                                LastMaxBrakeInAtmo - (AutopilotPlanetGravity * constructMass()))
-                    else
-                        return 0, 0
-                    end
-                end
-            end
-        
-            local function GetAutopilotTBBrakeDistanceAndTime(speed)
-                return Kinematic.computeDistanceAndTime(speed, AutopilotEndSpeed, constructMass(), Nav:maxForceForward(),
-                        warmup, LastMaxBrake - (AutopilotPlanetGravity * constructMass()))
-            end
 
         -- Various tick timers
             if timerId == "tenthSecond" then -- Timer executed ever tenth of a second
@@ -6362,15 +6371,15 @@ VERSION_NUMBER = 1.147
                         -- Note that for some nearby moons etc, it may never reach full speed though.
                         local brakeDistance, brakeTime
                         if not TurnBurn then
-                            brakeDistance, brakeTime = GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
+                            brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
                         else
-                            brakeDistance, brakeTime = GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
+                            brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
                         end
                         local _, curBrakeTime
                         if not TurnBurn and speed > 0 then -- Will this cause problems?  Was spamming something in here was giving 0 speed and 0 accel
-                            _, curBrakeTime = GetAutopilotBrakeDistanceAndTime(speed)
+                            _, curBrakeTime = AP.GetAutopilotBrakeDistanceAndTime(speed)
                         else
-                            _, curBrakeTime = GetAutopilotTBBrakeDistanceAndTime(speed)
+                            _, curBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(speed)
                         end
                         local cruiseDistance = 0
                         local cruiseTime = 0
@@ -6437,11 +6446,11 @@ VERSION_NUMBER = 1.147
                             distance = (AutopilotTargetCoords - worldPos):len() -- Don't show our weird variations
                         end
                         if not TurnBurn then
-                            brakeDistance, brakeTime = GetAutopilotBrakeDistanceAndTime(velMag)
-                            maxBrakeDistance, maxBrakeTime = GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
+                            brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(velMag)
+                            maxBrakeDistance, maxBrakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
                         else
-                            brakeDistance, brakeTime = GetAutopilotTBBrakeDistanceAndTime(velMag)
-                            maxBrakeDistance, maxBrakeTime = GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
+                            brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(velMag)
+                            maxBrakeDistance, maxBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
                         end
                         local displayText, displayUnit = getDistanceDisplayString(distance)
                         sysUpData(widgetDistanceText, '{"label": "distance", "value": "' .. displayText
@@ -6663,7 +6672,7 @@ VERSION_NUMBER = 1.147
                             if index > -1 then           
                                 atlas[0][index] = newLocation                
                             end            
-                            UpdateAtlasLocationsList()           
+                            ATLAS.UpdateAtlasLocationsList()           
                             msgText = newLocation.name .. " position updated"            
                         end       
                     end

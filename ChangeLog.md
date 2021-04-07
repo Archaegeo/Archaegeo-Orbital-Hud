@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Verison 1.148
+- Fix AP issues cased in previous versions due to due to reorganization of AP into class.
+
 Version 1.147
 - Fixed changes to BrakeToggleDefault to update on the fly without exiting seat (vanilla vs toggle brakes)
 - Fixed brake being on when getting in seat while within ground detection
