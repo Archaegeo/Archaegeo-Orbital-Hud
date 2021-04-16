@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.149
+Beginning more in-depth testing and adjustment of features for no atmo planets/situations.
+- Fix G use out of atmo to only lower/raise landing gear and set hoverheight to LandingGearGroundHeight (no more erratic pitch/roll)
+- Fixed repair arrows not showing when using remote.
+- Fixed command help to show / as command precursor.
+- Fixed needing to double tap alt for freelook on first sitting (single tap like normal now)
+
 Verison 1.148
 - Fix AP issues cased in previous versions due to due to reorganization of AP into class.
 
