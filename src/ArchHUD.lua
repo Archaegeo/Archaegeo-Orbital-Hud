@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.148
+VERSION_NUMBER = 1.149
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -182,11 +182,10 @@ VERSION_NUMBER = 1.148
         return mfloor(num * mult + 0.5) / mult
     end
 -- Variables that we declare local outside script because they will be treated as global but get local effectiveness
+    local coreOffset = 16
     local PrimaryR = SafeR
     local PrimaryB = SafeB
     local PrimaryG = SafeG
-    local notPvPZone = false
-    local pvpDist = 0
     local PlayerThrottle = 0
     local brakeInput2 = 0
     local ThrottleLimited = false
@@ -2833,7 +2832,27 @@ VERSION_NUMBER = 1.148
         })
     end    
     local function HudClass() -- Everything HUD releated the is self contained
+        local notPvPZone = false
+        local pvpDist = 0
         --Local Huds Functions
+            local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
+                local radius = 500000
+                local distsz, distp, key = math.huge
+                local safe = false
+                local safeWorldPos = vec3({13771471,7435803,-128971})
+                local safeRadius = 18000000 
+                distsz = vec3(WorldPos):dist(safeWorldPos)
+                if distsz < safeRadius then  
+                    return true, mabs(distsz - safeRadius), "Safe Zone", 0
+                end
+                distp = vec3(WorldPos):dist(vec3(planet.center))
+                if distp < radius then safe = true end
+                if mabs(distp - radius) < mabs(distsz - safeRadius) then 
+                    return safe, mabs(distp - radius), planet.name, planet.bodyId
+                else
+                    return safe, mabs(distsz - safeRadius), "Safe Zone", 0
+                end
+            end
             local function ConvertResolutionX (v)
                 if resolutionWidth == 1920 then 
                     return v
@@ -3857,7 +3876,13 @@ VERSION_NUMBER = 1.148
                 end
                 bottomText = "YAW"
             end
-        
+            
+            if not inAtmo then 
+                notPvPZone, pvpDist, _, _ = safeZone(worldPos)
+            else
+                notPvPZone = true
+            end        
+            
             if pvpDist > 50000 and not inAtmo then
                 local dist
                 if pvpDist > 200000 then
@@ -4282,24 +4307,6 @@ VERSION_NUMBER = 1.148
         end
 
         -- Local Functions used in apTick
-            local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
-                local radius = 500000
-                local distsz, distp, key = math.huge
-                local safe = false
-                local safeWorldPos = vec3({13771471,7435803,-128971})
-                local safeRadius = 18000000 
-                distsz = vec3(WorldPos):dist(safeWorldPos)
-                if distsz < safeRadius then  
-                    return true, mabs(distsz - safeRadius), "Safe Zone", 0
-                end
-                distp = vec3(WorldPos):dist(vec3(planet.center))
-                if distp < radius then safe = true end
-                if mabs(distp - radius) < mabs(distsz - safeRadius) then 
-                    return safe, mabs(distp - radius), planet.name, planet.bodyId
-                else
-                    return safe, mabs(distsz - safeRadius), "Safe Zone", 0
-                end
-            end
 
             local function signedRotationAngle(normal, vecA, vecB)
                 vecA = vecA:project_on_plane(normal)
@@ -4370,12 +4377,6 @@ VERSION_NUMBER = 1.148
             local gravity = planet:getGravity(core.getConstructWorldPos()):len() * constructMass()
             targetRoll = 0
             maxKinematicUp = core.getMaxKinematicsParametersAlongAxis("ground", core.getConstructOrientationUp())[1]
-
-            if not inAtmo then 
-                notPvPZone, pvpDist, _, _ = safeZone(worldPos)
-            else
-                notPvPZone = true
-            end
 
             if sysIsVwLock() == 0 then
                 if isRemote() == 1 and holdingCtrl then
@@ -5480,7 +5481,6 @@ VERSION_NUMBER = 1.148
 
                     groundDistance = hovGndDet
                     if groundDistance > -1 then 
-                        --if mabs(targetPitch - pitch) < autoPitchThreshold then 
                             autoRoll = autoRollPreference                
                             if velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0 then -- Or if they start going back up
                                 BrakeLanding = false
@@ -5493,7 +5493,6 @@ VERSION_NUMBER = 1.148
                             else
                                 BrakeIsOn = true
                             end
-                        --end
                     elseif StrongBrakes and (constructVelocity:normalize():dot(-up) < 0.999) then
                         BrakeIsOn = true
                     elseif vSpd < -brakeLandingRate and not skipLandingRate then
@@ -5583,7 +5582,6 @@ VERSION_NUMBER = 1.148
     end
 -- DU Events written for wrap and minimization. Written by Dimencia and Archaegeo. Optimization and Automation of scripting by ChronosWS  Linked sources where appropriate, most have been modified.
     function script.onStart()
-        local coreOffset = 16
         -- Local functions for onStart
             local function LoadVariables()
 
@@ -7463,21 +7461,25 @@ VERSION_NUMBER = 1.148
                 VectorToTarget = false
                 LockPitch = nil
                 cmdThrottle(0)
-                if (vBooster or hover) and hovGndDet == -1 then
-                    StrongBrakes = true -- We don't care about this anymore
-                    Reentry = false
-                    AutoTakeoff = false
-                    VertTakeOff = false
-                    AltitudeHold = false
-                    BrakeLanding = true
-                    autoRoll = true
-                    GearExtended = false -- Don't actually toggle the gear yet though
-                else
-                    BrakeIsOn = true
-                    Nav.control.extendLandingGears()
-                    navCom:setTargetGroundAltitude(LandingGearGroundHeight)
+                if vBooster or hover then 
+                    if inAtmo and hovGndDet == -1 then
+                        StrongBrakes = true -- We don't care about this anymore
+                        Reentry = false
+                        AutoTakeoff = false
+                        VertTakeOff = false
+                        AltitudeHold = false
+                        BrakeLanding = true
+                        autoRoll = true
+                        GearExtended = false -- Don't actually toggle the gear yet though
+                    elseif inAtmo then
+                        BrakeIsOn = true
+                        Nav.control.extendLandingGears()
+                        navCom:setTargetGroundAltitude(LandingGearGroundHeight)
+                    else
+                        Nav.control.extendLandingGears()
+                        navCom:setTargetGroundAltitude(LandingGearGroundHeight)
+                    end
                 end
-
                 if hasGear and not BrakeLanding then
                     Nav.control.extendLandingGears() -- Actually extend
                 end
@@ -7627,6 +7629,7 @@ VERSION_NUMBER = 1.148
                 BrakeIsOn = true -- Should never happen
             end
         elseif action == "lalt" then
+            toggleView = true
             AltIsOn = true
             if isRemote() == 0 and not freeLookToggle and userControlScheme == "keyboard" then
                 sysLockVw(1)
@@ -7946,7 +7949,7 @@ VERSION_NUMBER = 1.148
             msgText = "AGG Target Height set to "..arguement
         elseif command == "/G" then
             if arguement == nil or arguement == "" then
-                msgText = "Usage: ah-G VariableName variablevalue\nah-G dump - shows all variables"
+                msgText = "Usage: /G VariableName variablevalue\n/G dump - shows all variables"
                 return
             end
             if arguement == "dump" then
