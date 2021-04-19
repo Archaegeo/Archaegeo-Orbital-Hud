@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.149
+VERSION_NUMBER = 1.150
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -40,6 +40,7 @@ VERSION_NUMBER = 1.149
     brakeLandingRate = 30 --export: (Default: 30)
     MaxPitch = 30 --export: (Default: 30)
     TargetOrbitRadius = 1.4 --export: (Default: 1.4)
+    LowOrbitHeight = 1000 --export: (Default: 1000)
     AtmoSpeedLimit = 1050 --export: (Default: 1050)
     SpaceSpeedLimit = 30000 --export: (Default: 30000).
     AutoTakeoffAltitude = 1000 --export: (Default: 1000)
@@ -229,7 +230,7 @@ VERSION_NUMBER = 1.149
     local spaceLand = false
     local spaceLaunch = false
     local finalLand = false
-    local hovGndDet = -1
+    local abvGndDet = -1
     local clearAllCheck = false
     local myAutopilotTarget=""
     local inAtmo = (atmosphere() > 0)
@@ -341,7 +342,7 @@ VERSION_NUMBER = 1.149
                 "InvertMouse", "autoRollPreference", "turnAssist", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", 
                 "showHud", "ShowOdometer", "hideHudOnToggleWidgets", "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit"}
-            local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "TargetOrbitRadius",
+            local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
                 "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization"}
@@ -431,7 +432,7 @@ VERSION_NUMBER = 1.149
             VertTakeOff = false
             autoRoll = true
             upAmount = 0
-            if inAtmo and hovGndDet == -1 then
+            if inAtmo and abvGndDet == -1 then
                 BrakeLanding = false
                 AltitudeHold = true
                 upAmount = 0
@@ -494,7 +495,7 @@ VERSION_NUMBER = 1.149
                     HoldAltitude = planet.spaceEngineMinAltitude - 50
                 else
                     if unit.getClosestPlanetInfluence() > 0 then
-                        HoldAltitude = planet.noAtmosphericDensityAltitude + 1000
+                        HoldAltitude = planet.noAtmosphericDensityAltitude + LowOrbitHeight
                         OrbitTargetOrbit = HoldAltitude
                         OrbitTargetSet = true
                         if not IntoOrbit then ToggleIntoOrbit() end
@@ -532,7 +533,7 @@ VERSION_NUMBER = 1.149
             autoRoll = true
             LockPitch = nil
             OrbitAchieved = false
-            if hovGndDet == -1 then 
+            if abvGndDet == -1 then 
                 AutoTakeoff = false
                 if ahDoubleClick > -1 then
                     if unit.getClosestPlanetInfluence() > 0 then
@@ -651,10 +652,10 @@ VERSION_NUMBER = 1.149
             end
             if planet.hasAtmosphere then
                 if atmosDensity > 0 then
-                    HoldAltitude = planet.noAtmosphericDensityAltitude + 1000
+                    HoldAltitude = planet.noAtmosphericDensityAltitude + LowOrbitHeight
                 end
                 apDoubleClick = -1
-                if Autopilot or VectorToTarget then 
+                if Autopilot or VectorToTarget or IntoOrbit then 
                     return 
                 end
             end
@@ -663,7 +664,7 @@ VERSION_NUMBER = 1.149
         end
         TargetSet = false -- No matter what
         -- Toggle Autopilot, as long as the target isn't None
-        if AutopilotTargetIndex > 0 and not Autopilot and not VectorToTarget and not spaceLaunch then
+        if AutopilotTargetIndex > 0 and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
             ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
             showWaypoint(autopilotTargetPlanet, AutopilotTargetCoords)
             if CustomTarget ~= nil then
@@ -689,7 +690,7 @@ VERSION_NUMBER = 1.149
                             Autopilot = true
                         elseif not inAtmo then
                             if IntoOrbit then ToggleIntoOrbit() end -- Reset all appropriate vars
-                            OrbitTargetOrbit = planet.noAtmosphericDensityAltitude + 1000
+                            OrbitTargetOrbit = planet.noAtmosphericDensityAltitude + LowOrbitHeight
                             OrbitTargetSet = true
                             orbitalParams.AutopilotAlign = true
                             orbitalParams.VectorToTarget = true
@@ -833,7 +834,7 @@ VERSION_NUMBER = 1.149
         -- Meant to be called from Update or Tick repeatedly
         local alignmentTolerance = 0.001 -- How closely it must align to a planet before accelerating to it
         local autopilotStrength = 1 -- How strongly autopilot tries to point at a target
-        if not inAtmo or not stalling or hovGndDet ~= -1 or velMag < minAutopilotSpeed then
+        if not inAtmo or not stalling or abvGndDet ~= -1 or velMag < minAutopilotSpeed then
             local dampingMult = damping
             if dampingMult == nil then
                 dampingMult = DampingMultiplier
@@ -869,7 +870,7 @@ VERSION_NUMBER = 1.149
                 return true
             end
             return false
-        elseif stalling and hovGndDet == -1 then
+        elseif stalling and abvGndDet == -1 then
             -- If stalling, align to velocity to fix the stall
             -- IDK I'm just copy pasting all this
             vector = constructVelocity
@@ -986,24 +987,6 @@ VERSION_NUMBER = 1.149
             return seconds .. "s"
         else
             return "0s"
-        end
-    end
-
-    local function AboveGroundLevel()
-        local groundDistance = -1
-        if telemeter_1 then 
-            groundDistance = telemeter_1.getDistance()
-        end
-        if hovGndDet ~= -1 and groundDistance ~= -1 then
-            if hovGndDet < groundDistance then 
-                return hovGndDet 
-            else
-                return groundDistance
-            end
-        elseif hovGndDet ~= -1 then
-            return hovGndDet
-        else
-            return groundDistance
         end
     end
 
@@ -3183,10 +3166,10 @@ VERSION_NUMBER = 1.149
                 local rectW = 78
                 local rectH = 19
             
-                local gndHeight = AboveGroundLevel()
+                local gndHeight = abvGndDet
             
-                if gndHeight ~= -1 then
-                    newContent[#newContent + 1] = svgText(rectX+rectW, rectY+rectH+20, stringf("AGL: %.1fm", gndHeight), "pdim altsm txtend")
+                if abvGndDet ~= -1 then
+                    newContent[#newContent + 1] = svgText(rectX+rectW, rectY+rectH+20, stringf("AGL: %.1fm", abvGndDet), "pdim altsm txtend")
                 end
             
                 if nearPlanet and ((altitude < 200000 and not inAtmo) or (altitude and inAtmo)) then
@@ -3487,7 +3470,7 @@ VERSION_NUMBER = 1.149
                 elseif brakeInput2 > 0 then
                     newContent[#newContent + 1] = svgText(warningX, brakeY, "Auto-Brake Engaged", "warnings", "opacity:"..brakeInput2)
                 end
-                if inAtmo and stalling and hovGndDet == -1 then
+                if inAtmo and stalling and abvGndDet == -1 then
                     newContent[#newContent + 1] = svgText(warningX, apY+50, "** STALL WARNING **", "warnings")
                 end
                 if gyroIsOn then
@@ -3741,7 +3724,7 @@ VERSION_NUMBER = 1.149
                     if VertTakeOff then
                         table.insert(help,"Hit Alt-6 before exiting Atmosphere during VTO to hold in level flight")
                     end
-                    if hovGndDet ~= -1 then
+                    if abvGndDet ~= -1 then
                         if antigrav then
                             if antigravOn then
                                 table.insert(help, "Alt-6: AGG is on, will takeoff to AGG Height")
@@ -3973,7 +3956,7 @@ VERSION_NUMBER = 1.149
             if TurnBurn then flightStyle = "TB-"..flightStyle end
 
             local accel = (vec3(core.getWorldAcceleration()):len() / 9.80665)
-            gravity =  (planet:getGravity(planet.center + (vec3(0, 0, 1) * planet.radius)):len())
+            gravity =  core.g()
             newContent[#newContent + 1] = [[<g class="pdim txt txtend">]]
             if isRemote() == 1 and not RemoteHud then
                 xg = ConvertResolutionX(1120)
@@ -3999,7 +3982,7 @@ VERSION_NUMBER = 1.149
             if inAtmo then brakeValue = LastMaxBrakeInAtmo else brakeValue = LastMaxBrake end
             maxThrust = Nav:maxForceForward()
             totalMass = constructMass()
-            gravity =  (planet:getGravity(planet.center + (vec3(0, 0, 1) * planet.radius)):len())
+            gravity = core.g()
             if gravity > 0.1 then
                 reqThrust = totalMass * gravity
                 maxMass = maxThrust / gravity
@@ -4314,36 +4297,54 @@ VERSION_NUMBER = 1.149
                 return atan(vecA:cross(vecB):dot(normal), vecA:dot(vecB))
             end
 
-            local function hoverDetectGround()
-                local vgroundDistance = -1
-                local hgroundDistance = -1
-                if vBooster then
-                    vgroundDistance = vBooster.distance()
-                end
-                if hover then
-                    hgroundDistance = hover.distance()
-                end
-                if vgroundDistance ~= -1 and hgroundDistance ~= -1 then
-                    if vgroundDistance < hgroundDistance then
-                        return vgroundDistance
-                    else
-                        return hgroundDistance
+            local function AboveGroundLevel()
+                local function hoverDetectGround()
+                    local vgroundDistance = -1
+                    local hgroundDistance = -1
+                    if vBooster then
+                        vgroundDistance = vBooster.distance()
                     end
-                elseif vgroundDistance ~= -1 then
-                    return vgroundDistance
-                elseif hgroundDistance ~= -1 then
-                    return hgroundDistance
-                else
-                    return -1
+                    if hover then
+                        hgroundDistance = hover.distance()
+                    end
+                    if vgroundDistance ~= -1 and hgroundDistance ~= -1 then
+                        if vgroundDistance < hgroundDistance then
+                            return vgroundDistance
+                        else
+                            return hgroundDistance
+                        end
+                    elseif vgroundDistance ~= -1 then
+                        return vgroundDistance
+                    elseif hgroundDistance ~= -1 then
+                        return hgroundDistance
+                    else
+                        return -1
+                    end
                 end
-            end   
-
+                local hovGndDet = hoverDetectGround()  
+                local groundDistance = -1
+                if telemeter_1 then 
+                    groundDistance = telemeter_1.getDistance()
+                end
+                if hovGndDet ~= -1 and groundDistance ~= -1 then
+                    if hovGndDet < groundDistance then 
+                        return hovGndDet 
+                    else
+                        return groundDistance
+                    end
+                elseif hovGndDet ~= -1 then
+                    return hovGndDet
+                else
+                    return groundDistance
+                end
+            end
+            
         function ap.APTick()
 
             inAtmo = (atmosphere() > 0)
             atmosDensity = atmosphere()
             coreAltitude = core.getAltitude()
-            hovGndDet = hoverDetectGround()
+            abvGndDet = AboveGroundLevel()
             time = systime()
             lastApTickTime = time
 
@@ -4602,9 +4603,9 @@ VERSION_NUMBER = 1.149
                     end
                 end
                 if not OrbitTargetSet then
-                    OrbitTargetOrbit = math.floor(OrbitTargetPlanet.radius + OrbitTargetPlanet.surfaceMaxAltitude + 1000)
+                    OrbitTargetOrbit = math.floor(OrbitTargetPlanet.radius + OrbitTargetPlanet.surfaceMaxAltitude + LowOrbitHeight)
                     if OrbitTargetPlanet.hasAtmosphere then
-                        OrbitTargetOrbit = math.floor(OrbitTargetPlanet.radius + OrbitTargetPlanet.noAtmosphericDensityAltitude + 1000)
+                        OrbitTargetOrbit = math.floor(OrbitTargetPlanet.radius + OrbitTargetPlanet.noAtmosphericDensityAltitude + LowOrbitHeight)
                     end
                     OrbitTargetSet = true
                 end     
@@ -5273,7 +5274,7 @@ VERSION_NUMBER = 1.149
                         yawPID:inject(yawDiff)
                         local autoYawInput = uclamp(yawPID:get(),-1,1) -- Keep it reasonable so player can override
                         yawInput2 = yawInput2 + autoYawInput
-                    elseif (inAtmo and hovGndDet > -1 or velMag < minRollVelocity) then
+                    elseif (inAtmo and abvGndDet > -1 or velMag < minRollVelocity) then
 
                         AlignToWorldVector(targetVec) -- Point to the target if on the ground and 'stalled'
                     elseif stalling and atmosDensity > 0.01 then
@@ -5387,7 +5388,7 @@ VERSION_NUMBER = 1.149
                     end
                 end
 
-                if stalling and atmosDensity > 0.01 and hovGndDet == -1 and velMag > minRollVelocity and VectorStatus ~= "Finalizing Approach" then
+                if stalling and atmosDensity > 0.01 and abvGndDet == -1 and velMag > minRollVelocity and VectorStatus ~= "Finalizing Approach" then
                     AlignToWorldVector(constructVelocity) -- Otherwise try to pull out of the stall, and let it pitch into it
                     targetPitch = uclamp(adjustedPitch-currentPitch,adjustedPitch - PitchStallAngle*0.80, adjustedPitch + PitchStallAngle*0.80) -- Just try to get within un-stalling range to not bounce too much
                 end
@@ -5479,7 +5480,7 @@ VERSION_NUMBER = 1.149
                     navCom:setTargetGroundAltitude(500)
                     navCom:activateGroundEngineAltitudeStabilization(500)
 
-                    groundDistance = hovGndDet
+                    groundDistance = abvGndDet
                     if groundDistance > -1 then 
                             autoRoll = autoRollPreference                
                             if velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0 then -- Or if they start going back up
@@ -5545,7 +5546,7 @@ VERSION_NUMBER = 1.149
                 end
                 -- Copied from autoroll let's hope this is how a PID works... 
                 -- Don't pitch if there is significant roll, or if there is stall
-                local onGround = hovGndDet > -1
+                local onGround = abvGndDet > -1
                 local pitchToUse = adjustedPitch
 
                 if (VectorToTarget or spaceLaunch) and not onGround and velMag > minRollVelocity and atmosDensity > 0.01 then
@@ -5577,7 +5578,7 @@ VERSION_NUMBER = 1.149
                     end
             end
          end
-        hovGndDet = hoverDetectGround()
+        abvGndDet = AboveGroundLevel()
         return ap
     end
 -- DU Events written for wrap and minimization. Written by Dimencia and Archaegeo. Optimization and Automation of scripting by ChronosWS  Linked sources where appropriate, most have been modified.
@@ -5821,9 +5822,8 @@ VERSION_NUMBER = 1.149
                     end
                 end
 
-                local aboveGroundLevel = AboveGroundLevel()
                 -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
-                if aboveGroundLevel ~= -1 or (not inAtmo and vec3(core.getVelocity()):len() < 50) then
+                if abvGndDet ~= -1 or (not inAtmo and vec3(core.getVelocity()):len() < 50) then
                     BrakeIsOn = true
                     if not hasGear then
                         GearExtended = true
@@ -5849,7 +5849,7 @@ VERSION_NUMBER = 1.149
                 end
             
                 -- Store their max kinematic parameters in ship-up direction for use in brake-landing
-                if inAtmo and aboveGroundLevel ~= -1 then 
+                if inAtmo and abvGndDet ~= -1 then 
                     maxKinematicUp = core.getMaxKinematicsParametersAlongAxis("ground", core.getConstructOrientationUp())[1]
                 end
             
@@ -6405,14 +6405,6 @@ VERSION_NUMBER = 1.149
                             return accelTime + brakeTime + cruiseTime
                         end
                     end
-                    local function GetAutopilotMaxMass()
-                        local apmaxmass = LastMaxBrakeInAtmo /
-                                            (autopilotTargetPlanet:getGravity(
-                                                autopilotTargetPlanet.center + (vec3(0, 0, 1) * autopilotTargetPlanet.radius))
-                                                :len())
-                        return apmaxmass
-                    end
-                            
                 if atmosDensity > 0 and not WasInAtmo then
                     if not throttleMode and AtmoSpeedAssist and (AltitudeHold or Reentry) then
                         -- If they're reentering atmo from cruise, and have atmo speed Assist
@@ -6434,7 +6426,10 @@ VERSION_NUMBER = 1.149
                     end
                     if AutopilotTargetName ~= nil then
                         local customLocation = CustomTarget ~= nil
-                        planetMaxMass = GetAutopilotMaxMass()
+                        planetMaxMass = LastMaxBrakeInAtmo /
+                            (autopilotTargetPlanet:getGravity(
+                            autopilotTargetPlanet.center + (vec3(0, 0, 1) * autopilotTargetPlanet.radius))
+                            :len())
                         sysUpData(interplanetaryHeaderText,
                             '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "unit":""}')
                         travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
@@ -7462,7 +7457,7 @@ VERSION_NUMBER = 1.149
                 LockPitch = nil
                 cmdThrottle(0)
                 if vBooster or hover then 
-                    if inAtmo and hovGndDet == -1 then
+                    if inAtmo and abvGndDet == -1 then
                         StrongBrakes = true -- We don't care about this anymore
                         Reentry = false
                         AutoTakeoff = false

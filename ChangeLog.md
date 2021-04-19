@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.150
+- Added `LowOrbitHeight` user variable, default 1000.  Height above atmosphere or planet that autopilot orbit will attempt to achieve (Alt-4-4 on planet, Alt-6-6 in space)
+- Fixed alt-4 while low orbit hop autopilot not cancelling autopilot
+- Modified to support no vBooster/hover ships.  NOTE: If no hover/vBooster, will need a telemeter facing down slotted to control unit for many hud functions.
+- Fixed some errors with gravity calculation for odometer.
+
 Version 1.149
 Beginning more in-depth testing and adjustment of features for no atmo planets/situations.
 - Fix G use out of atmo to only lower/raise landing gear and set hoverheight to LandingGearGroundHeight (no more erratic pitch/roll)
