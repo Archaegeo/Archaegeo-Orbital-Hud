@@ -3515,7 +3515,7 @@ VERSION_NUMBER = 1.151
                         if antigravOn then
                             displayText, displayUnit = getDistanceDisplayString(antigrav.getBaseAltitude(),2)
                         end
-                        newContent[#newContent + 1] = svgText(warningX, apY, "VTO to "..displayText.. displayUnit, "warn")
+                        newContent[#newContent + 1] = svgText(warningX, apY, "AGG VTO to "..displayText.. displayUnit, "warn")
                     elseif AutoTakeoff and not IntoOrbit then
                         newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..displayText.. displayUnit, "warn")
                         if BrakeIsOn and not VertTakeOff then
@@ -3528,11 +3528,11 @@ VERSION_NUMBER = 1.151
                 end
                 if VertTakeOff and (antigrav ~= nil and antigrav) then
                     if atmosDensity > 0.1 then
-                        newContent[#newContent + 1] = svgText(warningX, apY, "Beginning ascent", "warn")
+                        newContent[#newContent + 1] = svgText(warningX, apY+20, "Beginning ascent", "warn")
                     elseif atmosDensity < 0.09 and atmosDensity > 0.05 then
-                        newContent[#newContent + 1] = svgText(warningX, apY,  "Aligning trajectory", "warn")
+                        newContent[#newContent + 1] = svgText(warningX, apY+20,  "Aligning trajectory", "warn")
                     elseif atmosDensity < 0.05 then
-                        newContent[#newContent + 1] = svgText(warningX, apY,  "Leaving atmosphere", "warn")
+                        newContent[#newContent + 1] = svgText(warningX, apY+20,  "Leaving atmosphere", "warn")
                     end
                 end
                 if IntoOrbit then
