@@ -238,6 +238,7 @@ VERSION_NUMBER = 1.151
     local coreAltitude = core.getAltitude()
     local elementsID = core.getElementIdList()
     local lastTravelTime = systime()
+    local mousePause = false
     local gyroIsOn = nil
     local speedLimitBreaking = false
     local rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
@@ -7102,8 +7103,13 @@ VERSION_NUMBER = 1.151
                 elseif Autopilot then
                     MaxGameVelocity = uclamp(MaxGameVelocity + speedChangeLarge/3.6*100,0, 8333.00)
                 end
-            else
+            elseif mousePause then
+                local currentPlayerThrot = PlayerThrottle
                 PlayerThrottle = round(uclamp(PlayerThrottle + speedChangeLarge/100, -1, 1),2)
+                if PlayerThrottle >= 0 and currentPlayerThrot < 0 then 
+                    PlayerThrottle = 0 
+                    mousePause = false
+                end
             end
         elseif system.getMouseWheel() < 0 then
             if AltIsOn then
@@ -7112,9 +7118,16 @@ VERSION_NUMBER = 1.151
                 elseif Autopilot then
                     MaxGameVelocity = uclamp(MaxGameVelocity - speedChangeLarge/3.6*100,0, 8333.00)
                 end
-            else
+            elseif mousePause then 
+                local currentPlayerThrot = PlayerThrottle
                 PlayerThrottle = round(uclamp(PlayerThrottle - speedChangeLarge/100, -1, 1),2)
+                if PlayerThrottle <= 0 and currentPlayerThrot > 0 then 
+                    PlayerThrottle = 0 
+                    mousePause = false
+                end
             end
+        else
+            mousePause = true
         end
 
         brakeInput2 = 0

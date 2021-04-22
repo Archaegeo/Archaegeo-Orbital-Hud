@@ -4,6 +4,7 @@ Version 1.151
 - Changed Interplanetary Helper Brake distance to return time/distance to 0 k/h if not in Autopilot and in space, 
     otherwise in Autopilot it's time/distance to orbit speed at destination orbit altitude.
 - Change Lifetime Distance from megameters to kSU on Odometer.
+- Fixed throttle to hard stop at 0 when manually changed from pos to neg or neg to pos
 
 Version 1.150
 - Added `LowOrbitHeight` user variable, default 1000.  Height above atmosphere or planet that autopilot orbit will attempt to achieve (Alt-4-4 on planet, Alt-6-6 in space)
