@@ -1,12 +1,13 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.152 - Intruder Detection System
+Version 1.152 - Intruder Detection System (off by default)
 - Added intruder detection system. Based around Safe Mass setting.
-"Safe Mass" is set when you exit control (stand up from seat or exit remote) or use Set Safe Mass button.
-To use:  Pilot must have >= 20 tons in personal inventory, otherwise an empty player will not be detected by mass change.
-If anyone boards ship, the mass gain (90kg + inventory) will be detected and reported by flashing text and sound alarm.  
-To reset alarm , hold SHIFT while not in freelook and Reset Intruder Alert.  Offline intruders will be detected by a weight gain from when you last stood up the next time you sit down.
-Resetting intruder alarm also resets Safe Mass to current ship mass.
+    "Safe Mass" is set when you exit control (stand up from seat or exit remote) or use Set Safe Mass button.
+    To use:  Pilot must have >= 20 tons in personal inventory, otherwise an empty player (90kg) will not be detected by mass change when they stand on/in ship.
+    If anyone boards ship, their mass gain (90kg+) will be detected and reported by flashing text and sound alarm.  
+    To reset alarm , hold SHIFT while not in freelook and Reset Intruder Alert.  
+    Offline intruders will be detected by a mass gain from when you last stood up upon the next time you sit down.
+    Resetting intruder alarm also resets Safe Mass to current ship mass.
 - Added `IntruderDetectionSystem` user variable, default is false.
 - Added soundAlarm for intruder alarm, can be used for other things as well. Sounds the waypoint beep every tenth of a second. (Will restore waypoint when alarm clears.)
 - Fix Mass calculations/updates.
