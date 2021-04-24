@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.152
+VERSION_NUMBER = 1.153
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -6658,6 +6658,8 @@ VERSION_NUMBER = 1.152
                         if coreMass > safeMass+50 then
                             soundAlarm = true
                             safeMass = -1
+                        elseif coreMass < safeMass then
+                            safeMass = coreMass
                         end
                     elseif safeMass == -1 then
                         safeMass = -2
