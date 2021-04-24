@@ -5,6 +5,7 @@ Version 1.151
     otherwise in Autopilot it's time/distance to orbit speed at destination orbit altitude.
 - Change Lifetime Distance from megameters to kSU on Odometer.
 - Fixed throttle to hard stop at 0 when manually changed from pos to neg or neg to pos throttle with mousewheel.
+- Fixed overlap of some displayed values on VTOL takeoff.
 
 
 Version 1.150
