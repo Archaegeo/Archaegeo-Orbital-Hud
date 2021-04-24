@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.150
+VERSION_NUMBER = 1.151
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -238,6 +238,7 @@ VERSION_NUMBER = 1.150
     local coreAltitude = core.getAltitude()
     local elementsID = core.getElementIdList()
     local lastTravelTime = systime()
+    local mousePause = false
     local gyroIsOn = nil
     local speedLimitBreaking = false
     local rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
@@ -3514,7 +3515,7 @@ VERSION_NUMBER = 1.150
                         if antigravOn then
                             displayText, displayUnit = getDistanceDisplayString(antigrav.getBaseAltitude(),2)
                         end
-                        newContent[#newContent + 1] = svgText(warningX, apY, "VTO to "..displayText.. displayUnit, "warn")
+                        newContent[#newContent + 1] = svgText(warningX, apY, "AGG VTO to "..displayText.. displayUnit, "warn")
                     elseif AutoTakeoff and not IntoOrbit then
                         newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..displayText.. displayUnit, "warn")
                         if BrakeIsOn and not VertTakeOff then
@@ -3527,11 +3528,11 @@ VERSION_NUMBER = 1.150
                 end
                 if VertTakeOff and (antigrav ~= nil and antigrav) then
                     if atmosDensity > 0.1 then
-                        newContent[#newContent + 1] = svgText(warningX, apY, "Beginning ascent", "warn")
+                        newContent[#newContent + 1] = svgText(warningX, apY+20, "Beginning ascent", "warn")
                     elseif atmosDensity < 0.09 and atmosDensity > 0.05 then
-                        newContent[#newContent + 1] = svgText(warningX, apY,  "Aligning trajectory", "warn")
+                        newContent[#newContent + 1] = svgText(warningX, apY+20,  "Aligning trajectory", "warn")
                     elseif atmosDensity < 0.05 then
-                        newContent[#newContent + 1] = svgText(warningX, apY,  "Leaving atmosphere", "warn")
+                        newContent[#newContent + 1] = svgText(warningX, apY+20,  "Leaving atmosphere", "warn")
                     end
                 end
                 if IntoOrbit then
@@ -3994,7 +3995,7 @@ VERSION_NUMBER = 1.150
                 ConvertResolutionX(1240), ConvertResolutionY(35), ConvertResolutionX(1280))
             if isRemote() == 0 or RemoteHud then
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(20), stringf("Trip: %.2f km", totalDistanceTrip), "txtstart") 
-                newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(30), stringf("Lifetime: %.2f Mm", (TotalDistanceTravelled / 1000)), "txtstart") 
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(30), stringf("Lifetime: %.2f kSU", (TotalDistanceTravelled / 200000)), "txtstart") 
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(20), "Trip Time: "..FormatTimeString(flightTime), "txtstart") 
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(30), "Total Time: "..FormatTimeString(TotalFlightTime), "txtstart") 
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(20), stringf("Mass: %.2f Tons", (totalMass / 1000)), "txtstart") 
@@ -4261,14 +4262,16 @@ VERSION_NUMBER = 1.150
     local function APClass()
         local ap = {}
             local function GetAutopilotBrakeDistanceAndTime(speed)
-                    -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
-            -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
+                -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
+                -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
+                local finalSpeed = AutopilotEndSpeed
+                if not Autopilot then  finalSpeed = 0 end
                 if not inAtmo then
-                    return Kinematic.computeDistanceAndTime(speed, AutopilotEndSpeed, constructMass(), 0, 0,
-                            LastMaxBrake - (AutopilotPlanetGravity * constructMass()))
+                    return Kinematic.computeDistanceAndTime(speed, finalSpeed, constructMass(), 0, 0,
+                        LastMaxBrake - (AutopilotPlanetGravity * constructMass()))
                 else
                     if LastMaxBrakeInAtmo and LastMaxBrakeInAtmo > 0 then
-                        return Kinematic.computeDistanceAndTime(speed, AutopilotEndSpeed, constructMass(), 0, 0,
+                        return Kinematic.computeDistanceAndTime(speed, finalSpeed, constructMass(), 0, 0,
                                 LastMaxBrakeInAtmo - (AutopilotPlanetGravity * constructMass()))
                     else
                         return 0, 0
@@ -4277,7 +4280,10 @@ VERSION_NUMBER = 1.150
             end
 
             local function GetAutopilotTBBrakeDistanceAndTime(speed)
-                return Kinematic.computeDistanceAndTime(speed, AutopilotEndSpeed, constructMass(), Nav:maxForceForward(),
+                local finalSpeed = AutopilotEndSpeed
+                if not Autopilot then finalSpeed = 0 end
+
+                return Kinematic.computeDistanceAndTime(speed, finalSpeed, constructMass(), Nav:maxForceForward(),
                         warmup, LastMaxBrake - (AutopilotPlanetGravity * constructMass()))
             end
 
@@ -5639,8 +5645,8 @@ VERSION_NUMBER = 1.150
                 LastStartTime = time
                 userControlScheme = string.lower(userControlScheme)
                 if string.find("keyboard virtual joystick mouse",  userControlScheme) == nil then 
-                    msgText = "Invalid User Control Scheme selected.  Change userControlScheme in Lua Parameters to keyboard, mouse, or virtual joystick\nOr use shift and button in screen"
-                    msgTimer = 5
+                    msgText = "Invalid User Control Scheme selected.\nChange userControlScheme in Lua Parameters to keyboard, mouse, or virtual joystick\nOr use shift and button in screen"
+                    msgTimer = 7
                 end
             
                 if antigrav and not ExternalAGG then
@@ -6297,7 +6303,6 @@ VERSION_NUMBER = 1.150
     end
 
     function script.onTick(timerId)
-        --Local functions use in more than one onTick
 
         -- Various tick timers
             if timerId == "tenthSecond" then -- Timer executed ever tenth of a second
@@ -7098,8 +7103,13 @@ VERSION_NUMBER = 1.150
                 elseif Autopilot then
                     MaxGameVelocity = uclamp(MaxGameVelocity + speedChangeLarge/3.6*100,0, 8333.00)
                 end
-            else
+            elseif mousePause then
+                local currentPlayerThrot = PlayerThrottle
                 PlayerThrottle = round(uclamp(PlayerThrottle + speedChangeLarge/100, -1, 1),2)
+                if PlayerThrottle >= 0 and currentPlayerThrot < 0 then 
+                    PlayerThrottle = 0 
+                    mousePause = false
+                end
             end
         elseif system.getMouseWheel() < 0 then
             if AltIsOn then
@@ -7108,9 +7118,16 @@ VERSION_NUMBER = 1.150
                 elseif Autopilot then
                     MaxGameVelocity = uclamp(MaxGameVelocity - speedChangeLarge/3.6*100,0, 8333.00)
                 end
-            else
+            elseif mousePause then 
+                local currentPlayerThrot = PlayerThrottle
                 PlayerThrottle = round(uclamp(PlayerThrottle - speedChangeLarge/100, -1, 1),2)
+                if PlayerThrottle <= 0 and currentPlayerThrot > 0 then 
+                    PlayerThrottle = 0 
+                    mousePause = false
+                end
             end
+        else
+            mousePause = true
         end
 
         brakeInput2 = 0

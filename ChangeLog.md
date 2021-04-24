@@ -1,10 +1,19 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.151
+- Changed Interplanetary Helper Brake distance to return time/distance to 0 k/h if not in Autopilot and in space, 
+    otherwise in Autopilot it's time/distance to orbit speed at destination orbit altitude.
+- Change Lifetime Distance from megameters to kSU on Odometer.
+- Fixed throttle to hard stop at 0 when manually changed from pos to neg or neg to pos throttle with mousewheel.
+- Fixed overlap of some displayed values on VTOL takeoff.
+
+
 Version 1.150
 - Added `LowOrbitHeight` user variable, default 1000.  Height above atmosphere or planet that autopilot orbit will attempt to achieve (Alt-4-4 on planet, Alt-6-6 in space)
 - Fixed alt-4 while low orbit hop autopilot not cancelling autopilot
 - Modified to support no vBooster/hover ships.  NOTE: If no hover/vBooster, will need a telemeter facing down slotted to control unit for many hud functions.
 - Fixed some errors with gravity calculation for odometer.
+- Fixed wrapping of invalid user control scheme message.
 
 Version 1.149
 Beginning more in-depth testing and adjustment of features for no atmo planets/situations.
