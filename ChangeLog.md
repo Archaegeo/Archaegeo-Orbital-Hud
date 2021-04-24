@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.153 
+- Fixed safe mass to update anytime core mass < safe mass in order to not let use of warp cells or fuel in a long flight miss an intruder boarding ship.
+
 Version 1.152 - Intruder Detection System (off by default)
 - Added intruder detection system. Based around Safe Mass setting.
     "Safe Mass" is set when you exit control (stand up from seat or exit remote) or use Set Safe Mass button.
