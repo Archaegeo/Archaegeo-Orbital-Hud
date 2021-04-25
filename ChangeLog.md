@@ -2,6 +2,7 @@
 
 Version 1.154
 - Created a new UserSettings file to explain all user settings.
+- Cleaned up Readme file.
 
 Version 1.153 
 - Fixed safe mass to update anytime core mass < safe mass in order to not let use of warp cells or fuel in a long flight miss an intruder boarding ship.
