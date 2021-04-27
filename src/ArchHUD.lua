@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.154
+VERSION_NUMBER = 1.155
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -320,7 +320,7 @@ VERSION_NUMBER = 1.154
     local vSpd = -worldVertical:dot(constructVelocity)
     local worldPos = vec3(core.getConstructWorldPos())
     local oldWayPoint = nil
-    local soundAlarm = false
+    local soundAlarm = 0
     local UpVertAtmoEngine = false
     local antigravOn = false
     local setCruiseSpeed = nil
@@ -632,7 +632,7 @@ VERSION_NUMBER = 1.154
         end
         local waypoint = zeroConvertToMapPosition(planet, coordinates)
         waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
-        if not soundAlarm then 
+        if soundAlarm == 0 then 
             oldWayPoint = waypoint
         end
         system.setWaypoint(waypoint)
@@ -675,6 +675,7 @@ VERSION_NUMBER = 1.154
         if AutopilotTargetIndex > 0 and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
             ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
             showWaypoint(autopilotTargetPlanet, AutopilotTargetCoords)
+            local nearPlanet = unit.getClosestPlanetInfluence() > 0
             if CustomTarget ~= nil then
                 LockPitch = nil
                 SpaceTarget = (CustomTarget.planetname == "Space")
@@ -693,7 +694,7 @@ VERSION_NUMBER = 1.154
                             ToggleVectorToTarget(SpaceTarget)
                         end
                     else
-                        if coreAltitude > AutopilotTargetOrbit*1.5 or coreAltitude == 0 then
+                        if not (autopilotTargetPlanet.name == planet.name and nearPlanet) then
                             OrbitAchieved = false
                             Autopilot = true
                         elseif not inAtmo then
@@ -717,7 +718,7 @@ VERSION_NUMBER = 1.154
                     end
                 end
             elseif atmosDensity == 0 then -- Planetary autopilot
-                local nearPlanet = unit.getClosestPlanetInfluence() > 0
+
                 if CustomTarget == nil and (autopilotTargetPlanet.name == planet.name and nearPlanet) and not IntoOrbit then
                     WaypointSet = false
                     OrbitAchieved = false
@@ -3524,7 +3525,11 @@ VERSION_NUMBER = 1.154
                         end
                         newContent[#newContent + 1] = svgText(warningX, apY, "AGG VTO to "..displayText.. displayUnit, "warn")
                     elseif AutoTakeoff and not IntoOrbit then
-                        newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..displayText.. displayUnit, "warn")
+                        if spaceLaunch then
+                            newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..AutopilotTargetName, "warn")
+                        else
+                            newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..displayText.. displayUnit, "warn")
+                        end
                         if BrakeIsOn and not VertTakeOff then
                             newContent[#newContent + 1] = svgText( warningX, apY + 50,"Throttle Up and Disengage Brake For Takeoff", "crit")
                         end
@@ -3548,7 +3553,7 @@ VERSION_NUMBER = 1.154
                     end
                 end
                 if IntruderAlertSystem and safeMass == -1 then
-                    newContent[#newContent + 1] = svgText(warningX, apY+70, "POSSIBLE INTRUDER ALERT - MASS GAIN DETECTED", "warnings")
+                    newContent[#newContent + 1] = svgText(warningX, apY+70, "POSSIBLE INTRUDER ALERT - MASS GAIN OF "..soundAlarm.."kg DETECTED", "warnings")
                 end
                 if BrakeLanding then
                     if StrongBrakes then
@@ -4675,9 +4680,11 @@ VERSION_NUMBER = 1.154
                         -- Orbit to target...
 
                         local brakeDistance, _ =  Kinematic.computeDistanceAndTime(velMag, adjustedAtmoSpeedLimit/3.6, coreMass, 0, 0, LastMaxBrake)
-                        if OrbitAchieved and targetVec:len() > 15000+brakeDistance+coreAltitude then -- Triggers when we get close to passing it or within 12km+height I guess
+                        if OrbitAchieved and targetVec:len() > 15000+brakeDistance+coreAltitude then -- Triggers when we get close to passing it or within 15km+height I guess
                             orbitMsg = "Orbiting to Target"
-                            if orbit.periapsis.altitude < OrbitTargetPlanet.noAtmosphericDensityAltitude then OrbitAchieved = false end
+                            if (coreAltitude - 100) <= OrbitTargetPlanet.noAtmosphericDensityAltitude or  (travelTime> orbit.timeToPeriapsis and  orbit.periapsis.altitude  < OrbitTargetPlanet.noAtmosphericDensityAltitude) then 
+                                OrbitAchieved = false 
+                            end
                         elseif OrbitAchieved or targetVec:len() < 15000+brakeDistance+coreAltitude then
                             msgText = "Orbit complete, proceeding with reentry"
                             -- We can skip prograde completely if we're approaching from an orbit?
@@ -4770,7 +4777,7 @@ VERSION_NUMBER = 1.154
                             end
                         elseif coreAltitude > OrbitTargetOrbit*1.5 then
                             orbitMsg = "Reentering orbital corridor - OrbitHeight: "..orbitHeightString
-                            orbitPitch = -85 --utils.map(vSpd, 25, -200, -65, -30)
+                            orbitPitch = -65 --utils.map(vSpd, 25, -200, -65, -30)
                             local pcsAdjust = utils.map(vSpd, -150, -400, 1, 0.55)
                             pcs = pcs*pcsAdjust
                         end
@@ -6094,7 +6101,7 @@ VERSION_NUMBER = 1.154
                     else 
                         msgText = "Intruder Detection reset\nSafe Mass set to "..round(coreMass,2).." kg"
                         msgTimer = 5 
-                        soundAlarm = false
+                        soundAlarm = 0
                         if oldWayPoint then system.setWaypoint(oldWayPoint) end
                     end 
                     safeMass = coreMass 
@@ -6529,7 +6536,7 @@ VERSION_NUMBER = 1.154
                     showWarpWidget = false
                 end
             end
-            if soundAlarm then 
+            if soundAlarm > 0 then 
                 system.setWaypoint(system.getWaypointFromPlayerPos()) 
             end       
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
@@ -6656,7 +6663,7 @@ VERSION_NUMBER = 1.154
                 local function compareMass()
                     if safeMass > 0 then 
                         if coreMass > safeMass+50 then
-                            soundAlarm = true
+                            soundAlarm = mfloor(coreMass - safeMass)
                             safeMass = -1
                         elseif coreMass < safeMass then
                             safeMass = coreMass

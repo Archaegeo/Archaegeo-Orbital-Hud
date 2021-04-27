@@ -1,5 +1,13 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.155 - Autopilot improvements.
+- Low Orbit AP Hops: Only adjust orbit after it's established if orbit periapsis dips < atmo AND time to destination > time to periapsis OR if altitude within 100 of atmosphere.
+- Fix AP to waypoint on nearest planet to use normal low orbit hop AP mechanics vice full AP to another planet mechanics if start nearPlanet (altitude shown).
+- Changed "Takeoff to 100k" to "Takeoff to <targename>" when doing spacelaunch takeoffs.
+- Updated Intruder Alert to report the mass gain that set it off.
+- Clean up UserSettings document some more.
+- Note: For Intruder Alert, 20T is not needed in pilot inventory.
+
 Version 1.154
 - Created a new UserSettings file to explain all user settings.
 - Cleaned up Readme file.
@@ -10,8 +18,7 @@ Version 1.153
 Version 1.152 - Intruder Detection System (off by default)
 - Added intruder detection system. Based around Safe Mass setting.
     "Safe Mass" is set when you exit control (stand up from seat or exit remote) or use Set Safe Mass button.
-    To use:  Pilot must have >= 20 tons in personal inventory, otherwise an empty player (90kg) will not be detected by mass change when they stand on/in ship.
-    If anyone boards ship, their mass gain (90kg+) will be detected and reported by flashing text and sound alarm.  
+    To use: If anyone boards ship, their mass gain (90kg+) will be detected and reported by flashing text and sound alarm.  
     To reset alarm , hold SHIFT while not in freelook and Reset Intruder Alert.  
     Offline intruders will be detected by a mass gain from when you last stood up upon the next time you sit down.
     Resetting intruder alarm also resets Safe Mass to current ship mass.

@@ -2,19 +2,18 @@
 * DATABANK USAGE: The hud databank must be manually slotted to the control unit one time and then the HUD Autoconf file re-ran.
 When you stand up, all current user settings are saved to a manually linked databank.  When you sit down, the settings on a databank will override those
 in Edit Lua Parameters unless useTheseSettings is checked.
-
 ## To modify user settings:
 * While out of seat, right click the control unit and go to _Advanced_ -> _Edit Lua Parameters_  Mouse over a name to see its default value.
 * While in seat, hold SHIFT while not in freelook mode, mouse over View Settings, and release SHIFT (Thats how you click a button)
 * While in View Settings mode, you can hold SHIFT and mouse over a true/false value to change it, or mouse over one of the sub
 catagories
 * Sub catagory values can be changed by hitting Enter, selecting LUA chat, and typing /G VariableName value
-
+# The construct itself must be set to keyboard control.  Then you use this setting to set how the hud controls.
 * userControlScheme = "virtual joystick" --  (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard".  This can be set by holding SHIFT and clicking 
 the button in lower left of main Control buttons view.
-
 ### True-False Values
 * useTheseSettings = false --  (Default: false) Toggle on to use the below preferences.  Toggle off to use saved preferences.  Preferences will save regardless when exiting seat. 
+This is only needed if you want to use Edit Lua Parameters to override saved settings already on a databank.  First install, or changing settings via in seat methods, you do not need to set this to true.
 * freeLookToggle = true --  (Default: true) Set to false for vanilla DU free look behavior.
 * BrakeToggleDefault = true --  (Default: true) Whether your brake toggle is on/off by default. Can be adjusted in the button menu.  Of is vanilla DU brakes.
 * RemoteFreeze = false --  (Default: false) Whether or not to freeze your character in place when using a remote controller. 
@@ -39,7 +38,6 @@ The flight model will start by adding more yaw the more horizontal the construct
 * DisplayOrbit = true --  (Default: true) Show Orbit display when valid or not.  May be toggled with shift Buttons
 * SetWaypointOnExit = true --export (Default: true) Set to false to not set a waypoint when you exit hud.  True helps find your ship in crowded locations when you get out of seat.
 * IntruderAlertSystem = false --export (Default: false) Set to True to enable Intruder Alert system.
-
 ### Ship Handling variables
 * YawStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when yawing, determine by experimentation.  Higher allows faster AP Bank turns.
 * PitchStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when pitching, determine by experimentation.
@@ -62,7 +60,6 @@ You can lower or raise (up to this limit) the current value by using Alt+Mousewh
 * fuelTankHandlingRocket = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
 * ContainerOptimization = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the Container Optimization level of the person who placed the tanks.  Ignored for slotted tanks.
 * FuelTankOptimization = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank optimization skill level of the person who placed the tank.  Ignored for slotted tanks.
-
 ### HUD Postioning variables - Positions scale to ResolutionX, ResolutionY setting
 * ResolutionX = 1920 --  (Default: 1920) Does not need to be set to same as game resolution.  You can set 1920 on a 2560 to get larger resolution
 * ResolutionY = 1080 --  (Default: 1080) Does not need to be set to same as game resolution.  You can set 1080 on a 1440 to get larger resolution
@@ -87,8 +84,6 @@ You can lower or raise (up to this limit) the current value by using Alt+Mousewh
 * OrbitMapSize = 250 --  (Default: 250) Size of the orbit map, make sure it is divisible by 4
 * OrbitMapX = 75 --  (Default: 75) X postion of Orbit Display Disabled
 * OrbitMapY = 0 --  (Default: 0)  Y position of Orbit Display
-
-
 ### Ship flight physics variables - Modify these with care, can have large effects on ship performance
 * speedChangeLarge = 5 --  (Default: 5) The speed change that occurs when you tap speed up/down, default is 5 (25% throttle change). 
 * speedChangeSmall = 1 --  (Default: 1) the speed change that occurs while you hold speed up/down, default is 1 (5% throttle change).
@@ -108,7 +103,7 @@ You can lower or raise (up to this limit) the current value by using Alt+Mousewh
 * DampingMultiplier = 40 --  (Default: 40) How strongly autopilot dampens when nearing the correct orientation
 * apTickRate = 0.0166667 --  (Default: 0.0166667) Set the Tick Rate for your autopilot features.  0.016667 is effectively 60 fps and the default value. 0.03333333 is 30 fps.  
 * hudTickRate = 0.0666667 --  (Default: 0.0666667) Set the tick rate for your HUD. Default is 4 times slower than apTickRate
-NOTE: For engine tags, if changed from "none" then only engines with those tags will fire.
+# NOTE: For engine tags, if changed from "none" then only engines with those tags will fire.
 * ExtraLongitudeTags = "none" --  (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "forward faster major"  These will be added to the engines that are control by longitude.
 * ExtraLateralTags = "none" --  (Default: "none") Enter any extra lateral tags you use inside '' seperated by space, i.e. "left right"  These will be added to the engines that are control by lateral.
 * ExtraVerticalTags = "none" --  (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "up down"  These will be added to the engines that are control by vertical.
