@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.156 - More AP improvements
+- Modified AP to ground on facing side of planet to have arrival speed of 0 vice orbit speed since you will not orbit around planet.
+
 Version 1.155 - Autopilot improvements.
 - Low Orbit AP Hops: Only adjust orbit after it's established if orbit periapsis dips < atmo AND time to destination > time to periapsis OR if altitude within 100 of atmosphere.
 - Fix AP to waypoint on nearest planet to use normal low orbit hop AP mechanics vice full AP to another planet mechanics if start nearPlanet (altitude shown).
