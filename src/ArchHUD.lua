@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.155
+VERSION_NUMBER = 1.156
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -4820,12 +4820,13 @@ VERSION_NUMBER = 1.155
                         local rightSideCoords = CustomTarget.position + (CustomTarget.position - autopilotTargetPlanet.center):normalize() * (AutopilotTargetOrbit - autopilotTargetPlanet:getAltitude(CustomTarget.position))
                         if (worldPos-wrongSideCoords):len() < (worldPos-rightSideCoords):len() then
                             targetCoords = wrongSideCoords
-                            AutopilotTargetCoords = targetCoords
                         else
                             targetCoords = CustomTarget.position + (CustomTarget.position - autopilotTargetPlanet.center):normalize() * (AutopilotTargetOrbit - autopilotTargetPlanet:getAltitude(CustomTarget.position))
-                            AutopilotTargetCoords = targetCoords
+                            AutopilotEndSpeed = 0
                         end
+                        AutopilotTargetCoords = targetCoords
                         showWaypoint(autopilotTargetPlanet, AutopilotTargetCoords)
+
                         skipAlign = true
                         TargetSet = true -- Only set the targetCoords once.  Don't let them change as we fly.
                     end
