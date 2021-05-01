@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.156
+VERSION_NUMBER = 1.157
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -34,6 +34,7 @@ VERSION_NUMBER = 1.156
     DisplayOrbit = true --export: (Default: true) 
     SetWaypointOnExit = true --export (Default: true)
     IntruderAlertSystem = false --export (Default: true)
+    AlwaysVSpd = false --export (Default: false)
 
     -- Ship Handling variables
     YawStallAngle = 35 --export: (Default: 35)
@@ -346,7 +347,7 @@ VERSION_NUMBER = 1.156
             local saveableVariablesBoolean = {"userControlScheme","freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
                 "InvertMouse", "autoRollPreference", "turnAssist", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", 
-                "showHud", "ShowOdometer", "hideHudOnToggleWidgets", "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem"}
+                "showHud", "ShowOdometer", "hideHudOnToggleWidgets", "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd"}
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
@@ -3464,7 +3465,7 @@ VERSION_NUMBER = 1.156
                 local hoverY = ConvertResolutionY(900)
                 local ewarpY = ConvertResolutionY(960)
                 local apY = ConvertResolutionY(200)
-                local turnBurnY = ConvertResolutionY(150)
+                local turnBurnY = ConvertResolutionY(250)
                 local gyroY = ConvertResolutionY(960)
                 if isRemote() == 1 and not RemoteHud then
                     brakeY = ConvertResolutionY(135)
@@ -3573,7 +3574,7 @@ VERSION_NUMBER = 1.156
                         local travelTime = Kinematic.computeTravelTime(velMag, 0, atmoDistance)
                         local displayCollisionType = "Collision"
                         if intersectBody.noAtmosphericDensityAltitude > 0 then displayCollisionType = "Atmosphere" end
-                        newContent[#newContent + 1] = svgText(warningX, turnBurnY, intersectBody.name.." "..displayCollisionType.." "..FormatTimeString(travelTime).." In "..displayText.. displayUnit, "crit")
+                        newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, intersectBody.name.." "..displayCollisionType.." "..FormatTimeString(travelTime).." In "..displayText.. displayUnit, "crit")
                     
                 end
                 if VectorToTarget and not IntoOrbit then
@@ -3838,6 +3839,10 @@ VERSION_NUMBER = 1.156
                     <svg height="100%%" width="100%%" viewBox="0 0 %d %d">
                     ]], bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig, resolutionWidth, resolutionHeight)
             return newContent
+        end
+
+        function Hud.DrawVerticalSpeed(newContent, altitude)
+            DrawVerticalSpeed(newContent, altitude)
         end
 
         function Hud.UpdateHud(newContent)
@@ -6848,6 +6853,7 @@ VERSION_NUMBER = 1.156
             if showHud then
                 HUD.UpdateHud(newContent) -- sets up Content for us
             else
+                if AlwaysVSpd then HUD.DrawVerticalSpeed(newContent, coreAltitude) end
                 HUD.DisplayOrbitScreen(newContent)
                 HUD.DrawWarnings(newContent)
             end
