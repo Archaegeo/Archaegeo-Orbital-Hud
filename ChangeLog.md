@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.157
+- Added AlwaysVSped defaults to false.  If set to true, vSpd meter will show when you alt-3 change to widget mode.
+- Moved location of Collision text so its more easily visable.
+
 Version 1.156 - More AP improvements
 - Modified AP to ground on facing side of planet to have arrival speed of 0 vice orbit speed since you will not orbit around planet.
 
