@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.158
+- Added `/iphWP` command - Displays current IPH selected target's planet based ::pos waypoint in lua chat. Right Click it in lua chat to copy or bookmark.
+- Fixed compass to look more normal with degrees going up left to right. 
+
 Version 1.157
 - Added AlwaysVSped defaults to false.  If set to true, vSpd meter will show when you alt-3 change to widget mode.
 - Moved location of Collision text so its more easily visable.
