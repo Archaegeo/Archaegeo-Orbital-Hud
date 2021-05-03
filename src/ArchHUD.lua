@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.157
+VERSION_NUMBER = 1.158
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -601,44 +601,6 @@ VERSION_NUMBER = 1.157
         end
     end
 
-    local function showWaypoint(planet, coordinates)
-        local function zeroConvertToMapPosition(targetplanet, worldCoordinates)
-            local worldVec = vec3(worldCoordinates)
-            if targetplanet.bodyId == 0 then
-                return setmetatable({
-                    latitude = worldVec.x,
-                    longitude = worldVec.y,
-                    altitude = worldVec.z,
-                    bodyId = 0,
-                    systemId = targetplanet.planetarySystemId
-                }, MapPosition)
-            end
-            local coords = worldVec - targetplanet.center
-            local distance = coords:len()
-            local altitude = distance - targetplanet.radius
-            local latitude = 0
-            local longitude = 0
-            if not float_eq(distance, 0) then
-                local phi = atan(coords.y, coords.x)
-                longitude = phi >= 0 and phi or (2 * math.pi + phi)
-                latitude = math.pi / 2 - math.acos(coords.z / distance)
-            end
-            return setmetatable({
-                latitude = math.deg(latitude),
-                longitude = math.deg(longitude),
-                altitude = altitude,
-                bodyId = targetplanet.bodyId,
-                systemId = targetplanet.planetarySystemId
-            }, MapPosition)
-        end
-        local waypoint = zeroConvertToMapPosition(planet, coordinates)
-        waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
-        if soundAlarm == 0 then 
-            oldWayPoint = waypoint
-        end
-        system.setWaypoint(waypoint)
-    end
-
     local function ToggleAutopilot()
 
         local function ToggleVectorToTarget(SpaceTarget)
@@ -675,7 +637,7 @@ VERSION_NUMBER = 1.157
         -- Toggle Autopilot, as long as the target isn't None
         if AutopilotTargetIndex > 0 and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
             ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
-            showWaypoint(autopilotTargetPlanet, AutopilotTargetCoords)
+            AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
             local nearPlanet = unit.getClosestPlanetInfluence() > 0
             if CustomTarget ~= nil then
                 LockPitch = nil
@@ -3053,8 +3015,9 @@ VERSION_NUMBER = 1.157
                     yawx = ConvertResolutionX(960)
                 end
                 local tickerPath = [[<path class="txttick line" d="]]
-                for i = mfloor(yawC - (range+10) - yawC % 5 + 0.5), mfloor(yawC + (range+10) + yawC % 5 + 0.5), 5 do
-                    local x = yawx + (-i * 5 + yaw * 5)
+                local degRange = mfloor(yawC - (range+10) - yawC % 5 + 0.5)
+                for i = degRange+60, degRange, -5 do
+                    local x = yawx - (-i * 5 + yaw * 5)
                     if (i % 10 == 0) then
                         yawlen = 10
                         local num = i
@@ -4363,7 +4326,54 @@ VERSION_NUMBER = 1.157
                     return groundDistance
                 end
             end
-            
+
+            local function showWaypoint(planet, coordinates, dontSet)
+                local function zeroConvertToMapPosition(targetplanet, worldCoordinates)
+                    local worldVec = vec3(worldCoordinates)
+                    if targetplanet.bodyId == 0 then
+                        return setmetatable({
+                            latitude = worldVec.x,
+                            longitude = worldVec.y,
+                            altitude = worldVec.z,
+                            bodyId = 0,
+                            systemId = targetplanet.planetarySystemId
+                        }, MapPosition)
+                    end
+                    local coords = worldVec - targetplanet.center
+                    local distance = coords:len()
+                    local altitude = distance - targetplanet.radius
+                    local latitude = 0
+                    local longitude = 0
+                    if not float_eq(distance, 0) then
+                        local phi = atan(coords.y, coords.x)
+                        longitude = phi >= 0 and phi or (2 * math.pi + phi)
+                        latitude = math.pi / 2 - math.acos(coords.z / distance)
+                    end
+                    return setmetatable({
+                        latitude = math.deg(latitude),
+                        longitude = math.deg(longitude),
+                        altitude = altitude,
+                        bodyId = targetplanet.bodyId,
+                        systemId = targetplanet.planetarySystemId
+                    }, MapPosition)
+                end
+                local waypoint = zeroConvertToMapPosition(planet, coordinates)
+                waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
+                if soundAlarm == 0 and not dontSet then 
+                    oldWayPoint = waypoint
+                end
+                if dontSet then 
+                    return waypoint
+                else
+                    system.setWaypoint(waypoint) 
+                    return true
+                end
+            end
+
+        function ap.showWayPoint(planet, coordinates, dontSet)
+            return showWaypoint(planet, coordinates, dontSet)
+        end
+
         function ap.APTick()
 
             inAtmo = (atmosphere() > 0)
@@ -4830,7 +4840,7 @@ VERSION_NUMBER = 1.157
                             AutopilotEndSpeed = 0
                         end
                         AutopilotTargetCoords = targetCoords
-                        showWaypoint(autopilotTargetPlanet, AutopilotTargetCoords)
+                        AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
 
                         skipAlign = true
                         TargetSet = true -- Only set the targetCoords once.  Don't let them change as we fly.
@@ -4862,7 +4872,7 @@ VERSION_NUMBER = 1.157
                         skipAlign = true
                         AutopilotRealigned = true
                         --AutopilotAccelerating = true
-                        showWaypoint(autopilotTargetPlanet, AutopilotTargetCoords)
+                        AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
                     end
                 end
 
@@ -5035,7 +5045,7 @@ VERSION_NUMBER = 1.157
                         apThrottleSet = false
                         ProgradeIsOn = true
                         spaceLand = true
-                        showWaypoint(autopilotTargetPlanet, AutopilotTargetCoords)
+                        AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
                     elseif orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 then
                         AutopilotStatus = "Circularizing"
                         local _, endSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed((worldPos-planet.center):len()-planet.radius)
@@ -5045,7 +5055,7 @@ VERSION_NUMBER = 1.157
                                     AutopilotStatus = "Orbiting to Target"
                                     if not WaypointSet then
                                         BrakeIsOn = false -- We have to set this at least once
-                                        showWaypoint(autopilotTargetPlanet, CustomTarget.position)
+                                        AP.showWayPoint(autopilotTargetPlanet, CustomTarget.position)
                                         WaypointSet = true
                                     end
                                 else 
@@ -5062,7 +5072,7 @@ VERSION_NUMBER = 1.157
                                     ProgradeIsOn = true
                                     spaceLand = true
                                     BrakeIsOn = false
-                                    showWaypoint(autopilotTargetPlanet, CustomTarget.position)
+                                    AP.showWayPoint(autopilotTargetPlanet, CustomTarget.position)
                                     WaypointSet = false -- Don't need it anymore
                                 end
                             else
@@ -5138,7 +5148,7 @@ VERSION_NUMBER = 1.157
                 apThrottleSet = false
                 ProgradeIsOn = true
                 spaceLand = true
-                showWaypoint(autopilotTargetPlanet, CustomTarget.position)
+                AP.showWayPoint(autopilotTargetPlanet, CustomTarget.position)
             end
             if followMode then
                 -- User is assumed to be outside the construct
@@ -6337,7 +6347,7 @@ VERSION_NUMBER = 1.157
         if button then
             button.activate()
         end
-        if SetWaypointOnExit then showWaypoint(planet, worldPos) end
+        if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
     end
 
     function script.onTick(timerId)
@@ -7968,12 +7978,13 @@ VERSION_NUMBER = 1.157
             end
 
         local i
-        local commands = "/commands /setname /G /agg /addlocation /copydatabank /wipedatabank"
+        local commands = "/commands /setname /G /agg /addlocation /copydatabank /wipedatabank /posWP"
         local command, arguement = nil, nil
         local commandhelp = "Command List:\n/commands \n/setname <newname> - Updates current selected saved position name\n/G VariableName newValue - Updates global variable to new value\n"..
                 "/G dump - shows all updatable variables with /G\n/agg <targetheight> - Manually set agg target height\n"..
                 "/addlocation savename ::pos{0,2,46.4596,-155.1799,22.6572} - adds a saved location by waypoint, not as accurate as making one at location\n"..
-                "/copydatabank - copies dbHud databank to a blank databank\n/wipedatabank - wipes the databank of all hud variables but not save variables"
+                "/copydatabank - copies dbHud databank to a blank databank\n/wipedatabank - wipes the databank of all hud variables but not save variables\n"..
+                "/iphWP - displays current IPH target's ::pos waypoint in lua chat"
         i = string.find(text, " ")
         command = text
         if i ~= nil then
@@ -8073,6 +8084,14 @@ VERSION_NUMBER = 1.157
             else
                 msgText = "No databank found."
             end
+        elseif command == "/iphWP" then
+            if AutopilotTargetIndex > 0 then
+                system.print(AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords, true)) 
+                msgText = "::pos waypoint shown in lua chat"
+            else
+                msgText = "No target selected in IPH"
+            end
+
         end
     end
 
