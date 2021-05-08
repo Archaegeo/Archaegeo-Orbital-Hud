@@ -38,6 +38,7 @@ The flight model will start by adding more yaw the more horizontal the construct
 * DisplayOrbit = true --  (Default: true) Show Orbit display when valid or not.  May be toggled with shift Buttons
 * SetWaypointOnExit = true --export (Default: true) Set to false to not set a waypoint when you exit hud.  True helps find your ship in crowded locations when you get out of seat.
 * IntruderAlertSystem = false --export (Default: false) Set to True to enable Intruder Alert system.
+* AlwaysVSpd = false --export (Default: false) Set to true to make vertical speed meter stay on screen when you alt-3 widget mode.
 ### Ship Handling variables
 * YawStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when yawing, determine by experimentation.  Higher allows faster AP Bank turns.
 * PitchStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when pitching, determine by experimentation.

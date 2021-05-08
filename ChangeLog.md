@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.159
+- Added Death Blossom (Alt-7) - Will cause ship to randomly spin on its axises.  Intent is to spread out incoming fire.  Will only spin if in PvP Space and either not in Autopilot or in Autopilot but at cruising speed.
+- Prevent hitting CTRL (Brake) turning off Alt-Hold and Lock Pitch if AGG is on.
+- Removed /wipedatabank command.  Not needed, cleaner/easier to pick up databank and remove dynamic properties.  Wipe was only wiping known variables, so not old discontinued ones.
+- Cleanup more code.
+
 Version 1.158
 - Added `/iphWP` command - Displays current IPH selected target's planet based ::pos waypoint in lua chat. Right Click it in lua chat to copy or bookmark.
 - Fixed compass to look more normal with degrees going up left to right. 
