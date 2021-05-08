@@ -3,6 +3,7 @@
 Version 1.159
 - Added Death Blossom (Alt-7) - Will cause ship to randomly spin on its axises.  Intent is to spread out incoming fire.  Will only spin if in PvP Space and either not in Autopilot or in Autopilot but at cruising speed.
 - Prevent hitting CTRL (Brake) turning off Alt-Hold and Lock Pitch if AGG is on.
+- Fixed Parachute Re-Entry to work again.
 - Removed /wipedatabank command.  Not needed, cleaner/easier to pick up databank and remove dynamic properties.  Wipe was only wiping known variables, so not old discontinued ones.
 - Cleanup more code.
 

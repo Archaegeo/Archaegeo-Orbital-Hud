@@ -5254,7 +5254,7 @@ VERSION_NUMBER = 1.159
 
                     if not throttleMode and coreAltitude > planet.noAtmosphericDensityAltitude + 5000 and velMag <= ReentrySpeed/3.6 and velMag > (ReentrySpeed/3.6)-10 and mabs(constructVelocity:normalize():dot(constructForward)) > 0.9 then
                         cmdThrottle(0)
-                    elseif throttleMode and ((brakeDistancer > -1 and distanceToTarget <= brakeDistancer) or coreAltitude <= planet.noAtmosphericDensityAltitude + 5000) then
+                    elseif throttleMode and velMag > ReentrySpeed/3.6 and ((brakeDistancer > -1 and distanceToTarget <= brakeDistancer) or coreAltitude <= planet.noAtmosphericDensityAltitude + 5000) then
                         BrakeIsOn = true
                     else
                         BrakeIsOn = false
