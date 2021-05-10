@@ -53,6 +53,7 @@ You can lower or raise (up to this limit) the current value by using Alt+Mousewh
 * AutoTakeoffAltitude = 1000 --  (Default: 1000) How high above your ground height AutoTakeoff tries to put you
 * TargetHoverHeight = 50 --  (Default: 50) Hover height above ground when G used to lift off, 50 is above all max hover heights.
 * LandingGearGroundHeight = 0 -- (Default: 0) Set to AGL-1 when on ground (or 0).  Will help prevent ship landing on ground then bouncing back up to landing gear height.  If too high, engines will not turn off.
+* ReEntryHeight = 5000 -- (Default: 5000) Height above a planets maximum surface altitude used for re-entry, if height exceeds min space engine height, then 11% atmo is used instead. (5000 means 11% is used)
 * MaxGameVelocity = 8333.00 --  (Default: 8333.00) Max speed for your autopilot in m/s, do not go above 8333.055 (30000 km/hr), can be reduced to save fuel. Use 6944.4444 for 25000km/hr
 * AutopilotInterplanetaryThrottle = 1.0 --  (Default: 1.0) How much throttle, 0.0 to 1.0, you want it to use when in autopilot to another planet while reaching MaxGameVelocity
 * warmup = 32 --  (Default: 32) How long it takes your space engines to warmup.  Basic Space Engines, from XS to XL: 0.25,1,4,16,32.  Only affects turn and burn brake calculations.
