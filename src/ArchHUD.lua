@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.159
+VERSION_NUMBER = 1.160
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -48,6 +48,7 @@ VERSION_NUMBER = 1.159
     AutoTakeoffAltitude = 1000 --export: (Default: 1000)
     TargetHoverHeight = 50 --export: (Default: 50)
     LandingGearGroundHeight = 0 --export: (Default: 0)
+    ReEntryHeight = 5000 -- export: (Default: 5000)
     MaxGameVelocity = 8333.00 --export: (Default: 8333.00)
     AutopilotInterplanetaryThrottle = 1.0 --export: (Default: 1.0)
     warmup = 32 --export: (Default: 32)
@@ -350,7 +351,7 @@ VERSION_NUMBER = 1.159
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", 
                 "showHud", "ShowOdometer", "hideHudOnToggleWidgets", "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd"}
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "TargetOrbitRadius", "LowOrbitHeight",
-                "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight",
+                "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
                 "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization"}
             local savableVariablesHud = {"ResolutionX","ResolutionY","circleRad","SafeR", "SafeG", "SafeB", 
@@ -908,7 +909,8 @@ VERSION_NUMBER = 1.159
             AltitudeHold = true
             autoRoll = true
             BrakeIsOn = false
-            HoldAltitude = planet.spaceEngineMinAltitude - 50
+            HoldAltitude = planet.surfaceMaxAltitude + ReEntryHeight
+            if HoldAltitude > planet.spaceEngineMinAltitude then HoldAltitude = planet.spaceEngineMinAltitude - 100 end
             local text, altUnit = getDistanceDisplayString(HoldAltitude)
             msgText = "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text .. altUnit
             cmdCruise(mfloor(adjustedAtmoSpeedLimit))
@@ -4494,12 +4496,14 @@ VERSION_NUMBER = 1.159
                     BrakeIsOn = false -- wtf how does this keep turning on, and why does it matter if we're in cruise?
                     local aligned = false
                     if CustomTarget ~= nil then
-                        aligned = AlignToWorldVector(CustomTarget.position-worldPos,0.01) 
+                        aligned = AlignToWorldVector(CustomTarget.position-worldPos,0.1) 
                     else
                         aligned = AlignToWorldVector(vec3(constructVelocity),0.01) 
                     end
                     autoRoll = true
-                    if aligned and (mabs(adjustedRoll) < 2 or mabs(adjustedPitch) > 85) and velMag >= adjustedAtmoSpeedLimit/3.6-1 then
+                    if aligned then
+                        cmdCruise(mfloor(adjustedAtmoSpeedLimit))
+                        if (mabs(adjustedRoll) < 2 or mabs(adjustedPitch) > 85) and velMag >= adjustedAtmoSpeedLimit/3.6-1 then
                             -- Try to force it to get full speed toward target, so it goes straight to throttle and all is well
                             BrakeIsOn = false
                             ProgradeIsOn = false
@@ -4509,10 +4513,9 @@ VERSION_NUMBER = 1.159
                             Autopilot = false
                             --autoRoll = autoRollPreference   
                             BeginReentry()
+                        end
                     elseif inAtmo and AtmoSpeedAssist then 
                         cmdThrottle(1) -- Just let them full throttle if they're in atmo
-                    else
-                        cmdCruise(mfloor(adjustedAtmoSpeedLimit)) -- Trouble drawing if it's not an int
                     end
                 elseif velMag > minAutopilotSpeed then
                     AlignToWorldVector(vec3(constructVelocity),0.01) 
@@ -4539,7 +4542,7 @@ VERSION_NUMBER = 1.159
                 end
             end
 
-            if deathBlossom and not notPvPZone and (not Autopilot or AutopilotCruising) then
+            if deathBlossom and not notPvPZone and (not Autopilot or (AutopilotCruising and not AutopilotBraking)) then
                 if AlignToWorldVector(deathBlossom, 0.1) then
                     deathBlossom = deathBlossomList[math.random(6)]
                 end
@@ -4817,6 +4820,22 @@ VERSION_NUMBER = 1.159
             end
 
             if Autopilot and atmosDensity == 0 and not spaceLand then
+                local function finishAutopilot(msg, orbit)
+                    system.print(msg)
+                    BrakeIsOn = false
+                    AutopilotBraking = false
+                    Autopilot = false
+                    TargetSet = false
+                    AutopilotStatus = "Aligning" -- Disable autopilot and reset
+                    cmdThrottle(0)
+                    apThrottleSet = false
+                    msgText = msg
+                    if orbit then
+                        if AutopilotTargetOrbit ~= nil then OrbitTargetOrbit = AutopilotTargetOrbit else OrbitTargetOrbit = coreAltitude end
+                        OrbitTargetSet = true
+                        ToggleIntoOrbit()
+                    end
+                end
                 -- Planetary autopilot engaged, we are out of atmo, and it has a target
                 -- Do it.  
                 -- And tbh we should calc the brakeDistance live too, and of course it's also in meters
@@ -5030,31 +5049,23 @@ VERSION_NUMBER = 1.159
                         --horizontalDistance = math.sqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
                     end
                     if (CustomTarget ~=nil and CustomTarget.planetname == "Space" and velMag < 50) then
-                        msgText = "Autopilot complete, arrived at space location"
-                        AutopilotBraking = false
-                        Autopilot = false
-                        TargetSet = false
-                        AutopilotStatus = "Aligning" -- Disable autopilot and reset
+                        finishAutopilot("Autopilot complete, arrived at space location")
+                        BrakeIsOn = true
+                        brakeInput = 1
                         -- We only aim for endSpeed even if going straight in, because it gives us a smoother transition to alignment
                     elseif (CustomTarget ~= nil and CustomTarget.planetname ~= "Space") and velMag <= endSpeed and (orbit.apoapsis == nil or orbit.periapsis == nil or orbit.apoapsis.altitude <= 0 or orbit.periapsis.altitude <= 0) then
                         -- They aren't in orbit, that's a problem if we wanted to do anything other than reenter.  Reenter regardless.                  
-                        msgText = "Autopilot complete, proceeding with reentry"
+                        finishAutopilot("Autopilot complete, commencing reentry")
+                        BrakeIsOn = true
                         --BrakeIsOn = false -- Leave brakes on to be safe while we align prograde
                         AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
-                        AutopilotBraking = false
-                        Autopilot = false
-                        TargetSet = false
-                        AutopilotStatus = "Aligning" -- Disable autopilot and reset
-                        --brakeInput = 0
-                        cmdThrottle(0)
-                        apThrottleSet = false
-                        ProgradeIsOn = true
+                        ProgradeIsOn = true  
                         spaceLand = true
                         AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
-                    elseif orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 then
+                    elseif orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 or AutopilotStatus == "Circularizing" then
                         AutopilotStatus = "Circularizing"
-                        local _, endSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed((worldPos-planet.center):len()-planet.radius)
-                        if velMag <= endSpeed then --or(orbit.apoapsis.altitude < AutopilotTargetOrbit and orbit.periapsis.altitude < AutopilotTargetOrbit) then
+                        system.print("VEL: "..velMag.." End: "..endSpeed)
+                        if velMag <= endSpeed then 
                             if CustomTarget ~= nil then
                                 if constructVelocity:normalize():dot(targetVec:normalize()) > 0.4 then -- Triggers when we get close to passing it
                                     AutopilotStatus = "Orbiting to Target"
@@ -5064,39 +5075,20 @@ VERSION_NUMBER = 1.159
                                         WaypointSet = true
                                     end
                                 else 
-                                    msgText = "Autopilot complete, proceeding with reentry"
-                                    --BrakeIsOn = false -- Leave brakes on to be safe while we align prograde
+                                    finishAutopilot("Autopilot complete, proceeding with reentry")
                                     AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
-                                    AutopilotBraking = false
-                                    Autopilot = false
-                                    TargetSet = false
-                                    AutopilotStatus = "Aligning" -- Disable autopilot and reset
-                                    --brakeInput = 0
-                                    cmdThrottle(0)
-                                    apThrottleSet = false
                                     ProgradeIsOn = true
                                     spaceLand = true
-                                    BrakeIsOn = false
                                     AP.showWayPoint(autopilotTargetPlanet, CustomTarget.position)
                                     WaypointSet = false -- Don't need it anymore
                                 end
                             else
-                                BrakeIsOn = false
-                                AutopilotBraking = false
-                                Autopilot = false
-                                TargetSet = false
-                                AutopilotStatus = "Aligning" -- Disable autopilot and reset
-                                -- TODO: This is being added to newContent *after* we already drew the screen, so it'll never get displayed
-                                msgText = "Autopilot completed, orbit established"
+                                finishAutopilot("Autopilot completed, setting orbit", true)
                                 brakeInput = 0
-                                cmdThrottle(0)
-                                apThrottleSet = false
-                                if CustomTarget ~= nil and CustomTarget.planetname ~= "Space" then
-                                    ProgradeIsOn = true
-                                    spaceLand = true
-                                end
                             end
                         end
+                    elseif AutopilotStatus == "Circularizing" then
+                        finishAutopilot("Autopilot complete, fixing Orbit", true)
                     end
                 elseif AutopilotCruising then
                     --if brakeForceRequired >= LastMaxBrake then
@@ -7990,7 +7982,7 @@ VERSION_NUMBER = 1.159
         local command, arguement = nil, nil
         local commandhelp = "Command List:\n/commands \n/setname <newname> - Updates current selected saved position name\n/G VariableName newValue - Updates global variable to new value\n"..
                 "/G dump - shows all updatable variables with /G\n/agg <targetheight> - Manually set agg target height\n"..
-                "/addlocation savename ::pos{0,2,46.4596,-155.1799,22.6572} - adds a saved location by waypoint, not as accurate as making one at location\n"..
+                "/addlocation SafeZoneCenter ::pos{0,0,13771471,7435803,-128971} - adds a saved location by waypoint, not as accurate as making one at location\n"..
                 "/copydatabank - copies dbHud databank to a blank databank\n"..
                 "/iphWP - displays current IPH target's ::pos waypoint in lua chat"
         i = string.find(text, " ")

@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.160
+- Added `ReEntryHeight` default 5000 - Height above a planets maximum surface altitude used for re-entry, if height exceeds min space engine height, then 11% atmo is used instead. (5000 means 11% is used).
+For example: Alioth max surface altitude is 1100m, so default would be 6100 which is > min space engine on Alioth of 3410m, so 3310 will be re-entry alt.  If 1000 set for ReEntryHeight, then 2100m would be target.
+- Fix to issue with Turn and Burn arrival to Orbit not stopping properly.
+- Fix re-entry prograde alignment planet to planet AP with "sloppy" ships not pushing into atmosphere before aligned (depending on arrival height)
+- AP to other planets (not to saved locations) will now clean up orbit to TargetOrbit height after arrival.
+
 Version 1.159
 - Added Death Blossom (Alt-7) - Will cause ship to randomly spin on its axises.  Intent is to spread out incoming fire.  Will only spin if in PvP Space and either not in Autopilot or in Autopilot but at cruising speed.
 - Prevent hitting CTRL (Brake) turning off Alt-Hold and Lock Pitch if AGG is on.
