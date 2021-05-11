@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.160
+VERSION_NUMBER = 1.161
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -5064,7 +5064,6 @@ VERSION_NUMBER = 1.160
                         AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
                     elseif orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 or AutopilotStatus == "Circularizing" then
                         AutopilotStatus = "Circularizing"
-                        system.print("VEL: "..velMag.." End: "..endSpeed)
                         if velMag <= endSpeed then 
                             if CustomTarget ~= nil then
                                 if constructVelocity:normalize():dot(targetVec:normalize()) > 0.4 then -- Triggers when we get close to passing it
@@ -6455,7 +6454,33 @@ VERSION_NUMBER = 1.160
                         return accelTime + brakeTime + cruiseTime
                     end
                 end
-
+                local function RefreshLastMaxBrake(gravity, force)
+                    if gravity == nil then
+                        gravity = core.g()
+                    end
+                    gravity = round(gravity, 5) -- round to avoid insignificant updates
+                    if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
+                        local velocity = core.getVelocity()
+                        local speed = vec3(velocity):len()
+                        local maxBrake = jdecode(unit.getData()).maxBrake 
+                        if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
+                            maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
+                            maxBrake = maxBrake / atmosDensity
+                            if atmosDensity > 0.10 then 
+                                if LastMaxBrakeInAtmo then
+                                    LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
+                                else
+                                    LastMaxBrakeInAtmo = maxBrake 
+                                end
+                            end -- Now that we're calculating actual brake values, we want this updated
+                        end
+                        if maxBrake ~= nil and maxBrake > 0 then
+                            LastMaxBrake = maxBrake
+                        end
+                        lastMaxBrakeAtG = gravity
+                    end
+                end
+            RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
             if atmosDensity > 0 and not WasInAtmo then
                 if not throttleMode and AtmoSpeedAssist and (AltitudeHold or Reentry) then
                     -- If they're reentering atmo from cruise, and have atmo speed Assist
@@ -6555,32 +6580,7 @@ VERSION_NUMBER = 1.160
             end       
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
             -- Local Functions for oneSecond
-                local function RefreshLastMaxBrake(gravity, force)
-                    if gravity == nil then
-                        gravity = core.g()
-                    end
-                    gravity = round(gravity, 5) -- round to avoid insignificant updates
-                    if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
-                        local velocity = core.getVelocity()
-                        local speed = vec3(velocity):len()
-                        local maxBrake = jdecode(unit.getData()).maxBrake 
-                        if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
-                            maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
-                            maxBrake = maxBrake / atmosDensity
-                            if atmosDensity > 0.10 then 
-                                if LastMaxBrakeInAtmo then
-                                    LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
-                                else
-                                    LastMaxBrakeInAtmo = maxBrake 
-                                end
-                            end -- Now that we're calculating actual brake values, we want this updated
-                        end
-                        if maxBrake ~= nil and maxBrake > 0 then
-                            LastMaxBrake = maxBrake
-                        end
-                        lastMaxBrakeAtG = gravity
-                    end
-                end
+
                 local function CheckDamage(newContent)
                     local percentDam = 0
                     damageMessage = ""
@@ -6691,7 +6691,7 @@ VERSION_NUMBER = 1.160
                             
             
             clearAllCheck = false
-            RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
+
             if IntruderAlertSystem then 
                 compareMass() 
             end
@@ -7928,7 +7928,7 @@ VERSION_NUMBER = 1.160
                 valuesAreSet = false
             end
 
-            local function AddNewLocationByWaypoint(savename, planet, pos)
+            local function AddNewLocationByWaypoint(savename, planet, pos, temp)
 
                 local function zeroConvertToWorldCoordinates(pos) -- Many thanks to SilverZero for this.
                     local num  = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
@@ -7949,7 +7949,7 @@ VERSION_NUMBER = 1.160
                     return planet.center + (planet.radius + altitude) * planetxyz
                 end    
             
-                if dbHud_1 then
+                if dbHud_1 or temp then
                     local newLocation = {}
                     local position = zeroConvertToWorldCoordinates(pos)
                     if planet.name == "Space" then
@@ -7969,20 +7969,28 @@ VERSION_NUMBER = 1.160
                             gravity = planet.gravity
                         }
                     end
-                    SavedLocations[#SavedLocations + 1] = newLocation
+                    if not temp then 
+                        SavedLocations[#SavedLocations + 1] = newLocation
+                    else
+                        for k, v in pairs(atlas[0]) do
+                            if v.name and savename == v.name then
+                                table.remove(atlas[0], k)
+                            end
+                        end
+                    end
                     table.insert(atlas[0], newLocation)
                     ATLAS.UpdateAtlasLocationsList()
                 else
-                    msgText = "Databank must be installed to save locations"
+                    msgText = "Databank must be installed to save permanent locations"
                 end
             end
 
         local i
-        local commands = "/commands /setname /G /agg /addlocation /copydatabank /posWP"
         local command, arguement = nil, nil
         local commandhelp = "Command List:\n/commands \n/setname <newname> - Updates current selected saved position name\n/G VariableName newValue - Updates global variable to new value\n"..
                 "/G dump - shows all updatable variables with /G\n/agg <targetheight> - Manually set agg target height\n"..
                 "/addlocation SafeZoneCenter ::pos{0,0,13771471,7435803,-128971} - adds a saved location by waypoint, not as accurate as making one at location\n"..
+                "/::pos{0,0,13771471,7435803,-128971} - adds a temporary waypoint that is not saved to databank with name 0Temp\n"..
                 "/copydatabank - copies dbHud databank to a blank databank\n"..
                 "/iphWP - displays current IPH target's ::pos waypoint in lua chat"
         i = string.find(text, " ")
@@ -8006,24 +8014,26 @@ VERSION_NUMBER = 1.160
             else
                 msgText = "Select a saved target to rename first"
             end
-        elseif command == "/addlocation" then
-            if arguement == nil or arguement == "" or string.find(arguement, "::") == nil then
-                msgText = "Usage: ah-addlocation savename ::pos{0,2,46.4596,-155.1799,22.6572}"
-                return
+        elseif command == "/addlocation" or string.find(text, "::pos") ~= nil then
+            local temp = false
+            local savename = "0-Temp"
+            if arguement == nil or arguement == "" then
+                arguement = command
+                temp = true
             end
             i = string.find(arguement, "::")
-            local savename = string.sub(arguement, 1, i-2)
+            if not temp then savename = string.sub(arguement, 1, i-2) end
             local pos = string.sub(arguement, i)
             local num        = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
             local posPattern = '::pos{' .. num .. ',' .. num .. ',' ..  num .. ',' .. num ..  ',' .. num .. '}'    
             local systemId, bodyId, latitude, longitude, altitude = stringmatch(pos, posPattern);
             local planet = atlas[tonumber(systemId)][tonumber(bodyId)]
-            AddNewLocationByWaypoint(savename, planet, pos)   
+            AddNewLocationByWaypoint(savename, planet, pos, temp) 
             msgText = "Added "..savename.." to saved locations,\nplanet "..planet.name.." at "..pos
             msgTimer = 5    
         elseif command == "/agg" then
             if arguement == nil or arguement == "" then
-                msgText = "Usage: ah-agg targetheight"
+                msgText = "Usage: /agg targetheight"
                 return
             end
             arguement = tonumber(arguement)
