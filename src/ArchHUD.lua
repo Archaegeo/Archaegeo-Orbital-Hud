@@ -6221,6 +6221,22 @@ VERSION_NUMBER = 1.162
                 MakeButton("Reset Intruder Alert", "Set Safe Mass", buttonWidth, buttonHeight, x + buttonWidth + 20,y,
                     function() return safeMass > 0 end, handleMass , function() return IntruderAlertSystem end)   
                 y = y + buttonHeight + 20
+                MakeButton(function() return stringf("Switch IPH Mode - Current: %s", iphCondition)
+                end, function()
+                    return stringf("IPH Mode: %s", iphCondition)
+                end, buttonWidth * 2, buttonHeight, x, y, function()
+                    return false
+                end, function()
+                    if iphCondition == "All" then
+                        iphCondition = "Custom Only"
+                    elseif iphCondition == "Custom Only" then
+                        iphCondition = "No Moons"
+                    else
+                        iphCondition = "All"
+                    end
+                    msgText = "IPH Mode: "..iphCondition
+                end)
+                y = y + buttonHeight + 20
                 MakeButton(function() return stringf("Toggle Control Scheme - Current: %s", userControlScheme)
                     end, function()
                         return stringf("Control Scheme: %s", userControlScheme)
@@ -6235,22 +6251,6 @@ VERSION_NUMBER = 1.162
                             userControlScheme = "keyboard"
                         end
                         msgText = "New Control Scheme: "..userControlScheme
-                    end)
-                y = y + buttonHeight + 20
-                MakeButton(function() return stringf("Switch IPH Mode - Current: %s", iphCondition)
-                    end, function()
-                        return stringf("IPH Mode: %s", iphCondition)
-                    end, buttonWidth * 2, buttonHeight, x, y, function()
-                        return false
-                    end, function()
-                        if iphCondition == "All" then
-                            iphCondition = "Custom Only"
-                        elseif iphCondition == "Custom Only" then
-                            iphCondition = "No Moons"
-                        else
-                            iphCondition = "All"
-                        end
-                        msgText = "IPH Mode: "..iphCondition
                     end)
             end
         

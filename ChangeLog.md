@@ -1,7 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.162
-- Added IPH version selector button.  All, No Moons, Custom Only.  Hold down SHIFT while not in freelook to see buttons, lower left button.
+- Added IPH Mode selector button to main Button screen. Modes: All, No Moons, Custom Only.  
 
 Version 1.161
 - Temporary AP Waypoints:  Added `/::pos{}` command to add a temporary waypoint to IPH named `0-Temp` that is not saved to databank when you exit seat.  Using it again overwrites the previous value.
