@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.162
+- Added IPH Mode selector button to main Button screen. Modes: All, No Moons, Custom Only.  
+
 Version 1.161
 - Temporary AP Waypoints:  Added `/::pos{}` command to add a temporary waypoint to IPH named `0-Temp` that is not saved to databank when you exit seat.  Using it again overwrites the previous value.
 This can also be used on ships without databanks to give you one personal AP location that doesnt save but can be used for that flight.
