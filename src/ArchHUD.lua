@@ -4,12 +4,12 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.161
+VERSION_NUMBER = 1.162
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
     userControlScheme = "virtual joystick" --export: (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard"
-    
+        
     -- True/False variables
     freeLookToggle = true --export: (Default: true)
     BrakeToggleDefault = true --export: (Default: true)
@@ -147,6 +147,7 @@ VERSION_NUMBER = 1.161
     IntoOrbit = false
     showHelp = true
     safeMass = 0
+    iphCondition = "all"
     -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
         local autoVariables = {"showHelp","VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
                     "Autopilot", "TurnBurn", "AltitudeHold", "BrakeLanding",
@@ -155,7 +156,7 @@ VERSION_NUMBER = 1.161
                     "AutopilotPlanetGravity", "PrevViewLock", "AutopilotTargetName", "AutopilotTargetCoords",
                     "AutopilotTargetIndex", "TotalDistanceTravelled",
                     "TotalFlightTime", "SavedLocations", "VectorToTarget", "LocationIndex", "LastMaxBrake", 
-                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "safeMass"}
+                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "safeMass", "iphCondition"}
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -4180,7 +4181,10 @@ VERSION_NUMBER = 1.161
                 else
                     local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
                     local autopilotEntry = atlas[0][atlasIndex]
-                    if autopilotEntry.name == "Space" then 
+                    if autopilotEntry.name == "Space" or 
+                       (iphCondition == "Custom Only" and autopilotEntry.center) or
+                       (iphCondition == "No Moons" and string.find(autopilotEntry.name, "Moon") ~= nil)
+                    then 
                         if up == nil then 
                             ATLAS.adjustAutopilotTargetIndex()
                         else
@@ -6230,6 +6234,23 @@ VERSION_NUMBER = 1.161
                         else
                             userControlScheme = "keyboard"
                         end
+                        msgText = "New Control Scheme: "..userControlScheme
+                    end)
+                y = y + buttonHeight + 20
+                MakeButton(function() return stringf("Switch IPH Mode - Current: %s", iphCondition)
+                    end, function()
+                        return stringf("IPH Mode: %s", iphCondition)
+                    end, buttonWidth * 2, buttonHeight, x, y, function()
+                        return false
+                    end, function()
+                        if iphCondition == "All" then
+                            iphCondition = "Custom Only"
+                        elseif iphCondition == "Custom Only" then
+                            iphCondition = "No Moons"
+                        else
+                            iphCondition = "All"
+                        end
+                        msgText = "IPH Mode: "..iphCondition
                     end)
             end
         
