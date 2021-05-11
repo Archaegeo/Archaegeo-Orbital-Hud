@@ -3,7 +3,8 @@
 Version 1.161
 - Temporary AP Waypoints:  Added `/::pos{}` command to add a temporary waypoint to IPH named `0-Temp` that is not saved to databank when you exit seat.  Using it again overwrites the previous value.
 This can also be used on ships without databanks to give you one personal AP location that doesnt save but can be used for that flight.
-- Remove a leftover system.print message
+- Documented functions with comments in the source file, doesnt increase conf file size.
+- More cleanup of code.
 
 Version 1.160
 - Added `ReEntryHeight` default 5000 - Height above a planets maximum surface altitude used for re-entry, if height exceeds min space engine height, then 11% atmo is used instead. (5000 means 11% is used).
