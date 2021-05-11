@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.160
+VERSION_NUMBER = 1.161
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -182,7 +182,7 @@ VERSION_NUMBER = 1.160
     local sysLockVw = system.lockView
     local sysIsVwLock = system.isViewLocked
 
-    local function round(num, numDecimalPlaces)
+    local function round(num, numDecimalPlaces) -- rounds variable num to numDecimalPlaces
         local mult = 10 ^ (numDecimalPlaces or 0)
         return mfloor(num * mult + 0.5) / mult
     end
@@ -335,15 +335,15 @@ VERSION_NUMBER = 1.160
     local notPvPZone = false
     local deathBlossom = nil
 
--- Function Definitions that are used in more than one area
-    local function addTable(table1, table2)
+-- Function Definitions that are used in more than one areause 
+    local function addTable(table1, table2) -- Function to add two tables together
         for i = 1, #table2 do
             table1[#table1 + 1 ] = table2[i]
         end
         return table1
     end
 
-    local function saveableVariables(subset)
+    local function saveableVariables(subset) -- returns saveable variables by catagory
         local returnSet = {}
             -- Complete list of user variables above, must be in saveableVariables to be stored on databank
             local saveableVariablesBoolean = {"userControlScheme","freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
@@ -379,14 +379,13 @@ VERSION_NUMBER = 1.160
         end            
     end
 
-    local function svgText(x, y, text, class, style)
+    local function svgText(x, y, text, class, style) -- processes a svg text string, saves code lines by doing it this way
         if class == nil then class = "" end
         if style == nil then style = "" end
-        return stringf([[<text class="%s" x=%s y=%s style="%s">%s</text>]],
-                                                class,x, y, style, text)
+        return stringf([[<text class="%s" x=%s y=%s style="%s">%s</text>]], class,x, y, style, text)
     end
 
-    local function cmdThrottle(value, dontSwitch)
+    local function cmdThrottle(value, dontSwitch) -- sets the throttle value to value, also switches to throttle mode (vice cruise) unless dontSwitch passed
         if navCom:getAxisCommandType(0) ~= axisCommandType.byThrottle and not dontSwitch then
             Nav.control.cancelCurrentControlMasterMode()
         end
@@ -394,7 +393,7 @@ VERSION_NUMBER = 1.160
         PlayerThrottle = uclamp(round(value*100,0)/100, -1, 1)
     end
 
-    local function cmdCruise(value, dontSwitch)
+    local function cmdCruise(value, dontSwitch) -- sets the cruise target speed to value, also switches to cruise mode (vice throttle) unless dontSwitch passed
         if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed and not dontSwitch then
             Nav.control.cancelCurrentControlMasterMode()
         end
@@ -402,7 +401,7 @@ VERSION_NUMBER = 1.160
         setCruiseSpeed = value
     end
 
-    local function float_eq(a, b)
+    local function float_eq(a, b) -- float equation
         if a == 0 then
             return mabs(b) < 1e-09
         end
@@ -412,32 +411,27 @@ VERSION_NUMBER = 1.160
         return mabs(a - b) < math.max(mabs(a), mabs(b)) * epsilon
     end
 
-    local function getDistanceDisplayString(distance, places)
+    local function getDistanceDisplayString(distance, places) -- Turn a distance into a string to a number of places
         local su = distance > 100000
-        local result, displayUnit = ""
         if places == nil then places = 1 end
         if su then
             -- Convert to SU
-            result, displayUnit = round(distance / 1000 / 200, places),"SU"
+            return round(distance / 1000 / 200, places).."SU"
         elseif distance < 1000 then
-            result, displayUnit = round(distance, places),"M"
+            return round(distance, places).."M"
         else
             -- Convert to KM
-            result, displayUnit = round(distance / 1000, places),"KM"
+            return round(distance / 1000, places).."KM"
         end
-
-        return result, displayUnit
     end
 
-    local function ToggleVerticalTakeoff()
+    local function ToggleVerticalTakeoff() -- Toggle vertical takeoff mode on and off
+        AltitudeHold = false
         if VertTakeOff then
-            AltitudeHold = false
             StrongBrakes = true -- We don't care about this anymore
             Reentry = false
             AutoTakeoff = false
-            AltitudeHold = false
             BrakeLanding = true
-            VertTakeOff = false
             autoRoll = true
             upAmount = 0
             if inAtmo and abvGndDet == -1 then
@@ -448,17 +442,16 @@ VERSION_NUMBER = 1.160
                 cmdCruise(mfloor(adjustedAtmoSpeedLimit))
             end
         else
-            VertTakeOff = true
-            AltitudeHold = false
             OrbitAchieved = false
             GearExtended = false
             Nav.control.retractLandingGears()
-            navCom:setTargetGroundAltitude(TargetHoverHeight) -- Hard set this for takeoff, you wouldn't use takeoff from a hangar
+            navCom:setTargetGroundAltitude(TargetHoverHeight) 
             BrakeIsOn = true
         end
+        VertTakeOff = not VertTakeOff
     end
 
-    local function ToggleIntoOrbit()
+    local function ToggleIntoOrbit() -- Toggle IntoOrbit mode on and off
         OrbitAchieved = false
         orbitPitch = nil
         orbitRoll = nil
@@ -496,7 +489,7 @@ VERSION_NUMBER = 1.160
         end
     end
 
-    local function ToggleAltitudeHold()  
+    local function ToggleAltitudeHold()  -- Toggle Altitude Hold mode on and off
         if (time - ahDoubleClick) < 1.5 then
             if planet.hasAtmosphere  then
                 if atmosDensity > 0 then
@@ -573,7 +566,7 @@ VERSION_NUMBER = 1.160
         end
     end
 
-    local function ToggleFollowMode()
+    local function ToggleFollowMode() -- Toggle Follow Mode on and off
         if isRemote() == 1 then
             followMode = not followMode
             if followMode then
@@ -603,7 +596,7 @@ VERSION_NUMBER = 1.160
         end
     end
 
-    local function ToggleAutopilot()
+    local function ToggleAutopilot() -- Toggle autopilot mode on and off
 
         local function ToggleVectorToTarget(SpaceTarget)
             -- This is a feature to vector toward the target destination in atmo or otherwise on-planet
@@ -723,7 +716,7 @@ VERSION_NUMBER = 1.160
         end
     end
 
-    local function UpdatePosition(newName)
+    local function UpdatePosition(newName) -- Update a saved location with new position
         local index = -1
         local newLocation
         index = ATLAS.findAtlasIndex(SavedLocations)
@@ -762,7 +755,7 @@ VERSION_NUMBER = 1.160
         end
     end
 
-    local function BrakeToggle()
+    local function BrakeToggle() -- Toggle brakes on and off
         -- Toggle brakes
         BrakeIsOn = not BrakeIsOn
         if BrakeLanding then
@@ -795,7 +788,7 @@ VERSION_NUMBER = 1.160
         end
     end
 
-    local function AlignToWorldVector(vector, tolerance, damping)
+    local function AlignToWorldVector(vector, tolerance, damping) -- Aligns ship to vector with a tolerance and a damping override of user damping if needed.
         local function getMagnitudeInDirection(vector, direction)
             -- return vec3(vector):project_on(vec3(direction)):len()
             vector = vec3(vector)
@@ -882,7 +875,7 @@ VERSION_NUMBER = 1.160
         end
     end
 
-    local function BeginReentry()
+    local function BeginReentry() -- Begins re-entry process
         if Reentry then
             msgText = "Re-Entry cancelled"
             Reentry = false
@@ -911,14 +904,14 @@ VERSION_NUMBER = 1.160
             BrakeIsOn = false
             HoldAltitude = planet.surfaceMaxAltitude + ReEntryHeight
             if HoldAltitude > planet.spaceEngineMinAltitude then HoldAltitude = planet.spaceEngineMinAltitude - 100 end
-            local text, altUnit = getDistanceDisplayString(HoldAltitude)
-            msgText = "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text .. altUnit
+            local text = getDistanceDisplayString(HoldAltitude)
+            msgText = "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text 
             cmdCruise(mfloor(adjustedAtmoSpeedLimit))
         end
         AutoTakeoff = false -- This got left on somewhere.. 
     end
 
-    local function ToggleAntigrav()
+    local function ToggleAntigrav() -- Toggles antigrav on and off
         if antigrav and not ExternalAGG then
             if antigravOn then
                 antigrav.deactivate()
@@ -934,7 +927,7 @@ VERSION_NUMBER = 1.160
         end
     end
 
-    local function FormatTimeString(seconds)
+    local function FormatTimeString(seconds) -- Format a time string for display
         local minutes = 0
         local hours = 0
         local days = 0
@@ -963,7 +956,7 @@ VERSION_NUMBER = 1.160
         end
     end
 
-    local function SaveDataBank(copy)
+    local function SaveDataBank(copy) -- Save values to the databank.
         local function writeData(dataList)
             for k, v in pairs(dataList) do
                 dbHud_1.setStringValue(v, jencode(_G[v]))
@@ -2145,16 +2138,6 @@ VERSION_NUMBER = 1.160
             -- Utilities
             local utils = require('cpml.utils')
             local vec3 = require('cpml.vec3')
-            local clamp = uclamp
-            local function float_eq(a, b)
-                if a == 0 then
-                    return mabs(b) < 1e-09
-                end
-                if b == 0 then
-                    return mabs(a) < 1e-09
-                end
-                return mabs(a - b) < math.max(mabs(a), mabs(b)) * epsilon
-            end
             local function formatNumber(n)
                 local result = string.gsub(string.reverse(stringf('%.4f', n)), '^0*%.?', '')
                 return result == '' and '0' or string.reverse(result)
@@ -2273,7 +2256,7 @@ VERSION_NUMBER = 1.160
                     }, MapPosition)
                 end
                 return setmetatable({
-                    latitude = deg2rad * clamp(latitude, -90, 90),
+                    latitude = deg2rad * uclamp(latitude, -90, 90),
                     longitude = deg2rad * (longitude % 360),
                     altitude = altitude,
                     bodyId = bodyId,
@@ -2555,7 +2538,7 @@ VERSION_NUMBER = 1.160
         end
 
 -- Class Definitions to organize code
-    local function Kinematics()
+    local function Kinematics() -- Part of Jaylebreak's flight files, modified slightly for hud
 
         local Kinematic = {} -- just a namespace
         local C = 30000000 / 3600
@@ -2658,7 +2641,7 @@ VERSION_NUMBER = 1.160
         end
         return Kinematic
     end
-    local function Keplers()
+    local function Keplers() -- Part of Jaylebreak's flight files, modified slightly for hud
         local vec3 = require('cpml.vec3')
         local PlanetRef = PlanetRef()
         local function isString(s)
@@ -2666,15 +2649,6 @@ VERSION_NUMBER = 1.160
         end
         local function isTable(t)
             return type(t) == 'table'
-        end
-        local function float_eq(a, b)
-            if a == 0 then
-                return mabs(b) < 1e-09
-            end
-            if b == 0 then
-                return mabs(a) < 1e-09
-            end
-            return mabs(a - b) < math.max(mabs(a), mabs(b)) * constants.epsilon
         end
         Kepler = {}
         Kepler.__index = Kepler
@@ -2784,7 +2758,7 @@ VERSION_NUMBER = 1.160
             end
         })
     end    
-    local function HudClass() -- Everything HUD releated the is self contained
+    local function HudClass() -- Everything HUD display releated including tick
         local pvpDist = 0
         --Local Huds Functions
             local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
@@ -3456,8 +3430,8 @@ VERSION_NUMBER = 1.160
                     else
                         newContent[#newContent + 1] = svgText(warningX, gearY, "Landed (G: Takeoff)", "warnings")
                     end
-                    local displayText, displayUnit = getDistanceDisplayString(Nav:getTargetGroundAltitude())
-                    newContent[#newContent + 1] = svgText(warningX, hoverY,"Hover Height: ".. displayText.. displayUnit,"warn")
+                    local displayText = getDistanceDisplayString(Nav:getTargetGroundAltitude())
+                    newContent[#newContent + 1] = svgText(warningX, hoverY,"Hover Height: ".. displayText,"warn")
                 end
                 if isBoosting then
                     newContent[#newContent + 1] = svgText(warningX, ewarpY+20, "ROCKET BOOST ENABLED", "warn")
@@ -3483,24 +3457,24 @@ VERSION_NUMBER = 1.160
                     atmoDistance = math.min(nearSide,farSide)
                 end
                 if AltitudeHold or VertTakeOff then
-                    local displayText, displayUnit = getDistanceDisplayString(HoldAltitude, 2)
+                    local displayText = getDistanceDisplayString(HoldAltitude, 2)
                     if VertTakeOff then
                         if antigravOn then
-                            displayText, displayUnit = getDistanceDisplayString(antigrav.getBaseAltitude(),2)
+                            displayText = getDistanceDisplayString(antigrav.getBaseAltitude(),2)
                         end
-                        newContent[#newContent + 1] = svgText(warningX, apY, "AGG VTO to "..displayText.. displayUnit, "warn")
+                        newContent[#newContent + 1] = svgText(warningX, apY, "AGG VTO to "..displayText , "warn")
                     elseif AutoTakeoff and not IntoOrbit then
                         if spaceLaunch then
                             newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..AutopilotTargetName, "warn")
                         else
-                            newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..displayText.. displayUnit, "warn")
+                            newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..displayText, "warn")
                         end
                         if BrakeIsOn and not VertTakeOff then
                             newContent[#newContent + 1] = svgText( warningX, apY + 50,"Throttle Up and Disengage Brake For Takeoff", "crit")
                         end
                 
                     else
-                        newContent[#newContent + 1] = svgText(warningX, apY, "Altitude Hold: ".. displayText.. displayUnit, "warn")
+                        newContent[#newContent + 1] = svgText(warningX, apY, "Altitude Hold: ".. displayText, "warn")
                     end
                 end
                 if VertTakeOff and (antigrav ~= nil and antigrav) then
@@ -3534,11 +3508,11 @@ VERSION_NUMBER = 1.160
                     newContent[#newContent + 1] = svgText(warningX, apY, "Retrograde Alignment", "crit")
                 end
                 if atmoDistance ~= nil and atmosDensity == 0 then
-                        local displayText, displayUnit = getDistanceDisplayString(atmoDistance)
+                        local displayText = getDistanceDisplayString(atmoDistance)
                         local travelTime = Kinematic.computeTravelTime(velMag, 0, atmoDistance)
                         local displayCollisionType = "Collision"
                         if intersectBody.noAtmosphericDensityAltitude > 0 then displayCollisionType = "Atmosphere" end
-                        newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, intersectBody.name.." "..displayCollisionType.." "..FormatTimeString(travelTime).." In "..displayText.. displayUnit, "crit")
+                        newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, intersectBody.name.." "..displayCollisionType.." "..FormatTimeString(travelTime).." In "..displayText, "crit")
                     
                 end
                 if VectorToTarget and not IntoOrbit then
@@ -3582,8 +3556,8 @@ VERSION_NUMBER = 1.160
                         x + line, y - 5, orbitMapX + orbitMapSize / 2 - rx + xOffset, y - 5)
                     newContent[#newContent + 1] = svgText(x, y, type)
                     y = y + orbitInfoYOffset
-                    local displayText, displayUnit = getDistanceDisplayString(alt)
-                    newContent[#newContent + 1] = svgText(x, y, displayText.. displayUnit)
+                    local displayText = getDistanceDisplayString(alt)
+                    newContent[#newContent + 1] = svgText(x, y, displayText)
                     y = y + orbitInfoYOffset
                     newContent[#newContent + 1] = svgText(x, y, FormatTimeString(time))
                     y = y + orbitInfoYOffset
@@ -4237,7 +4211,7 @@ VERSION_NUMBER = 1.160
         Atlas.UpdateAutopilotTarget()
         return Atlas
     end
-    local function APClass()
+    local function APClass() -- Autopiloting functions including tick
         local ap = {}
         local deathBlossomList = {vec3(constructVelocity), -vec3(constructVelocity), vec3(constructUp), -vec3(constructUp), vec3(constructRight), -vec3(constructRight) }
             local function GetAutopilotBrakeDistanceAndTime(speed)
@@ -4637,8 +4611,7 @@ VERSION_NUMBER = 1.160
             if IntoOrbit then
                 local targetVec
                 local yawAligned = false
-                local heightstring, heightunit = getDistanceDisplayString(OrbitTargetOrbit)
-                local orbitHeightString = heightstring .. heightunit
+                local orbitHeightString = getDistanceDisplayString(OrbitTargetOrbit)
 
                 if OrbitTargetPlanet == nil then
                     OrbitTargetPlanet = planet
@@ -4647,9 +4620,9 @@ VERSION_NUMBER = 1.160
                     end
                 end
                 if not OrbitTargetSet then
-                    OrbitTargetOrbit = math.floor(OrbitTargetPlanet.radius + OrbitTargetPlanet.surfaceMaxAltitude + LowOrbitHeight)
+                    OrbitTargetOrbit = mfloor(OrbitTargetPlanet.radius + OrbitTargetPlanet.surfaceMaxAltitude + LowOrbitHeight)
                     if OrbitTargetPlanet.hasAtmosphere then
-                        OrbitTargetOrbit = math.floor(OrbitTargetPlanet.radius + OrbitTargetPlanet.noAtmosphericDensityAltitude + LowOrbitHeight)
+                        OrbitTargetOrbit = mfloor(OrbitTargetPlanet.radius + OrbitTargetPlanet.noAtmosphericDensityAltitude + LowOrbitHeight)
                     end
                     OrbitTargetSet = true
                 end     
@@ -4924,9 +4897,9 @@ VERSION_NUMBER = 1.160
                                             (worldPos +
                                                 (vec3(constructVelocity):normalize() * AutopilotDistance))):len() -
                                             autopilotTargetPlanet.radius
-                local displayText, displayUnit = getDistanceDisplayString(projectedAltitude)
+                local displayText = getDistanceDisplayString(projectedAltitude)
                 sysUpData(widgetTrajectoryAltitudeText, '{"label": "Projected Altitude", "value": "' ..
-                    displayText.. '", "unit":"' .. displayUnit .. '"}')
+                    displayText.. '"}')
                 
 
                 local brakeDistance, brakeTime
@@ -5064,7 +5037,6 @@ VERSION_NUMBER = 1.160
                         AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
                     elseif orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 or AutopilotStatus == "Circularizing" then
                         AutopilotStatus = "Circularizing"
-                        system.print("VEL: "..velMag.." End: "..endSpeed)
                         if velMag <= endSpeed then 
                             if CustomTarget ~= nil then
                                 if constructVelocity:normalize():dot(targetVec:normalize()) > 0.4 then -- Triggers when we get close to passing it
@@ -6088,8 +6060,8 @@ VERSION_NUMBER = 1.160
                 local function getAPEnableName()
                     local name = AutopilotTargetName
                     if name == nil then
-                        local displayText, displayUnit = getDistanceDisplayString((worldPos - CustomTarget.position):len())
-                        name = CustomTarget.name .. " " .. displayText .. displayUnit
+                        local displayText = getDistanceDisplayString((worldPos - CustomTarget.position):len())
+                        name = CustomTarget.name .. " " .. displayText
                                 
                     end
                     if name == nil then
@@ -6455,7 +6427,33 @@ VERSION_NUMBER = 1.160
                         return accelTime + brakeTime + cruiseTime
                     end
                 end
-
+                local function RefreshLastMaxBrake(gravity, force)
+                    if gravity == nil then
+                        gravity = core.g()
+                    end
+                    gravity = round(gravity, 5) -- round to avoid insignificant updates
+                    if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
+                        local velocity = core.getVelocity()
+                        local speed = vec3(velocity):len()
+                        local maxBrake = jdecode(unit.getData()).maxBrake 
+                        if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
+                            maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
+                            maxBrake = maxBrake / atmosDensity
+                            if atmosDensity > 0.10 then 
+                                if LastMaxBrakeInAtmo then
+                                    LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
+                                else
+                                    LastMaxBrakeInAtmo = maxBrake 
+                                end
+                            end -- Now that we're calculating actual brake values, we want this updated
+                        end
+                        if maxBrake ~= nil and maxBrake > 0 then
+                            LastMaxBrake = maxBrake
+                        end
+                        lastMaxBrakeAtG = gravity
+                    end
+                end
+            RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
             if atmosDensity > 0 and not WasInAtmo then
                 if not throttleMode and AtmoSpeedAssist and (AltitudeHold or Reentry) then
                     -- If they're reentering atmo from cruise, and have atmo speed Assist
@@ -6477,7 +6475,7 @@ VERSION_NUMBER = 1.160
                 end
                 if AutopilotTargetName ~= nil then
                     local customLocation = CustomTarget ~= nil
-                    planetMaxMass = LastMaxBrakeInAtmo /
+                    local planetMaxMass = LastMaxBrakeInAtmo /
                         (autopilotTargetPlanet:getGravity(
                         autopilotTargetPlanet.center + (vec3(0, 0, 1) * autopilotTargetPlanet.radius))
                         :len())
@@ -6496,26 +6494,26 @@ VERSION_NUMBER = 1.160
                         brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(velMag)
                         maxBrakeDistance, maxBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
                     end
-                    local displayText, displayUnit = getDistanceDisplayString(distance)
+                    local displayText = getDistanceDisplayString(distance)
                     sysUpData(widgetDistanceText, '{"label": "distance", "value": "' .. displayText
-                        .. '", "unit":"' .. displayUnit .. '"}')
+                        .. '"}')
                     sysUpData(widgetTravelTimeText, '{"label": "Travel Time", "value": "' ..
                         FormatTimeString(travelTime) .. '", "unit":""}')
-                    displayText, displayUnit = getDistanceDisplayString(brakeDistance)
+                    displayText = getDistanceDisplayString(brakeDistance)
                     sysUpData(widgetCurBrakeDistanceText, '{"label": "Cur Brake distance", "value": "' ..
-                        displayText.. '", "unit":"' .. displayUnit .. '"}')
+                        displayText.. '"}')
                     sysUpData(widgetCurBrakeTimeText, '{"label": "Cur Brake Time", "value": "' ..
                         FormatTimeString(brakeTime) .. '", "unit":""}')
-                    displayText, displayUnit = getDistanceDisplayString(maxBrakeDistance)
+                    displayText = getDistanceDisplayString(maxBrakeDistance)
                     sysUpData(widgetMaxBrakeDistanceText, '{"label": "Max Brake distance", "value": "' ..
-                        displayText.. '", "unit":"' .. displayUnit .. '"}')
+                        displayText.. '"}')
                     sysUpData(widgetMaxBrakeTimeText, '{"label": "Max Brake Time", "value": "' ..
                         FormatTimeString(maxBrakeTime) .. '", "unit":""}')
                     sysUpData(widgetMaxMassText, '{"label": "Maximum Mass", "value": "' ..
                         stringf("%.2f", (planetMaxMass / 1000)) .. '", "unit":" Tons"}')
-                    displayText, displayUnit = getDistanceDisplayString(AutopilotTargetOrbit)
+                    displayText = getDistanceDisplayString(AutopilotTargetOrbit)
                     sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
-                    stringf("%.2f", displayText) .. '", "unit":"' .. displayUnit .. '"}')
+                    displayText .. '"}')
                     if atmosDensity > 0 and not WasInAtmo then
                         system.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
                         system.removeDataFromWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
@@ -6555,32 +6553,7 @@ VERSION_NUMBER = 1.160
             end       
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
             -- Local Functions for oneSecond
-                local function RefreshLastMaxBrake(gravity, force)
-                    if gravity == nil then
-                        gravity = core.g()
-                    end
-                    gravity = round(gravity, 5) -- round to avoid insignificant updates
-                    if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
-                        local velocity = core.getVelocity()
-                        local speed = vec3(velocity):len()
-                        local maxBrake = jdecode(unit.getData()).maxBrake 
-                        if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
-                            maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
-                            maxBrake = maxBrake / atmosDensity
-                            if atmosDensity > 0.10 then 
-                                if LastMaxBrakeInAtmo then
-                                    LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
-                                else
-                                    LastMaxBrakeInAtmo = maxBrake 
-                                end
-                            end -- Now that we're calculating actual brake values, we want this updated
-                        end
-                        if maxBrake ~= nil and maxBrake > 0 then
-                            LastMaxBrake = maxBrake
-                        end
-                        lastMaxBrakeAtG = gravity
-                    end
-                end
+
                 local function CheckDamage(newContent)
                     local percentDam = 0
                     damageMessage = ""
@@ -6691,7 +6664,7 @@ VERSION_NUMBER = 1.160
                             
             
             clearAllCheck = false
-            RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
+
             if IntruderAlertSystem then 
                 compareMass() 
             end
@@ -7928,7 +7901,7 @@ VERSION_NUMBER = 1.160
                 valuesAreSet = false
             end
 
-            local function AddNewLocationByWaypoint(savename, planet, pos)
+            local function AddNewLocationByWaypoint(savename, planet, pos, temp)
 
                 local function zeroConvertToWorldCoordinates(pos) -- Many thanks to SilverZero for this.
                     local num  = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
@@ -7949,7 +7922,7 @@ VERSION_NUMBER = 1.160
                     return planet.center + (planet.radius + altitude) * planetxyz
                 end    
             
-                if dbHud_1 then
+                if dbHud_1 or temp then
                     local newLocation = {}
                     local position = zeroConvertToWorldCoordinates(pos)
                     if planet.name == "Space" then
@@ -7969,20 +7942,28 @@ VERSION_NUMBER = 1.160
                             gravity = planet.gravity
                         }
                     end
-                    SavedLocations[#SavedLocations + 1] = newLocation
+                    if not temp then 
+                        SavedLocations[#SavedLocations + 1] = newLocation
+                    else
+                        for k, v in pairs(atlas[0]) do
+                            if v.name and savename == v.name then
+                                table.remove(atlas[0], k)
+                            end
+                        end
+                    end
                     table.insert(atlas[0], newLocation)
                     ATLAS.UpdateAtlasLocationsList()
                 else
-                    msgText = "Databank must be installed to save locations"
+                    msgText = "Databank must be installed to save permanent locations"
                 end
             end
 
         local i
-        local commands = "/commands /setname /G /agg /addlocation /copydatabank /posWP"
         local command, arguement = nil, nil
         local commandhelp = "Command List:\n/commands \n/setname <newname> - Updates current selected saved position name\n/G VariableName newValue - Updates global variable to new value\n"..
-                "/G dump - shows all updatable variables with /G\n/agg <targetheight> - Manually set agg target height\n"..
+                "/G dump - shows all variables updatable by /G\n/agg <targetheight> - Manually set agg target height\n"..
                 "/addlocation SafeZoneCenter ::pos{0,0,13771471,7435803,-128971} - adds a saved location by waypoint, not as accurate as making one at location\n"..
+                "/::pos{0,0,13771471,7435803,-128971} - adds a temporary waypoint that is not saved to databank with name 0Temp\n"..
                 "/copydatabank - copies dbHud databank to a blank databank\n"..
                 "/iphWP - displays current IPH target's ::pos waypoint in lua chat"
         i = string.find(text, " ")
@@ -8006,24 +7987,26 @@ VERSION_NUMBER = 1.160
             else
                 msgText = "Select a saved target to rename first"
             end
-        elseif command == "/addlocation" then
-            if arguement == nil or arguement == "" or string.find(arguement, "::") == nil then
-                msgText = "Usage: ah-addlocation savename ::pos{0,2,46.4596,-155.1799,22.6572}"
-                return
+        elseif command == "/addlocation" or string.find(text, "::pos") ~= nil then
+            local temp = false
+            local savename = "0-Temp"
+            if arguement == nil or arguement == "" then
+                arguement = command
+                temp = true
             end
             i = string.find(arguement, "::")
-            local savename = string.sub(arguement, 1, i-2)
+            if not temp then savename = string.sub(arguement, 1, i-2) end
             local pos = string.sub(arguement, i)
             local num        = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
             local posPattern = '::pos{' .. num .. ',' .. num .. ',' ..  num .. ',' .. num ..  ',' .. num .. '}'    
             local systemId, bodyId, latitude, longitude, altitude = stringmatch(pos, posPattern);
             local planet = atlas[tonumber(systemId)][tonumber(bodyId)]
-            AddNewLocationByWaypoint(savename, planet, pos)   
+            AddNewLocationByWaypoint(savename, planet, pos, temp) 
             msgText = "Added "..savename.." to saved locations,\nplanet "..planet.name.." at "..pos
             msgTimer = 5    
         elseif command == "/agg" then
             if arguement == nil or arguement == "" then
-                msgText = "Usage: ah-agg targetheight"
+                msgText = "Usage: /agg targetheight"
                 return
             end
             arguement = tonumber(arguement)
