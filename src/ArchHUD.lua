@@ -5855,28 +5855,15 @@ VERSION_NUMBER = 1.163
                 -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
                 if abvGndDet ~= -1 or (not inAtmo and vec3(core.getVelocity()):len() < 50) then
                     BrakeIsOn = true
-                    if not hasGear then
-                        GearExtended = true
+                    GearExtended = true
+                    if hasGear then
+                        Nav.control.extendLandingGears()
                     end
                 else
                     BrakeIsOn = false
                 end
             
-                if targetGroundAltitude ~= nil then
-                    navCom:setTargetGroundAltitude(targetGroundAltitude)
-                    if targetGroundAltitude == 0 and not hasGear then 
-                        GearExtended = true
-                        BrakeIsOn = true -- If they were hovering at 0 and have no gear, consider them landed 
-                    end
-                else
-                    targetGroundAltitude = Nav:getTargetGroundAltitude() 
-                    if GearExtended then -- or not hasGear then -- And we already tagged GearExtended if they don't have gear, we can just use this
-                        navCom:setTargetGroundAltitude(LandingGearGroundHeight)
-                        --GearExtended = true -- We don't need to extend gear just because they have a databank, that would have been done earlier if necessary
-                    else
-                        navCom:setTargetGroundAltitude(TargetHoverHeight)
-                    end
-                end
+                navCom:setTargetGroundAltitude(targetGroundAltitude)
             
                 -- Store their max kinematic parameters in ship-up direction for use in brake-landing
                 if inAtmo and abvGndDet ~= -1 then 
