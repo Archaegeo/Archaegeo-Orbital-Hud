@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.162
+VERSION_NUMBER = 1.163
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -32,9 +32,10 @@ VERSION_NUMBER = 1.162
     hideHudOnToggleWidgets = true --export: (Default: true)
     ShiftShowsRemoteButtons = true --export: (Default: true)
     DisplayOrbit = true --export: (Default: true) 
-    SetWaypointOnExit = true --export (Default: true)
-    IntruderAlertSystem = false --export (Default: true)
+    SetWaypointOnExit = true --export: (Default: true)
+    IntruderAlertSystem = false --export: (Default: true)
     AlwaysVSpd = false --export (Default: false)
+    BarFuelDisplay = true --export (Default: true)
 
     -- Ship Handling variables
     YawStallAngle = 35 --export: (Default: 35)
@@ -76,8 +77,8 @@ VERSION_NUMBER = 1.162
     vSpdMeterY = 325 --export: (Default: 325)
     altMeterX = 550  --export: (Default: 550)
     altMeterY = 540 --export: (Default: 540) 
-    fuelX = 100 --export: (Default: 100)
-    fuelY = 300 --export: (Default: 300)
+    fuelX = 30 --export: (Default: 30)
+    fuelY = 700 --export: (Default: 700)
     DeadZone = 50 --export: (Default: 50)
     OrbitMapSize = 250 --export: (Default: 250)
     OrbitMapX = 75 --export: (Default: 75)
@@ -349,8 +350,8 @@ VERSION_NUMBER = 1.162
             -- Complete list of user variables above, must be in saveableVariables to be stored on databank
             local saveableVariablesBoolean = {"userControlScheme","freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
                 "InvertMouse", "autoRollPreference", "turnAssist", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
-                "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", 
-                "showHud", "ShowOdometer", "hideHudOnToggleWidgets", "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd"}
+                "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
+                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd", "BarFuelDisplay"}
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
@@ -2824,7 +2825,8 @@ VERSION_NUMBER = 1.162
                 local slottedTanks = 0
             
                 local y1 = fuelY
-                local y2 = fuelY+10
+                local y2 = fuelY+5
+                if not BarFuelDisplay then y2=y2+5 end
                 if isRemote() == 1 and not RemoteHud then
                     y1 = y1 - 50
                     y2 = y2 - 50
@@ -2887,7 +2889,7 @@ VERSION_NUMBER = 1.162
                         end
                         local fuelTimeDisplay
                         if fuelTimeLeftTable[i] == 0 then
-                            fuelTimeDisplay = "n/a"
+                            fuelTimeDisplay = ""
                         else
                             fuelTimeDisplay = FormatTimeString(fuelTimeLeftTable[i])
                         end
@@ -2895,15 +2897,29 @@ VERSION_NUMBER = 1.162
                             local colorMod = mfloor(fuelPercentTable[i] * 2.55)
                             local color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
                             local class = ""
-                            if ((fuelTimeDisplay ~= "n/a" and fuelTimeLeftTable[i] < 120) or fuelPercentTable[i] < 5) then
+                            if ((fuelTimeDisplay ~= "" and fuelTimeLeftTable[i] < 120) or fuelPercentTable[i] < 5) then
                                 if updateTanks then
                                     class = [[class="red"]]
                                 end
                             end
-                            newContent[#newContent + 1] = svgText(x, y1, name, class.." pdim txtfuel") 
-                            newContent[#newContent + 1] = svgText( x, y2, stringf("%d%% %s", fuelPercentTable[i], fuelTimeDisplay), "pdim txtfuel","fill:"..color)
-                            y1 = y1 + 30
-                            y2 = y2 + 30
+                            if BarFuelDisplay then
+                                table.insert(newContent, stringf([[
+                                    <g class="pdim">                        
+                                    <rect fill=grey class="bar" x="%d" y="%d" width="100" height="13"></rect></g>
+                                    <g class="bar txtstart">
+                                    <rect fill=%s width="%d" height="13" x="%d" y="%d"></rect>
+                                    <text fill=black x="%d" y="%d">%s%% %s</text>
+                                    </g>]], x, y2, color, fuelPercentTable[i], x, y2, x+2, y2+10, fuelPercentTable[i], fuelTimeDisplay
+                                ))
+                                newContent[#newContent + 1] = svgText(x, y1, name, class.."txtstart pdim txtfuel") 
+                                y1 = y1 - 30
+                                y2 = y2 - 30
+                            else
+                                newContent[#newContent + 1] = svgText(x, y1, name, class.." pdim txtfuel") 
+                                newContent[#newContent + 1] = svgText( x, y2, stringf("%d%% %s", fuelPercentTable[i], fuelTimeDisplay), "pdim txtfuel","fill:"..color)
+                                y1 = y1 + 30
+                                y2 = y2 + 30
+                            end
                         end
                     end
                 end
@@ -3850,8 +3866,8 @@ VERSION_NUMBER = 1.162
             end
             if (fuelX ~= 0 and fuelY ~= 0) then
                 DrawTank(newContent, updateTanks, fuelX, "Atmospheric ", "ATMO", atmoTanks, fuelTimeLeft, fuelPercent)
-                DrawTank(newContent, updateTanks, fuelX+100, "Space fuel t", "SPACE", spaceTanks, fuelTimeLeftS, fuelPercentS)
-                DrawTank(newContent, updateTanks, fuelX+200, "Rocket fuel ", "ROCKET", rocketTanks, fuelTimeLeftR, fuelPercentR)
+                DrawTank(newContent, updateTanks, fuelX+120, "Space fuel t", "SPACE", spaceTanks, fuelTimeLeftS, fuelPercentS)
+                DrawTank(newContent, updateTanks, fuelX+240, "Rocket fuel ", "ROCKET", rocketTanks, fuelTimeLeftR, fuelPercentR)
             end
         
             if updateTanks then
@@ -5839,28 +5855,15 @@ VERSION_NUMBER = 1.162
                 -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
                 if abvGndDet ~= -1 or (not inAtmo and vec3(core.getVelocity()):len() < 50) then
                     BrakeIsOn = true
-                    if not hasGear then
-                        GearExtended = true
+                    GearExtended = true
+                    if hasGear then
+                        Nav.control.extendLandingGears()
                     end
                 else
                     BrakeIsOn = false
                 end
             
-                if targetGroundAltitude ~= nil then
-                    navCom:setTargetGroundAltitude(targetGroundAltitude)
-                    if targetGroundAltitude == 0 and not hasGear then 
-                        GearExtended = true
-                        BrakeIsOn = true -- If they were hovering at 0 and have no gear, consider them landed 
-                    end
-                else
-                    targetGroundAltitude = Nav:getTargetGroundAltitude() 
-                    if GearExtended then -- or not hasGear then -- And we already tagged GearExtended if they don't have gear, we can just use this
-                        navCom:setTargetGroundAltitude(LandingGearGroundHeight)
-                        --GearExtended = true -- We don't need to extend gear just because they have a databank, that would have been done earlier if necessary
-                    else
-                        navCom:setTargetGroundAltitude(TargetHoverHeight)
-                    end
-                end
+                navCom:setTargetGroundAltitude(targetGroundAltitude)
             
                 -- Store their max kinematic parameters in ship-up direction for use in brake-landing
                 if inAtmo and abvGndDet ~= -1 then 
@@ -5963,7 +5966,7 @@ VERSION_NUMBER = 1.162
                             function() ToggleBoolean(v) end,
                             function() return true end, true) 
                         y = y + buttonHeight + 20
-                        if cnt == 7 then 
+                        if cnt == 8 then 
                             x = x + buttonWidth + 20 
                             y = resolutionHeight / 2 - 400
                             cnt = 0

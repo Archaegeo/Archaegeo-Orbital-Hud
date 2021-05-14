@@ -39,6 +39,7 @@ The flight model will start by adding more yaw the more horizontal the construct
 * SetWaypointOnExit = true --export (Default: true) Set to false to not set a waypoint when you exit hud.  True helps find your ship in crowded locations when you get out of seat.
 * IntruderAlertSystem = false --export (Default: false) Set to True to enable Intruder Alert system.
 * AlwaysVSpd = false --export (Default: false) Set to true to make vertical speed meter stay on screen when you alt-3 widget mode.
+* BarFuelDisplay = true --export (Default: true) Set to false to use old non-bar fuel display
 ### Ship Handling variables
 * YawStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when yawing, determine by experimentation.  Higher allows faster AP Bank turns.
 * PitchStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when pitching, determine by experimentation.
@@ -80,8 +81,8 @@ You can lower or raise (up to this limit) the current value by using Alt+Mousewh
 * vSpdMeterY = 325 --  (Default: 325) Y postion of Vertical Speed Meter.  Default 325
 * altMeterX = 550  --  (Default: 550) X postion of Altimeter.  Default 550 
 * altMeterY = 540 --  (Default: 540) Y postion of Altimeter.  Default 500
-* fuelX = 100 --  (Default: 100) X position of fuel tanks, default is 100 for left side, set both fuelX and fuelY to 0 to hide fuel display
-* fuelY = 350 --  (Default: 350) Y position of fuel tanks, default 350 for left side, set both fuelX and fuelY to 0 to hide fuel display
+* fuelX = 30 --  (Default: 30) X position of fuel tanks, set to 100 for non-bar style fuel display, set both fuelX and fuelY to 0 to hide fuel display
+* fuelY = 700 --  (Default: 700) Y position of fuel tanks, set to 300 for non-bar style fuel display, set both fuelX and fuelY to 0 to hide fuel display
 * DeadZone = 50 --  (Default: 50) Number of pixels of deadzone at the center of the screen
 * OrbitMapSize = 250 --  (Default: 250) Size of the orbit map, make sure it is divisible by 4
 * OrbitMapX = 75 --  (Default: 75) X postion of Orbit Display Disabled

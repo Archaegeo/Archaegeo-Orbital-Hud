@@ -1,4 +1,9 @@
-## ChangeLog - Most recent changes at the top
+## ChangeLog - Most recent changes at the top\
+
+Version 1.163
+- Added `BarFuelDisplay` default true.  If true you get the new fuel display.  New default fuelX and fuelY of 30 and 700 respectively.
+If BarFuelDisplay changed to false, you get the old fuel display.
+- Fixed getting out of ship in space applying brakes when you get back in (affected ships with no landing gear)  Brakes only applied in space when sitting if going < 50m/s (180k/hr)
 
 Version 1.162
 - Added IPH Mode selector button to main Button screen. Modes: All, No Moons, Custom Only.  
