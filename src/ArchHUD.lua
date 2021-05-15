@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.163
+VERSION_NUMBER = 1.164
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -91,7 +91,7 @@ VERSION_NUMBER = 1.163
     MouseYSensitivity = 0.003 --export: (Default: 0.003)
     autoRollFactor = 2 --export: (Default: 2)
     rollSpeedFactor = 1.5 --export: (Default: 1.5)
-    autoRollRollThreshold = 0 --export: (Default: 0)
+    autoRollRollThreshold = 180 --export: (Default: 180)
     minRollVelocity = 150 --export: (Default: 150)    
     turnAssistFactor = 2 --export: (Default: 2)
     TrajectoryAlignmentStrength = 0.002 --export: (Default: 0.002)
@@ -7108,9 +7108,12 @@ VERSION_NUMBER = 1.163
             finalPitchInput * pitchSpeedFactor * constructRight + finalRollInput * rollSpeedFactor * constructForward +
                 finalYawInput * yawSpeedFactor * constructUp
 
-        if worldVertical:len() > 0.01 and (atmosDensity > 0.0 or ProgradeIsOn or Reentry or spaceLand or AltitudeHold or IntoOrbit) then
+        if autoRoll == true and worldVertical:len() > 0.01 then
             -- autoRoll on AND adjustedRoll is big enough AND player is not rolling
-            if autoRoll == true and mabs(targetRoll-adjustedRoll) > autoRollRollThreshold and finalRollInput == 0 and mabs(adjustedPitch) < 85 then
+            local currentRollDelta = mabs(targetRoll-adjustedRoll)
+            if ((( ProgradeIsOn or Reentry or spaceLand or AltitudeHold or IntoOrbit) and currentRollDelta > 0) or
+                (atmosDensity > 0.0 and currentRollDelta < autoRollRollThreshold and autoRollPreference))  
+                and finalRollInput == 0 and mabs(adjustedPitch) < 85 then
                 local targetRollDeg = targetRoll
                 local rollFactor = autoRollFactor
                 if atmosDensity == 0 then
