@@ -1,4 +1,11 @@
-## ChangeLog - Most recent changes at the top\
+## ChangeLog - Most recent changes at the top
+
+Version 1.164 - AutoRoll overhaul
+- FIX/Change: `autoRollRollThreshold` now defaults 180.  This is the value of roll below which autoRoll to 0 will occur if `autoRollPreference` is on.
+Note: Autoroll doesnt occur if you are actively rolling (applying roll) or are out of atmosphere and not in certain autopilot modes.
+The strength it rolls back is controlled by `autoRollFactor`
+If you normally have autoRollPreference on and have a databank, then you will need to set autoRollRollThreshold one time as its old default is 0.
+Autoroll will still occur regardless of `autoRollPreference` setting during certain autopilot features.
 
 Version 1.163
 - Added `BarFuelDisplay` default true.  If true you get the new fuel display.  New default fuelX and fuelY of 30 and 700 respectively.

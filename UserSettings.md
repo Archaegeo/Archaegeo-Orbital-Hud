@@ -94,7 +94,7 @@ You can lower or raise (up to this limit) the current value by using Alt+Mousewh
 * MouseXSensitivity = 0.003 --  (Default: 0.003) For virtual joystick only
 * autoRollFactor = 2 --  (Default: 2) [Only in atmosphere]<br>When autoRoll is engaged, this factor will increase to strength of the roll back to 0
 * rollSpeedFactor = 1.5 --  (Default: 1.5) This factor will increase/decrease the player input along the roll axis<br>(higher value may be unstable)
-* autoRollRollThreshold = 0 -- (Default: 0) The minimum amount of roll before autoRoll kicks in and stabilizes (if active)
+* autoRollRollThreshold = 180 -- (Default: 180) The amount of roll below which autoRoll to 0 will occur (if `autoRollPreference` is true)
 * minRollVelocity = 150 -- (Default: 150) Min velocity, in m/s, over which autorolling can occur
 * turnAssistFactor = 2 --  (Default: 2) [Only in atmosphere]<br>This factor will increase/decrease the turnAssist effect (higher value may be unstable)
 * TrajectoryAlignmentStrength = 0.002 --  (Default: 0.002) How strongly AP tries to align your velocity vector to the target when not in orbit, recommend 0.002
