@@ -8,8 +8,6 @@
 1. To most easily set up user preferences the first time, right click the seat, choose Advanced -> Edit LUA Parameters. You may also change control scheme using a Button while seated and change all other user parameters.
 1. If you have a Databank installed on your vehicle your parameters will save when you stand up. Saved parameters will be restored any time you upgrade the HUD to a new version. 
 1. Please see https://github.com/Archaegeo/Archaegeo-Orbital-Hud/blob/master/UserSettings.md for an explanation of all settings.
-1. To use sound files, download the sound pack and install the files it in a new folder called archHUD in the Sound Player audiopacks directory.  Sound player zip file available at: https://github.com/ZarTaen/DU_logfile_audioframework/releases 
-You will then need to edit the audiopacks.toml file in the conf directory and add a line: archHUD = "audiopacks/archHUD"
 
 At this point you should be ready to fly!
 
