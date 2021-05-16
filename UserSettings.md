@@ -37,9 +37,12 @@ The flight model will start by adding more yaw the more horizontal the construct
 * ShiftShowsRemoteButtons = true --  (Default: true) Whether or not pressing Shift in remote controller mode shows you the buttons (otherwise no access to them)
 * DisplayOrbit = true --  (Default: true) Show Orbit display when valid or not.  May be toggled with shift Buttons
 * SetWaypointOnExit = true --export (Default: true) Set to false to not set a waypoint when you exit hud.  True helps find your ship in crowded locations when you get out of seat.
-* IntruderAlertSystem = false --export (Default: false) Set to True to enable Intruder Alert system.
-* AlwaysVSpd = false --export (Default: false) Set to true to make vertical speed meter stay on screen when you alt-3 widget mode.
-* BarFuelDisplay = true --export (Default: true) Set to false to use old non-bar fuel display
+* IntruderAlertSystem = false --export: (Default: false) Set to True to enable Intruder Alert system.
+* AlwaysVSpd = false --export: (Default: false) Set to true to make vertical speed meter stay on screen when you alt-3 widget mode.
+* BarFuelDisplay = true --export: (Default: true) Set to false to use old non-bar fuel display
+* showHelp = true --export: (Default: true) Set to false to hide in hud dynamic help text.
+* voice = true --export: (Default: true) Play voice recordings as appropriate if sound files are installed.
+* alarms = true --export: (Defatul: true) Play alarm and warning sounds as appropriate if sound files are installed.
 ### Ship Handling variables
 * YawStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when yawing, determine by experimentation.  Higher allows faster AP Bank turns.
 * PitchStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when pitching, determine by experimentation.

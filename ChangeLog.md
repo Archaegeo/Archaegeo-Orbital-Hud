@@ -1,5 +1,16 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.200 - Now with Sound Support
+Now with soundfile support for voice announcements and alarm/warnings.  The sound player reads the game log for sound commands and then plays the associated sound file.
+To use sound files, download the sound pack and install the files it in a new folder called archHUD in the Sound Player audiopacks directory.  
+The Sound player zip file is available at: https://github.com/ZarTaen/DU_logfile_audioframework/releases 
+You will then need to edit the audiopacks.toml file in the conf directory and add a line: archHUD = "audiopacks/archHUD"
+If you do not install the sound files, the hud will perform like normal with no impact.
+- Added `voice` user setting to toggle playing of voices (if sound files installed)
+- Added `alarms` user setting to toggle playing of warnings/alarms (if sound files installed)
+- Moved showHelp to user editable variable so it saves for people without databanks if they change it in Edit Lua Parameters.
+- Moved dynamic help display up to not overwrite default fuel area.
+
 Version 1.164 - AutoRoll overhaul
 - FIX/Change: `autoRollRollThreshold` now defaults 180.  This is the value of roll below which autoRoll to 0 will occur if `autoRollPreference` is on.
 Note: Autoroll doesnt occur if you are actively rolling (applying roll) or are out of atmosphere and not in certain autopilot modes.

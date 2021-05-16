@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.164
+VERSION_NUMBER = 1.200
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -34,8 +34,11 @@ VERSION_NUMBER = 1.164
     DisplayOrbit = true --export: (Default: true) 
     SetWaypointOnExit = true --export: (Default: true)
     IntruderAlertSystem = false --export: (Default: true)
-    AlwaysVSpd = false --export (Default: false)
-    BarFuelDisplay = true --export (Default: true)
+    AlwaysVSpd = false --export: (Default: false)
+    BarFuelDisplay = true --export: (Default: true)
+    showHelp = true --export: (Default: true)
+    voice = true --export: (Default: true)
+    alarms = true --export: (Defatul: true)
 
     -- Ship Handling variables
     YawStallAngle = 35 --export: (Default: 35)
@@ -146,11 +149,10 @@ VERSION_NUMBER = 1.164
     SpaceTarget = false
     LeftAmount = 0
     IntoOrbit = false
-    showHelp = true
     safeMass = 0
     iphCondition = "all"
     -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
-        local autoVariables = {"showHelp","VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
+        local autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
                     "Autopilot", "TurnBurn", "AltitudeHold", "BrakeLanding",
                     "Reentry", "AutoTakeoff", "HoldAltitude", "AutopilotAccelerating", "AutopilotBraking",
                     "AutopilotCruising", "AutopilotRealigned", "AutopilotEndSpeed", "AutopilotStatus",
@@ -168,11 +170,9 @@ VERSION_NUMBER = 1.164
     local eleMaxHp = core.getElementMaxHitPointsById
     local atmosphere = unit.getAtmosphereDensity
     local eleMass = core.getElementMassById
-
     local isRemote = Nav.control.isRemoteControlled
     local atan = math.atan
     local stringmatch = string.match
-    local tostring = tostring
     local utilsround = utils.round
     local systime = system.getTime
     local vec3 = vec3
@@ -338,6 +338,11 @@ VERSION_NUMBER = 1.164
     local deathBlossom = nil
 
 -- Function Definitions that are used in more than one areause 
+
+    local function play(sound, allowed)
+        if allowed then system.logInfo("audioplayback|archHUD|"..sound) end
+    end
+
     local function addTable(table1, table2) -- Function to add two tables together
         for i = 1, #table2 do
             table1[#table1 + 1 ] = table2[i]
@@ -351,7 +356,8 @@ VERSION_NUMBER = 1.164
             local saveableVariablesBoolean = {"userControlScheme","freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
                 "InvertMouse", "autoRollPreference", "turnAssist", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
-                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd", "BarFuelDisplay"}
+                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd", "BarFuelDisplay", "showHelp",
+                "voice", "alarms"}
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
@@ -536,7 +542,8 @@ VERSION_NUMBER = 1.164
             autoRoll = true
             LockPitch = nil
             OrbitAchieved = false
-            if abvGndDet == -1 then 
+            if abvGndDet == -1 then
+                play("AltitudeHoldEnabled.mp3|2", voice) 
                 AutoTakeoff = false
                 if ahDoubleClick > -1 then
                     if unit.getClosestPlanetInfluence() > 0 then
@@ -549,14 +556,18 @@ VERSION_NUMBER = 1.164
                 if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
                 GearExtended = false
                 Nav.control.retractLandingGears()
+                play("LandingGearRetracted.mp3|3", voice)
                 BrakeIsOn = true
                 navCom:setTargetGroundAltitude(TargetHoverHeight)
                 if VertTakeOffEngine and UpVertAtmoEngine then 
                     ToggleVerticalTakeoff()
+                else
+                    play("ThrottleUpAndDisengageBrakes.mp3|3", voice)
                 end
             end
             if spaceLaunch then HoldAltitude = 100000 end
         else
+            play("AltitudeHoldDisabled.mp3|2", voice)
             if IntoOrbit then ToggleIntoOrbit() end
             if VertTakeOff then 
                 ToggleVerticalTakeoff() 
@@ -582,6 +593,7 @@ VERSION_NUMBER = 1.164
                 OldGearExtended = GearExtended
                 GearExtended = false
                 Nav.control.retractLandingGears()
+                play("LandingGearRetracted.mp3|3", voice)
                 navCom:setTargetGroundAltitude(TargetHoverHeight)
             else
                 BrakeIsOn = true
@@ -609,6 +621,7 @@ VERSION_NUMBER = 1.164
                 if not AltitudeHold and not SpaceTarget then
                     ToggleAltitudeHold()
                 end
+                if not AutoTakeoff then play("VectoringToTarget.mp3|3", voice) end
             end
             VectorStatus = "Proceeding to Waypoint"
         end
@@ -649,7 +662,6 @@ VERSION_NUMBER = 1.164
                 elseif planet.name  == CustomTarget.planetname then
                     StrongBrakes = true
                     if atmosDensity > 0 then
-                        --OrbitAchieved = false
                         if not VectorToTarget then
                             ToggleVectorToTarget(SpaceTarget)
                         end
@@ -677,6 +689,7 @@ VERSION_NUMBER = 1.164
                         Autopilot = true
                     end
                 end
+                play("AutopilotEngaged.mp3|2", voice) 
             elseif atmosDensity == 0 then -- Planetary autopilot
 
                 if CustomTarget == nil and (autopilotTargetPlanet.name == planet.name and nearPlanet) and not IntoOrbit then
@@ -703,6 +716,7 @@ VERSION_NUMBER = 1.164
                 ToggleAltitudeHold()
             end
         else
+            if voice then system.logInfo("audioplayback|archHUD|AutopilotSecured.mp3|2") end
             spaceLaunch = false
             Autopilot = false
             AutopilotRealigned = false
@@ -3433,6 +3447,9 @@ VERSION_NUMBER = 1.164
                     newContent[#newContent + 1] = svgText(warningX, brakeY, "Auto-Brake Engaged", "warnings", "opacity:"..brakeInput2)
                 end
                 if inAtmo and stalling and abvGndDet == -1 then
+                    if not Autopilot and not VectorToTarget and not BrakeLanding then
+                        play("sectionpass.mp3|1", alarms)
+                    end
                     newContent[#newContent + 1] = svgText(warningX, apY+50, "** STALL WARNING **", "warnings")
                 end
                 if deathBlossom ~= nil and not inAtmo then
@@ -3682,7 +3699,7 @@ VERSION_NUMBER = 1.164
 
             local function DisplayHelp(newContent)
                 local x = 50
-                local y = 525
+                local y = 275
                 local help = {"Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-3: Toggle Vanilla Widget view"}
                 local helpAtmo = {  "Alt-4: Autopilot in atmo to target", "Alt-4-4: Autopilot to +1k over atmosphere and orbit to target", "Alt-5: Lock Pitch at current pitch",
                                     "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", "Alt-9: Activate Gyroscope"}
@@ -5370,7 +5387,10 @@ VERSION_NUMBER = 1.164
                             BrakeIsOn = false
                         end
                         if VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget)) then
-                            if not antigravOn then  BrakeLanding = true end
+                            if not antigravOn then  
+                                play("BrakeLandingEngaged.mp3|2",voice)
+                                BrakeLanding = true 
+                            end
                             
                             VectorToTarget = false
                             VectorStatus = "Proceeding to Waypoint"
@@ -5516,6 +5536,7 @@ VERSION_NUMBER = 1.164
                                 AltitudeHold = false
                                 GearExtended = true
                                 Nav.control.extendLandingGears()
+                                play("LandingGearDeployed.mp3|3", voice)
                                 navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                                 upAmount = 0
                                 BrakeIsOn = true
@@ -7547,22 +7568,27 @@ VERSION_NUMBER = 1.164
                         VertTakeOff = false
                         AltitudeHold = false
                         BrakeLanding = true
+                        play("BrakeLandingEngaged.mp3|2", voice)
                         autoRoll = true
                         GearExtended = false -- Don't actually toggle the gear yet though
                     elseif inAtmo then
                         BrakeIsOn = true
                         Nav.control.extendLandingGears()
+                        play("LandingGearDeployed.mp3|3", voice)
                         navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                     else
                         Nav.control.extendLandingGears()
+                        play("LandingGearDeployed.mp3|3", voice)
                         navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                     end
                 end
-                if hasGear and not BrakeLanding then
+                if hasGear and not BrakeLanding and not (vBooster or hover) then
+                    play("LandingGearDeployed.mp3|3", voice)
                     Nav.control.extendLandingGears() -- Actually extend
                 end
             else
                 if hasGear then
+                    play("LandingGearRetracted.mp3|3", voice)
                     Nav.control.retractLandingGears()
                 end
                 navCom:setTargetGroundAltitude(TargetHoverHeight)
@@ -7614,6 +7640,7 @@ VERSION_NUMBER = 1.164
             local function ToggleWidgets()
                 UnitHidden = not UnitHidden
                 if not UnitHidden then
+                    play("VanillaDisplay.mp3|3", voice)
                     unit.show()
                     core.show()
                     if atmofueltank_size > 0 then
@@ -7632,6 +7659,7 @@ VERSION_NUMBER = 1.164
                         rocketfuelPanelID = _autoconf.panels[_autoconf.panels_size]
                     end
                 else
+                    play("HUDDisplay.mp3|3", voice)
                     unit.hide()
                     core.hide()
                     if fuelPanelID ~= nil then
@@ -7664,11 +7692,13 @@ VERSION_NUMBER = 1.164
         elseif action == "option5" then
             local function ToggleLockPitch()
                 if LockPitch == nil then
+                    play("LockedPitchEngaged.mp3|3", voice)
                     LockPitch = adjustedPitch
                     AutoTakeoff = false
                     AltitudeHold = false
                     BrakeLanding = false
                 else
+                    play("LockedPitchSecured.mp3|3", voice)
                     LockPitch = nil
                 end
             end
