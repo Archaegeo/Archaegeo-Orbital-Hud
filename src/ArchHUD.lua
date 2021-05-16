@@ -5661,7 +5661,7 @@ VERSION_NUMBER = 1.165
                         msgText = "No Saved Variables Found - Exit HUD to save settings"
                     end
                 else
-                    msgText = "No databank found. Attach one to control unit and rerun the autoconfigure to save preferences and locations"
+                    msgText = "No databank found. Attach one to control unit and rerun \nthe autoconfigure to save preferences and locations"
                 end
             
                 if (LastStartTime + 180) < time then -- Variables to reset if out of seat (and not on hud) for more than 3 min
