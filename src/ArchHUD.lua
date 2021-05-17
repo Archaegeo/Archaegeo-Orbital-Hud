@@ -149,6 +149,7 @@ VERSION_NUMBER = 1.165
     IntoOrbit = false
     safeMass = 0
     iphCondition = "all"
+    stablized = true
     -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
         local autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
                     "Autopilot", "TurnBurn", "AltitudeHold", "BrakeLanding",
@@ -157,7 +158,7 @@ VERSION_NUMBER = 1.165
                     "AutopilotPlanetGravity", "PrevViewLock", "AutopilotTargetName", "AutopilotTargetCoords",
                     "AutopilotTargetIndex", "TotalDistanceTravelled",
                     "TotalFlightTime", "SavedLocations", "VectorToTarget", "LocationIndex", "LastMaxBrake", 
-                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "safeMass", "iphCondition"}
+                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "safeMass", "iphCondition", "stablized"}
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -3926,6 +3927,7 @@ VERSION_NUMBER = 1.165
             local flightStyle = GetFlightStyle()
             if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
             if TurnBurn then flightStyle = "TB-"..flightStyle end
+            if not stablized then flightStyle = flightStyle.."-DeCoupled" end
 
             local accel = (vec3(core.getWorldAcceleration()):len() / 9.80665)
             gravity =  core.g()
@@ -5510,6 +5512,7 @@ VERSION_NUMBER = 1.165
                     end
                     navCom:setTargetGroundAltitude(500)
                     navCom:activateGroundEngineAltitudeStabilization(500)
+                    stablized = true
 
                     groundDistance = abvGndDet
                     if groundDistance > -1 then 
@@ -7308,7 +7311,7 @@ VERSION_NUMBER = 1.165
             if ExtraVerticalTags ~= "none" then verticalStrafeEngineTags = verticalStrafeEngineTags..ExtraVerticalTags end
 
             -- Vertical also handles the non-airfoils separately
-            if upAmount ~= 0 or (BrakeLanding and BrakeIsOn) then
+            if upAmount ~= 0 or (BrakeLanding and BrakeIsOn) or (not GearExtended and not stablized) then
                 Nav:setEngineForceCommand(verticalStrafeEngineTags, verticalStrafeAcceleration, keepCollinearity)
             else
                 Nav:setEngineForceCommand(verticalStrafeEngineTags, vec3(), keepCollinearity) -- Reset vertical engines but not airfoils or ground
@@ -7688,7 +7691,15 @@ VERSION_NUMBER = 1.165
             end
             toggleView = false
         elseif action == "option8" then
-            ToggleFollowMode()
+            stablized = not stablized
+            if not stablized then
+                msgText = "DeCoupled Mode - Ground Stabilization off"
+                navCom:deactivateGroundEngineAltitudeStabilization()
+            else
+                msgText = "Coupled Mode - Ground Stabilization on"
+                navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
+                Nav:setEngineForceCommand('hover', vec3(), 1) 
+            end
             toggleView = false
         elseif action == "option9" then
             if gyro ~= nil then
@@ -7815,13 +7826,17 @@ VERSION_NUMBER = 1.165
         elseif action == "up" then
             upAmount = 0
             navCom:updateCommandFromActionStop(axisCommandId.vertical, -1.0)
-            navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-            Nav:setEngineForceCommand('hover', vec3(), 1) 
+            if stablized then 
+                navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
+                Nav:setEngineForceCommand('hover', vec3(), 1) 
+            end
         elseif action == "down" then
             upAmount = 0
             navCom:updateCommandFromActionStop(axisCommandId.vertical, 1.0)
-            navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-            Nav:setEngineForceCommand('hover', vec3(), 1) 
+            if stablized then 
+                navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
+                Nav:setEngineForceCommand('hover', vec3(), 1) 
+            end
         elseif action == "groundaltitudeup" then
             groundAltStop()
             toggleView = false
