@@ -1,5 +1,14 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.165 - Underwater (under 0 ground height) flight support
+- Added support for flying underwater (finally). For safety reasons you must manually turn off ground stablization with Alt-8 to remove the hover/pop to surface normal behavior.
+With ground stablization off: Stopping or Toggle on Brakes will let you float in water at current height. hovers/vBoosters will fire when underwater to simulate water floating flight.
+Pressing G will lower you to bottom at brake rate. Ship remembers ground stablization mode if databank installed. 
+WARNING: You might hit hard if its very deep or you have poor brakes. You can control your lowering rate by tapping spacebar or toggling G on and off.
+- Removed remote control follow mode from alt-8, now on Button on Control view page only.
+- Moved showHelp to user editable variable so it saves for people without databanks if they change it in Edit Lua Parameters.
+- Moved dynamic help display up to not overwrite default fuel area.
+
 Version 1.164 - AutoRoll overhaul
 - FIX/Change: `autoRollRollThreshold` now defaults 180.  This is the value of roll below which autoRoll to 0 will occur if `autoRollPreference` is on.
 Note: Autoroll doesnt occur if you are actively rolling (applying roll) or are out of atmosphere and not in certain autopilot modes.

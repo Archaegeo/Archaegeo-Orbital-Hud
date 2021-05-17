@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.164
+VERSION_NUMBER = 1.165
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -34,8 +34,9 @@ VERSION_NUMBER = 1.164
     DisplayOrbit = true --export: (Default: true) 
     SetWaypointOnExit = true --export: (Default: true)
     IntruderAlertSystem = false --export: (Default: true)
-    AlwaysVSpd = false --export (Default: false)
-    BarFuelDisplay = true --export (Default: true)
+    AlwaysVSpd = false --export: (Default: false)
+    BarFuelDisplay = true --export: (Default: true)
+    showHelp = true --export: (Default: true)
 
     -- Ship Handling variables
     YawStallAngle = 35 --export: (Default: 35)
@@ -146,18 +147,18 @@ VERSION_NUMBER = 1.164
     SpaceTarget = false
     LeftAmount = 0
     IntoOrbit = false
-    showHelp = true
     safeMass = 0
     iphCondition = "all"
+    stablized = true
     -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
-        local autoVariables = {"showHelp","VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
+        local autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
                     "Autopilot", "TurnBurn", "AltitudeHold", "BrakeLanding",
                     "Reentry", "AutoTakeoff", "HoldAltitude", "AutopilotAccelerating", "AutopilotBraking",
                     "AutopilotCruising", "AutopilotRealigned", "AutopilotEndSpeed", "AutopilotStatus",
                     "AutopilotPlanetGravity", "PrevViewLock", "AutopilotTargetName", "AutopilotTargetCoords",
                     "AutopilotTargetIndex", "TotalDistanceTravelled",
                     "TotalFlightTime", "SavedLocations", "VectorToTarget", "LocationIndex", "LastMaxBrake", 
-                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "safeMass", "iphCondition"}
+                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "safeMass", "iphCondition", "stablized"}
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -168,11 +169,9 @@ VERSION_NUMBER = 1.164
     local eleMaxHp = core.getElementMaxHitPointsById
     local atmosphere = unit.getAtmosphereDensity
     local eleMass = core.getElementMassById
-
     local isRemote = Nav.control.isRemoteControlled
     local atan = math.atan
     local stringmatch = string.match
-    local tostring = tostring
     local utilsround = utils.round
     local systime = system.getTime
     local vec3 = vec3
@@ -338,6 +337,8 @@ VERSION_NUMBER = 1.164
     local deathBlossom = nil
 
 -- Function Definitions that are used in more than one areause 
+
+
     local function addTable(table1, table2) -- Function to add two tables together
         for i = 1, #table2 do
             table1[#table1 + 1 ] = table2[i]
@@ -351,7 +352,7 @@ VERSION_NUMBER = 1.164
             local saveableVariablesBoolean = {"userControlScheme","freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
                 "InvertMouse", "autoRollPreference", "turnAssist", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
-                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd", "BarFuelDisplay"}
+                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd", "BarFuelDisplay", "showHelp"}
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
@@ -536,7 +537,7 @@ VERSION_NUMBER = 1.164
             autoRoll = true
             LockPitch = nil
             OrbitAchieved = false
-            if abvGndDet == -1 then 
+            if abvGndDet == -1 then
                 AutoTakeoff = false
                 if ahDoubleClick > -1 then
                     if unit.getClosestPlanetInfluence() > 0 then
@@ -649,7 +650,6 @@ VERSION_NUMBER = 1.164
                 elseif planet.name  == CustomTarget.planetname then
                     StrongBrakes = true
                     if atmosDensity > 0 then
-                        --OrbitAchieved = false
                         if not VectorToTarget then
                             ToggleVectorToTarget(SpaceTarget)
                         end
@@ -3433,7 +3433,9 @@ VERSION_NUMBER = 1.164
                     newContent[#newContent + 1] = svgText(warningX, brakeY, "Auto-Brake Engaged", "warnings", "opacity:"..brakeInput2)
                 end
                 if inAtmo and stalling and abvGndDet == -1 then
-                    newContent[#newContent + 1] = svgText(warningX, apY+50, "** STALL WARNING **", "warnings")
+                    if not Autopilot and not VectorToTarget and not BrakeLanding and not antigravOn and not VertTakeOff then
+                        newContent[#newContent + 1] = svgText(warningX, apY+50, "** STALL WARNING **", "warnings")
+                    end
                 end
                 if deathBlossom ~= nil and not inAtmo then
                     newContent[#newContent + 1] = svgText(warningX, apY+50, "* DEATH BLOSSOM ENGAGED *", "warnings")
@@ -3682,7 +3684,7 @@ VERSION_NUMBER = 1.164
 
             local function DisplayHelp(newContent)
                 local x = 50
-                local y = 525
+                local y = 275
                 local help = {"Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-3: Toggle Vanilla Widget view"}
                 local helpAtmo = {  "Alt-4: Autopilot in atmo to target", "Alt-4-4: Autopilot to +1k over atmosphere and orbit to target", "Alt-5: Lock Pitch at current pitch",
                                     "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", "Alt-9: Activate Gyroscope"}
@@ -3925,6 +3927,7 @@ VERSION_NUMBER = 1.164
             local flightStyle = GetFlightStyle()
             if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
             if TurnBurn then flightStyle = "TB-"..flightStyle end
+            if not stablized then flightStyle = flightStyle.."-DeCoupled" end
 
             local accel = (vec3(core.getWorldAcceleration()):len() / 9.80665)
             gravity =  core.g()
@@ -5370,7 +5373,9 @@ VERSION_NUMBER = 1.164
                             BrakeIsOn = false
                         end
                         if VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget)) then
-                            if not antigravOn then  BrakeLanding = true end
+                            if not antigravOn then  
+                                BrakeLanding = true 
+                            end
                             
                             VectorToTarget = false
                             VectorStatus = "Proceeding to Waypoint"
@@ -5507,6 +5512,7 @@ VERSION_NUMBER = 1.164
                     end
                     navCom:setTargetGroundAltitude(500)
                     navCom:activateGroundEngineAltitudeStabilization(500)
+                    stablized = true
 
                     groundDistance = abvGndDet
                     if groundDistance > -1 then 
@@ -5658,7 +5664,7 @@ VERSION_NUMBER = 1.164
                         msgText = "No Saved Variables Found - Exit HUD to save settings"
                     end
                 else
-                    msgText = "No databank found. Attach one to control unit and rerun the autoconfigure to save preferences and locations"
+                    msgText = "No databank found. Attach one to control unit and rerun \nthe autoconfigure to save preferences and locations"
                 end
             
                 if (LastStartTime + 180) < time then -- Variables to reset if out of seat (and not on hud) for more than 3 min
@@ -7305,7 +7311,7 @@ VERSION_NUMBER = 1.164
             if ExtraVerticalTags ~= "none" then verticalStrafeEngineTags = verticalStrafeEngineTags..ExtraVerticalTags end
 
             -- Vertical also handles the non-airfoils separately
-            if upAmount ~= 0 or (BrakeLanding and BrakeIsOn) then
+            if upAmount ~= 0 or (BrakeLanding and BrakeIsOn) or (not GearExtended and not stablized) then
                 Nav:setEngineForceCommand(verticalStrafeEngineTags, verticalStrafeAcceleration, keepCollinearity)
             else
                 Nav:setEngineForceCommand(verticalStrafeEngineTags, vec3(), keepCollinearity) -- Reset vertical engines but not airfoils or ground
@@ -7558,7 +7564,7 @@ VERSION_NUMBER = 1.164
                         navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                     end
                 end
-                if hasGear and not BrakeLanding then
+                if hasGear and not BrakeLanding and not (vBooster or hover) then
                     Nav.control.extendLandingGears() -- Actually extend
                 end
             else
@@ -7685,7 +7691,15 @@ VERSION_NUMBER = 1.164
             end
             toggleView = false
         elseif action == "option8" then
-            ToggleFollowMode()
+            stablized = not stablized
+            if not stablized then
+                msgText = "DeCoupled Mode - Ground Stabilization off"
+                navCom:deactivateGroundEngineAltitudeStabilization()
+            else
+                msgText = "Coupled Mode - Ground Stabilization on"
+                navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
+                Nav:setEngineForceCommand('hover', vec3(), 1) 
+            end
             toggleView = false
         elseif action == "option9" then
             if gyro ~= nil then
@@ -7812,13 +7826,17 @@ VERSION_NUMBER = 1.164
         elseif action == "up" then
             upAmount = 0
             navCom:updateCommandFromActionStop(axisCommandId.vertical, -1.0)
-            navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-            Nav:setEngineForceCommand('hover', vec3(), 1) 
+            if stablized then 
+                navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
+                Nav:setEngineForceCommand('hover', vec3(), 1) 
+            end
         elseif action == "down" then
             upAmount = 0
             navCom:updateCommandFromActionStop(axisCommandId.vertical, 1.0)
-            navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-            Nav:setEngineForceCommand('hover', vec3(), 1) 
+            if stablized then 
+                navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
+                Nav:setEngineForceCommand('hover', vec3(), 1) 
+            end
         elseif action == "groundaltitudeup" then
             groundAltStop()
             toggleView = false
