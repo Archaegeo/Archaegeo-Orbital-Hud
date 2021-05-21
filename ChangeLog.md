@@ -1,5 +1,14 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.200 - Now with Cockpit support (V 1.0 - Note: You will see about a 10-13 FPS hit possibly when using cockpit mode)
+- Added cockpit support.  Requires databank.  To use:
+1) Manually connect databank to cockpit.  Run the ArchHUD on the cockpit per normal install instructions.
+2) Install a Programming Board on ship.
+3) Manually connect same databank connected to cockpit to programming board.
+4) Edit Lua Parameters and set Cockpit to true (This can be done from another control unit via buttons to support both cockpit and chair/remote flying) 
+5) Paste the CockpitPB.json script to the programming board.  Activate programming board before getting in cockpit (or after if visible from cockpit)
+- Fixed VTO message to not say AGG if not doing AGG VTO.
+
 Version 1.165 - Underwater (under 0 ground height) flight support
 - Added support for flying underwater (finally). For safety reasons you must manually turn off ground stablization with Alt-8 to remove the hover/pop to surface normal behavior.
 With ground stablization off: Stopping or Toggle on Brakes will let you float in water at current height. hovers/vBoosters will fire when underwater to simulate water floating flight.

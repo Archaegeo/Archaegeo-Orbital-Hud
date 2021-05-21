@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.165
+VERSION_NUMBER = 1.200
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -37,6 +37,7 @@ VERSION_NUMBER = 1.165
     AlwaysVSpd = false --export: (Default: false)
     BarFuelDisplay = true --export: (Default: true)
     showHelp = true --export: (Default: true)
+    Cockpit = false --export: (Default: false)
 
     -- Ship Handling variables
     YawStallAngle = 35 --export: (Default: 35)
@@ -352,7 +353,7 @@ VERSION_NUMBER = 1.165
             local saveableVariablesBoolean = {"userControlScheme","freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
                 "InvertMouse", "autoRollPreference", "turnAssist", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
-                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd", "BarFuelDisplay", "showHelp"}
+                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd", "BarFuelDisplay", "showHelp", "Cockpit"}
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
@@ -3479,9 +3480,9 @@ VERSION_NUMBER = 1.165
                     local displayText = getDistanceDisplayString(HoldAltitude, 2)
                     if VertTakeOff then
                         if antigravOn then
-                            displayText = getDistanceDisplayString(antigrav.getBaseAltitude(),2)
+                            displayText = getDistanceDisplayString(antigrav.getBaseAltitude(),2).." AGG singularity height"
                         end
-                        newContent[#newContent + 1] = svgText(warningX, apY, "AGG VTO to "..displayText , "warn")
+                        newContent[#newContent + 1] = svgText(warningX, apY, "VTO to "..displayText , "warn")
                     elseif AutoTakeoff and not IntoOrbit then
                         if spaceLaunch then
                             newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..AutopilotTargetName, "warn")
@@ -5956,6 +5957,9 @@ VERSION_NUMBER = 1.165
                     oldShowHud = _G[v]
                 elseif v == "BrakeToggleDefault" then 
                     BrakeToggleStatus = BrakeToggleDefault
+                elseif v == "Cockpit" then
+                    system.showScreen(0)
+                    dbHud_1.setStringValue("content", "")
                 end
             end
 
@@ -7493,7 +7497,11 @@ VERSION_NUMBER = 1.165
         else
             Nav:update()
             if not Animating and content ~= LastContent then
-                system.setScreen(content)
+                if not Cockpit then 
+                    system.setScreen(content) 
+                else
+                    dbHud_1.setStringValue("content", content)
+                end
             end
             LastContent = content
         end
