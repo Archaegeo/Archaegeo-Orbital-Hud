@@ -3537,7 +3537,7 @@ VERSION_NUMBER = 1.300
                 end
                 if IntruderAlertSystem and safeMass == -1 then
                     newContent[#newContent + 1] = svgText(warningX, apY+70, "POSSIBLE INTRUDER ALERT - MASS GAIN OF "..soundAlarm.."kg DETECTED", "warnings")
-                    play("Alarm.mp3","AL",1)
+                    play("Alarm.mp3","AL",1)                    
                 end
                 if BrakeLanding then
                     if StrongBrakes then
@@ -6600,9 +6600,6 @@ VERSION_NUMBER = 1.300
                     showWarpWidget = false
                 end
             end
-            if soundAlarm > 0 then 
-                play("IntruderAlert.mp3","IA",1) 
-            end       
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
             -- Local Functions for oneSecond
 
