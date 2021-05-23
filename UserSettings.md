@@ -11,6 +11,7 @@ catagories
 # The construct itself must be set to keyboard control.  Then you use this setting to set how the hud controls.
 * userControlScheme = "virtual joystick" --  (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard".  This can be set by holding SHIFT and clicking 
 the button in lower left of main Control buttons view.
+* soundFolder = "archHUD" -- (Default: "archHUD")  Set to the name of the folder with sound files in it.  Recommended changing from archHUD to prevent other scripts making your PC play sounds.
 ### True-False Values
 * useTheseSettings = false --  (Default: false) Toggle on to use the below preferences.  Toggle off to use saved preferences.  Preferences will save regardless when exiting seat. 
 This is only needed if you want to use Edit Lua Parameters to override saved settings already on a databank.  First install, or changing settings via in seat methods, you do not need to set this to true.
@@ -41,6 +42,9 @@ The flight model will start by adding more yaw the more horizontal the construct
 * AlwaysVSpd = false --export: (Default: false) Set to true to make vertical speed meter stay on screen when you alt-3 widget mode.
 * BarFuelDisplay = true --export: (Default: true) Set to false to use old non-bar fuel display
 * showHelp = true --export: (Default: true) Set to false to hide in hud dynamic help text.
+* Cockpit = false --export: (Default: false) Set to true to enable support for Cockpit view.  See install instructions for how to set up
+* voices = true --export: (Default: true) Set to false to disable voice sounds.
+* alerts = true --export: (Default: true) Set to false to disable alert sounds.
 ### Ship Handling variables
 * YawStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when yawing, determine by experimentation.  Higher allows faster AP Bank turns.
 * PitchStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when pitching, determine by experimentation.
@@ -88,6 +92,7 @@ You can lower or raise (up to this limit) the current value by using Alt+Mousewh
 * OrbitMapSize = 250 --  (Default: 250) Size of the orbit map, make sure it is divisible by 4
 * OrbitMapX = 75 --  (Default: 75) X postion of Orbit Display Disabled
 * OrbitMapY = 0 --  (Default: 0)  Y position of Orbit Display
+* soundVolume = 100 -- (Default: 100) Set to value (0-100 recommended) to control volume of voice and alerts.  Alerts will automatically lower other hud sounds 50% if needed.
 ### Ship flight physics variables - Modify these with care, can have large effects on ship performance
 * speedChangeLarge = 5 --  (Default: 5) The speed change that occurs when you tap speed up/down, default is 5 (25% throttle change). 
 * speedChangeSmall = 1 --  (Default: 1) the speed change that occurs while you hold speed up/down, default is 1 (5% throttle change).

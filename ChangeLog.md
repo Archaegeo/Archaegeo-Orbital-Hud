@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.300 - Added support for ZarTaen's Sound player external addon.
+- See Install Instructions on the release page for full explanation of sound support
+- `Alt-7` is now used to turn off or on all hud sounds.
+- Changed intruder alert to use Sound system vice the setting/clearing of waypoint.  (you will still get text alert without sound pack)
+- Removed the defensive "deathblossom" spin untill can be made better.
+- Fixed IPH all filter needing to be done twice
+
 Version 1.200 - Now with Cockpit support (V 1.0 - Note: You will see about a 10-13 FPS hit possibly when using cockpit mode)
 - Added cockpit support.  Requires databank.  To use:
 1) Manually connect databank to cockpit.  Run the ArchHUD on the cockpit per normal install instructions.
