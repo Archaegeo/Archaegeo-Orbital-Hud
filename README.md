@@ -2,7 +2,7 @@
 <!--Intro information-->
 # Arch-Orbital-HUD
 ## A general purpose HUD for Dual Universe, based on DU Orbital Hud 5.450 and earlier
-#### Cockpits are *NOT* supported.
+
 ###### For assistance, see my personal [Discord](https://discord.gg/CNRE45xRu7) or the OSIN discord channel [Discord](https://discord.gg/9RD3xQfYXG)
 ###### Donations are accepted but not expected. You may donate to Archaegeo in game via Wallet or to https://paypal.me/archaegeo for Paypal.
 <!--TOC-->
