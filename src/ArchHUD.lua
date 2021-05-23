@@ -344,8 +344,7 @@ VERSION_NUMBER = 1.300
 -- Function Definitions that are used in more than one areause 
 
     local function play(sound, ID, type)
-        --if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" or not sounds then return end
-        if (type == nil and not voices) or (type ~= nil and not alerts) or not sounds then return end
+        if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" or not sounds then return end
         if type ~= nil then
             system.logInfo("sound_notification|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
         else

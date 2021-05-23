@@ -19,12 +19,13 @@ FOR COCKPIT USAGE:
 FOR SOUND SUPPORT:
 1. Download and extract to location of your choice the ZIP file found at https://github.com/ZarTaen/DU_logfile_audioframework/releases 
 1. In the `audiopacks` folder of the above extraction, extract the `archHudSoundPack.zip` file found here.  Should result in a subfolder named `archHUD`
-1. Any sound file in the audiopack may be replaced with exact same name different sound file if you choose to personalize.
-1. If you dislike any particular sound and do not want to replace it, simply remove its .mp3 file from the soundpack folder.
-1. Run the `DU_logfile_audioframework.exe` file.  Start DU as normal.
+1. Any sound file in the audiopack may be replaced with a different sound file using same filename if you choose to personalize.
+1. If you dislike any particular sound and do not want to replace it but want other sounds, simply remove its .mp3 file from the soundpack folder.
+1. Run the `DU_logfile_audioframework.exe` file found in the extract file, source code is available at the above github site.
 1. Voices can be turned off by setting `voices` user variable to false.  Alerts can be turned off by setting `alerts` to false.
 1. Sound volumes can be controlled by the `soundVolume` setting, which defaults to 100.
-1. NOTE: You MUST change the name of the subfolder and the userVariable `soundFolder` to something other than "archHUD". This is to prevent others from making your PC play sounds they think you have installed.
+1. `Alt-7` will toggle all sounds on or off
+1. ***NOTE:*** You MUST change the name of the subfolder and the userVariable `soundFolder` to something other than "archHUD". This is to prevent others from making your PC play sounds they think you have installed.
 
 
 At this point you should be ready to fly!
