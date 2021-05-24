@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.300
+VERSION_NUMBER = 1.301
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -561,7 +561,7 @@ VERSION_NUMBER = 1.300
                 end
                 if VertTakeOff then ToggleVerticalTakeoff() end
             else
-                play("ThrottleUpAndDisengageBrakes.mp3", "TU")
+                play("LaunchingFromSurface.mp3", "LS")
                 AutoTakeoff = true
                 if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
                 GearExtended = false
@@ -669,7 +669,7 @@ VERSION_NUMBER = 1.300
                     StrongBrakes = true
                     if atmosDensity > 0 then
                         if not VectorToTarget then
-                            play("VectoringToTarget.mp3", "AP")
+                            play("AutopilotEngaged.mp3", "AP")
                             ToggleVectorToTarget(SpaceTarget)
                         end
                     else
@@ -787,7 +787,7 @@ VERSION_NUMBER = 1.300
             autoRoll = autoRollPreference
         end
         if BrakeIsOn then
-            play("250Hz.mp3","B",1)
+            play("EngagingBrake.mp3","B",1)
             -- If they turn on brakes, disable a few things
             VectorToTarget = false
             AutoTakeoff = false
@@ -811,7 +811,7 @@ VERSION_NUMBER = 1.300
             finalLand = false
             upAmount = 0
         else
-            play("100Hz.mp3","B",1)
+            play("DisengagingBrake.mp3","B",1)
         end
     end
 
@@ -7580,7 +7580,7 @@ VERSION_NUMBER = 1.300
                         autoRoll = true
                         GearExtended = false -- Don't actually toggle the gear yet though
                     else
-                        play("LandingGearDeployed.mp3","BL")
+                        play("LoweringLandingGear.mp3","LG")
                         if inAtmo then
                             BrakeIsOn = true
                             Nav.control.extendLandingGears()
@@ -7592,12 +7592,12 @@ VERSION_NUMBER = 1.300
                     end
                 end
                 if hasGear and not BrakeLanding and not (vBooster or hover) then
-                    play("LandingGearDeployed.mp3","BL")
+                    play("LoweringLandingGear.mp3","LG")
                     Nav.control.extendLandingGears() -- Actually extend
                 end
             else
                 if hasGear then
-                    play("LandingGearRetracted.mp3","BL")
+                    play("RaisingLandingGear.mp3","LG")
                     Nav.control.retractLandingGears()
                 end
                 navCom:setTargetGroundAltitude(TargetHoverHeight)
@@ -7649,7 +7649,7 @@ VERSION_NUMBER = 1.300
             local function ToggleWidgets()
                 UnitHidden = not UnitHidden
                 if not UnitHidden then
-                    play("VanillaDisplay.mp3","DH")
+                    play("Display.mp3","DH")
                     unit.show()
                     core.show()
                     if atmofueltank_size > 0 then
@@ -7668,7 +7668,7 @@ VERSION_NUMBER = 1.300
                         rocketfuelPanelID = _autoconf.panels[_autoconf.panels_size]
                     end
                 else
-                    play("HUDDisplay.mp3","DH")
+                    play("Display.mp3","DH")
                     unit.hide()
                     core.hide()
                     if fuelPanelID ~= nil then

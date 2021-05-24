@@ -1,5 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.301 - Improved SoundPack integration
+- Made major improvement to the .zip soundPack replacing all sounds. Download the new version.
+- Added a couple of new sound support lines.
+- Changed some sound callouts, see new filenames in soundPack
+
 Version 1.300 - Added support for ZarTaen's Sound player external addon.
 - See Install Instructions on the release page for full explanation of sound support
 - `Alt-7` is now used to turn off or on all hud sounds.
