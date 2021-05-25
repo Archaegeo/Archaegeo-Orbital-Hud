@@ -49,7 +49,7 @@ https://docs.google.com/document/d/1HcoCwX9QqZt6SBJYQAZOf7sYLWXVJeUnE68RndYnPDY/
 ##### :black_small_square: Fuel tanks - If _not_ manually connected provide a rough estimate of fuel levels (set parameters for fuel tank handling, fuel tank optimization, and container optimization). If manually connected, more accurate readings are provided and a non-HUD widget is updated.
 
 ## How to Install
-1. Scroll down the the **Assets** and click on **`ArchHUD.conf`**, this should trigger a download for this file.
+1. Go here: https://github.com/Archaegeo/Archaegeo-Orbital-Hud/releases and then scroll down the the **Assets** and click on **`ArchHUD.conf`**, this should trigger a download for this file.
 1. Save the file to %ProgramData%\Dual Universe\Game\data\lua\autoconf\custom (or equivalent directory if you did not do default install), the filename does not matter (as long as it's still .conf)
 1. If using a databank, manually link the databank to the control unit(s) that will be running the HUD PRIOR to the next step.
 1. In-game, right click your seat and go to Advanced -> Update custom autoconf list - If you get a YAML error, you did not follow the above directions correctly.
