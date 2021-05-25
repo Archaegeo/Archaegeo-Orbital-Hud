@@ -18,7 +18,7 @@ FOR COCKPIT USAGE:
 
 FOR SOUND SUPPORT:
 1. Download and extract to location of your choice the ZIP file found at https://github.com/ZarTaen/DU_logfile_audioframework/releases 
-1. Download the archHudSoundPack.zip file found at https://github.com/Archaegeo/Archaegeo-Orbital-Hud/blob/Beta/archHudSoundPack.zip. 
+1. Download the archHudSoundPack.zip file found at https://github.com/Archaegeo/Archaegeo-Orbital-Hud/blob/master/archHudSoundPack.zip. 
 1. In the `audiopacks` folder of the Logfile extraction, extract the `archHudSoundPack.zip`.  This should result in a subfolder named `archHUD`
 1. Any sound file in the audiopack may be replaced with a different sound file using same filename if you choose to personalize.
 1. If you dislike any particular sound and do not want to replace it but still want the other sounds, simply remove its .mp3 file from the soundpack folder.
