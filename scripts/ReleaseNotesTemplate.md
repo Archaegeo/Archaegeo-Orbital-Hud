@@ -28,6 +28,7 @@ FOR SOUND SUPPORT:
 1. `Alt-7` will toggle all sounds on or off
 1. ***NOTE:*** You MUST change the name of the soundpack subfolder and the userVariable `soundFolder` to something other than "archHUD". Use /G soundFolder NewName in lua chat for existing systems.
 This is to prevent others from making your PC play sounds they think you have installed.
+1. STREAMERS ONLY:  For your viewers to hear the sounds/voices, you will need to add the `DU_logfile_audioframework.exe` as an audio source for your stream.
 
 
 At this point you should be ready to fly!

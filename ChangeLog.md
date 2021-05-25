@@ -1,5 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.302
+- Clean up AP re-entry process.
+- Changed re-entry height when > min space engine alt to (planet.spaceEngineMinAltitude - (planet.spaceEngineMinAltitude/10)) On alioth this will equal 3070.
+This only applies if you set ReEntryHeight > min space engine altitude on a planet with atmo.
+
 Version 1.301 - Improved SoundPack integration
 - Made major improvement to the .zip soundPack replacing all sounds. Download the new version.
 - Added a couple of new sound support lines.

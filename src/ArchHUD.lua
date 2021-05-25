@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.301
+VERSION_NUMBER = 1.302
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -930,7 +930,7 @@ VERSION_NUMBER = 1.301
             autoRoll = true
             BrakeIsOn = false
             HoldAltitude = planet.surfaceMaxAltitude + ReEntryHeight
-            if HoldAltitude > planet.spaceEngineMinAltitude then HoldAltitude = planet.spaceEngineMinAltitude - 100 end
+            if HoldAltitude > planet.spaceEngineMinAltitude then HoldAltitude = planet.spaceEngineMinAltitude - (planet.spaceEngineMinAltitude / 10) end
             local text = getDistanceDisplayString(HoldAltitude)
             msgText = "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text 
             cmdCruise(mfloor(adjustedAtmoSpeedLimit))
@@ -4843,9 +4843,11 @@ VERSION_NUMBER = 1.301
                     cmdThrottle(0)
                     apThrottleSet = false
                     msgText = msg
-                    if orbit then
-                        if AutopilotTargetOrbit ~= nil then OrbitTargetOrbit = AutopilotTargetOrbit else OrbitTargetOrbit = coreAltitude end
-                        OrbitTargetSet = true
+                    if orbit or spaceLand then
+                        if AutopilotTargetOrbit ~= nil and not spaceLand then 
+                            OrbitTargetOrbit = AutopilotTargetOrbit
+                            OrbitTargetSet = true
+                        end
                         ToggleIntoOrbit()
                     end
                 end
@@ -4874,7 +4876,7 @@ VERSION_NUMBER = 1.301
                         if (worldPos-wrongSideCoords):len() < (worldPos-rightSideCoords):len() then
                             targetCoords = wrongSideCoords
                         else
-                            targetCoords = CustomTarget.position + (CustomTarget.position - autopilotTargetPlanet.center):normalize() * (AutopilotTargetOrbit - autopilotTargetPlanet:getAltitude(CustomTarget.position))
+                            targetCoords = rightSideCoords
                             AutopilotEndSpeed = 0
                         end
                         AutopilotTargetCoords = targetCoords
@@ -5069,10 +5071,10 @@ VERSION_NUMBER = 1.301
                     elseif (CustomTarget ~= nil and CustomTarget.planetname ~= "Space") and velMag <= endSpeed and (orbit.apoapsis == nil or orbit.periapsis == nil or orbit.apoapsis.altitude <= 0 or orbit.periapsis.altitude <= 0) then
                         -- They aren't in orbit, that's a problem if we wanted to do anything other than reenter.  Reenter regardless.                  
                         finishAutopilot("Autopilot complete, commencing reentry")
-                        BrakeIsOn = true
+                        --BrakeIsOn = true
                         --BrakeIsOn = false -- Leave brakes on to be safe while we align prograde
                         AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
-                        ProgradeIsOn = true  
+                        --ProgradeIsOn = true  
                         spaceLand = true
                         AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
                     elseif orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 or AutopilotStatus == "Circularizing" then
@@ -5089,7 +5091,7 @@ VERSION_NUMBER = 1.301
                                 else 
                                     finishAutopilot("Autopilot complete, proceeding with reentry")
                                     AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
-                                    ProgradeIsOn = true
+                                    --ProgradeIsOn = true
                                     spaceLand = true
                                     AP.showWayPoint(autopilotTargetPlanet, CustomTarget.position)
                                     WaypointSet = false -- Don't need it anymore
