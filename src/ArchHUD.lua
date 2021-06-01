@@ -234,7 +234,6 @@ VERSION_NUMBER = 1.302
     local simulatedY = 0        
     local msgTimer = 3
     local distance = 0
-    local radarMessage = ""
     local lastOdometerOutput = ""
     local peris = 0
     local spaceLand = false
@@ -339,6 +338,8 @@ VERSION_NUMBER = 1.302
     local oldShowHud = showHud
     local AtlasOrdered = {}
     local notPvPZone = false
+    local radarMessage = ""
+    local pipeMessage = ""
 
 
 -- Function Definitions that are used in more than one areause 
@@ -2789,6 +2790,7 @@ VERSION_NUMBER = 1.302
     end    
     local function HudClass() -- Everything HUD display releated including tick
         local pvpDist = 0
+
         --Local Huds Functions
             local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
                 local radius = 500000
@@ -3460,7 +3462,7 @@ VERSION_NUMBER = 1.302
                     newContent[#newContent + 1] = svgText(warningX, brakeY, "Auto-Brake Engaged", "warnings", "opacity:"..brakeInput2)
                 end
                 if inAtmo and stalling and abvGndDet == -1 then
-                    if not Autopilot and not VectorToTarget and not BrakeLanding and not antigravOn and not VertTakeOff then
+                    if not Autopilot and not VectorToTarget and not BrakeLanding and not antigravOn and not VertTakeOff and not AutoTakeoff then
                         newContent[#newContent + 1] = svgText(warningX, apY+50, "** STALL WARNING **", "warnings")
                         play("StallWarning.mp3","SW",1)
                     end
@@ -3709,18 +3711,19 @@ VERSION_NUMBER = 1.302
             end            
 
             local function DisplayHelp(newContent)
-                local x = 50
+                local x = 30
                 local y = 275
                 local help = {"Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-3: Toggle Vanilla Widget view"}
-                local helpAtmo = {  "Alt-4: Autopilot in atmo to target", "Alt-4-4: Autopilot to +1k over atmosphere and orbit to target", "Alt-5: Lock Pitch at current pitch",
-                                    "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", "Alt-9: Activate Gyroscope"}
-                local helpSpace = {"Alt-4 (Alt < 100k): Autopilot to Orbit and land", "Alt-4 (Alt > 100k): Autopilot to target", "Alt-6: Orbit at current altitude",
-                                    "Alt-6-6: Orbit at 1k over atmosphere", "Alt-9: Activate Gyroscope"}
-                local helpGeneral = {"CTRL: Toggle Brakes on and off, cancels active AP", "LeftAlt: Tap to shift freelook on and off", "Shift: Hold while not in freelook to see Buttons",
+                local helpAtmo = { "", "------------------IN ATMO-----------------", "Alt-4: Autopilot in atmo to target", "Alt-4-4: Autopilot to LowOrbitHeight over atmosphere and orbit to target", 
+                                    "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere"}
+                local helpSpace = {"", "------------------NO ATMO-----------------", "Alt-4 (Alt < 100k): Autopilot to Orbit and land", "Alt-4 (Alt > 100k): Autopilot to target", "Alt-6: Orbit at current altitude",
+                                    "Alt-6-6: Orbit at LowOrbitHeight over atmosphere"}
+                local helpGeneral = {"", "------------------ALWAYS--------------------", "Alt-5: Lock Pitch at current pitch","Alt-7: Toggle InHud Sounds", "Alt-8: Toggle ground stabilization (underwater flight)","Alt-9: Activate Gyroscope", 
+                                    "", "CTRL: Toggle Brakes on and off, cancels active AP", "LeftAlt: Tap to shift freelook on and off", "Shift: Hold while not in freelook to see Buttons",
                                     "Type /commands or /help in lua chat to see text commands"}
                 if inAtmo then 
                     addTable(help, helpAtmo)
-                    table.insert(help, "---------------------------------------")
+                    table.insert(help, "--------------CONDITIONAL-----------------")
                     if VertTakeOff then
                         table.insert(help,"Hit Alt-6 before exiting Atmosphere during VTO to hold in level flight")
                     end
@@ -3746,11 +3749,60 @@ VERSION_NUMBER = 1.302
                 if AltitudeHold then 
                     table.insert(help, "Alt-Spacebar/Alt-C will raise/lower target height")
                 end
-                table.insert(help, "---------------------------------------")   
                 addTable(help, helpGeneral)
                 for i = 1, #help do
                     y=y+12
                     newContent[#newContent + 1] = svgText( x, y, help[i], "pdim txttick txtstart")
+                end
+            end
+            
+            local function getPipeDistance(origCenter, destCenter)  -- Many thanks to Tiramon for the idea and functionality.
+                local pipeDistance
+                local pipe = (destCenter - origCenter):normalize()
+                local r = (worldPos -origCenter):dot(pipe) / pipe:dot(pipe)
+                if r <= 0. then
+                return (worldPos-origCenter):len()
+                elseif r >= (destCenter - origCenter):len() then
+                return (worldPos-destCenter):len()
+                end
+                local L = origCenter + (r * pipe)
+                pipeDistance =  (L - worldPos):len()
+                return pipeDistance
+            end
+
+            local function getClosestPipe() -- Many thanks to Tiramon for the idea and functionality, thanks to Dimencia for the assist
+                local pipeDistance
+                local nearestDistance = nil
+                local nearestPipePlanet = nil
+                local pipeOriginPlanet = nil
+                for k,nextPlanet in pairs(atlas[0]) do
+                    if nextPlanet.hasAtmosphere then -- Skip moons
+                        local distance = getPipeDistance(planet.center, nextPlanet.center)
+                        if nearestDistance == nil or distance < nearestDistance then
+                            nearestPipePlanet = nextPlanet
+                            nearestDistance = distance
+                            pipeOriginPlanet = planet
+                        end
+                        if autopilotTargetPlanet and autopilotTargetPlanet.hasAtmosphere and autopilotTargetPlanet.name ~= planet.name then 
+                            local distance2 = getPipeDistance(autopilotTargetPlanet.center, nextPlanet.center)
+                            if distance2 < nearestDistance then
+                                nearestPipePlanet = nextPlanet
+                                nearestDistance = distance2
+                                pipeOriginPlanet = autopilotTargetPlanet
+                            end
+                        end
+                    end
+                end
+                local pipeX = ConvertResolutionX(1770)
+                local pipeY = ConvertResolutionY(330)
+                if nearestDistance then
+                    local txtadd = "txttick "
+                    local fudge = 500000
+                    if nearestDistance < nearestPipePlanet.radius+fudge or nearestDistance < pipeOriginPlanet.radius+fudge then 
+                        if notPvPZone then txtadd = "txttick red " else txtadd = "txttick orange " end
+                    end
+                    pipeDistance = getDistanceDisplayString(nearestDistance,2)
+                    pipeMessage = svgText(pipeX, pipeY, "Pipe ("..pipeOriginPlanet.name.."--"..nearestPipePlanet.name.."): "..pipeDistance, txtadd.."pbright txtmid") 
                 end
             end
 
@@ -3803,6 +3855,7 @@ VERSION_NUMBER = 1.302
                         .dim {fill:%s;stroke:%s}
                         .pdim {fill:%s;stroke:%s}
                         .red {fill:red;stroke:red}
+                        .orange {fill:orange;stroke:orange}
                         .redout {fill:none;stroke:red}
                         .op30 {opacity:0.3}
                         .op10 {opacity:0.1}
@@ -3886,6 +3939,10 @@ VERSION_NUMBER = 1.302
             -- RADAR
         
             newContent[#newContent + 1] = radarMessage
+
+            -- Pipe distance
+
+            if pipeMessage ~= "" then newContent[#newContent +1] = pipeMessage end
         
             -- FUEL TANKS
         
@@ -4039,12 +4096,20 @@ VERSION_NUMBER = 1.302
                                             DeadZone)
         end
 
+        function Hud.UpdatePipe() -- Many thanks to Tiramon for the idea and math part of the code.
+            if inAtmo then 
+                pipeMessage = "" 
+                return 
+            end
+            getClosestPipe()           
+        end
+
         function Hud.UpdateRadar()
             if (radar_1) then
                 local radarContacts = radar_1.getEntries()
                 local radarData = radar_1.getData()
                 local radarX = ConvertResolutionX(1770)
-                local radarY = ConvertResolutionY(330)
+                local radarY = ConvertResolutionY(350)
                 if #radarContacts > 0 then
                     local target = radarData:find('identifiedConstructs":%[%]')
                     if target == nil and perisPanelID == nil then
@@ -4562,9 +4627,9 @@ VERSION_NUMBER = 1.302
                 end
             end
 
-            if finalLand and CustomTarget ~= nil and (coreAltitude < (HoldAltitude + 200) and coreAltitude > (HoldAltitude - 200)) and ((velMag*3.6) > (adjustedAtmoSpeedLimit-100)) and mabs(vSpd) < 20 and atmosDensity >= 0.1
+            if finalLand and CustomTarget ~= nil and (coreAltitude < (HoldAltitude + 250) and coreAltitude > (HoldAltitude - 250)) and ((velMag*3.6) > (adjustedAtmoSpeedLimit-250)) and mabs(vSpd) < 25 and atmosDensity >= 0.1
                 and (CustomTarget.position-worldPos):len() > 2000 + coreAltitude then -- Only engage if far enough away to be able to turn back for it
-                ToggleAutopilot()
+                    ToggleAutopilot()
                 finalLand = false
             end
 
@@ -4844,7 +4909,7 @@ VERSION_NUMBER = 1.302
                     apThrottleSet = false
                     msgText = msg
                     if orbit or spaceLand then
-                        if AutopilotTargetOrbit ~= nil and not spaceLand then 
+                        if orbit and AutopilotTargetOrbit ~= nil and not spaceLand then 
                             OrbitTargetOrbit = AutopilotTargetOrbit
                             OrbitTargetSet = true
                         end
@@ -5081,7 +5146,7 @@ VERSION_NUMBER = 1.302
                         AutopilotStatus = "Circularizing"
                         if velMag <= endSpeed then 
                             if CustomTarget ~= nil then
-                                if constructVelocity:normalize():dot(targetVec:normalize()) > 0.4 then -- Triggers when we get close to passing it
+                                if constructVelocity:normalize():dot(targetVec:normalize()) > 0.55 then -- Triggers when we get close to passing it
                                     AutopilotStatus = "Orbiting to Target"
                                     if not WaypointSet then
                                         BrakeIsOn = false -- We have to set this at least once
@@ -5995,7 +6060,7 @@ VERSION_NUMBER = 1.302
                             function() ToggleBoolean(v) end,
                             function() return true end, true) 
                         y = y + buttonHeight + 20
-                        if cnt == 8 then 
+                        if cnt == 9 then 
                             x = x + buttonWidth + 20 
                             y = resolutionHeight / 2 - 400
                             cnt = 0
@@ -6331,10 +6396,7 @@ VERSION_NUMBER = 1.302
             unit.setTimer("hudTick", hudTickRate)
             unit.setTimer("oneSecond", 1)
             unit.setTimer("tenthSecond", 1/10)
-
-            if UseSatNav then 
-                unit.setTimer("fiveSecond", 5) 
-            end
+            unit.setTimer("fiveSecond", 5) 
             play("StartupComplete.mp3","SU")
         end)
     end
@@ -6721,6 +6783,7 @@ VERSION_NUMBER = 1.302
             end
             updateDistance()
             HUD.UpdateRadar()
+            HUD.UpdatePipe()
             updateWeapons()
             -- Update odometer output string
             local newContent = {}
@@ -6734,6 +6797,7 @@ VERSION_NUMBER = 1.302
             lastOdometerOutput = table.concat(newContent, "")
             collectgarbage("collect")
         elseif timerId == "fiveSecond" then -- Timer executed every 5 seconds (SatNav only stuff for now)
+            if not UseSatNav then return end
             -- Support for SatNav by Trog
             myAutopilotTarget = dbHud_1.getStringValue("SPBAutopilotTargetName")
             if myAutopilotTarget ~= nil and myAutopilotTarget ~= "" and myAutopilotTarget ~= "SatNavNotChanged" then

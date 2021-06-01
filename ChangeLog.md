@@ -1,9 +1,14 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.302
+Version 1.302 - Pipe Distance Calculation (Thanks to Tiramon for the idea and the starter code)
+- Added display of distance to centerline of closest "pipe" based off either closest planet or off of IPH selected target destination.
+This should allow you to better fly "outside the pipe"
+- If distance to center of pipe is < radius of planet + 2.5 SU the text will be red as a warning that you are in radar range of pipe (blue if in pvp area)
+(For more pipe info see: https://i.redd.it/pdvg4xaabgg61.png)
 - Clean up AP re-entry process.
 - Changed re-entry height when > min space engine alt to (planet.spaceEngineMinAltitude - (planet.spaceEngineMinAltitude/10)) On alioth this will equal 3070.
 This only applies if you set ReEntryHeight > min space engine altitude on a planet with atmo.
+- Cleaned up dynamic help text display, added new help text.
 
 Version 1.301 - Improved SoundPack integration
 - Made major improvement to the .zip soundPack replacing all sounds. Download the new version.
