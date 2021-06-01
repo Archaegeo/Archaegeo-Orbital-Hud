@@ -18,7 +18,7 @@ FOR COCKPIT USAGE:
 
 FOR SOUND SUPPORT:
 1. Download and extract to location of your choice the ZIP file found at https://github.com/ZarTaen/DU_logfile_audioframework/releases 
-1. Download the archHudSoundPack.zip file found at https://github.com/Archaegeo/Archaegeo-Orbital-Hud/blob/Beta/archHudSoundPack.zip. 
+1. Download the archHudSoundPack.zip file found at https://github.com/Archaegeo/Archaegeo-Orbital-Hud/blob/master/archHudSoundPack.zip. 
 1. In the `audiopacks` folder of the Logfile extraction, extract the `archHudSoundPack.zip`.  This should result in a subfolder named `archHUD`
 1. Any sound file in the audiopack may be replaced with a different sound file using same filename if you choose to personalize.
 1. If you dislike any particular sound and do not want to replace it but still want the other sounds, simply remove its .mp3 file from the soundpack folder.
@@ -28,6 +28,7 @@ FOR SOUND SUPPORT:
 1. `Alt-7` will toggle all sounds on or off
 1. ***NOTE:*** You MUST change the name of the soundpack subfolder and the userVariable `soundFolder` to something other than "archHUD". Use /G soundFolder NewName in lua chat for existing systems.
 This is to prevent others from making your PC play sounds they think you have installed.
+1. STREAMERS ONLY:  For your viewers to hear the sounds/voices, you will need to add the `DU_logfile_audioframework.exe` as an audio source for your stream.
 
 
 At this point you should be ready to fly!
