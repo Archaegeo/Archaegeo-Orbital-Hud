@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.303 - Optional SolarSystem Display - Many thanks to EasternGamer for his AR code framework and working to make a demo thats useful when flying
+NO HUD CHANGE, just optional SolarSystem.json file
+To use - Place a Programming board (preferrably within activation range while sitting in seat).  Connect to core.  Copy SolarSystem.json and right click
+programming board, Advanced, Paste lua configuration to clipboard.
+Works in seat or out.  If in seat, you must be in first person, or the second fixed 3rd person view (does not work in freelook).
+Looking around you will see all major planets (no moons) plotted in space, circle size scaled by distance.
+
 Version 1.302 - Pipe Distance Calculation (Thanks to Tiramon for the idea and the starter code)
 - Added display of distance to centerline of closest "pipe" based off either closest planet or off of IPH selected target destination.
 This should allow you to better fly "outside the pipe"
