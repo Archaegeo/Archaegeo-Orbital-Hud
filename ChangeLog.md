@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.304 
+- Fixed fuel calculation for unslotted tanks due to formula change in patch 23.5 assuming all talents known. - Thanks SpacemanSpiff and Ystreben
+
 Version 1.303 - Optional SolarSystem Display - Many thanks to EasternGamer for his AR code framework and working to make a demo thats useful when flying
 NO HUD CHANGE, just optional SolarSystem.json file
 To use - Place a Programming board (preferrably within activation range while sitting in seat).  Connect to core.  Copy SolarSystem.json and right click

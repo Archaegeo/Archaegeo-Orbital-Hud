@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.303
+VERSION_NUMBER = 1.304
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -4110,6 +4110,7 @@ VERSION_NUMBER = 1.303
                 local radarData = radar_1.getData()
                 local radarX = ConvertResolutionX(1770)
                 local radarY = ConvertResolutionY(350)
+                
                 if #radarContacts > 0 then
                     local target = radarData:find('identifiedConstructs":%[%]')
                     if target == nil and perisPanelID == nil then
@@ -5778,12 +5779,14 @@ VERSION_NUMBER = 1.303
                     if curMass > vanillaMaxVolume then
                         vanillaMaxVolume = curMass
                     end
+                    local f1, f2 = 0, 0
                     if ContainerOptimization > 0 then 
-                        vanillaMaxVolume = vanillaMaxVolume - (vanillaMaxVolume * ContainerOptimization * 0.05)
+                        f1 = ContainerOptimization * 0.05
                     end
                     if FuelTankOptimization > 0 then 
-                        vanillaMaxVolume = vanillaMaxVolume - (vanillaMaxVolume * FuelTankOptimization * 0.05)
+                        f2 = FuelTankOptimization * 0.05
                     end
+                    vanillaMaxVolume = vanillaMaxVolume * (1 - (f1 + f2))
                     return vanillaMaxVolume            
                 end
 
