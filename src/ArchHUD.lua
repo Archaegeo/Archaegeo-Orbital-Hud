@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.304
+VERSION_NUMBER = 1.305
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export: (Default: false)
@@ -6441,7 +6441,15 @@ VERSION_NUMBER = 1.304
 
     function script.onTick(timerId)
         -- Various tick timers
-        if timerId == "tenthSecond" then -- Timer executed ever tenth of a second
+        if timerId == "contact" then
+            if not contactTimer then contactTimer = 0 end
+            if time > contactTimer+10 then
+                msgText = "Radar Contact" 
+                play("TrackingTarget.mp3","TT")
+                contactTimer = time
+            end
+            unit.stopTimer("contact")
+        elseif timerId == "tenthSecond" then -- Timer executed ever tenth of a second
             -- Local Functions for tenthSecond
                 local function SetupInterplanetaryPanel() -- Interplanetary helper
                     local sysCrData = system.createData
@@ -8222,6 +8230,12 @@ VERSION_NUMBER = 1.304
                 msgText = "No target selected in IPH"
             end
 
+        end
+    end
+
+    function script.onEnter(id)
+        if radar_1 then 
+            unit.setTimer("contact",0.1) 
         end
     end
 

@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.305 - New Radar Contact alert
+- If you get a new radar contact, and its been 10 seconds since last notification added notification in text on screen 
+and via "Tracking Target" sound warning if using sound pack.  If you dont want it announced, remove TrackingTarget.mp3 from soundpack.
+
 Version 1.304 
 - Fixed fuel calculation for unslotted tanks due to formula change in patch 23.5 assuming all talents known. - Thanks SpacemanSpiff and Ystreben
 
