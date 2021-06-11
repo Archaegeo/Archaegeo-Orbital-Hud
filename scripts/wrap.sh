@@ -47,7 +47,7 @@ fi
 # Wrap in AutoConf
 SLOTS=(
     core:class=CoreUnit
-    radar:class=RadarPVPUnit,select=manual
+    radar:class=RadarPVPUnit,select=manual,type=radar
     antigrav:class=AntiGravityGeneratorUnit
     warpdrive:class=WarpDriveUnit
     gyro:class=GyroUnit
