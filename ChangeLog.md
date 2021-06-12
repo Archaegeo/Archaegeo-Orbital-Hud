@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.310 - Major soundpack overhaul (Some soundfile names changed, all replaced, more soundfiles)
+- Changed stall warning to a more pleasent constant beep.
+- Redid all voice announcements using TTS that match what is really occuring.
+- Disabled Radar Contact text/announcement while in atmosphere or safespace.
+- Removed brake check before allowing re-entry.  If you got in seat in space it told you not good enough brakes for re-entry.
+
+
 Version 1.305 - New Radar Contact alert
 - If you get a new radar contact, and its been 10 seconds since last notification added notification in text on screen 
 and via "Tracking Target" sound warning if using sound pack.  If you dont want it announced, remove TrackingTarget.mp3 from soundpack.
