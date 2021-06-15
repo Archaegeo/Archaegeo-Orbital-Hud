@@ -5,7 +5,7 @@ New Assisted Flight Controls (Many thanks to Dimencia for helping with the math)
 - ALT-Q/E will make you bank hard left/right till you release but still provide stall control.  If you were not in alt-hold before, you will not be in after release.
 (NOTE: You can use these to see if your YawStallAngle limit is too severe or too loose.  If STALL limiter kicks in and you arent stalling, raise it.  Also good for
 dodging pesky towers)
-- ALT-W will make you perform a 180 deg turn. It will also cancel Autopilot, leaving you in ALT-Hold when done.
+- ALT-S will make you perform a 180 deg turn. It will also cancel Autopilot, leaving you in ALT-Hold when done.
 - Removed Default values showing in Edit Lua Paramters to save code length.  Find all defaults in the `UserSettings.md` file.
 
 Version 1.310 - Major soundpack overhaul (Some soundfile names changed, all replaced, more soundfiles)
