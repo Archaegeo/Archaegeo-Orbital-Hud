@@ -4,114 +4,114 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.310
+VERSION_NUMBER = 1.315
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
-    useTheseSettings = false --export: (Default: false)
-    userControlScheme = "virtual joystick" --export: (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard"
-    soundFolder = "archHUD" --export: (Default: "archHUD")
-        
+    useTheseSettings = false --export:
+    userControlScheme = "virtual joystick" --export:
+    soundFolder = "archHUD" --export:
+    
     -- True/False variables
-    freeLookToggle = true --export: (Default: true)
-    BrakeToggleDefault = true --export: (Default: true)
-    RemoteFreeze = false --export: (Default: false)
-    RemoteHud = true --export: (Default: true)
-    brightHud = false --export: (Default: false)
-    VanillaRockets = false --export: (Default: false)
-    InvertMouse = false --export: (Default: false)
-    autoRollPreference = false --export: (Default: false)
-    turnAssist = true --export: (Default: true)
-    ExternalAGG = false --export: (Default: false)
-    UseSatNav = false --export: (Default: false)
-    ShouldCheckDamage = true --export: (Default: true)
-    CalculateBrakeLandingSpeed = false --export: (Default: false)
-    AtmoSpeedAssist = true --export: (Default: true)
-    ForceAlignment = false --export: (Default: false)
-    DisplayDeadZone = true --export: (Default: true)
-    showHud = true --export: (Default: true) 
-    ShowOdometer = true --export: (Default: true)
-    hideHudOnToggleWidgets = true --export: (Default: true)
-    ShiftShowsRemoteButtons = true --export: (Default: true)
-    DisplayOrbit = true --export: (Default: true) 
-    SetWaypointOnExit = true --export: (Default: true)
-    IntruderAlertSystem = false --export: (Default: true)
-    AlwaysVSpd = false --export: (Default: false)
-    BarFuelDisplay = true --export: (Default: true)
-    showHelp = true --export: (Default: true)
-    Cockpit = false --export: (Default: false)
-    voices = true --export: (Default: true)
-    alerts = true --export: (Default: true)
+    freeLookToggle = true --export:
+    BrakeToggleDefault = true --export:
+    RemoteFreeze = false --export:
+    RemoteHud = true --export:
+    brightHud = false --export:
+    VanillaRockets = false --export:
+    InvertMouse = false --export:
+    autoRollPreference = false --export:
+    turnAssist = true --export:
+    ExternalAGG = false --export:
+    UseSatNav = false --export:
+    ShouldCheckDamage = true --export:
+    CalculateBrakeLandingSpeed = false --export:
+    AtmoSpeedAssist = true --export:
+    ForceAlignment = false --export:
+    DisplayDeadZone = true --export:
+    showHud = true --export: 
+    ShowOdometer = true --export:
+    hideHudOnToggleWidgets = true --export:
+    ShiftShowsRemoteButtons = true --export:
+    DisplayOrbit = true --export: 
+    SetWaypointOnExit = true --export:
+    IntruderAlertSystem = false --export:
+    AlwaysVSpd = false --export:
+    BarFuelDisplay = true --export:
+    showHelp = true --export:
+    Cockpit = false --export:
+    voices = true --export:
+    alerts = true --export:
     
     -- Ship Handling variables
-    YawStallAngle = 35 --export: (Default: 35)
-    PitchStallAngle = 35 --export: (Default: 35)
-    brakeLandingRate = 30 --export: (Default: 30)
-    MaxPitch = 30 --export: (Default: 30)
-    TargetOrbitRadius = 1.4 --export: (Default: 1.4)
-    LowOrbitHeight = 1000 --export: (Default: 1000)
-    AtmoSpeedLimit = 1050 --export: (Default: 1050)
-    SpaceSpeedLimit = 30000 --export: (Default: 30000).
-    AutoTakeoffAltitude = 1000 --export: (Default: 1000)
-    TargetHoverHeight = 50 --export: (Default: 50)
-    LandingGearGroundHeight = 0 --export: (Default: 0)
-    ReEntryHeight = 5000 -- export: (Default: 5000)
-    MaxGameVelocity = 8333.00 --export: (Default: 8333.00)
-    AutopilotInterplanetaryThrottle = 1.0 --export: (Default: 1.0)
-    warmup = 32 --export: (Default: 32)
-    fuelTankHandlingAtmo = 0 --export: (Default: 0)
-    fuelTankHandlingSpace = 0 --export: (Default: 0)
-    fuelTankHandlingRocket = 0 --export: (Default: 0)
-    ContainerOptimization = 0 --export: (Default: 0)
-    FuelTankOptimization = 0 --export: (Default: 0)
+    YawStallAngle = 35 --export:
+    PitchStallAngle = 35 --export:
+    brakeLandingRate = 30 --export:
+    MaxPitch = 30 --export:
+    TargetOrbitRadius = 1.4 --export:
+    LowOrbitHeight = 1000 --export:
+    AtmoSpeedLimit = 1050 --export:
+    SpaceSpeedLimit = 30000 --export:
+    AutoTakeoffAltitude = 1000 --export:
+    TargetHoverHeight = 50 --export:
+    LandingGearGroundHeight = 0 --export:
+    ReEntryHeight = 5000 -- export:
+    MaxGameVelocity = 8333.00 --export:
+    AutopilotInterplanetaryThrottle = 1.0 --export:
+    warmup = 32 --export:
+    fuelTankHandlingAtmo = 0 --export:
+    fuelTankHandlingSpace = 0 --export:
+    fuelTankHandlingRocket = 0 --export:
+    ContainerOptimization = 0 --export:
+    FuelTankOptimization = 0 --export:
 
     -- HUD Postioning variables
-    ResolutionX = 1920 --export: (Default: 1920)
-    ResolutionY = 1080 --export: (Default: 1080) 
-    circleRad = 400 --export: (Default: 400)
-    SafeR = 130 --export: (Default: 130)
-    SafeG = 224 --export: (Default: 224)
-    SafeB = 255 --export: (Default: 255)
-    PvPR = 255 --export: (Default: 255)
-    PvPG = 0 --export: (Default: 0)
-    PvPB = 0 --export: (Default: 0)
-    centerX = 960 --export: (Default: 960)
-    centerY = 540 --export: (Default: 540)
-    throtPosX = 1300 --export: (Default: 1300)
-    throtPosY = 540 --export: (Default: 540)
-    vSpdMeterX = 1525  --export: (Default: 1525)
-    vSpdMeterY = 325 --export: (Default: 325)
-    altMeterX = 550  --export: (Default: 550)
-    altMeterY = 540 --export: (Default: 540) 
-    fuelX = 30 --export: (Default: 30)
-    fuelY = 700 --export: (Default: 700)
-    DeadZone = 50 --export: (Default: 50)
-    OrbitMapSize = 250 --export: (Default: 250)
-    OrbitMapX = 75 --export: (Default: 75)
-    OrbitMapY = 0 --export: (Default: 0)
-    soundVolume = 100 --export: (Default: 100)
+    ResolutionX = 1920 --export:
+    ResolutionY = 1080 --export:
+    circleRad = 400 --export:
+    SafeR = 130 --export:
+    SafeG = 224 --export:
+    SafeB = 255 --export:
+    PvPR = 255 --export:
+    PvPG = 0 --export:
+    PvPB = 0 --export:
+    centerX = 960 --export:
+    centerY = 540 --export:
+    throtPosX = 1300 --export:
+    throtPosY = 540 --export:
+    vSpdMeterX = 1525  --export:
+    vSpdMeterY = 325 --export:
+    altMeterX = 550  --export:
+    altMeterY = 540 --export:
+    fuelX = 30 --export:
+    fuelY = 700 --export:
+    DeadZone = 50 --export:
+    OrbitMapSize = 250 --export:
+    OrbitMapX = 75 --export:
+    OrbitMapY = 0 --export:
+    soundVolume = 100 --export:
 
     --Ship flight physics variables 
-    speedChangeLarge = 5 --export: (Default: 5)
-    speedChangeSmall = 1 --export: (Default: 1)
-    MouseXSensitivity = 0.003 --export: (Default: 0.003)
-    MouseYSensitivity = 0.003 --export: (Default: 0.003)
-    autoRollFactor = 2 --export: (Default: 2)
-    rollSpeedFactor = 1.5 --export: (Default: 1.5)
-    autoRollRollThreshold = 180 --export: (Default: 180)
-    minRollVelocity = 150 --export: (Default: 150)    
-    turnAssistFactor = 2 --export: (Default: 2)
-    TrajectoryAlignmentStrength = 0.002 --export: (Default: 0.002)
-    torqueFactor = 2 --export: (Default: 2)
-    pitchSpeedFactor = 0.8 --export: (Default: 0.8)
-    yawSpeedFactor = 1 --export: (Default: 1)
-    brakeSpeedFactor = 3 --export: (Default: 3)
-    brakeFlatFactor = 1 --export: (Default: 1)
-    DampingMultiplier = 40 --export: (Default: 40) 
-    apTickRate = 0.0166667 --export: (Default: 0.0166667)  
-    hudTickRate = 0.0666667 --export: (Default: 0.0666667)
-    ExtraLongitudeTags = "none" --export: (Default: "none")
-    ExtraLateralTags = "none" --export: (Default: "none")
-    ExtraVerticalTags = "none" --export: (Default: "none")
+    speedChangeLarge = 5 --export:
+    speedChangeSmall = 1 --export:
+    MouseXSensitivity = 0.003 --export:
+    MouseYSensitivity = 0.003 --export:
+    autoRollFactor = 2 --export:
+    rollSpeedFactor = 1.5 --export:
+    autoRollRollThreshold = 180 --export:
+    minRollVelocity = 150 --export:
+    turnAssistFactor = 2 --export:
+    TrajectoryAlignmentStrength = 0.002 --export:
+    torqueFactor = 2 --export:
+    pitchSpeedFactor = 0.8 --export:
+    yawSpeedFactor = 1 --export:
+    brakeSpeedFactor = 3 --export:
+    brakeFlatFactor = 1 --export:
+    DampingMultiplier = 40 --export:
+    apTickRate = 0.0166667 --export:
+    hudTickRate = 0.0666667 --export:
+    ExtraLongitudeTags = "none" --export:
+    ExtraLateralTags = "none" --export:
+    ExtraVerticalTags = "none" --export:
 
 -- Auto Variable declarations that store status of ship. Must be global because they get saved/read to Databank due to using _G assignment
     BrakeToggleStatus = BrakeToggleDefault
@@ -156,6 +156,7 @@ VERSION_NUMBER = 1.310
     iphCondition = "All"
     stablized = true
     sounds = true
+
     -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
         local autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
                     "Autopilot", "TurnBurn", "AltitudeHold", "BrakeLanding",
@@ -164,7 +165,8 @@ VERSION_NUMBER = 1.310
                     "AutopilotPlanetGravity", "PrevViewLock", "AutopilotTargetName", "AutopilotTargetCoords",
                     "AutopilotTargetIndex", "TotalDistanceTravelled",
                     "TotalFlightTime", "SavedLocations", "VectorToTarget", "LocationIndex", "LastMaxBrake", 
-                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "safeMass", "iphCondition", "stablized", "sounds"}
+                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "safeMass", "iphCondition", "stablized", 
+                    "sounds"}
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -340,6 +342,7 @@ VERSION_NUMBER = 1.310
     local notPvPZone = false
     local radarMessage = ""
     local pipeMessage = ""
+    local ReversalIsOn = nil
 
 
 -- Function Definitions that are used in more than one areause 
@@ -804,6 +807,7 @@ VERSION_NUMBER = 1.310
             ProgradeIsOn = false -- No reason to brake while facing prograde, but retrograde yes.
             BrakeLanding = false
             AutoLanding = false
+            ReversalIsOn = nil
             if not antigravOn then
                 AltitudeHold = false -- And stop alt hold
                 LockPitch = nil
@@ -5398,9 +5402,19 @@ VERSION_NUMBER = 1.310
                 if velMag > minAutopilotSpeed and not spaceLaunch and not VectorToTarget and not BrakeLanding and ForceAlignment then -- When do we even need this, just alt hold? lol
                     AlignToWorldVector(vec3(constructVelocity))
                 end
-                if (VectorToTarget or spaceLaunch) and AutopilotTargetIndex > 0 and atmosDensity > 0.01 then
+                if ReversalIsOn ~= nil or ((VectorToTarget or spaceLaunch) and AutopilotTargetIndex > 0 and atmosDensity > 0.01) then
                     local targetVec
-                    if CustomTarget ~= nil then
+                    if ReversalIsOn ~= nil then
+                        if type(ReversalIsOn) == "table" then
+                            targetVec = ReversalIsOn
+                        elseif ReversalIsOn < 3 and ReversalIsOn > 0 then
+                           targetVec = -worldVertical:cross(constructVelocity)*5000
+                        elseif ReversalIsOn >= 3 then
+                            targetVec = worldVertical:cross(constructVelocity)*5000
+                        elseif ReversalIsOn == 0 then
+                            targetVec = constructVelocity*25000
+                        end
+                    elseif CustomTarget ~= nil then
                         targetVec = CustomTarget.position - worldPos
                     else
                         targetVec = autopilotTargetPlanet.center - worldPos
@@ -5422,6 +5436,12 @@ VERSION_NUMBER = 1.310
 
 
                     local yawDiff = currentYaw-targetYaw
+
+                    if (type(ReversalIsOn) == "table" or ReversalIsOn == 0) and mabs(yawDiff) <= 0.001 then
+                        if ReversalIsOn == 0 then ToggleAltitudeHold() end
+                        ReversalIsOn = nil
+                        return
+                    end
 
                     if not stalling and velMag > minRollVelocity and atmosDensity > 0.01 then
                         if (yawPID == nil) then
@@ -5484,7 +5504,8 @@ VERSION_NUMBER = 1.310
                         StrongBrakes = true -- We don't care about this or glide landing anymore and idk where all it gets used
                         
                         -- Fudge it with the distance we'll travel in a tick - or half that and the next tick accounts for the other? idk
-                        if not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance + (velMag*deltaTick)/2 and (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99 or VectorStatus == "Finalizing Approach") then 
+                        if not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance + (velMag*deltaTick)/2 and (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99 
+                            or VectorStatus == "Finalizing Approach") then 
                             VectorStatus = "Finalizing Approach" 
                             cmdThrottle(0) -- Kill throttle in case they weren't in cruise
                             if AltitudeHold then
@@ -5760,7 +5781,6 @@ VERSION_NUMBER = 1.310
                 end
 
                 if dbHud_1 then
-                    local hasKey = dbHud_1.hasKey
                     if not useTheseSettings then 
                         processVariableList(saveableVariables())
                         coroutine.yield()
@@ -5945,6 +5965,9 @@ VERSION_NUMBER = 1.310
                 
                 if gyro ~= nil then
                     gyroIsOn = gyro.getState() == 1
+                end
+                if not stablized then 
+                    navCom:deactivateGroundEngineAltitudeStabilization()
                 end
                 if userControlScheme ~= "keyboard" then
                     sysLockVw(1)
@@ -7679,6 +7702,25 @@ VERSION_NUMBER = 1.310
                     ATLAS.adjustAutopilotTargetIndex(mult)
                 end
             end
+            local function assistedFlight(vectorType)
+                local t = type(vectorType)
+                if ReversalIsOn == nil then 
+                    if t == "table" then
+                        if Autopilot or VectorToTarget then 
+                            ToggleAutopilot() 
+                        end
+                    end
+                    if not AltitudeHold and not Autopilot and not VectorToTarget then 
+                        ToggleAltitudeHold() 
+                        if t ~= "table" then 
+                            vectorType = vectorType + 1 
+                        end
+                    end
+                    ReversalIsOn = vectorType
+                elseif t == "table" then 
+                    ReversalIsOn = nil
+                end                
+            end
         if action == "gear" then
             GearExtended = not GearExtended
             if GearExtended then
@@ -7728,21 +7770,33 @@ VERSION_NUMBER = 1.310
         elseif action == "forward" then
             pitchInput = pitchInput - 1
         elseif action == "backward" then
-            pitchInput = pitchInput + 1
+            if AltIsOn then
+                assistedFlight(-constructVelocity*5000)
+            else
+                pitchInput = pitchInput + 1
+            end
         elseif action == "left" then
-            rollInput = rollInput - 1
+            if AltIsOn then
+                assistedFlight(1)
+            else            
+                rollInput = rollInput - 1
+            end
         elseif action == "right" then
-            rollInput = rollInput + 1
+            if AltIsOn then
+                assistedFlight(3)
+            else      
+                rollInput = rollInput + 1
+            end
         elseif action == "yawright" then
             yawInput = yawInput - 1
         elseif action == "yawleft" then
             yawInput = yawInput + 1
         elseif action == "straferight" then
-            navCom:updateCommandFromActionStart(axisCommandId.lateral, 1.0)
-            LeftAmount = 1
+                navCom:updateCommandFromActionStart(axisCommandId.lateral, 1.0)
+                LeftAmount = 1
         elseif action == "strafeleft" then
-            navCom:updateCommandFromActionStart(axisCommandId.lateral, -1.0)
-            LeftAmount = -1
+                navCom:updateCommandFromActionStart(axisCommandId.lateral, -1.0)
+                LeftAmount = -1
         elseif action == "up" then
             upAmount = upAmount + 1
             navCom:deactivateGroundEngineAltitudeStabilization()
@@ -7813,6 +7867,7 @@ VERSION_NUMBER = 1.310
             ToggleWidgets()
             toggleView = false
         elseif action == "option4" then
+            ReversalIsOn = nil
             ToggleAutopilot()
             toggleView = false            
         elseif action == "option5" then
@@ -7915,6 +7970,7 @@ VERSION_NUMBER = 1.310
                     AutopilotStatus = "Aligning"                
                     RetrogradeIsOn = false
                     ProgradeIsOn = false
+                    ReversalIsOn = nil
                     AltitudeHold = false
                     Reentry = false
                     BrakeLanding = false
@@ -7965,8 +8021,10 @@ VERSION_NUMBER = 1.310
         elseif action == "backward" then
             pitchInput = 0
         elseif action == "left" then
+            if ReversalIsOn == 2 then ReversalIsOn = 0 else ReversalIsOn = nil end
             rollInput = 0
         elseif action == "right" then
+            if ReversalIsOn == 4 then ReversalIsOn = 0 else ReversalIsOn = nil end
             rollInput = 0
         elseif action == "yawright" then
             yawInput = 0
