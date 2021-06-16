@@ -1,5 +1,13 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.317 - More nuanced flight controls
+- Holding LALT AND LSHIFT and hitting C or Spacebar will have the following effects (normal LALT+C/Spacebar usage remains the same):
+        AGG ON, C, Sets AGG target height to 1000
+        In other modes it cycles the target heights between 4 values:
+            MaxSurfaceHeight+100, 11% atmo height, Low Orbit Height, Target Orbit Height
+        If above atmo an in active orbit approach, value will not lower below Low Orbit Height.
+- Changed SetWaypointOnExit default to false.  You can toggle it via settings button, but more people dislike than like it.
+
 Version 1.316 - MISSION AP SUPPORT and instant 100% throttle.
 - Pasting a mission waypoint with /<pasted postion> or /addlocation name <pasted postion> for use with Autopilot both work now.
 - Using StopEngine (default MMB) will set engine speed to 0 if > 0 or to max if 0.  In Throttle mode, 100% throttle.  In Cruise mode, AtmoSpeedLimit if inAtmo or MaxGameVelocity*3.6 if in space.

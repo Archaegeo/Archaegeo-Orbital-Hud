@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.316
+VERSION_NUMBER = 1.317
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -33,7 +33,7 @@ VERSION_NUMBER = 1.316
     hideHudOnToggleWidgets = true --export:
     ShiftShowsRemoteButtons = true --export:
     DisplayOrbit = true --export: 
-    SetWaypointOnExit = true --export:
+    SetWaypointOnExit = false --export:
     IntruderAlertSystem = false --export:
     AlwaysVSpd = false --export:
     BarFuelDisplay = true --export:
@@ -7051,9 +7051,10 @@ VERSION_NUMBER = 1.316
 
             if sysIsVwLock() == 0 then
                 if isRemote() == 1 and holdingCtrl then
-                    SetButtonContains()
-                    DrawButtons(newContent)
-
+                    if not AltIsOn then
+                        SetButtonContains()
+                        DrawButtons(newContent)
+                    end
                     -- If they're remote, it's kinda weird to be 'looking' everywhere while you use the mouse
                     -- We need to add a body with a background color
                     if not Animating and not Animated then
@@ -7086,15 +7087,13 @@ VERSION_NUMBER = 1.316
             else
                 if not holdingCtrl and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                     CheckButtons()
-
                     if distance > DeadZone then -- Draw a line to the cursor from the screen center
                         -- Note that because SVG lines fucking suck, we have to do a translate and they can't use calc in their params
                         if DisplayDeadZone then DrawCursorLine(newContent) end
                     end
-                else
+                elseif not AltIsOn then
                     SetButtonContains()
                     DrawButtons(newContent)
-
                 end
                 -- Cursor always on top, draw it last
                 newContent[#newContent + 1] = stringf(
@@ -7675,9 +7674,28 @@ VERSION_NUMBER = 1.316
 
             local mult=1
             local function groundAltStart(down)
+                
+                local function nextTargetHeight(curTarget, down)
+                    local targetHeights = { planet.surfaceMaxAltitude+100, (planet.spaceEngineMinAltitude-50), planet.noAtmosphericDensityAltitude + LowOrbitHeight,
+                        planet.radius*(TargetOrbitRadius-1) + planet.noAtmosphericDensityAltitude }
+                    local origTarget = curTarget
+                    for _,v in ipairs(targetHeights) do
+                        if down and origTarget > v then
+                            system.print("C: "..curTarget.." V: "..v)
+                            curTarget = v -- Change to the first altitude below our current target
+                        elseif curTarget < v and not down then
+                            curTarget = v -- Change to the first altitude above our current target
+                            break
+                        end
+                    end
+                    return curTarget
+                end
+
                 if down then mult = -1 end
                 if not ExternalAGG and antigravOn then
-                    if AntigravTargetAltitude ~= nil  then
+                    if holdingCtrl and down then
+                        AntigravTargetAltitude = 1000
+                    elseif AntigravTargetAltitude ~= nil  then
                         AntigravTargetAltitude = AntigravTargetAltitude + mult*antiGravButtonModifier
                         if AntigravTargetAltitude < 1000 then AntigravTargetAltitude = 1000 end
                         if AltitudeHold and AntigravTargetAltitude < HoldAltitude + 10 and AntigravTargetAltitude > HoldAltitude - 10 then 
@@ -7688,10 +7706,18 @@ VERSION_NUMBER = 1.316
                     end
                 elseif AltitudeHold or VertTakeOff or IntoOrbit then
                     if IntoOrbit then
-                        OrbitTargetOrbit = OrbitTargetOrbit + mult*holdAltitudeButtonModifier
+                        if holdingCtrl then
+                            OrbitTargetOrbit = nextTargetHeight(OrbitTargetOrbit, down) 
+                        else                          
+                            OrbitTargetOrbit = OrbitTargetOrbit + mult*holdAltitudeButtonModifier
+                        end
                         if OrbitTargetOrbit < planet.noAtmosphericDensityAltitude then OrbitTargetOrbit = planet.noAtmosphericDensityAltitude end
                     else
-                        HoldAltitude = HoldAltitude + mult*holdAltitudeButtonModifier
+                        if holdingCtrl and inAtmo then
+                            HoldAltitude = nextTargetHeight(HoldAltitude, down)
+                        else
+                            HoldAltitude = HoldAltitude + mult*holdAltitudeButtonModifier
+                        end
                     end
                 else
                     navCom:updateTargetGroundAltitudeFromActionStart(mult*1.0)
@@ -7809,7 +7835,6 @@ VERSION_NUMBER = 1.316
             upAmount = upAmount + 1
             navCom:deactivateGroundEngineAltitudeStabilization()
             navCom:updateCommandFromActionStart(axisCommandId.vertical, 1.0)
-            
         elseif action == "down" then
             upAmount = upAmount - 1
             navCom:deactivateGroundEngineAltitudeStabilization()
@@ -7925,6 +7950,7 @@ VERSION_NUMBER = 1.316
             end
             toggleView = false
         elseif action == "lshift" then
+            if AltIsOn then holdingCtrl = true return end
             if sysIsVwLock() == 1 then
                 holdingCtrl = true
                 PrevViewLock = sysIsVwLock()
@@ -8080,15 +8106,14 @@ VERSION_NUMBER = 1.316
             toggleView = false
         elseif action == "lshift" then
             if sysIsVwLock() == 1 then
-                holdingCtrl = false
                 simulatedX = 0
                 simulatedY = 0 -- Reset for steering purposes
                 sysLockVw(PrevViewLock)
             elseif isRemote() == 1 and ShiftShowsRemoteButtons then
-                holdingCtrl = false
                 Animated = false
                 Animating = false
             end
+            holdingCtrl = false
         elseif action == "brake" then
             if not BrakeToggleStatus then
                 if BrakeIsOn then
@@ -8156,9 +8181,9 @@ VERSION_NUMBER = 1.316
                 end
             end
         if action == "groundaltitudeup" then
-            groundLoop()
+            if not holdingCtrl then groundLoop() end
         elseif action == "groundaltitudedown" then
-            groundLoop(true)
+            if not holdingCtrl then groundLoop(true) end
         elseif action == "speedup" then
             spdLoop()
         elseif action == "speeddown" then
