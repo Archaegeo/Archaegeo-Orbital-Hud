@@ -1,5 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.316 - MISSION AP SUPPORT and instant 100% throttle.
+- Pasting a mission waypoint with /<pasted postion> or /addlocation name <pasted postion> for use with Autopilot both work now.
+- Using StopEngine (default MMB) will set engine speed to 0 if > 0 or to max if 0.  In Throttle mode, 100% throttle.  In Cruise mode, AtmoSpeedLimit if inAtmo or MaxGameVelocity*3.6 if in space.
+- Fixed StopEngine doubleclick to clear all AP functions to need to occur within 1.5s (before it would just wait after first for any length of time)
+
 Version 1.315 - Assisted Flight Controls
 New Assisted Flight Controls (Many thanks to Dimencia for helping with the math)
 - ALT-Q/E will make you bank hard left/right till you release but still provide stall control.  If you were not in alt-hold before, you will not be in after release.
