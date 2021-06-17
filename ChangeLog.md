@@ -1,5 +1,24 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.317 - More Flight Assist and improved SolarSystem.json
+NOTE: Massive BankRoll improvement.  User setting `PitchStallAngle` default of 35 is absolute lowest safe value. You can raise it while sitting with 
+/G PitchStallAngle 55 for example.  Then hold ALT-Q or ALT-E and see how many degrees you can turn before it rolls you out to avoid stall.  If it doesnt,
+raise it more.  If it does before 180 degress, lower it.
+
+SolarSystem.json AR system updated by EasterGamer to display ArchHUD saved waypoints along with planets.  To use, put down programming board, connect to core
+and then ArchHUD databank.  Right click PB, Edit->Advanced->Paste LUA Configuration from clipboard.  Activate pb.  NOTE:  Can be used on foot, or fixed camera first
+person or fixed camera third person when in seat.  Toggle on and off by activating/deactivating PB.
+
+- Drastic improvement to Alt-S/Q/E performance.  No more autostall unless your PitchStallAngle is WAY off and code will still save you (no more YoYoing).
+- Holding LALT AND LSHIFT and hitting C or Spacebar will have the following effects (normal LALT+C/Spacebar usage remains the same):
+        AGG ON, C, Sets AGG target height to 1000
+        In other modes it cycles the target heights between 4 values:
+            MaxSurfaceHeight+100, 11% atmo height, Low Orbit Height, Target Orbit Height
+        If above atmo an in active orbit approach, value will not lower below Low Orbit Height.
+- Fixed manual BrakeLanding to cause you to autoRoll level.
+- Changed SetWaypointOnExit default to false.  You can toggle it via settings button, but more people dislike than like it.
+
+
 Version 1.316 - MISSION AP SUPPORT and instant 100% throttle.
 - Pasting a mission waypoint with /<pasted postion> or /addlocation name <pasted postion> for use with Autopilot both work now.
 - Using StopEngine (default MMB) will set engine speed to 0 if > 0 or to max if 0.  In Throttle mode, 100% throttle.  In Cruise mode, AtmoSpeedLimit if inAtmo or MaxGameVelocity*3.6 if in space.
