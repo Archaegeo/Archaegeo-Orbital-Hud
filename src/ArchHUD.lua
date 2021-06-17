@@ -3476,6 +3476,9 @@ VERSION_NUMBER = 1.317
                         play("StallWarning.mp3","SW",1)
                     end
                 end
+                if ReversalIsOn then
+                    newContent[#newContent + 1] = svgText(warningX, apY+70, "Flight Assist in Progress", "warnings")
+                end
 
                 if gyroIsOn then
                     newContent[#newContent + 1] = svgText(warningX, gyroY, "Gyro Enabled", "warnings")
@@ -5408,9 +5411,9 @@ VERSION_NUMBER = 1.317
                 if velMag > minAutopilotSpeed and not spaceLaunch and not VectorToTarget and not BrakeLanding and ForceAlignment then -- When do we even need this, just alt hold? lol
                     AlignToWorldVector(vec3(constructVelocity))
                 end
-                if ReversalIsOn ~= nil or ((VectorToTarget or spaceLaunch) and AutopilotTargetIndex > 0 and atmosDensity > 0.01) then
+                if ReversalIsOn or ((VectorToTarget or spaceLaunch) and AutopilotTargetIndex > 0 and atmosDensity > 0.01) then
                     local targetVec
-                    if ReversalIsOn ~= nil then
+                    if ReversalIsOn then
                         if type(ReversalIsOn) == "table" then
                             targetVec = ReversalIsOn
                         elseif ReversalIsOn < 3 and ReversalIsOn > 0 then
@@ -5736,7 +5739,7 @@ VERSION_NUMBER = 1.317
                 local onGround = abvGndDet > -1
                 local pitchToUse = adjustedPitch
 
-                if (VectorToTarget or spaceLaunch) and not onGround and velMag > minRollVelocity and atmosDensity > 0.01 then
+                if (VectorToTarget or spaceLaunch or ReversalIsOn) and not onGround and velMag > minRollVelocity and atmosDensity > 0.01 then
                     local rollRad = math.rad(mabs(adjustedRoll))
                     pitchToUse = adjustedPitch*mabs(math.cos(rollRad))+currentPitch*math.sin(rollRad)
                 end
@@ -5747,7 +5750,7 @@ VERSION_NUMBER = 1.317
                 elseif atmosDensity < 0.01 then
                     pitchDiff = uclamp(targetPitch-pitchToUse, -MaxPitch, MaxPitch) -- I guess
                 end
-                if (((mabs(adjustedRoll) < 5 or VectorToTarget)) or BrakeLanding or onGround or AltitudeHold) then
+                if (((mabs(adjustedRoll) < 5 or VectorToTarget or ReversalIsOn)) or BrakeLanding or onGround or AltitudeHold) then
                     if (pitchPID == nil) then -- Changed from 8 to 5 to help reduce problems?
                         pitchPID = pid.new(5 * 0.01, 0, 5 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
                     end
@@ -7283,7 +7286,7 @@ VERSION_NUMBER = 1.317
         if autoRoll == true and worldVertical:len() > 0.01 then
             -- autoRoll on AND adjustedRoll is big enough AND player is not rolling
             local currentRollDelta = mabs(targetRoll-adjustedRoll)
-            if ((( ProgradeIsOn or Reentry or spaceLand or AltitudeHold or IntoOrbit) and currentRollDelta > 0) or
+            if ((( ProgradeIsOn or Reentry or BrakeLanding or spaceLand or AltitudeHold or IntoOrbit) and currentRollDelta > 0) or
                 (atmosDensity > 0.0 and currentRollDelta < autoRollRollThreshold and autoRollPreference))  
                 and finalRollInput == 0 and mabs(adjustedPitch) < 85 then
                 local targetRollDeg = targetRoll
@@ -7681,7 +7684,6 @@ VERSION_NUMBER = 1.317
                     local origTarget = curTarget
                     for _,v in ipairs(targetHeights) do
                         if down and origTarget > v then
-                            system.print("C: "..curTarget.." V: "..v)
                             curTarget = v -- Change to the first altitude below our current target
                         elseif curTarget < v and not down then
                             curTarget = v -- Change to the first altitude above our current target
