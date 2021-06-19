@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.318 - Minor cleanups
+- Flight Assist (Alt-Q/E/S) limited to inAtmo only.  Use Align Retrograde/Prograde buttons to 180 in space.
+- Remove SpeedLimit.mp3 playing when space engines hit speed limit, it was infinitely looping (hud fault, not framework)
+- Fixed brakes/landinggear announcements overwriting each other.
+- Fixed Orbit sound announcement at end of AP.
+- Fixed orbit cleanup at end of AP to orbit.
+
 Version 1.317 - More Flight Assist and improved SolarSystem.json
 NOTE: Massive BankRoll improvement.  User setting `PitchStallAngle` default of 35 is absolute lowest safe value. You can raise it while sitting with 
 /G PitchStallAngle 55 for example.  Then hold ALT-Q or ALT-E and see how many degrees you can turn before it rolls you out to avoid stall.  If it doesnt,

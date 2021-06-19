@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.317
+VERSION_NUMBER = 1.318
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -350,9 +350,9 @@ VERSION_NUMBER = 1.317
     local function play(sound, ID, type)
         if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" or not sounds then return end
         if type ~= nil then
-            system.logInfo("sound_notification|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
+            system.logInfo("sound_notification|audiopacks/"..soundFolder.."/"..sound..".mp3|"..ID.."|"..soundVolume)
         else
-            system.logInfo("sound_q|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
+            system.logInfo("sound_q|audiopacks/"..soundFolder.."/"..sound..".mp3|"..ID.."|"..soundVolume)
         end
     end
 
@@ -479,7 +479,7 @@ VERSION_NUMBER = 1.317
         OrbitTicks = 0
         if atmosDensity == 0 then
             if IntoOrbit then
-                play("NoOrbit.mp3", "AP")
+                play("NoOrbit", "AP")
                 IntoOrbit = false
                 orbitAligned = false
                 OrbitTargetPlanet = nil
@@ -489,7 +489,7 @@ VERSION_NUMBER = 1.317
                 orbitalParams.AutopilotAlign = false
                 OrbitTargetSet = false
             elseif unit.getClosestPlanetInfluence() > 0 then
-                play("Orbit.mp3", "AP")
+                play("Orbit", "AP")
                 IntoOrbit = true
                 autoRoll = true
                 if OrbitTargetPlanet == nil then
@@ -517,7 +517,7 @@ VERSION_NUMBER = 1.317
             if planet.hasAtmosphere  then
                 if atmosDensity > 0 then
                     HoldAltitude = planet.spaceEngineMinAltitude - 50
-                    play("ElevenPercent.mp3","EP")
+                    play("ElevenPercent","EP")
                 else
                     if unit.getClosestPlanetInfluence() > 0 then
                         HoldAltitude = planet.noAtmosphericDensityAltitude + LowOrbitHeight
@@ -559,7 +559,7 @@ VERSION_NUMBER = 1.317
             LockPitch = nil
             OrbitAchieved = false
             if abvGndDet == -1 then
-                play("AltitudeHoldEnabled.mp3","AH")
+                play("AltitudeHoldEnabled","AH")
                 AutoTakeoff = false
                 if ahDoubleClick > -1 then
                     if unit.getClosestPlanetInfluence() > 0 then
@@ -568,7 +568,7 @@ VERSION_NUMBER = 1.317
                 end
                 if VertTakeOff then ToggleVerticalTakeoff() end
             else
-                play("LaunchingFromSurface.mp3", "LS")
+                play("LaunchingFromSurface", "LS")
                 AutoTakeoff = true
                 if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
                 GearExtended = false
@@ -581,7 +581,7 @@ VERSION_NUMBER = 1.317
             end
             if spaceLaunch then HoldAltitude = 100000 end
         else
-            play("AltitudeHoldDisabled.mp3","AH")
+            play("AltitudeHoldDisabled","AH")
             if IntoOrbit then ToggleIntoOrbit() end
             if VertTakeOff then 
                 ToggleVerticalTakeoff() 
@@ -608,9 +608,9 @@ VERSION_NUMBER = 1.317
                 GearExtended = false
                 Nav.control.retractLandingGears()
                 navCom:setTargetGroundAltitude(TargetHoverHeight)
-                play("Follow.mp3","F")
+                play("Follow","F")
             else
-                play("NoFollow.mp3","F")
+                play("NoFollow","F")
                 BrakeIsOn = true
                 autoRoll = autoRollPreference
                 GearExtended = OldGearExtended
@@ -648,7 +648,7 @@ VERSION_NUMBER = 1.317
             if planet.hasAtmosphere then
                 if atmosDensity > 0 then
                     HoldAltitude = planet.noAtmosphericDensityAltitude + LowOrbitHeight
-                    play("OrbitHeight.mp3","OH")
+                    play("OrbitHeight","OH")
                 end
                 apDoubleClick = -1
                 if Autopilot or VectorToTarget or IntoOrbit then 
@@ -668,7 +668,7 @@ VERSION_NUMBER = 1.317
                 LockPitch = nil
                 SpaceTarget = (CustomTarget.planetname == "Space")
                 if SpaceTarget then
-                    play("AutopilotToSpace.mp3", "AP")
+                    play("AutopilotToSpace", "AP")
                     if atmosDensity ~= 0 then 
                         spaceLaunch = true
                         ToggleAltitudeHold()
@@ -679,11 +679,11 @@ VERSION_NUMBER = 1.317
                     StrongBrakes = true
                     if atmosDensity > 0 then
                         if not VectorToTarget then
-                            play("VectorToTarget.mp3", "AP")
+                            play("VectorToTarget", "AP")
                             ToggleVectorToTarget(SpaceTarget)
                         end
                     else
-                        play("AutopilotEngaged.mp3", "AP")
+                        play("AutopilotEngaged", "AP")
                         if not (autopilotTargetPlanet.name == planet.name and nearPlanet) then
                             OrbitAchieved = false
                             Autopilot = true
@@ -698,7 +698,7 @@ VERSION_NUMBER = 1.317
                         end
                     end
                 else
-                    play("AutopilotToPlanet.mp3", "AP")
+                    play("AutopilotToPlanet", "AP")
                     RetrogradeIsOn = false
                     ProgradeIsOn = false
                     if atmosDensity ~= 0 then 
@@ -715,7 +715,7 @@ VERSION_NUMBER = 1.317
                     orbitAligned = false
                     ToggleIntoOrbit() -- this works much better here
                 else
-                    play("AutopilotToPlanet.mp3","AP")
+                    play("AutopilotToPlanet","AP")
                     Autopilot = true
                     RetrogradeIsOn = false
                     ProgradeIsOn = false
@@ -730,12 +730,12 @@ VERSION_NUMBER = 1.317
                     WaypointSet = false
                 end
             else
-                play("AutopilotToPlanet.mp3", "AP")
+                play("AutopilotToPlanet", "AP")
                 spaceLaunch = true
                 ToggleAltitudeHold()
             end
         else
-            play("AutopilotSecured.mp3", "AP")
+            play("AutopilotSecured", "AP")
             spaceLaunch = false
             Autopilot = false
             AutopilotRealigned = false
@@ -798,7 +798,7 @@ VERSION_NUMBER = 1.317
             autoRoll = autoRollPreference
         end
         if BrakeIsOn then
-            play("EngagingBrake.mp3","B",1)
+            play("EngagingBrake","B",1)
             -- If they turn on brakes, disable a few things
             VectorToTarget = false
             AutoTakeoff = false
@@ -823,7 +823,7 @@ VERSION_NUMBER = 1.317
             finalLand = false
             upAmount = 0
         else
-            play("DisengagingBrake.mp3","B",1)
+            play("DisengagingBrake","B",1)
         end
     end
 
@@ -917,7 +917,7 @@ VERSION_NUMBER = 1.317
     local function BeginReentry() -- Begins re-entry process
         if Reentry then
             msgText = "Re-Entry cancelled"
-            play("NoReEntry.mp3", "RE")
+            play("NoReEntry", "RE")
             Reentry = false
             autoRoll = autoRollPreference
             AltitudeHold = false
@@ -932,7 +932,7 @@ VERSION_NUMBER = 1.317
             autoRoll = true
             BrakeIsOn = false
             msgText = "Beginning Parachute Re-Entry - Strap In.  Target speed: " .. adjustedAtmoSpeedLimit
-            play("Parachute.mp3", "RE")
+            play("Parachute", "RE")
         else --Glide Reentry
             Reentry = true
             AltitudeHold = true
@@ -942,7 +942,7 @@ VERSION_NUMBER = 1.317
             if HoldAltitude > planet.spaceEngineMinAltitude then HoldAltitude = planet.spaceEngineMinAltitude - (planet.spaceEngineMinAltitude / 10) end
             local text = getDistanceDisplayString(HoldAltitude)
             msgText = "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text 
-            play("Glide.mp3","RE")
+            play("Glide","RE")
             cmdCruise(mfloor(adjustedAtmoSpeedLimit))
         end
         AutoTakeoff = false -- This got left on somewhere.. 
@@ -951,7 +951,7 @@ VERSION_NUMBER = 1.317
     local function ToggleAntigrav() -- Toggles antigrav on and off
         if antigrav and not ExternalAGG then
             if antigravOn then
-                play("AntigravSecured.mp3","AG")
+                play("AntigravSecured","AG")
                 antigrav.deactivate()
                 antigrav.hide()
             else
@@ -959,7 +959,7 @@ VERSION_NUMBER = 1.317
                 if AntigravTargetAltitude < 1000 then
                     AntigravTargetAltitude = 1000
                 end
-                play("AntigravActivated.mp3","AG")
+                play("AntigravActivated","AG")
                 antigrav.activate()
                 antigrav.show()
             end
@@ -3473,7 +3473,7 @@ VERSION_NUMBER = 1.317
                 if inAtmo and stalling and abvGndDet == -1 then
                     if not Autopilot and not VectorToTarget and not BrakeLanding and not antigravOn and not VertTakeOff and not AutoTakeoff then
                         newContent[#newContent + 1] = svgText(warningX, apY+50, "** STALL WARNING **", "warnings")
-                        play("StallWarning.mp3","SW",1)
+                        play("StallWarning","SW",1)
                     end
                 end
                 if ReversalIsOn then
@@ -3551,7 +3551,7 @@ VERSION_NUMBER = 1.317
                 end
                 if IntruderAlertSystem and safeMass == -1 then
                     newContent[#newContent + 1] = svgText(warningX, apY+70, "POSSIBLE INTRUDER ALERT - MASS GAIN OF "..soundAlarm.."kg DETECTED", "warnings")
-                    play("Alarm.mp3","AL",1)                    
+                    play("Alarm","AL",1)                    
                 end
                 if BrakeLanding then
                     if StrongBrakes then
@@ -4321,7 +4321,7 @@ VERSION_NUMBER = 1.317
                 end        
             else
                 msgText = "Disengage autopilot before changing Interplanetary Helper"
-                play("Disengage.mp3","AP")
+                play("Disengage","AP")
             end
         end 
 
@@ -4565,7 +4565,6 @@ VERSION_NUMBER = 1.317
 
             if velMag > SpaceSpeedLimit/3.6 and not inAtmo and not Autopilot and not isWarping then
                 msgText = "Space Speed Engine Shutoff reached"
-                play("SpeedLimit.mp3","SP")
                 cmdThrottle(0)
             end
 
@@ -4685,11 +4684,11 @@ VERSION_NUMBER = 1.317
                                 VertTakeOff = false
                             end
                             msgText = "Takeoff complete. Singularity engaged"
-                            play("Singularity.mp3","AG")
+                            play("Singularity","AG")
                         else
                             BrakeIsOn = false
                             msgText = "VTO complete. Engaging Horizontal Flight"
-                            play("VTOC.mp3", "VT")
+                            play("VTOC", "VT")
                             ToggleVerticalTakeoff()
                         end
                         upAmount = 0
@@ -4812,7 +4811,7 @@ VERSION_NUMBER = 1.317
                             end
                         elseif OrbitAchieved or targetVec:len() < 15000+brakeDistance+coreAltitude then
                             msgText = "Orbit complete, proceeding with reentry"
-                            play("OrbitComplete.mp3", "OB")
+                            play("OrbitComplete", "OB")
                             -- We can skip prograde completely if we're approaching from an orbit?
                             --BrakeIsOn = false -- Leave brakes on to be safe while we align prograde
                             AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
@@ -4834,7 +4833,7 @@ VERSION_NUMBER = 1.317
                                     
                                     if not orbitalParams.VectorToTarget then
                                         msgText = "Orbit complete"
-                                        play("OrbitComplete.mp3", "OB")
+                                        play("OrbitComplete", "OB")
                                         ToggleIntoOrbit()
                                     end
                                 else
@@ -4933,10 +4932,11 @@ VERSION_NUMBER = 1.317
                     cmdThrottle(0)
                     apThrottleSet = false
                     msgText = msg
-                    play("APComplete.mp3","AP")
+                    play("APComplete","AP")
                     if orbit or spaceLand then
                         if orbit and AutopilotTargetOrbit ~= nil and not spaceLand then 
-                            OrbitTargetOrbit = AutopilotTargetOrbit
+                            if not coreAltitude or coreAltitude == 0 then return end
+                            OrbitTargetOrbit = coreAltitude
                             OrbitTargetSet = true
                         end
                         ToggleIntoOrbit()
@@ -5089,12 +5089,12 @@ VERSION_NUMBER = 1.317
                     if mabs(targetYaw) > 2 or mabs(targetPitch) > 2 then
                         if AutopilotStatus ~= "Adjusting Trajectory" then
                             AutopilotStatus = "Adjusting Trajectory"
-                            play("AdjustingTrajectory.mp3","AP")
+                            play("AdjustingTrajectory","AP")
                         end
                     else
                         if AutopilotStatus ~= "Accelerating" then
                             AutopilotStatus = "Accelerating"
-                            play("Accelerating.mp3","AP")
+                            play("Accelerating","AP")
                         end
                     end
                     
@@ -5126,7 +5126,7 @@ VERSION_NUMBER = 1.317
                     if (vec3(core.getVelocity()):len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet)) then
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Cruising" then
-                            play("Cruising.mp3","AP")
+                            play("Cruising","AP")
                             AutopilotStatus = "Cruising"
                         end
                         AutopilotCruising = true
@@ -5138,7 +5138,7 @@ VERSION_NUMBER = 1.317
                     if AutopilotDistance <= brakeDistance then
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Braking" then
-                            play("Braking.mp3","AP")
+                            play("Braking","AP")
                             AutopilotStatus = "Braking"
                         end
                         AutopilotBraking = true
@@ -5182,14 +5182,14 @@ VERSION_NUMBER = 1.317
                         AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
                     elseif orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 or AutopilotStatus == "Circularizing" then
                         if AutopilotStatus ~= "Circularizing" then
-                            play("Circularizing.mp3", "AP")
+                            play("Circularizing", "AP")
                             AutopilotStatus = "Circularizing"
                         end
                         if velMag <= endSpeed then 
                             if CustomTarget ~= nil then
                                 if constructVelocity:normalize():dot(targetVec:normalize()) > 0.4 then -- Triggers when we get close to passing it
                                     if AutopilotStatus ~= "Orbiting to Target" then
-                                        play("Orbiting.mp3")
+                                        play("Orbiting","OB")
                                         AutopilotStatus = "Orbiting to Target"
                                     end
                                     if not WaypointSet then
@@ -5218,7 +5218,7 @@ VERSION_NUMBER = 1.317
                     if AutopilotDistance <= brakeDistance then
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Braking" then
-                            play("Braking.mp3","AP")
+                            play("Braking","AP")
                             AutopilotStatus = "Braking"
                         end
                         AutopilotBraking = true
@@ -5229,7 +5229,7 @@ VERSION_NUMBER = 1.317
                         AutopilotAccelerating = true
                         if AutopilotStatus ~= "Accelerating" then
                             AutopilotStatus = "Accelerating"
-                            play("Accelerating.mp3","AP")
+                            play("Accelerating","AP")
                         end
                         AutopilotCruising = false
                     end
@@ -5250,7 +5250,7 @@ VERSION_NUMBER = 1.317
                             AutopilotAccelerating = true
                             if AutopilotStatus ~= "Accelerating" then
                                 AutopilotStatus = "Accelerating"
-                                play("Accelerating.mp3","AP")
+                                play("Accelerating","AP")
                             end
                             -- Set throttle to max
                             if not apThrottleSet then
@@ -5266,7 +5266,7 @@ VERSION_NUMBER = 1.317
                 -- If we accidentally hit atmo while autopiloting to a custom target, cancel it and go straight to pulling up
             elseif Autopilot and (CustomTarget ~= nil and CustomTarget.planetname ~= "Space" and atmosDensity > 0) then
                 msgText = "Autopilot complete, proceeding with reentry"
-                play("APComplete.mp3", "AP")
+                play("APComplete", "AP")
                 AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
                 BrakeIsOn = false -- Leaving these on makes it screw up alignment...?
                 AutopilotBraking = false
@@ -5529,7 +5529,7 @@ VERSION_NUMBER = 1.317
                         end
                         if VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget)) then
                             if not antigravOn then  
-                                play("BrakeLandingEngaged.mp3","BL")
+                                play("BrakeLandingEngaged","BL")
                                 BrakeLanding = true 
                             end
                             
@@ -6477,7 +6477,7 @@ VERSION_NUMBER = 1.317
             unit.setTimer("oneSecond", 1)
             unit.setTimer("tenthSecond", 1/10)
             unit.setTimer("fiveSecond", 5) 
-            play("StartupComplete.mp3","SU")
+            play("StartupComplete","SU")
         end)
     end
 
@@ -6513,7 +6513,7 @@ VERSION_NUMBER = 1.317
             button.activate()
         end
         if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
-        play("ShutdownComplete.mp3","SU")
+        play("ShutdownComplete","SU")
     end
 
     function script.onTick(timerId)
@@ -6522,7 +6522,7 @@ VERSION_NUMBER = 1.317
             if not contactTimer then contactTimer = 0 end
             if time > contactTimer+10 then
                 msgText = "Radar Contact" 
-                play("RadarContact.mp3","RC")
+                play("RadarContact","RC")
                 contactTimer = time
             end
             unit.stopTimer("contact")
@@ -7739,6 +7739,10 @@ VERSION_NUMBER = 1.317
                 end
             end
             local function assistedFlight(vectorType)
+                if not inAtmo then
+                    msgText = "Flight Assist in Atmo only"
+                    return
+                end
                 local t = type(vectorType)
                 if ReversalIsOn == nil then 
                     if t == "table" then
@@ -7765,7 +7769,7 @@ VERSION_NUMBER = 1.317
                 cmdThrottle(0)
                 if vBooster or hover then 
                     if inAtmo and abvGndDet == -1 then
-                        play("BrakeLandingEngaged.mp3", "BL")
+                        play("BrakeLandingEngaged", "BL")
                         StrongBrakes = true -- We don't care about this anymore
                         Reentry = false
                         AutoTakeoff = false
@@ -7775,7 +7779,7 @@ VERSION_NUMBER = 1.317
                         autoRoll = true
                         GearExtended = false -- Don't actually toggle the gear yet though
                     else
-                        play("LoweringLandingGear.mp3","LG")
+                        play("LoweringLandingGear","LG",1)
                         if inAtmo then
                             BrakeIsOn = true
                             Nav.control.extendLandingGears()
@@ -7787,12 +7791,12 @@ VERSION_NUMBER = 1.317
                     end
                 end
                 if hasGear and not BrakeLanding and not (vBooster or hover) then
-                    play("LoweringLandingGear.mp3","LG")
+                    play("LoweringLandingGear","LG",1)
                     Nav.control.extendLandingGears() -- Actually extend
                 end
             else
                 if hasGear then
-                    play("RaisingLandingGear.mp3","LG")
+                    play("RaisingLandingGear","LG",1)
                     Nav.control.retractLandingGears()
                 end
                 navCom:setTargetGroundAltitude(TargetHoverHeight)
@@ -7855,7 +7859,7 @@ VERSION_NUMBER = 1.317
             local function ToggleWidgets()
                 UnitHidden = not UnitHidden
                 if not UnitHidden then
-                    play("WidgetDisplay.mp3","DH")
+                    play("WidgetDisplay","DH")
                     unit.show()
                     core.show()
                     if atmofueltank_size > 0 then
@@ -7874,7 +7878,7 @@ VERSION_NUMBER = 1.317
                         rocketfuelPanelID = _autoconf.panels[_autoconf.panels_size]
                     end
                 else
-                    play("HudDisplay.mp3","DH")
+                    play("HudDisplay","DH")
                     unit.hide()
                     core.hide()
                     if fuelPanelID ~= nil then
@@ -7908,13 +7912,13 @@ VERSION_NUMBER = 1.317
         elseif action == "option5" then
             local function ToggleLockPitch()
                 if LockPitch == nil then
-                    play("LockedPitchEngaged.mp3","LP")
+                    play("LockedPitchEngaged","LP")
                     LockPitch = adjustedPitch
                     AutoTakeoff = false
                     AltitudeHold = false
                     BrakeLanding = false
                 else
-                    play("LockedPitchSecured.mp3","LP")
+                    play("LockedPitchSecured","LP")
                     LockPitch = nil
                 end
             end
@@ -7936,19 +7940,19 @@ VERSION_NUMBER = 1.317
             if not stablized then
                 msgText = "DeCoupled Mode - Ground Stabilization off"
                 navCom:deactivateGroundEngineAltitudeStabilization()
-                play("GroundStabilizationOff.mp3", "GS")
+                play("GroundStabilizationOff", "GS")
             else
                 msgText = "Coupled Mode - Ground Stabilization on"
                 navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
                 Nav:setEngineForceCommand('hover', vec3(), 1)
-                play("GroundStabilizationOn.mp3", "GS") 
+                play("GroundStabilizationOn", "GS") 
             end
             toggleView = false
         elseif action == "option9" then
             if gyro ~= nil then
                 gyro.toggle()
                 gyroIsOn = gyro.getState() == 1
-                if gyroIsOn then play("GyroActivated.mp3", "GA") else play("GyroDeactivated.mp3", "GA") end
+                if gyroIsOn then play("GyroActivated", "GA") else play("GyroDeactivated", "GA") end
             end
             toggleView = false
         elseif action == "lshift" then
@@ -7996,7 +8000,7 @@ VERSION_NUMBER = 1.317
         elseif action == "stopengines" then
             local function clearAll()         
                 if (time - clearAllCheck) < 1.5 then
-                    play("ClearAll.mp3","CA")
+                    play("ClearAll","CA")
                     AutopilotAccelerating = false
                     AutopilotBraking = false
                     AutopilotCruising = false
