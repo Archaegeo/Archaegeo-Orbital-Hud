@@ -17,16 +17,17 @@ FOR COCKPIT USAGE:
 1. Paste the **`CockpitPB.json`** script to the programming board.  Activate programming board before getting in cockpit (or after if visible from cockpit)
 
 FOR SOUND SUPPORT:
-1. Download and extract to location of your choice the ZIP file found at https://github.com/ZarTaen/DU_logfile_audioframework/releases 
+1. Download and place to location of your choice the exe file found at https://github.com/ZarTaen/DU_logfile_audioframework/releases 
 1. Download the archHudSoundPack.zip file found at https://github.com/Archaegeo/Archaegeo-Orbital-Hud/blob/master/archHudSoundPack.zip. 
-1. In the `audiopacks` folder of the Logfile extraction, extract the `archHudSoundPack.zip`.  This should result in a subfolder named `archHUD`
-1. Any sound file in the audiopack may be replaced with a different sound file using same filename if you choose to personalize.
-1. If you dislike any particular sound and do not want to replace it but still want the other sounds, simply remove its .mp3 file from the soundpack folder.
-1. Run the `DU_logfile_audioframework.exe` file found in the extract file, (source code is available at the above github site for those who are concerned)
+1. Run the `DU_logfile_audioframework.exe` file and leave running. This will create an `audiopacks` subfolder 
+1. Extract the `archHudSoundPack.zip`.  This should result in a subfolder named in the `audiopacks` folder named `archHUD`
+1. NOTE: Any sound file in the audiopack may be replaced with a different sound file using same filename if you choose to personalize.
+1. NOTE: If you dislike any particular sound and do not want to replace it but still want the other sounds, simply remove its .mp3 file from the soundpack folder.
+1. NOTE: The `DU_logfile_audioframework.exe` must be left running.  It reads the DU log file and plays the appropriate sound (source code in Rust is available at the above github site for those who are concerned)
 1. Voices can be turned off by setting `voices` user variable to false.  Alerts can be turned off by setting `alerts` to false.
 1. Sound volumes can be controlled by the `soundVolume` setting, which defaults to 100.
 1. `Alt-7` will toggle all sounds on or off
-1. ***NOTE:*** You MUST change the name of the soundpack subfolder and the userVariable `soundFolder` to something other than "archHUD". Use /G soundFolder NewName in lua chat for existing systems.
+1. ***IMPORTANT:*** You MUST change the name of the soundpack subfolder and the userVariable `soundFolder` to something other than "archHUD". Use /G soundFolder NewName in lua chat for existing systems.
 This is to prevent others from making your PC play sounds they think you have installed.
 1. STREAMERS ONLY:  For your viewers to hear the sounds/voices, you will need to add the `DU_logfile_audioframework.exe` as an audio source for your stream.
 
