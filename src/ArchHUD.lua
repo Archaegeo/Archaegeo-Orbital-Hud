@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.320
+VERSION_NUMBER = 1.321
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -5485,7 +5485,13 @@ VERSION_NUMBER = 1.320
                         -- We just don't know the last leg
                         -- a2 + b2 = c2.  c2 - b2 = a2
                         local targetAltitude = planet:getAltitude(CustomTarget.position)
-                        local distanceToTarget = math.sqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
+                        --local distanceToTarget = math.sqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
+
+                        local targetPosAtAltitude = CustomTarget.position + worldVertical*(coreAltitude - targetAltitude) - planet.center
+                        local worldPosPlanetary = worldPos - planet.center
+                        local distanceToTarget = (planet.radius+coreAltitude) * math.atan(worldPosPlanetary:cross(targetPosAtAltitude):len(), worldPosPlanetary:dot(targetPosAtAltitude))
+
+                        system.print("ORIGD: "..distanceToTarget.." "..VectorStatus)
 
                         -- We want current brake value, not max
                         local curBrake = LastMaxBrakeInAtmo
@@ -5844,6 +5850,7 @@ VERSION_NUMBER = 1.320
                 end
 
                 if safeMass == 0 then safeMass = coreMass end
+                VectorStatus = "Proceeding to Waypoint"
             end
 
             local function ProcessElements()

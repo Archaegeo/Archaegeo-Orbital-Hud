@@ -1,5 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.321 - Major improved to saved land waypoint accuracy.
+
 Version 1.320 - Randomized sound file support (Requirs 1.1.1+ audioframework if using soundPack features)
 - Added support for audioframework 1.1.1 - This will require the new audioPack where sounds are played by folder name.
 If more than one soundfile is in the folder the player will randomize which one is played.  Sorry about the change in
