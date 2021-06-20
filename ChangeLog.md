@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.320 - Randomized sound file support (Requirs 1.1.1+ audioframework if using soundPack features)
+- Added support for audioframework 1.1.1 - This will require the new audioPack where sounds are played by folder name.
+If more than one soundfile is in the folder the player will randomize which one is played.  Sorry about the change in
+structure, but a lot of people wanted this feature.
+- Enabled support of looped sounds (stallwarning and intruderalert alarms)
+
 Version 1.318 - Minor cleanups
 - Flight Assist (Alt-Q/E/S) limited to inAtmo only.  Use Align Retrograde/Prograde buttons to 180 in space.
 - Remove SpeedLimit.mp3 playing when space engines hit speed limit, it was infinitely looping (hud fault, not framework)
