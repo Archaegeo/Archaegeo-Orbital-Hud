@@ -344,6 +344,7 @@ VERSION_NUMBER = 1.321
     local pipeMessage = ""
     local ReversalIsOn = nil
     contacts = {}
+    positions = {}
     collisionAlertStatus = false
 
 
@@ -4124,6 +4125,39 @@ VERSION_NUMBER = 1.321
         end
 
         function Hud.UpdateRadar()
+            local Math = {
+                epsilon = epsilon or 1e-09,
+            }
+            local function equals (a, b)
+                if a == 0 then return math.abs(b) < Math.epsilon end
+                if b == 0 then return math.abs(a) < Math.epsilon end
+                return math.abs(a - b) < math.max(math.abs(a), math.abs(b)) * Math.epsilon
+            end
+            local function trilaterate (p1, r1, p2, r2, p3, r3, p4, r4)
+                local r1s, r2s, r3s = r1*r1, r2*r2, r3*r3
+                local v2 = p2 - p1
+                local ax = v2:normalize()
+                local U = v2:len()
+                local v3 = p3 - p1
+                local ay = (v3 - v3:project_on(ax)):normalize()
+                local v3x, v3y = v3:dot(ax), v3:dot(ay)
+                local vs = v3x*v3x + v3y*v3y
+                local az = ax:cross(ay)  
+                local x = (r1s - r2s + U*U) / (2*U) 
+                local y = (r1s - r3s + vs - 2*v3x*x)/(2*v3y)
+                local m = r1s - (x^2) - (y^2) 
+                if equals(m, 0) then m = 0 end
+                local z = math.sqrt(m)
+                local t1 = p1 + ax*x + ay*y + az*z
+                local t2 = p1 + ax*x + ay*y - az*z
+              
+                if math.abs((p4 - t1):len() - r4) < math.abs((p4 - t2):len() - r4) then
+                  return t1
+                else
+                  return t2
+                end
+            end
+
             if (radar_1) then
                 local radarContacts = radar_1.getEntries()
                 local radarData = radar_1.getData()
@@ -4140,14 +4174,33 @@ VERSION_NUMBER = 1.321
                                 rdrDist = tonumber(radarData:match('"constructId":"'..v..'","distance":([%d%.]*)'))
                                 if rdrDist > 0 then 
                                     if contacts[v] == nil then
-                                        contacts[v] = {t0 = rdrDist}
+                                        contacts[v] = {rdrDist}
+                                        positions[v] = {worldPos}
                                     else
-                                        contacts[v].t1 = contacts[v].t0
-                                        contacts[v].t0 = rdrDist
-                                        local t1 = contacts[v].t1
-                                        if rdrDist < t1 then
-                                            local approachSpd = (t1 - rdrDist)/(time-contacts["time"])
+                                        table.insert(contacts[v],1,rdrDist)
+                                        table.insert(positions[v],1,worldPos)
+                                        if #contacts[v] == 5 then
+                                            table.remove(contacts[v],5)
+                                            table.remove(positions[v],5)
+                                        end
+                                        local t2 = contacts[v][2]
+                                        if rdrDist < t2 then
+                                            local approachSpd = (t2 - rdrDist)/(time-contacts["time"])
                                             if approachSpd > velMag*0.90 then
+                                                if #contacts[v] == 4 then
+                                                    local targetPosition = trilaterate(positions[v][1], contacts[v][1], positions[v][2], contacts[v][2], positions[v][3], contacts[v][3], positions[v][4], contacts[v][4])
+                                                    system.print("POSs: "..jencode(positions[v][1]).." "..jencode(positions[v][2]).." "..jencode(positions[v][3]).." "..jencode(positions[v][4]))
+                                                    system.print("dist: "..contacts[v][1].." "..contacts[v][2].." "..contacts[v][3].." "..contacts[v][4])
+                                                    system.print("POSITION: "..jencode(targetPosition))
+                                                    -- Figure out ship-right vector vs gravity and velocity
+                                                    local gvRight = worldVertical:normalize():cross(constructVelocity:normalize())
+                                                    -- See if it's closer left or right
+                                                    if targetPosition:project_on(gvRight):dot(gvRight) > 0 then
+                                                        -- Turn right
+                                                    else
+                                                        -- Turn left
+                                                    end
+                                                end                                                
                                                 collisionAlertStatus = "warn"
                                                 system.print(radar_1.getConstructName(v).." approaching at "..(approachSpd *3.6).." km/hr")
                                                 if rdrDist+100 <= brakeDistance then
@@ -4156,9 +4209,10 @@ VERSION_NUMBER = 1.321
                                             end
                                         else
                                             contacts[v] = nil
+                                            positions[v] = nil
                                         end
                                     end
-                                 end
+                                end
                             end
                         end
                         contacts["time"] = time
