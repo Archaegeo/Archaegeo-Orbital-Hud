@@ -343,6 +343,8 @@ VERSION_NUMBER = 1.321
     local radarMessage = ""
     local pipeMessage = ""
     local ReversalIsOn = nil
+    contacts = {}
+    collisionAlertStatus = false
 
 
 -- Function Definitions that are used in more than one areause 
@@ -634,6 +636,7 @@ VERSION_NUMBER = 1.321
         local function ToggleVectorToTarget(SpaceTarget)
             -- This is a feature to vector toward the target destination in atmo or otherwise on-planet
             -- Uses altitude hold.  
+            collisionAlertStatus = false
             VectorToTarget = not VectorToTarget
             if VectorToTarget then
                 TurnBurn = false
@@ -4128,6 +4131,38 @@ VERSION_NUMBER = 1.321
                 local radarY = ConvertResolutionY(350)
                 
                 if #radarContacts > 0 then
+                    if (VectorToTarget) then
+                        local id, rdrDist = "none", 0
+                        for k, v in pairs(radarContacts) do
+                            rdrDist = 0
+                            id = radar_1.getConstructType(v)
+                            if id and id == "static" then 
+                                rdrDist = tonumber(radarData:match('"constructId":"'..v..'","distance":([%d%.]*)'))
+                                if rdrDist > 0 then 
+                                    if contacts[v] == nil then
+                                        contacts[v] = {t0 = rdrDist}
+                                    else
+                                        contacts[v].t1 = contacts[v].t0
+                                        contacts[v].t0 = rdrDist
+                                        local t1 = contacts[v].t1
+                                        if rdrDist < t1 then
+                                            local approachSpd = (t1 - rdrDist)/(time-contacts["time"])
+                                            if approachSpd > velMag*0.90 then
+                                                collisionAlertStatus = "warn"
+                                                system.print(radar_1.getConstructName(v).." approaching at "..(approachSpd *3.6).." km/hr")
+                                                if rdrDist+100 <= brakeDistance then
+                                                    collisionAlertStatus = "active"
+                                                end
+                                            end
+                                        else
+                                            contacts[v] = nil
+                                        end
+                                    end
+                                 end
+                            end
+                        end
+                        contacts["time"] = time
+                    end
                     local target = radarData:find('identifiedConstructs":%[%]')
                     if target == nil and perisPanelID == nil then
                         peris = 1
@@ -5485,13 +5520,11 @@ VERSION_NUMBER = 1.321
                         -- We just don't know the last leg
                         -- a2 + b2 = c2.  c2 - b2 = a2
                         local targetAltitude = planet:getAltitude(CustomTarget.position)
-                        --local distanceToTarget = math.sqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
+                        local distanceToTarget = math.sqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
 
-                        local targetPosAtAltitude = CustomTarget.position + worldVertical*(coreAltitude - targetAltitude) - planet.center
-                        local worldPosPlanetary = worldPos - planet.center
-                        local distanceToTarget = (planet.radius+coreAltitude) * math.atan(worldPosPlanetary:cross(targetPosAtAltitude):len(), worldPosPlanetary:dot(targetPosAtAltitude))
-
-                        system.print("ORIGD: "..distanceToTarget.." "..VectorStatus)
+                        --local targetPosAtAltitude = CustomTarget.position + worldVertical*(coreAltitude - targetAltitude) - planet.center
+                        --local worldPosPlanetary = worldPos - planet.center
+                        --local distanceToTarget = (planet.radius+coreAltitude) * math.atan(worldPosPlanetary:cross(targetPosAtAltitude):len(), worldPosPlanetary:dot(targetPosAtAltitude))
 
                         -- We want current brake value, not max
                         local curBrake = LastMaxBrakeInAtmo
@@ -5519,13 +5552,12 @@ VERSION_NUMBER = 1.321
                             brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, curBrake/2)
                         end
                     
-
                         --StrongBrakes = ((planet.gravity * 9.80665 * coreMass) < LastMaxBrakeInAtmo)
                         StrongBrakes = true -- We don't care about this or glide landing anymore and idk where all it gets used
                         
                         -- Fudge it with the distance we'll travel in a tick - or half that and the next tick accounts for the other? idk
-                        if not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance + (velMag*deltaTick)/2 and (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99 
-                            or VectorStatus == "Finalizing Approach") then 
+                        if collisionAlertStatus == "active" or (not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance + (velMag*deltaTick)/2 and 
+                                (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99  or VectorStatus == "Finalizing Approach")) then 
                             VectorStatus = "Finalizing Approach" 
                             cmdThrottle(0) -- Kill throttle in case they weren't in cruise
                             if AltitudeHold then
@@ -5538,13 +5570,14 @@ VERSION_NUMBER = 1.321
                         elseif not AutoTakeoff then
                             BrakeIsOn = false
                         end
-                        if VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget)) then
+                        if collisionAlertStatus == "active" or (VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget))) then
                             if not antigravOn then  
                                 play("bklOn","BL")
                                 BrakeLanding = true 
                             end
                             VectorToTarget = false
                             VectorStatus = "Proceeding to Waypoint"
+                            collisionAlertStatus = false
                         end
                         LastDistanceToTarget = distanceToTarget
                     end
@@ -5603,15 +5636,12 @@ VERSION_NUMBER = 1.321
                     local distanceToStop = 30 
                     if maxKinematicUp ~= nil and maxKinematicUp > 0 then
 
-                        local airFriction = 0
-
                         -- Funny enough, LastMaxBrakeInAtmo has stuff done to it to convert to a flat value
                         -- But we need the instant one back, to know how good we are at braking at this exact moment
                         local atmos = uclamp(atmosDensity,0.4,2) -- Assume at least 40% atmo when they land, to keep things fast in low atmo
                         local curBrake = LastMaxBrakeInAtmo * uclamp(velMag/100,0.1,1) * atmos
-                        local totalNewtons = maxKinematicUp * atmos + curBrake + airFriction - gravity -- Ignore air friction for leeway, KinematicUp and Brake are already in newtons
-                        --local brakeNewtons = curBrake + airFriction - gravity
-                        local weakBreakNewtons = curBrake/2 + airFriction - gravity
+                        local totalNewtons = maxKinematicUp * atmos + curBrake - gravity -- Ignore air friction for leeway, KinematicUp and Brake are already in newtons
+                        local weakBreakNewtons = curBrake/2 - gravity
 
                         local speedAfterBraking = velMag - math.sqrt((mabs(weakBreakNewtons/2)*20)/(0.5*coreMass))*utils.sign(weakBreakNewtons)
                         if speedAfterBraking < 0 then  
@@ -5634,10 +5664,10 @@ VERSION_NUMBER = 1.321
                             local stopDistance = 0
                             if speedAfterBraking > 100 then
                                 local stopDistance1, _ = Kinematic.computeDistanceAndTime(speedAfterBraking, 100, coreMass, 0, 0, totalNewtons) 
-                                local stopDistance2, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, maxKinematicUp * atmos + math.sqrt(curBrake) + airFriction - gravity) -- Low brake power for the last 100kph
+                                local stopDistance2, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, maxKinematicUp * atmos + math.sqrt(curBrake) - gravity) -- Low brake power for the last 100kph
                                 stopDistance = stopDistance1 + stopDistance2
                             else
-                                stopDistance, _ = Kinematic.computeDistanceAndTime(speedAfterBraking, 0, coreMass, 0, 0, maxKinematicUp * atmos + math.sqrt(curBrake) + airFriction - gravity) 
+                                stopDistance, _ = Kinematic.computeDistanceAndTime(speedAfterBraking, 0, coreMass, 0, 0, maxKinematicUp * atmos + math.sqrt(curBrake) - gravity) 
                             end
                             --if LandingGearGroundHeight == 0 then
                             stopDistance = (stopDistance+15+(velMag*deltaTick))*1.1 -- Add leeway for large ships with forcefields or landing gear, and for lag
@@ -5687,7 +5717,10 @@ VERSION_NUMBER = 1.321
                                 BrakeLanding = false
                                 AltitudeHold = false
                                 GearExtended = true
-                                Nav.control.extendLandingGears()
+                                if hasGear then
+                                    Nav.control.extendLandingGears()
+                                    play("grOut","LG",1)
+                                end
                                 navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                                 upAmount = 0
                                 BrakeIsOn = true
