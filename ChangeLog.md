@@ -1,18 +1,6 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.321 - Static Core Collision Alert/Action system (v 1.0)
-- When atmo radar is hooked to chair and user variable `CollisionAlert` is true (default) then when conditions are met,
-the system will display Collision Alert info, play an alarm if soundpack in use, and disable VectorToTarget via brakelanding.
-
-Warning Condition: Not BrakeLanding and approach speed to target > 27 m/s and approach speed > 98% of ships speed
-
-Initiate BrakeLanding Condition:  Warning Condition Met, Vectoring to target, Distance is < brake distance + 2.5 x approach speed
-
-This will catch a lot of things, but not all as it focuses on the core distance.  The potential core size is taken into account, but
-can still miss some structures.  When flying manually you may get alarm if coming in at a location fast.
-
-Does not do dynamic cores and does not work in space yet.
-
+Version 1.321 
 - Added landing gear deployed announcement when doing brake landing from up high AP
 
 Version 1.320 - Randomized sound file support (Requirs 1.1.1+ audioframework if using soundPack features)
