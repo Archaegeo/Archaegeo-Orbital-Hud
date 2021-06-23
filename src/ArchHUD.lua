@@ -41,6 +41,7 @@ VERSION_NUMBER = 1.321
     Cockpit = false --export:
     voices = true --export:
     alerts = true --export:
+    CollisionAlert = true --export:
     
     -- Ship Handling variables
     YawStallAngle = 35 --export:
@@ -344,9 +345,6 @@ VERSION_NUMBER = 1.321
     local pipeMessage = ""
     local ReversalIsOn = nil
     contacts = {}
-    positions = {}
-    collisionAlertStatus = false
-
 
 -- Function Definitions that are used in more than one areause 
 
@@ -377,7 +375,7 @@ VERSION_NUMBER = 1.321
                 "InvertMouse", "autoRollPreference", "turnAssist", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
                 "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd", "BarFuelDisplay", "showHelp", "Cockpit",
-                "voices", "alerts"}
+                "voices", "alerts", "CollisionAlert"}
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
@@ -637,7 +635,7 @@ VERSION_NUMBER = 1.321
         local function ToggleVectorToTarget(SpaceTarget)
             -- This is a feature to vector toward the target destination in atmo or otherwise on-planet
             -- Uses altitude hold.  
-            collisionAlertStatus = false
+            contacts["status"] = nil
             VectorToTarget = not VectorToTarget
             if VectorToTarget then
                 TurnBurn = false
@@ -3561,6 +3559,10 @@ VERSION_NUMBER = 1.321
                     newContent[#newContent + 1] = svgText(warningX, apY+70, "POSSIBLE INTRUDER ALERT - MASS GAIN OF "..soundAlarm.."kg DETECTED", "warnings")
                     play("alarm","AL",2)                    
                 end
+                if CollisionAlert and contacts["status"] ~= nil then
+                    newContent[#newContent + 1] = svgText(warningX, apY+70, contacts["collisionmsg"], "warnings")
+                    play("alarm","AL",2) 
+                end
                 if BrakeLanding then
                     if StrongBrakes then
                         newContent[#newContent + 1] = svgText(warningX, apY, "Brake-Landing", "warnings")
@@ -4125,39 +4127,6 @@ VERSION_NUMBER = 1.321
         end
 
         function Hud.UpdateRadar()
-            local Math = {
-                epsilon = epsilon or 1e-09,
-            }
-            local function equals (a, b)
-                if a == 0 then return math.abs(b) < Math.epsilon end
-                if b == 0 then return math.abs(a) < Math.epsilon end
-                return math.abs(a - b) < math.max(math.abs(a), math.abs(b)) * Math.epsilon
-            end
-            local function trilaterate (p1, r1, p2, r2, p3, r3, p4, r4)
-                local r1s, r2s, r3s = r1*r1, r2*r2, r3*r3
-                local v2 = p2 - p1
-                local ax = v2:normalize()
-                local U = v2:len()
-                local v3 = p3 - p1
-                local ay = (v3 - v3:project_on(ax)):normalize()
-                local v3x, v3y = v3:dot(ax), v3:dot(ay)
-                local vs = v3x*v3x + v3y*v3y
-                local az = ax:cross(ay)  
-                local x = (r1s - r2s + U*U) / (2*U) 
-                local y = (r1s - r3s + vs - 2*v3x*x)/(2*v3y)
-                local m = r1s - (x^2) - (y^2) 
-                if equals(m, 0) then m = 0 end
-                local z = math.sqrt(m)
-                local t1 = p1 + ax*x + ay*y + az*z
-                local t2 = p1 + ax*x + ay*y - az*z
-              
-                if math.abs((p4 - t1):len() - r4) < math.abs((p4 - t2):len() - r4) then
-                  return t1
-                else
-                  return t2
-                end
-            end
-
             if (radar_1) then
                 local radarContacts = radar_1.getEntries()
                 local radarData = radar_1.getData()
@@ -4165,57 +4134,44 @@ VERSION_NUMBER = 1.321
                 local radarY = ConvertResolutionY(350)
                 
                 if #radarContacts > 0 then
-                    if (VectorToTarget) then
+                    if (CollisionAlert) then
                         local id, rdrDist = "none", 0
+                        local contacts = contacts 
+                        local d1, t1, d2, t2 = 0, 0, 0, 0
                         for k, v in pairs(radarContacts) do
                             rdrDist = 0
                             id = radar_1.getConstructType(v)
-                            if id and id == "static" then 
+                            if id and id == "static" then
                                 rdrDist = tonumber(radarData:match('"constructId":"'..v..'","distance":([%d%.]*)'))
                                 if rdrDist > 0 then 
                                     if contacts[v] == nil then
-                                        contacts[v] = {rdrDist}
-                                        positions[v] = {worldPos}
+                                        contacts[v] = {{rdrDist, time}}
                                     else
-                                        table.insert(contacts[v],1,rdrDist)
-                                        table.insert(positions[v],1,worldPos)
-                                        if #contacts[v] == 5 then
-                                            table.remove(contacts[v],5)
-                                            table.remove(positions[v],5)
+                                        table.insert(contacts[v],1,{rdrDist, time})
+                                        if #contacts[v] >= 3 then
+                                            table.remove(contacts[v],3)
                                         end
-                                        local t2 = contacts[v][2]
-                                        if rdrDist < t2 then
-                                            local approachSpd = (t2 - rdrDist)/(time-contacts["time"])
-                                            if approachSpd > velMag*0.90 then
-                                                if #contacts[v] == 4 then
-                                                    local targetPosition = trilaterate(positions[v][1], contacts[v][1], positions[v][2], contacts[v][2], positions[v][3], contacts[v][3], positions[v][4], contacts[v][4])
-                                                    system.print("POSs: "..jencode(positions[v][1]).." "..jencode(positions[v][2]).." "..jencode(positions[v][3]).." "..jencode(positions[v][4]))
-                                                    system.print("dist: "..contacts[v][1].." "..contacts[v][2].." "..contacts[v][3].." "..contacts[v][4])
-                                                    system.print("POSITION: "..jencode(targetPosition))
-                                                    -- Figure out ship-right vector vs gravity and velocity
-                                                    local gvRight = worldVertical:normalize():cross(constructVelocity:normalize())
-                                                    -- See if it's closer left or right
-                                                    if targetPosition:project_on(gvRight):dot(gvRight) > 0 then
-                                                        -- Turn right
-                                                    else
-                                                        -- Turn left
-                                                    end
-                                                end                                                
-                                                collisionAlertStatus = "warn"
-                                                system.print(radar_1.getConstructName(v).." approaching at "..(approachSpd *3.6).." km/hr")
-                                                if rdrDist+100 <= brakeDistance then
-                                                    collisionAlertStatus = "active"
+                                        d1 = contacts[v][1][1]
+                                        t1 = contacts[v][1][2]
+                                        d2 = contacts[v][2][1]
+                                        t2 = contacts[v][2][2]
+                                        if d1 < d2 then
+                                            local approachSpd = (d2 - d1)/(t1-t2)
+                                            if not BrakeLanding and approachSpd > 27 and approachSpd > velMag*0.98 then
+                                                contacts["status"] = "warn"
+                                                contacts["collisionmsg"] = radar_1.getConstructName(v).." "..round(rdrDist,0).."m, closing at "..round(approachSpd,0).."m/s"
+                                                if VectorToTarget and d1-128 <= brakeDistance+approachSpd*2.5 then
+                                                    system.print("ABORT")
+                                                    contacts["status"] =  "active"
                                                 end
+                                            else
+                                                contacts["status"] = nil 
                                             end
-                                        else
-                                            contacts[v] = nil
-                                            positions[v] = nil
                                         end
                                     end
                                 end
                             end
                         end
-                        contacts["time"] = time
                     end
                     local target = radarData:find('identifiedConstructs":%[%]')
                     if target == nil and perisPanelID == nil then
@@ -5610,7 +5566,7 @@ VERSION_NUMBER = 1.321
                         StrongBrakes = true -- We don't care about this or glide landing anymore and idk where all it gets used
                         
                         -- Fudge it with the distance we'll travel in a tick - or half that and the next tick accounts for the other? idk
-                        if collisionAlertStatus == "active" or (not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance + (velMag*deltaTick)/2 and 
+                        if contacts["status"] == "active" or (not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance + (velMag*deltaTick)/2 and 
                                 (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99  or VectorStatus == "Finalizing Approach")) then 
                             VectorStatus = "Finalizing Approach" 
                             cmdThrottle(0) -- Kill throttle in case they weren't in cruise
@@ -5624,14 +5580,14 @@ VERSION_NUMBER = 1.321
                         elseif not AutoTakeoff then
                             BrakeIsOn = false
                         end
-                        if collisionAlertStatus == "active" or (VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget))) then
+                        if contacts["status"] == "active" or (VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget))) then
                             if not antigravOn then  
                                 play("bklOn","BL")
                                 BrakeLanding = true 
                             end
                             VectorToTarget = false
                             VectorStatus = "Proceeding to Waypoint"
-                            collisionAlertStatus = false
+                            contacts["status"] = nil
                         end
                         LastDistanceToTarget = distanceToTarget
                     end
@@ -6965,8 +6921,8 @@ VERSION_NUMBER = 1.321
                 compareMass() 
             end
             updateDistance()
-            HUD.UpdateRadar()
             HUD.UpdatePipe()
+            HUD.UpdateRadar()
             updateWeapons()
             -- Update odometer output string
             local newContent = {}

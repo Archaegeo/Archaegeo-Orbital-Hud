@@ -45,6 +45,7 @@ The flight model will start by adding more yaw the more horizontal the construct
 * Cockpit = false --export: (Default: false) Set to true to enable support for Cockpit view.  See install instructions for how to set up
 * voices = true --export: (Default: true) Set to false to disable voice sounds.
 * alerts = true --export: (Default: true) Set to false to disable alert sounds.
+* CollisionAlert = true --export: (Default: true) If True, system will provide collision alerts and abort vector to target if conditions met.
 ### Ship Handling variables
 * YawStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when yawing, determine by experimentation.  Higher allows faster AP Bank turns.
 * PitchStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when pitching, determine by experimentation.
