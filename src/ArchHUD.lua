@@ -4150,6 +4150,7 @@ VERSION_NUMBER = 1.321
         end
 
         function Hud.UpdateRadarRoutine()
+            system.print("START URR: "..time)
             local knownContacts = {}
             local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library.
                 p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
@@ -4212,7 +4213,7 @@ VERSION_NUMBER = 1.321
                 
                 if #radarContacts > 0 then
                     local friendlies = {}
-                    local count = 0
+                    local count, count2 = 0, 0
                     local wp = getTrueWorldPos()
                     for v in contactData do
                         local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
@@ -4238,28 +4239,29 @@ VERSION_NUMBER = 1.321
                             end
                             if construct.center == nil then 
                                 updateVariables(construct, distance)
-                            elseif #knownContacts < 99 then 
+                            elseif #knownContacts < 100 then 
                                 table.insert(knownContacts, construct)
-                            else
-                                break
                             end
+                            count2 = count2 + 1
                         end
                         count = count + 1
 
-                        if count > 99 then
+                        if count > 500 or count2 > 50 then
                             coroutine.yield()
-                            count = 0
+                            count, count2 = 0, 0
                         end
                     end
-                    local body, far, near, vect
-                    if inAtmo then
-                        vect = constructForward:normalize()
-                    else
-                        vect = constructVelocity:normalize()
+                    if #knownContacts > 0 then 
+                        local body, far, near, vect
+                        if inAtmo then
+                            vect = constructForward:normalize()
+                        else
+                            vect = constructVelocity:normalize()
+                        end
+                        body, far, near = castIntersections(worldPos, vect, knownContacts)
+                        knownContacts = {}
+                        if body then if near then system.print("COLLISION: "..body.name.." N: "..near.." F: "..far) else system.print("COLLISION: "..body.name.." F: "..far) end end
                     end
-                    body, far, near = castIntersections(worldPos, vect, knownContacts)
-                    knownContacts = {}
-                    if body then if near then system.print("COLLISION: "..body.name.." N: "..near.." F: "..far) else system.print("COLLISION: "..body.name.." N: "..near) end end
                     local target = radarData:find('identifiedConstructs":%[%]')
                     if target == nil and perisPanelID == nil then
                         peris = 1
@@ -4296,14 +4298,17 @@ VERSION_NUMBER = 1.321
                     end
                 end
             end
+            system.print("FINISH URR: "..time)
         end
 
         function Hud.UpdateRadar()
             local cont = coroutine.status (UpdateRadarCoroutine)
             if cont == "suspended" then 
                 local value, done = coroutine.resume(UpdateRadarCoroutine)
-            elseif cont == "dead" or done then
+                if done then system.print("ERROR UPDATE RADAR: "..done) end
+            elseif cont == "dead" then
                 UpdateRadarCoroutine = coroutine.create(Hud.UpdateRadarRoutine)
+                local value, done = coroutine.resume(UpdateRadarCoroutine)
             end
         end
 
@@ -6626,6 +6631,7 @@ VERSION_NUMBER = 1.321
             unit.setTimer("fiveSecond", 5) 
             play("start","SU")
         end)
+        coroutine.resume(beginSetup)
     end
 
     function script.onStop()
@@ -7801,11 +7807,15 @@ VERSION_NUMBER = 1.321
 
     function script.onUpdate()
         if not SetupComplete then
-            local _, result = coroutine.resume(beginSetup)
-            if result then
+            local cont = coroutine.status (beginSetup)
+            if cont == "suspended" then 
+                local value, done = coroutine.resume(beginSetup)
+                if done then system.print("ERROR STARTUP: "..done) end
+            elseif cont == "dead" then
                 SetupComplete = true
             end
-        else
+        end
+        if SetupComplete then
             Nav:update()
             if not Animating and content ~= LastContent then
                 if not Cockpit then 
