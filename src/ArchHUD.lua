@@ -1043,6 +1043,49 @@ VERSION_NUMBER = 1.321
         return adjPos
     end
 
+    function castIntersections(origin, direction, collection, sizeCalculator, bodyIds)
+        local sizeCalculator = sizeCalculator or function(body)
+            return 1.05 * body.radius
+        end
+        local candidates = {}
+        if bodyIds then
+            for _, i in ipairs(bodyIds) do
+                candidates[i] = collection[i]
+            end
+        else
+            bodyIds = {}
+            for k, body in pairs(collection) do
+                table.insert(bodyIds, k)
+                candidates[k] = body
+            end
+        end
+        local function compare(b1, b2)
+            local v1 = candidates[b1].center - origin
+            local v2 = candidates[b2].center - origin
+            return v1:len() < v2:len()
+        end
+        table.sort(bodyIds, compare)
+        local dir = direction:normalize()
+        for i, id in ipairs(bodyIds) do
+            local body = candidates[id]
+            local c_oV3 = body.center - origin
+            local radius = sizeCalculator(body)
+            local dot = c_oV3:dot(dir)
+            local desc = dot ^ 2 - (c_oV3:len2() - radius ^ 2)
+            if desc >= 0 then
+                local root = math.sqrt(desc)
+                local farSide = dot + root
+                local nearSide = dot - root
+                if nearSide > 0 then
+                    return body, farSide, nearSide
+                elseif farSide > 0 then
+                    return body, farSide, nil
+                end
+            end
+        end
+        return nil, nil, nil
+    end
+
 -- Planet Info - https://gitlab.com/JayleBreak/dualuniverse/-/tree/master/DUflightfiles/autoconf/custom with modifications to support HUD, vanilla JayleBreak will not work anymore
     local function Atlas()
         return {
@@ -2453,46 +2496,7 @@ VERSION_NUMBER = 1.321
         end
 
         function PlanetarySystem:castIntersections(origin, direction, sizeCalculator, bodyIds)
-            local sizeCalculator = sizeCalculator or function(body)
-                return 1.05 * body.radius
-            end
-            local candidates = {}
-            if bodyIds then
-                for _, i in ipairs(bodyIds) do
-                    candidates[i] = self[i]
-                end
-            else
-                bodyIds = {}
-                for k, body in pairs(self) do
-                    table.insert(bodyIds, k)
-                    candidates[k] = body
-                end
-            end
-            local function compare(b1, b2)
-                local v1 = candidates[b1].center - origin
-                local v2 = candidates[b2].center - origin
-                return v1:len() < v2:len()
-            end
-            table.sort(bodyIds, compare)
-            local dir = direction:normalize()
-            for i, id in ipairs(bodyIds) do
-                local body = candidates[id]
-                local c_oV3 = body.center - origin
-                local radius = sizeCalculator(body)
-                local dot = c_oV3:dot(dir)
-                local desc = dot ^ 2 - (c_oV3:len2() - radius ^ 2)
-                if desc >= 0 then
-                    local root = math.sqrt(desc)
-                    local farSide = dot + root
-                    local nearSide = dot - root
-                    if nearSide > 0 then
-                        return body, farSide, nearSide
-                    elseif farSide > 0 then
-                        return body, farSide, nil
-                    end
-                end
-            end
-            return nil, nil, nil
+            castIntersections(origin, direction, self, sizeCalculator, bodyIds)
         end
 
         function PlanetarySystem:closestBody(coordinates)
@@ -4147,6 +4151,8 @@ VERSION_NUMBER = 1.321
 
         function Hud.UpdateRadar()
 
+            local knownContacts = {}
+
             local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library.
                 p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
                 local r1s, r2s, r3s = r1*r1, r2*r2, r3*r3
@@ -4189,8 +4195,10 @@ VERSION_NUMBER = 1.321
                         y = y + ref[2]
                         z = z + ref[3]
                         construct.ref = wp
-                        construct.x, construct.y, construct.z = x,y,z
-                        if construct.name == "Alioth Base" then system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..x..','..y..','..z..'}')  end
+                        construct.center = vec3(x,y,z)
+                        construct.radius = 130
+                        table.insert(knownContacts, construct)
+                        if construct.name == "Alioth Base" then system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}')  end
                     end
                     construct.pts = {}
                 else
@@ -4231,6 +4239,9 @@ VERSION_NUMBER = 1.321
                             count = count + 1
                         end
                     end
+                    local body, near, far = castIntersections(worldPos, constructVelocity:normalize(), knownContacts)
+                    knownContacts = {}
+                    if body then system.print("COLLISION: "..body.name.." N: "..near) end
                     local target = radarData:find('identifiedConstructs":%[%]')
                     if target == nil and perisPanelID == nil then
                         peris = 1
