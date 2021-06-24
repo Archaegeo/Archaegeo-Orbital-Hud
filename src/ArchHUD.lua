@@ -4194,8 +4194,7 @@ VERSION_NUMBER = 1.321
                         z = z + ref[3]
                         construct.ref = wp
                         construct.center = vec3(x,y,z)
-                        table.insert(knownContacts, construct)
-                        --if construct.name == "Alioth Base" then system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}') end
+                        system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}')
                     end
                     construct.pts = {}
                 else
@@ -4235,12 +4234,17 @@ VERSION_NUMBER = 1.321
                                 elseif size == "M" then sz = 64
                                 elseif size == "S" then sz = 32 end
                                 contacts[id].radius = (sz/2+coreOffset/2)
-                            else
+                                construct = contacts[id]
+                            end
+                            if construct.center == nil then 
                                 updateVariables(construct, distance)
+                            elseif #knownContacts < 100 then 
+                                table.insert(knownContacts, construct)
                             end
                         end
                         count = count + 1
-                        if count > 100 then
+
+                        if count > 150 then
                             coroutine.yield()
                             count = 0
                         end
@@ -4287,8 +4291,10 @@ VERSION_NUMBER = 1.321
         end
 
         function Hud.UpdateRadar()
-            local _, done = coroutine.resume(UpdateRadarCoroutine)
-            if done then
+            local cont = coroutine.status (UpdateRadarCoroutine)
+            if cont == "suspended" then 
+                local value, done = coroutine.resume(UpdateRadarCoroutine)
+            elseif cont == "dead" or done then
                 UpdateRadarCoroutine = coroutine.create(Hud.UpdateRadarRoutine)
             end
         end
@@ -4311,6 +4317,7 @@ VERSION_NUMBER = 1.321
             end
             return newContent
         end
+
         UpdateRadarCoroutine = coroutine.create(Hud.UpdateRadarRoutine)
         return Hud
     end 
@@ -6884,7 +6891,6 @@ VERSION_NUMBER = 1.321
                     showWarpWidget = false
                 end
             end
-
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
             -- Local Functions for oneSecond
 
@@ -7000,7 +7006,6 @@ VERSION_NUMBER = 1.321
                 compareMass() 
             end
             updateDistance()
-
             HUD.UpdatePipe()
             updateWeapons()
             -- Update odometer output string
@@ -7174,7 +7179,6 @@ VERSION_NUMBER = 1.321
             if showSettings and settingsVariables ~= {} then 
                 HUD.DrawSettings(newContent) 
             end
-            HUD.UpdateRadar()
             HUD.HUDEpilogue(newContent)
             newContent[#newContent + 1] = stringf(
                 [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
@@ -7245,6 +7249,7 @@ VERSION_NUMBER = 1.321
             end        
         elseif timerId == "apTick" then -- Timer for all autopilot functions
             AP.APTick()
+            HUD.UpdateRadar()
         end
     end
 
