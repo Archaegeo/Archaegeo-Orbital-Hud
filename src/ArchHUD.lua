@@ -1045,7 +1045,7 @@ VERSION_NUMBER = 1.321
 
     function castIntersections(origin, direction, collection, sizeCalculator, bodyIds)
         local sizeCalculator = sizeCalculator or function(body)
-            return 1.05 * body.radius
+            return 1.00 * body.radius
         end
         local candidates = {}
         if bodyIds then
@@ -4196,9 +4196,8 @@ VERSION_NUMBER = 1.321
                         z = z + ref[3]
                         construct.ref = wp
                         construct.center = vec3(x,y,z)
-                        construct.radius = 130
                         table.insert(knownContacts, construct)
-                        if construct.name == "Alioth Base" then system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}')  end
+                        --if construct.name == "Alioth Base" then system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}') end
                     end
                     construct.pts = {}
                 else
@@ -4219,7 +4218,8 @@ VERSION_NUMBER = 1.321
                     local count = 0
                     local wp = getTrueWorldPos()
                     for v in contactData do
-                        local id,distance = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*)]])
+                        local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
+                        local sz = 16
                         distance = tonumber(distance)
                         if radar_1.hasMatchingTransponder(id) == 1 then
                             table.insert(friendlies,id)
@@ -4233,6 +4233,10 @@ VERSION_NUMBER = 1.321
                                 contacts[id].pts = {}
                                 contacts[id].ref = wp
                                 contacts[id].name = name
+                                if size == "L" then sz = 128
+                                elseif size == "M" then sz = 64
+                                elseif size == "S" then sz = 32 end
+                                contacts[id].radius = (sz/2+coreOffset/2)
                             else
                                 updateVariables(construct, distance)
                             end
@@ -6870,6 +6874,7 @@ VERSION_NUMBER = 1.321
                     showWarpWidget = false
                 end
             end
+
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
             -- Local Functions for oneSecond
 
@@ -6985,7 +6990,7 @@ VERSION_NUMBER = 1.321
                 compareMass() 
             end
             updateDistance()
-            HUD.UpdateRadar()
+
             HUD.UpdatePipe()
             updateWeapons()
             -- Update odometer output string
@@ -7159,6 +7164,7 @@ VERSION_NUMBER = 1.321
             if showSettings and settingsVariables ~= {} then 
                 HUD.DrawSettings(newContent) 
             end
+            HUD.UpdateRadar()
             HUD.HUDEpilogue(newContent)
             newContent[#newContent + 1] = stringf(
                 [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
