@@ -3543,11 +3543,6 @@ VERSION_NUMBER = 1.321
                 elseif Reentry then
                     newContent[#newContent + 1] = svgText(warningX, apY+20, "Re-entry in Progress", "warn")
                 end
-                local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
-                local atmoDistance = farSide
-                if nearSide ~= nil and farSide ~= nil then
-                    atmoDistance = math.min(nearSide,farSide)
-                end
                 if AltitudeHold or VertTakeOff then
                     local displayText = getDistanceDisplayString(HoldAltitude, 2)
                     if VertTakeOff then
@@ -3599,13 +3594,20 @@ VERSION_NUMBER = 1.321
                 if RetrogradeIsOn then
                     newContent[#newContent + 1] = svgText(warningX, apY, "Retrograde Alignment", "crit")
                 end
+                local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
+                local atmoDistance = farSide
+                if nearSide ~= nil and farSide ~= nil then
+                    atmoDistance = math.min(nearSide,farSide)
+                end
                 if atmoDistance ~= nil and atmosDensity == 0 then
                         local displayText = getDistanceDisplayString(atmoDistance)
                         local travelTime = Kinematic.computeTravelTime(velMag, 0, atmoDistance)
                         local displayCollisionType = "Collision"
                         if intersectBody.noAtmosphericDensityAltitude > 0 then displayCollisionType = "Atmosphere" end
                         newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, intersectBody.name.." "..displayCollisionType.." "..FormatTimeString(travelTime).." In "..displayText, "crit")
-                    
+                end
+                if collisionAlertStatus then
+                    newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, collisionAlertStatus, "crit")
                 end
                 if VectorToTarget and not IntoOrbit then
                     newContent[#newContent + 1] = svgText(warningX, apY+35, VectorStatus, "warn")
@@ -4267,9 +4269,20 @@ VERSION_NUMBER = 1.321
                             innerCount = innerCount + 100
                         end
                         knownContacts = {}
-                        if body and brakeDistance*2 < far then 
-                            play("alarm","AL",2) 
-                            if near then system.print("COLLISION: "..body.name.." N: "..near.." F: "..far) else system.print("COLLISION: "..body.name.." F: "..far) end 
+                        if body then
+                            local collisionDistance = math.min(far, near or far)
+                            local collisionTime = (collisionDistance-brakeDistance)/velMag
+                            if collisionTime < 11 then 
+                                msgText = "COLLISION IN "..getDistanceDisplayString(collisionDistance,2).."\n"..body.name.."\nBrake or Turn in "..round(collisionTime).." seconds" 
+                            else
+                                collisionAlertStatus = body.name.." collision "..FormatTimeString(collisionTime)
+                            end
+                            --if near then system.print("COLLISION: "..body.name.." D: "..math.max(far, near or far).." BD*2: "..brakeDistance*2) end 
+                            if collisionTime < 5 then
+                                play("alarm","AL",2) 
+                            end
+                        else
+                            collisionAlertStatus = false
                         end
                     end
                     local target = radarData:find('identifiedConstructs":%[%]')
