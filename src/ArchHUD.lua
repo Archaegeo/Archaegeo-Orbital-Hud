@@ -4150,7 +4150,7 @@ VERSION_NUMBER = 1.321
         end
 
         function Hud.UpdateRadarRoutine()
-            system.print("START URR: "..time)
+            --system.print("START URR: "..time)
             local knownContacts = {}
             local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library.
                 p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
@@ -4222,7 +4222,7 @@ VERSION_NUMBER = 1.321
                         if radar_1.hasMatchingTransponder(id) == 1 then
                             table.insert(friendlies,id)
                         end
-                        if distance > 0 and radar_1.getConstructType(id) == "static" then
+                        if velMag > 25 and distance > 0 and radar_1.getConstructType(id) == "static" then
                             local name = radar_1.getConstructName(id)
                             id = tostring(id)
                             local construct = contacts[id]
@@ -4239,26 +4239,34 @@ VERSION_NUMBER = 1.321
                             end
                             if construct.center == nil then 
                                 updateVariables(construct, distance)
-                            elseif #knownContacts < 100 then 
+                            else
                                 table.insert(knownContacts, construct)
                             end
                             count2 = count2 + 1
                         end
                         count = count + 1
 
-                        if count > 500 or count2 > 50 then
+                        if count > 500 or count2 > 25 then
                             coroutine.yield()
                             count, count2 = 0, 0
                         end
                     end
-                    if #knownContacts > 0 then 
+                    if #knownContacts > 0 and velMag > 25 then 
                         local body, far, near, vect
+                        local innerCount = 0
                         if inAtmo then
                             vect = constructForward:normalize()
                         else
                             vect = constructVelocity:normalize()
                         end
-                        body, far, near = castIntersections(worldPos, vect, knownContacts)
+                        while innerCount < #knownContacts do
+                            coroutine.yield()
+                            --system.print("Checking contacts " .. innerCount .. "-" .. innerCount+100 .. " out of " .. #knownContacts)
+                            local innerList = { table.unpack(knownContacts, innerCount, math.min(innerCount + 100, #knownContacts)) }
+                            body, far, near = castIntersections(worldPos, vect, innerList)
+                            if body then break end
+                            innerCount = innerCount + 100
+                        end
                         knownContacts = {}
                         if body then if near then system.print("COLLISION: "..body.name.." N: "..near.." F: "..far) else system.print("COLLISION: "..body.name.." F: "..far) end end
                     end
@@ -4298,7 +4306,7 @@ VERSION_NUMBER = 1.321
                     end
                 end
             end
-            system.print("FINISH URR: "..time)
+            --system.print("FINISH URR: "..time)
         end
 
         function Hud.UpdateRadar()
