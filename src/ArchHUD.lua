@@ -4244,7 +4244,7 @@ VERSION_NUMBER = 1.321
                         end
                         count = count + 1
 
-                        if count > 150 then
+                        if count > 75 then
                             coroutine.yield()
                             count = 0
                         end
