@@ -4188,7 +4188,7 @@ VERSION_NUMBER = 1.321
                     local in4 = pts[index-3]
                     local pos = trilaterate(in1[1], in1[2], in2[1], in2[2], in3[1], in3[2], in4[1], in4[2])
                     local x,y,z = pos.x, pos.y, pos.z
-                    if x == x then
+                    if x == x and y == y and z == z then
                         x = x + ref[1]
                         y = y + ref[2]
                         z = z + ref[3]
@@ -4238,20 +4238,28 @@ VERSION_NUMBER = 1.321
                             end
                             if construct.center == nil then 
                                 updateVariables(construct, distance)
-                            elseif #knownContacts < 100 then 
+                            elseif #knownContacts < 99 then 
                                 table.insert(knownContacts, construct)
+                            else
+                                break
                             end
                         end
                         count = count + 1
 
-                        if count > 75 then
+                        if count > 99 then
                             coroutine.yield()
                             count = 0
                         end
                     end
-                    local body, near, far = castIntersections(worldPos, constructVelocity:normalize(), knownContacts)
+                    local body, far, near, vect
+                    if inAtmo then
+                        vect = constructForward:normalize()
+                    else
+                        vect = constructVelocity:normalize()
+                    end
+                    body, far, near = castIntersections(worldPos, vect, knownContacts)
                     knownContacts = {}
-                    if body then system.print("COLLISION: "..body.name.." N: "..near) end
+                    if body then if near then system.print("COLLISION: "..body.name.." N: "..near.." F: "..far) else system.print("COLLISION: "..body.name.." N: "..near) end end
                     local target = radarData:find('identifiedConstructs":%[%]')
                     if target == nil and perisPanelID == nil then
                         peris = 1
