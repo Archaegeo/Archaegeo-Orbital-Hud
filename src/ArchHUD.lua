@@ -41,6 +41,7 @@ VERSION_NUMBER = 1.321
     Cockpit = false --export:
     voices = true --export:
     alerts = true --export:
+    CollisionSystem = true --export:
     
     -- Ship Handling variables
     YawStallAngle = 35 --export:
@@ -376,7 +377,7 @@ VERSION_NUMBER = 1.321
                 "InvertMouse", "autoRollPreference", "turnAssist", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
                 "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd", "BarFuelDisplay", "showHelp", "Cockpit",
-                "voices", "alerts"}
+                "voices", "alerts", "CollisionSystem"}
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
@@ -4151,7 +4152,7 @@ VERSION_NUMBER = 1.321
         function Hud.UpdateRadarRoutine()
             --system.print("START URR: "..time)
             local knownContacts = {}
-            local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library.
+            local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
                 p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
                 local r1s, r2s, r3s = r1*r1, r2*r2, r3*r3
                 local v2 = p2 - p1
@@ -4176,7 +4177,7 @@ VERSION_NUMBER = 1.321
                 end
             end
             
-            local function updateVariables(construct, d, wp) -- Thanks to EasternGamer
+            local function updateVariables(construct, d, wp) -- Thanks to EasternGamer and Dimencia
                 local pts = construct.pts
                 local index = #pts
                 local ref = construct.ref
@@ -4221,9 +4222,9 @@ VERSION_NUMBER = 1.321
                         if radar_1.hasMatchingTransponder(id) == 1 then
                             table.insert(friendlies,id)
                         end
-                        if distance > 0 and radar_1.getConstructType(id) == "static" then
+                        if CollisionSystem and distance > 0 and radar_1.getConstructType(id) == "static" then
                             local name = radar_1.getConstructName(id)
-                            id = tostring(id)
+                            --id = tostring(id)
                             local construct = contacts[id]
                             if construct == nil then
                                 contacts[id] = {}
@@ -8582,6 +8583,13 @@ VERSION_NUMBER = 1.321
     function script.onEnter(id)
         if radar_1 and not inAtmo and not notPvPZone then 
             unit.setTimer("contact",0.1) 
+        end
+    end
+
+    function script.onLeave(id)
+        if radar_1 and CollisionSystem then 
+            id = tostring(id)
+            if contacts[id] then contacts[id] = {} end
         end
     end
 
