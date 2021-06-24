@@ -4149,10 +4149,8 @@ VERSION_NUMBER = 1.321
             getClosestPipe()           
         end
 
-        function Hud.UpdateRadar()
-
+        function Hud.UpdateRadarRoutine()
             local knownContacts = {}
-
             local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library.
                 p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
                 local r1s, r2s, r3s = r1*r1, r2*r2, r3*r3
@@ -4224,7 +4222,7 @@ VERSION_NUMBER = 1.321
                         if radar_1.hasMatchingTransponder(id) == 1 then
                             table.insert(friendlies,id)
                         end
-                        if count < 100 and distance > 0 and radar_1.getConstructType(id) == "static" then
+                        if distance > 0 and radar_1.getConstructType(id) == "static" then
                             local name = radar_1.getConstructName(id)
                             id = tostring(id)
                             local construct = contacts[id]
@@ -4240,7 +4238,11 @@ VERSION_NUMBER = 1.321
                             else
                                 updateVariables(construct, distance)
                             end
-                            count = count + 1
+                        end
+                        count = count + 1
+                        if count > 100 then
+                            coroutine.yield()
+                            count = 0
                         end
                     end
                     local body, near, far = castIntersections(worldPos, constructVelocity:normalize(), knownContacts)
@@ -4284,6 +4286,13 @@ VERSION_NUMBER = 1.321
             end
         end
 
+        function Hud.UpdateRadar()
+            local _, done = coroutine.resume(UpdateRadarCoroutine)
+            if done then
+                UpdateRadarCoroutine = coroutine.create(Hud.UpdateRadarRoutine)
+            end
+        end
+
         function Hud.DrawSettings(newContent)
             if #settingsVariables > 0  then
                 local x = ConvertResolutionX(640)
@@ -4302,6 +4311,7 @@ VERSION_NUMBER = 1.321
             end
             return newContent
         end
+        UpdateRadarCoroutine = coroutine.create(Hud.UpdateRadarRoutine)
         return Hud
     end 
     local function AtlasClass() -- Atlas and Interplanetary functions including Update Autopilot Target
