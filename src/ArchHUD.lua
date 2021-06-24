@@ -344,7 +344,6 @@ VERSION_NUMBER = 1.321
     local pipeMessage = ""
     local ReversalIsOn = nil
     contacts = {}
-    positions = {}
     collisionAlertStatus = false
 
 
@@ -4177,12 +4176,11 @@ VERSION_NUMBER = 1.321
                 end
             end
             
-            local function updateVariables(construct, d) -- Thanks to EasternGamer
+            local function updateVariables(construct, d, wp) -- Thanks to EasternGamer
                 local pts = construct.pts
                 local index = #pts
                 local ref = construct.ref
-                local wp = getTrueWorldPos()
-                if index > 4 then
+                if index > 3 then
                     local in1 = pts[index]
                     local in2 = pts[index-1]
                     local in3 = pts[index-2]
@@ -4210,11 +4208,12 @@ VERSION_NUMBER = 1.321
                 local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
                 local radarX = ConvertResolutionX(1770)
                 local radarY = ConvertResolutionY(350)
+                local wp = getTrueWorldPos()
                 
                 if #radarContacts > 0 then
                     local friendlies = {}
                     local count, count2 = 0, 0
-                    local wp = getTrueWorldPos()
+
                     for v in contactData do
                         local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
                         local sz = 16
@@ -4222,7 +4221,7 @@ VERSION_NUMBER = 1.321
                         if radar_1.hasMatchingTransponder(id) == 1 then
                             table.insert(friendlies,id)
                         end
-                        if velMag > 25 and distance > 0 and radar_1.getConstructType(id) == "static" then
+                        if distance > 0 and radar_1.getConstructType(id) == "static" then
                             local name = radar_1.getConstructName(id)
                             id = tostring(id)
                             local construct = contacts[id]
@@ -4238,20 +4237,20 @@ VERSION_NUMBER = 1.321
                                 construct = contacts[id]
                             end
                             if construct.center == nil then 
-                                updateVariables(construct, distance)
+                                updateVariables(construct, distance, wp)
+                                count2 = count2 + 1
                             else
                                 table.insert(knownContacts, construct)
                             end
-                            count2 = count2 + 1
                         end
                         count = count + 1
 
-                        if count > 500 or count2 > 25 then
+                        if count > 500 or count2 > 20 then
                             coroutine.yield()
                             count, count2 = 0, 0
                         end
                     end
-                    if #knownContacts > 0 and velMag > 25 then 
+                    if #knownContacts > 0 then 
                         local body, far, near, vect
                         local innerCount = 0
                         if inAtmo then
@@ -4261,14 +4260,16 @@ VERSION_NUMBER = 1.321
                         end
                         while innerCount < #knownContacts do
                             coroutine.yield()
-                            --system.print("Checking contacts " .. innerCount .. "-" .. innerCount+100 .. " out of " .. #knownContacts)
                             local innerList = { table.unpack(knownContacts, innerCount, math.min(innerCount + 100, #knownContacts)) }
                             body, far, near = castIntersections(worldPos, vect, innerList)
                             if body then break end
                             innerCount = innerCount + 100
                         end
                         knownContacts = {}
-                        if body then if near then system.print("COLLISION: "..body.name.." N: "..near.." F: "..far) else system.print("COLLISION: "..body.name.." F: "..far) end end
+                        if body and brakeDistance*2 < far then 
+                            play("alarm","AL",2) 
+                            if near then system.print("COLLISION: "..body.name.." N: "..near.." F: "..far) else system.print("COLLISION: "..body.name.." F: "..far) end 
+                        end
                     end
                     local target = radarData:find('identifiedConstructs":%[%]')
                     if target == nil and perisPanelID == nil then
