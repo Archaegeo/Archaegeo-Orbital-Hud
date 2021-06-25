@@ -4150,7 +4150,9 @@ VERSION_NUMBER = 1.321
             end
             getClosestPipe()           
         end
-
+failCount = 0
+successCount = 0
+rePlotCount = 0
         function Hud.UpdateRadarRoutine()
             --system.print("START URR: "..time)
             local knownContacts = {}
@@ -4184,24 +4186,32 @@ VERSION_NUMBER = 1.321
                 local index = #pts
                 local ref = construct.ref
                 if index > 4 then
-                    local in1 = pts[index]
-                    local in2 = pts[index-1]
-                    local in3 = pts[index-2]
-                    local in4 = pts[index-3]
+                    local in1, in2, in3, in4 = pts[index], pts[index-1], pts[index-2], pts[index-3]
+                    construct.ref = wp
                     local pos = trilaterate(in1[1], in1[2], in2[1], in2[2], in3[1], in3[2], in4[1], in4[2])
                     local x,y,z = pos.x, pos.y, pos.z
                     if x == x and y == y and z == z then
                         x = x + ref[1]
                         y = y + ref[2]
                         z = z + ref[3]
-                        construct.ref = wp
-                        construct.center = vec3(x,y,z)
-                        system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}')
+                        local save = construct.center
+                        if save == nil or construct.i > 2 then 
+                            if construct.i > 2 then rePlotCount = rePlotCount + 1 else successCount =  successCount + 1 end
+                            construct.center = vec3(x,y,z)
+                            construct.i = 0
+                            --system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}')
+                        elseif mabs(save.x - x) > 2 or mabs(save.y - y) > 2 then
+                            construct.i = construct.i + 1
+                            failCount = failCount + 1
+                            --system.print(construct.name.." "..construct.i)
+                        else
+                            successCount =  successCount + 1
+                        end
                     end
                     construct.pts = {}
                 else
                     local offset = {wp[1]-ref[1],wp[2]-ref[2],wp[3]-ref[3]}
-                    construct.pts[index+1] = {d,offset}
+                    pts[index+1] = {d,offset}
                 end
             end
 
@@ -4224,7 +4234,7 @@ VERSION_NUMBER = 1.321
                         if radar_1.hasMatchingTransponder(id) == 1 then
                             table.insert(friendlies,id)
                         end
-                        if CollisionSystem and distance > 0 and radar_1.getConstructType(id) == "static" then
+                        if CollisionSystem and velMag > 20 and distance > 0 and radar_1.getConstructType(id) == "static" then
                             local name = radar_1.getConstructName(id)
                             --id = tostring(id)
                             local construct = contacts[id]
@@ -4233,26 +4243,24 @@ VERSION_NUMBER = 1.321
                                 contacts[id].pts = {}
                                 contacts[id].ref = wp
                                 contacts[id].name = name
+                                contacts[id].i = 0
                                 if size == "L" then sz = 128
                                 elseif size == "M" then sz = 64
                                 elseif size == "S" then sz = 32 end
                                 contacts[id].radius = (sz/2+coreOffset/2)
                                 construct = contacts[id]
                             end
-                            if construct.center == nil then 
-                                updateVariables(construct, distance, wp)
-                                count2 = count2 + 1
-                            else
-                                table.insert(knownContacts, construct)
-                            end
+                            updateVariables(construct, distance, wp)
+                            if construct.center then table.insert(knownContacts, construct) end
+                            count2 = count2 + 1
                         end
                         count = count + 1
-                        if count > 500 or count2 > 15 then
+                        if count > 125 or count2 > 10 then
                             coroutine.yield()
                             count, count2 = 0, 0
                         end
                     end
-                    if #knownContacts > 0 then 
+                    if #knownContacts > 0 and velMag > 20 then 
                         local body, far, near, vect
                         local innerCount = 0
                         vect = constructVelocity:normalize()
@@ -4263,7 +4271,6 @@ VERSION_NUMBER = 1.321
                             if body then break end
                             innerCount = innerCount + 100
                         end
-                        knownContacts = {}
                         if body then
                             local collisionDistance = math.min(far, near or far)
                             local collisionTime = (collisionDistance-brakeDistance)/velMag
@@ -4285,6 +4292,7 @@ VERSION_NUMBER = 1.321
                             collisionAlertStatus = false
                         end
                     end
+                    knownContacts = {}
                     local target = radarData:find('identifiedConstructs":%[%]')
                     if target == nil and perisPanelID == nil then
                         peris = 1
@@ -4322,6 +4330,9 @@ VERSION_NUMBER = 1.321
                 end
             end
             --system.print("FINISH URR: "..time)
+            system.print("Fail Count: " .. failCount)
+            system.print("RePlot Count: " .. rePlotCount )
+            system.print("Success Count: " .. successCount )
         end
 
         function Hud.UpdateRadar()
@@ -4647,7 +4658,6 @@ VERSION_NUMBER = 1.321
         end
 
         function ap.APTick()
-
             inAtmo = (atmosphere() > 0)
             atmosDensity = atmosphere()
             coreAltitude = core.getAltitude()
@@ -7216,6 +7226,7 @@ VERSION_NUMBER = 1.321
             if showSettings and settingsVariables ~= {} then 
                 HUD.DrawSettings(newContent) 
             end
+            HUD.UpdateRadar()
             HUD.HUDEpilogue(newContent)
             newContent[#newContent + 1] = stringf(
                 [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
@@ -7286,7 +7297,6 @@ VERSION_NUMBER = 1.321
             end        
         elseif timerId == "apTick" then -- Timer for all autopilot functions
             AP.APTick()
-            HUD.UpdateRadar()
         end
     end
 
