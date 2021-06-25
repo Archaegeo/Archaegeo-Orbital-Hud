@@ -4183,7 +4183,7 @@ VERSION_NUMBER = 1.321
                 local pts = construct.pts
                 local index = #pts
                 local ref = construct.ref
-                if index > 3 then
+                if index > 4 then
                     local in1 = pts[index]
                     local in2 = pts[index-1]
                     local in3 = pts[index-2]
@@ -4247,8 +4247,7 @@ VERSION_NUMBER = 1.321
                             end
                         end
                         count = count + 1
-
-                        if count > 500 or count2 > 20 then
+                        if count > 500 or count2 > 15 then
                             coroutine.yield()
                             count, count2 = 0, 0
                         end
@@ -4256,11 +4255,7 @@ VERSION_NUMBER = 1.321
                     if #knownContacts > 0 then 
                         local body, far, near, vect
                         local innerCount = 0
-                        if inAtmo then
-                            vect = constructForward:normalize()
-                        else
-                            vect = constructVelocity:normalize()
-                        end
+                        vect = constructVelocity:normalize()
                         while innerCount < #knownContacts do
                             coroutine.yield()
                             local innerList = { table.unpack(knownContacts, innerCount, math.min(innerCount + 100, #knownContacts)) }
@@ -4274,12 +4269,17 @@ VERSION_NUMBER = 1.321
                             local collisionTime = (collisionDistance-brakeDistance)/velMag
                             if collisionTime < 11 then 
                                 msgText = "COLLISION IN "..getDistanceDisplayString(collisionDistance,2).."\n"..body.name.."\nBrake or Turn in "..round(collisionTime).." seconds" 
+                                msgTimer = 0.5
                             else
                                 collisionAlertStatus = body.name.." collision "..FormatTimeString(collisionTime)
                             end
                             --if near then system.print("COLLISION: "..body.name.." D: "..math.max(far, near or far).." BD*2: "..brakeDistance*2) end 
                             if collisionTime < 5 then
                                 play("alarm","AL",2) 
+                            end
+                            if (AltitudeHold or VectorToTarget) and brakeDistance*2.5 > collisionDistance then
+                                BrakeIsOn = true
+                                cmdThrottle(0)
                             end
                         else
                             collisionAlertStatus = false
@@ -5687,7 +5687,7 @@ VERSION_NUMBER = 1.321
                         StrongBrakes = true -- We don't care about this or glide landing anymore and idk where all it gets used
                         
                         -- Fudge it with the distance we'll travel in a tick - or half that and the next tick accounts for the other? idk
-                        if collisionAlertStatus == "active" or (not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance + (velMag*deltaTick)/2 and 
+                        if (not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance + (velMag*deltaTick)/2 and 
                                 (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99  or VectorStatus == "Finalizing Approach")) then 
                             VectorStatus = "Finalizing Approach" 
                             cmdThrottle(0) -- Kill throttle in case they weren't in cruise
@@ -5701,7 +5701,7 @@ VERSION_NUMBER = 1.321
                         elseif not AutoTakeoff then
                             BrakeIsOn = false
                         end
-                        if collisionAlertStatus == "active" or (VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget))) then
+                        if (VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget))) then
                             if not antigravOn then  
                                 play("bklOn","BL")
                                 BrakeLanding = true 
@@ -8602,7 +8602,7 @@ VERSION_NUMBER = 1.321
     function script.onLeave(id)
         if radar_1 and CollisionSystem then 
             id = tostring(id)
-            if contacts[id] then contacts[id] = {} end
+            contacts[id] = nil 
         end
     end
 
