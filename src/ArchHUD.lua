@@ -346,6 +346,7 @@ VERSION_NUMBER = 1.321
     local ReversalIsOn = nil
     contacts = {}
     collisionAlertStatus = false
+    collisionTarget = nil
 
 
 -- Function Definitions that are used in more than one areause 
@@ -3607,7 +3608,9 @@ VERSION_NUMBER = 1.321
                         newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, intersectBody.name.." "..displayCollisionType.." "..FormatTimeString(travelTime).." In "..displayText, "crit")
                 end
                 if collisionAlertStatus then
-                    newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, collisionAlertStatus, "crit")
+                    local type
+                    if string.find(collisionAlertStatus, "COLLISION") then type = "warnings" else type = "crit" end
+                    newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, collisionAlertStatus, type)
                 end
                 if VectorToTarget and not IntoOrbit then
                     newContent[#newContent + 1] = svgText(warningX, apY+35, VectorStatus, "warn")
@@ -4150,9 +4153,9 @@ VERSION_NUMBER = 1.321
             end
             getClosestPipe()           
         end
-failCount = 0
-successCount = 0
-rePlotCount = 0
+        --failCount = 0
+        --successCount = 0
+        --rePlotCount = 0
         function Hud.UpdateRadarRoutine()
             --system.print("START URR: "..time)
             local knownContacts = {}
@@ -4196,16 +4199,16 @@ rePlotCount = 0
                         z = z + ref[3]
                         local save = construct.center
                         if save == nil or construct.i > 2 then 
-                            if construct.i > 2 then rePlotCount = rePlotCount + 1 else successCount =  successCount + 1 end
+                            --if construct.i > 2 then rePlotCount = rePlotCount + 1 else successCount =  successCount + 1 end
                             construct.center = vec3(x,y,z)
                             construct.i = 0
                             --system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}')
                         elseif mabs(save.x - x) > 2 or mabs(save.y - y) > 2 then
                             construct.i = construct.i + 1
-                            failCount = failCount + 1
+                            --failCount = failCount + 1
                             --system.print(construct.name.." "..construct.i)
                         else
-                            successCount =  successCount + 1
+                            --successCount =  successCount + 1
                         end
                     end
                     construct.pts = {}
@@ -4236,7 +4239,6 @@ rePlotCount = 0
                         end
                         if CollisionSystem and velMag > 20 and distance > 0 and radar_1.getConstructType(id) == "static" then
                             local name = radar_1.getConstructName(id)
-                            --id = tostring(id)
                             local construct = contacts[id]
                             if construct == nil then
                                 contacts[id] = {}
@@ -4268,31 +4270,15 @@ rePlotCount = 0
                             coroutine.yield()
                             local innerList = { table.unpack(knownContacts, innerCount, math.min(innerCount + 100, #knownContacts)) }
                             body, far, near = castIntersections(worldPos, vect, innerList)
-                            if body then break end
+                            if body then collisionTarget = {body, far, near} break end
                             innerCount = innerCount + 100
                         end
-                        if body then
-                            local collisionDistance = math.min(far, near or far)
-                            local collisionTime = (collisionDistance-brakeDistance)/velMag
-                            if collisionTime < 11 then 
-                                msgText = "COLLISION IN "..getDistanceDisplayString(collisionDistance,2).."\n"..body.name.."\nBrake or Turn in "..round(collisionTime).." seconds" 
-                                msgTimer = 0.5
-                            else
-                                collisionAlertStatus = body.name.." collision "..FormatTimeString(collisionTime)
-                            end
-                            --if near then system.print("COLLISION: "..body.name.." D: "..math.max(far, near or far).." BD*2: "..brakeDistance*2) end 
-                            if collisionTime < 5 then
-                                play("alarm","AL",2) 
-                            end
-                            if (AltitudeHold or VectorToTarget) and brakeDistance*2.5 > collisionDistance then
-                                BrakeIsOn = true
-                                cmdThrottle(0)
-                            end
-                        else
-                            collisionAlertStatus = false
-                        end
+                        if not body then collisionTarget = nil end
+                        knownContacts = {}
+                    else
+                        collisionTarget = nil
                     end
-                    knownContacts = {}
+
                     local target = radarData:find('identifiedConstructs":%[%]')
                     if target == nil and perisPanelID == nil then
                         peris = 1
@@ -4330,9 +4316,6 @@ rePlotCount = 0
                 end
             end
             --system.print("FINISH URR: "..time)
-            system.print("Fail Count: " .. failCount)
-            system.print("RePlot Count: " .. rePlotCount )
-            system.print("Success Count: " .. successCount )
         end
 
         function Hud.UpdateRadar()
@@ -4658,12 +4641,46 @@ rePlotCount = 0
         end
 
         function ap.APTick()
+            local function checkCollision()
+                if collisionTarget then
+                    local body = collisionTarget[1]
+                    local far, near = collisionTarget[2],collisionTarget[3] 
+                    local collisionDistance = math.min(far, near or far)
+                    local collisionTime = collisionDistance/velMag
+                    if collisionTime < 11 then 
+                        collisionAlertStatus = body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2)
+                    else
+                        collisionAlertStatus = body.name.." collision "..FormatTimeString(collisionTime)
+                    end
+                    --if near then system.print("COLLISION: "..body.name.." D: "..math.max(far, near or far).." BD*2: "..brakeDistance*2) end 
+                    if collisionTime < 5 then
+                        play("alarm","AL",2) 
+                    end
+                    if (AltitudeHold or VectorToTarget or LockPitch) and (brakeDistance*2.5 > collisionDistance or collisionTime < 1) then
+                        BrakeIsOn = true
+                        cmdThrottle(0)
+                        if AltitudeHold then ToggleAltitudeHold() end
+                        if LockPitch then ToggleLockPitch() end
+                        msgText = "Autopilot Cancelled due to possible collision"
+                        if VectorToTarget then 
+                            ToggleAutopilot()
+                        end
+                        StrongBrakes = true
+                        BrakeLanding = true
+                        autoRoll = true
+                    end
+                else
+                    collisionAlertStatus = false
+                end
+            end
             inAtmo = (atmosphere() > 0)
             atmosDensity = atmosphere()
             coreAltitude = core.getAltitude()
             abvGndDet = AboveGroundLevel()
             time = systime()
             lastApTickTime = time
+
+            if CollisionSystem then checkCollision() end
 
             if antigrav then
                 antigravOn = (antigrav.getState() == 1)
@@ -6668,6 +6685,9 @@ rePlotCount = 0
     end
 
     function script.onStop()
+        --system.print("Fail Count: " .. failCount)
+        --system.print("RePlot Count: " .. rePlotCount )
+        --system.print("Success Count: " .. successCount )
         _autoconf.hideCategoryPanels()
         if antigrav ~= nil  and not ExternalAGG then
             antigrav.hide()
@@ -8104,7 +8124,7 @@ rePlotCount = 0
             ToggleAutopilot()
             toggleView = false            
         elseif action == "option5" then
-            local function ToggleLockPitch()
+            function ToggleLockPitch()
                 if LockPitch == nil then
                     play("lkPOn","LP")
                     LockPitch = adjustedPitch
