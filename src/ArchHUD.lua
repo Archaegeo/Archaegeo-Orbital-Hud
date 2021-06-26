@@ -4153,9 +4153,9 @@ VERSION_NUMBER = 1.321
             end
             getClosestPipe()           
         end
-        failCount = 0
-        successCount = 0
-        rePlotCount = 0
+        --failCount = 0
+        --successCount = 0
+        --rePlotCount = 0
         function Hud.UpdateRadarRoutine()
             --system.print("START URR: "..time)
             local knownContacts = {}
@@ -4199,16 +4199,16 @@ VERSION_NUMBER = 1.321
                         z = z + ref[3]
                         local save = construct.center
                         if save == nil or construct.i > 2 then 
-                            if construct.i > 2 then rePlotCount = rePlotCount + 1 else successCount =  successCount + 1 end
+                            --if construct.i > 2 then rePlotCount = rePlotCount + 1 else successCount =  successCount + 1 end
                             construct.center = vec3(x,y,z)
                             construct.i = 0
                             --system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}')
                         elseif mabs(save.x - x) > 2 or mabs(save.y - y) > 2 then
                             construct.i = construct.i + 1
-                            failCount = failCount + 1
+                            --failCount = failCount + 1
                             --system.print(construct.name.." "..construct.i)
                         else
-                            successCount =  successCount + 1
+                            --successCount =  successCount + 1
                         end
                     end
                     construct.pts = {}
@@ -4260,7 +4260,7 @@ VERSION_NUMBER = 1.321
                             end
                         end
                         count = count + 1
-                        if count > 125 or count2 > 10 then
+                        if count > 250 or count2 > 25 then
                             coroutine.yield()
                             count, count2 = 0, 0
                         end
@@ -4271,10 +4271,10 @@ VERSION_NUMBER = 1.321
                         vect = constructVelocity:normalize()
                         while innerCount < #knownContacts do
                             coroutine.yield()
-                            local innerList = { table.unpack(knownContacts, innerCount, math.min(innerCount + 100, #knownContacts)) }
+                            local innerList = { table.unpack(knownContacts, innerCount, math.min(innerCount + 75, #knownContacts)) }
                             body, far, near = castIntersections(worldPos, vect, innerList)
-                            if body then collisionTarget = {body, far, near} break end
-                            innerCount = innerCount + 100
+                            if body and near then collisionTarget = {body, far, near} break end
+                            innerCount = innerCount + 75
                         end
                         if not body then collisionTarget = nil end
                         knownStatic = #knownContacts
@@ -4652,7 +4652,7 @@ VERSION_NUMBER = 1.321
 
         function ap.APTick()
             local function checkCollision()
-                if collisionTarget then
+                if collisionTarget and not AutoTakeoff and not BrakeLanding then
                     local body = collisionTarget[1]
                     local far, near = collisionTarget[2],collisionTarget[3] 
                     local collisionDistance = math.min(far, near or far)
@@ -6695,9 +6695,9 @@ VERSION_NUMBER = 1.321
     end
 
     function script.onStop()
-        system.print("Fail Count: " .. failCount)
-        system.print("RePlot Count: " .. rePlotCount )
-        system.print("Success Count: " .. successCount )
+        --system.print("Fail Count: " .. failCount)
+        --system.print("RePlot Count: " .. rePlotCount )
+        --system.print("Success Count: " .. successCount )
         _autoconf.hideCategoryPanels()
         if antigrav ~= nil  and not ExternalAGG then
             antigrav.hide()
