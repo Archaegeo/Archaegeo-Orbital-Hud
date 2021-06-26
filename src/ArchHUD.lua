@@ -4153,9 +4153,9 @@ VERSION_NUMBER = 1.321
             end
             getClosestPipe()           
         end
-        --failCount = 0
-        --successCount = 0
-        --rePlotCount = 0
+        failCount = 0
+        successCount = 0
+        rePlotCount = 0
         function Hud.UpdateRadarRoutine()
             --system.print("START URR: "..time)
             local knownContacts = {}
@@ -4199,16 +4199,16 @@ VERSION_NUMBER = 1.321
                         z = z + ref[3]
                         local save = construct.center
                         if save == nil or construct.i > 2 then 
-                            --if construct.i > 2 then rePlotCount = rePlotCount + 1 else successCount =  successCount + 1 end
+                            if construct.i > 2 then rePlotCount = rePlotCount + 1 else successCount =  successCount + 1 end
                             construct.center = vec3(x,y,z)
                             construct.i = 0
                             --system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}')
                         elseif mabs(save.x - x) > 2 or mabs(save.y - y) > 2 then
                             construct.i = construct.i + 1
-                            --failCount = failCount + 1
+                            failCount = failCount + 1
                             --system.print(construct.name.." "..construct.i)
                         else
-                            --successCount =  successCount + 1
+                            successCount =  successCount + 1
                         end
                     end
                     construct.pts = {}
@@ -4228,7 +4228,7 @@ VERSION_NUMBER = 1.321
                 
                 if #radarContacts > 0 then
                     local friendlies = {}
-                    local count, count2 = 0, 0
+                    local count, count2, static, knownStatic = 0, 0, 0, 0
 
                     for v in contactData do
                         local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
@@ -4237,24 +4237,27 @@ VERSION_NUMBER = 1.321
                         if radar_1.hasMatchingTransponder(id) == 1 then
                             table.insert(friendlies,id)
                         end
-                        if CollisionSystem and velMag > 20 and distance > 0 and radar_1.getConstructType(id) == "static" then
-                            local name = radar_1.getConstructName(id)
-                            local construct = contacts[id]
-                            if construct == nil then
-                                contacts[id] = {}
-                                contacts[id].pts = {}
-                                contacts[id].ref = wp
-                                contacts[id].name = name
-                                contacts[id].i = 0
-                                if size == "L" then sz = 128
-                                elseif size == "M" then sz = 64
-                                elseif size == "S" then sz = 32 end
-                                contacts[id].radius = (sz/2+coreOffset/2)
-                                construct = contacts[id]
+                        if distance > 0 and radar_1.getConstructType(id) == "static" then
+                            static = static + 1
+                            if CollisionSystem then
+                                local name = radar_1.getConstructName(id)
+                                local construct = contacts[id]
+                                if construct == nil then
+                                    contacts[id] = {}
+                                    contacts[id].pts = {}
+                                    contacts[id].ref = wp
+                                    contacts[id].name = name
+                                    contacts[id].i = 0
+                                    if size == "L" then sz = 128
+                                    elseif size == "M" then sz = 64
+                                    elseif size == "S" then sz = 32 end
+                                    contacts[id].radius = (sz/2+coreOffset/2)
+                                    construct = contacts[id]
+                                end
+                                updateVariables(construct, distance, wp)
+                                if construct.center then table.insert(knownContacts, construct) end
+                                count2 = count2 + 1
                             end
-                            updateVariables(construct, distance, wp)
-                            if construct.center then table.insert(knownContacts, construct) end
-                            count2 = count2 + 1
                         end
                         count = count + 1
                         if count > 125 or count2 > 10 then
@@ -4262,7 +4265,7 @@ VERSION_NUMBER = 1.321
                             count, count2 = 0, 0
                         end
                     end
-                    if #knownContacts > 0 and velMag > 20 then 
+                    if #knownContacts > 0 then 
                         local body, far, near, vect
                         local innerCount = 0
                         vect = constructVelocity:normalize()
@@ -4274,6 +4277,7 @@ VERSION_NUMBER = 1.321
                             innerCount = innerCount + 100
                         end
                         if not body then collisionTarget = nil end
+                        knownStatic = #knownContacts
                         knownContacts = {}
                     else
                         collisionTarget = nil
@@ -4290,7 +4294,13 @@ VERSION_NUMBER = 1.321
                     if radarPanelID == nil then
                         ToggleRadarPanel()
                     end
-                    radarMessage = svgText(radarX, radarY, "Radar: "..#radarContacts.." contacts", "pbright txtbig txtmid")
+                    local msg
+                    if CollisionSystem then 
+                        msg = knownStatic.."/"..static.." Buildings : "..(#radarContacts-static).." Ships" 
+                    else 
+                        msg = static.." Buildings : "..(#radarContacts-static).." Ships" 
+                    end
+                    radarMessage = svgText(radarX, radarY, msg, "pbright txtbig txtmid")
 
                     if #friendlies > 0 then
                         local y = ConvertResolutionY(15)
@@ -6685,9 +6695,9 @@ VERSION_NUMBER = 1.321
     end
 
     function script.onStop()
-        --system.print("Fail Count: " .. failCount)
-        --system.print("RePlot Count: " .. rePlotCount )
-        --system.print("Success Count: " .. successCount )
+        system.print("Fail Count: " .. failCount)
+        system.print("RePlot Count: " .. rePlotCount )
+        system.print("Success Count: " .. successCount )
         _autoconf.hideCategoryPanels()
         if antigrav ~= nil  and not ExternalAGG then
             antigrav.hide()

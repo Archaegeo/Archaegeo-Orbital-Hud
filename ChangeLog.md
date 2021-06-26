@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.321 
+Version 1.350 - Collision Detection and Avoidance System 1.0 (Atmospheric Static Contacts)
+Collision System is on by Default.
 - Added landing gear deployed announcement when doing brake landing from up high AP
 
 Version 1.320 - Randomized sound file support (Requirs 1.1.1+ audioframework if using soundPack features)
