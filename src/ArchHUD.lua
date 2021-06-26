@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.351
+VERSION_NUMBER = 1.352
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -200,6 +200,7 @@ VERSION_NUMBER = 1.351
     local time = systime()
     local clearAllCheck = systime()
     local coreOffset = 16
+    coreHalfDiag = 13
     local PrimaryR = SafeR
     local PrimaryB = SafeB
     local PrimaryG = SafeG
@@ -347,6 +348,7 @@ VERSION_NUMBER = 1.351
     contacts = {}
     collisionAlertStatus = false
     collisionTarget = nil
+    nearPlanet = unit.getClosestPlanetInfluence() > 0
 
 
 -- Function Definitions that are used in more than one areause 
@@ -517,7 +519,7 @@ VERSION_NUMBER = 1.351
                 orbitalParams.VectorToTarget = false
                 orbitalParams.AutopilotAlign = false
                 OrbitTargetSet = false
-            elseif unit.getClosestPlanetInfluence() > 0 then
+            elseif nearPlanet then
                 play("orOn", "AP")
                 IntoOrbit = true
                 autoRoll = true
@@ -548,7 +550,7 @@ VERSION_NUMBER = 1.351
                     HoldAltitude = planet.spaceEngineMinAltitude - 50
                     play("11","EP")
                 else
-                    if unit.getClosestPlanetInfluence() > 0 then
+                    if nearPlanet then
                         HoldAltitude = planet.noAtmosphericDensityAltitude + LowOrbitHeight
                         OrbitTargetOrbit = HoldAltitude
                         OrbitTargetSet = true
@@ -564,7 +566,7 @@ VERSION_NUMBER = 1.351
         else
             ahDoubleClick = time
         end
-        if unit.getClosestPlanetInfluence() > 0 and atmosDensity == 0 then
+        if nearPlanet and atmosDensity == 0 then
             OrbitTargetOrbit = coreAltitude
             OrbitTargetSet = true
             orbitAligned = true
@@ -693,7 +695,6 @@ VERSION_NUMBER = 1.351
         if AutopilotTargetIndex > 0 and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
             ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
             AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
-            local nearPlanet = unit.getClosestPlanetInfluence() > 0
             if CustomTarget ~= nil then
                 LockPitch = nil
                 SpaceTarget = (CustomTarget.planetname == "Space")
@@ -3953,7 +3954,7 @@ VERSION_NUMBER = 1.351
         
             local flightStyle = GetFlightStyle()
             local bottomText = "ROLL"
-            local nearPlanet = unit.getClosestPlanetInfluence() > 0
+            
             if throt == nil then throt = 0 end
         
             if (not nearPlanet) then
@@ -4159,6 +4160,7 @@ VERSION_NUMBER = 1.351
             --system.print("START URR: "..time)
             local knownContacts = {}
             local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
+                local st = time
                 p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
                 local r1s, r2s, r3s = r1*r1, r2*r2, r3*r3
                 local v2 = p2 - p1
@@ -4187,7 +4189,7 @@ VERSION_NUMBER = 1.351
                 local pts = construct.pts
                 local index = #pts
                 local ref = construct.ref
-                if index > 4 then
+                if index > 3 then
                     local in1, in2, in3, in4 = pts[index], pts[index-1], pts[index-2], pts[index-3]
                     construct.ref = wp
                     local pos = trilaterate(in1[1], in1[2], in2[1], in2[2], in3[1], in3[2], in4[1], in4[2])
@@ -4201,12 +4203,13 @@ VERSION_NUMBER = 1.351
                             --if construct.i > 2 then rePlotCount = rePlotCount + 1 else successCount =  successCount + 1 end
                             construct.center = vec3(x,y,z)
                             construct.i = 0
-                            --system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}')
+                            system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}')
                         elseif mabs(save.x - x) > 2 or mabs(save.y - y) > 2 then
                             construct.i = construct.i + 1
                             --failCount = failCount + 1
                             --system.print(construct.name.." "..construct.i)
                         else
+                            construct.i = 0
                             --successCount =  successCount + 1
                         end
                     end
@@ -4231,12 +4234,12 @@ VERSION_NUMBER = 1.351
 
                     for v in contactData do
                         local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
-                        local sz = 16
+                        local sz = 13
                         distance = tonumber(distance)
                         if radar_1.hasMatchingTransponder(id) == 1 then
                             table.insert(friendlies,id)
                         end
-                        if distance > 0 and radar_1.getConstructType(id) == "static" then
+                        if distance > 0 and radar_1.getConstructType(id) == "static" or radar_1.getConstructType(id) == "space" then
                             static = static + 1
                             if CollisionSystem then
                                 local name = radar_1.getConstructName(id)
@@ -4247,10 +4250,10 @@ VERSION_NUMBER = 1.351
                                     contacts[id].ref = wp
                                     contacts[id].name = name
                                     contacts[id].i = 0
-                                    if size == "L" then sz = 128
-                                    elseif size == "M" then sz = 64
-                                    elseif size == "S" then sz = 32 end
-                                    contacts[id].radius = (sz/2+coreOffset/2)
+                                    if size == "L" then sz = 110
+                                    elseif size == "M" then sz = 55
+                                    elseif size == "S" then sz = 27 end
+                                    contacts[id].radius = (sz+coreHalfDiag)
                                     construct = contacts[id]
                                 end
                                 updateVariables(construct, distance, wp)
@@ -4294,11 +4297,12 @@ VERSION_NUMBER = 1.351
                     if radarPanelID == nil then
                         ToggleRadarPanel()
                     end
-                    local msg
+                    local msg, where
+                    if nearPlanet then where = "Buildings" else where = "Stations" end
                     if CollisionSystem then 
-                        msg = knownStatic.."/"..static.." Buildings : "..(#radarContacts-static).." Ships" 
+                        msg = knownStatic.."/"..static.." "..where.." : "..(#radarContacts-static).." Ships" 
                     else 
-                        msg = static.." Buildings : "..(#radarContacts-static).." Ships" 
+                        msg = static.." "..where.." : "..(#radarContacts-static).." Ships" 
                     end
                     radarMessage = svgText(radarX, radarY, msg, "pbright txtbig txtmid")
 
@@ -4686,6 +4690,7 @@ VERSION_NUMBER = 1.351
             abvGndDet = AboveGroundLevel()
             time = systime()
             lastApTickTime = time
+            nearPlanet = unit.getClosestPlanetInfluence() > 0
 
             if CollisionSystem then checkCollision() end
 
@@ -5562,7 +5567,7 @@ VERSION_NUMBER = 1.351
                     brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, curBrake/2)
                 end
                 -- HoldAltitude is the alt we want to hold at
-                local nearPlanet = unit.getClosestPlanetInfluence() > 0
+
                 -- Dampen this.
                 local altDiff = HoldAltitude - coreAltitude
                 -- This may be better to smooth evenly regardless of HoldAltitude.  Let's say, 2km scaling?  Should be very smooth for atmo
@@ -6097,14 +6102,22 @@ VERSION_NUMBER = 1.351
                     if (type == "Landing Gear") then
                         hasGear = true
                     end
+                    local sz = 13.8564064606
+                    distance = tonumber(distance)
+                    if radar_1.hasMatchingTransponder(id) == 1 then
+                        table.insert(friendlies,id)
+                    end
                     if (type == "Dynamic Core Unit") then
                         local hp = eleMaxHp(elementsID[k])
                         if hp > 10000 then
                             coreOffset = 128
+                            coreHalfDiag = 110
                         elseif hp > 1000 then
                             coreOffset = 64
+                            coreHalfDiag = 55
                         elseif hp > 150 then
                             coreOffset = 32
+                            coreHalfDiag = 27
                         end
                     end
                     eleTotalMaxHp = eleTotalMaxHp + eleMaxHp(elementsID[k])
@@ -6568,7 +6581,7 @@ VERSION_NUMBER = 1.351
                         function()
                             return IntoOrbit
                         end, ToggleIntoOrbit, function()
-                            return (atmosDensity == 0 and unit.getClosestPlanetInfluence() > 0)
+                            return (atmosDensity == 0 and nearPlanet)
                         end)
                 y = y + buttonHeight + 20
                 MakeButton("Glide Re-Entry", "Cancel Glide Re-Entry", buttonWidth, buttonHeight, x, y,
@@ -8178,7 +8191,7 @@ VERSION_NUMBER = 1.351
             end
             toggleView = false
         elseif action == "lshift" then
-            if AltIsOn then holdingCtrl = true return end
+            if AltIsOn then holdingCtrl = true end
             if sysIsVwLock() == 1 then
                 holdingCtrl = true
                 PrevViewLock = sysIsVwLock()
@@ -8639,8 +8652,10 @@ VERSION_NUMBER = 1.351
 
     function script.onLeave(id)
         if radar_1 and CollisionSystem then 
-            id = tostring(id)
-            contacts[id] = nil 
+            if #contacts > 650 then 
+                id = tostring(id)
+                contacts[id] = nil 
+            end
         end
     end
 

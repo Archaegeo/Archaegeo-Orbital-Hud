@@ -1,4 +1,12 @@
 ## ChangeLog - Most recent changes at the top
+
+Version 1.352 - Space Collision support and intersect refinement
+- Added support for collision determination when in space.  Only warnings at this time.
+- Change how collision intersect determination is made to 1/2 diagonal of ship size + 1/2 diagonal of
+possible collision target size.
+- Improved performance of collision recognition
+
+
 Version 1.351 - Fix AP to another planet issue introduced in 1.350
 - AP will now detect intersection like it did in 1.320 and earlier.
 
