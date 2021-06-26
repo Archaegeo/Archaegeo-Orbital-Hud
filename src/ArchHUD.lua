@@ -351,6 +351,27 @@ VERSION_NUMBER = 1.350
 
 -- Function Definitions that are used in more than one areause 
 
+    function getTrueWorldPos()
+        local function getLocalToWorldConverter()
+            local v1 = core.getConstructWorldOrientationRight()
+            local v2 = core.getConstructWorldOrientationForward()
+            local v3 = core.getConstructWorldOrientationUp()
+            local v1t = library.systemResolution3(v1, v2, v3, {1,0,0})
+            local v2t = library.systemResolution3(v1, v2, v3, {0,1,0})
+            local v3t = library.systemResolution3(v1, v2, v3, {0,0,1})
+            return function(cref)
+                return library.systemResolution3(v1t, v2t, v3t, cref)
+            end
+        end
+        local cal = getLocalToWorldConverter()
+        local cWorldPos = core.getConstructWorldPos()
+        local pos = core.getElementPositionById(1)
+        local offsetPosition = {pos[1] - coreOffset, pos[2] - coreOffset, pos[3] - coreOffset}
+        local adj = cal(offsetPosition)
+        local adjPos = {cWorldPos[1] - adj[1], cWorldPos[2] - adj[2], cWorldPos[3] - adj[3]}
+        return adjPos
+    end
+
     local function play(sound, ID, type)
         if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" or not sounds then return end
         if type ~= nil then
@@ -1023,69 +1044,6 @@ VERSION_NUMBER = 1.350
         end
     end
 
-    function getTrueWorldPos()
-        local function getLocalToWorldConverter()
-            local v1 = core.getConstructWorldOrientationRight()
-            local v2 = core.getConstructWorldOrientationForward()
-            local v3 = core.getConstructWorldOrientationUp()
-            local v1t = library.systemResolution3(v1, v2, v3, {1,0,0})
-            local v2t = library.systemResolution3(v1, v2, v3, {0,1,0})
-            local v3t = library.systemResolution3(v1, v2, v3, {0,0,1})
-            return function(cref)
-                return library.systemResolution3(v1t, v2t, v3t, cref)
-            end
-        end
-        local cal = getLocalToWorldConverter()
-        local cWorldPos = core.getConstructWorldPos()
-        local pos = core.getElementPositionById(1)
-        local offsetPosition = {pos[1] - coreOffset, pos[2] - coreOffset, pos[3] - coreOffset}
-        local adj = cal(offsetPosition)
-        local adjPos = {cWorldPos[1] - adj[1], cWorldPos[2] - adj[2], cWorldPos[3] - adj[3]}
-        return adjPos
-    end
-
-    function castIntersections(origin, direction, collection, sizeCalculator, bodyIds)
-        local sizeCalculator = sizeCalculator or function(body)
-            return 1.00 * body.radius
-        end
-        local candidates = {}
-        if bodyIds then
-            for _, i in ipairs(bodyIds) do
-                candidates[i] = collection[i]
-            end
-        else
-            bodyIds = {}
-            for k, body in pairs(collection) do
-                table.insert(bodyIds, k)
-                candidates[k] = body
-            end
-        end
-        local function compare(b1, b2)
-            local v1 = candidates[b1].center - origin
-            local v2 = candidates[b2].center - origin
-            return v1:len() < v2:len()
-        end
-        table.sort(bodyIds, compare)
-        local dir = direction:normalize()
-        for i, id in ipairs(bodyIds) do
-            local body = candidates[id]
-            local c_oV3 = body.center - origin
-            local radius = sizeCalculator(body)
-            local dot = c_oV3:dot(dir)
-            local desc = dot ^ 2 - (c_oV3:len2() - radius ^ 2)
-            if desc >= 0 then
-                local root = math.sqrt(desc)
-                local farSide = dot + root
-                local nearSide = dot - root
-                if nearSide > 0 then
-                    return body, farSide, nearSide
-                elseif farSide > 0 then
-                    return body, farSide, nil
-                end
-            end
-        end
-        return nil, nil, nil
-    end
 
 -- Planet Info - https://gitlab.com/JayleBreak/dualuniverse/-/tree/master/DUflightfiles/autoconf/custom with modifications to support HUD, vanilla JayleBreak will not work anymore
     local function Atlas()
@@ -2496,8 +2454,49 @@ VERSION_NUMBER = 1.350
             -- return nil
         end
 
-        function PlanetarySystem:castIntersections(origin, direction, sizeCalculator, bodyIds)
-            castIntersections(origin, direction, self, sizeCalculator, bodyIds)
+        function PlanetarySystem:castIntersections(origin, direction, sizeCalculator, bodyIds, collection)
+            local sizeCalculator = sizeCalculator or function(body)
+                return 1.05 * body.radius
+            end
+            local candidates = {}
+            local selfie
+            if collection then selfie = collection else selfie = self end
+            if bodyIds then
+                for _, i in ipairs(bodyIds) do
+                    candidates[i] = selfie[i]
+                end
+            else
+                bodyIds = {}
+                for k, body in pairs(selfie) do
+                    table.insert(bodyIds, k)
+                    candidates[k] = body
+                end
+            end
+            local function compare(b1, b2)
+                local v1 = candidates[b1].center - origin
+                local v2 = candidates[b2].center - origin
+                return v1:len() < v2:len()
+            end
+            table.sort(bodyIds, compare)
+            local dir = direction:normalize()
+            for i, id in ipairs(bodyIds) do
+                local body = candidates[id]
+                local c_oV3 = body.center - origin
+                local radius = sizeCalculator(body)
+                local dot = c_oV3:dot(dir)
+                local desc = dot ^ 2 - (c_oV3:len2() - radius ^ 2)
+                if desc >= 0 then
+                    local root = math.sqrt(desc)
+                    local farSide = dot + root
+                    local nearSide = dot - root
+                    if nearSide > 0 then
+                        return body, farSide, nearSide
+                    elseif farSide > 0 then
+                        return body, farSide, nil
+                    end
+                end
+            end
+            return nil, nil, nil
         end
 
         function PlanetarySystem:closestBody(coordinates)
@@ -4268,11 +4267,12 @@ VERSION_NUMBER = 1.350
                     if #knownContacts > 0 then 
                         local body, far, near, vect
                         local innerCount = 0
+                        local galxRef = galaxyReference:getPlanetarySystem(0)
                         vect = constructVelocity:normalize()
                         while innerCount < #knownContacts do
                             coroutine.yield()
                             local innerList = { table.unpack(knownContacts, innerCount, math.min(innerCount + 75, #knownContacts)) }
-                            body, far, near = castIntersections(worldPos, vect, innerList)
+                            body, far, near = galxRef:castIntersections(worldPos, vect, nil, nil, innerList)
                             if body and near then collisionTarget = {body, far, near} break end
                             innerCount = innerCount + 75
                         end

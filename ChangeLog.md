@@ -1,4 +1,6 @@
 ## ChangeLog - Most recent changes at the top
+Version 1.351 - Fix AP to another planet issue introduced in 1.350
+- AP will now detect intersection like it did in 1.320 and earlier.
 
 Version 1.350 - Collision Detection and Avoidance System (Atmospheric Static Contacts)
 (MANY THANKS to both Dimencia and EasternGamer for tons of help over the past week developing this system.)
