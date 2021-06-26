@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.321
+VERSION_NUMBER = 1.350
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -4260,7 +4260,7 @@ VERSION_NUMBER = 1.321
                             end
                         end
                         count = count + 1
-                        if count > 250 or count2 > 25 then
+                        if count > 500 or count2 > 50 then
                             coroutine.yield()
                             count, count2 = 0, 0
                         end
@@ -4652,33 +4652,30 @@ VERSION_NUMBER = 1.321
 
         function ap.APTick()
             local function checkCollision()
-                if collisionTarget and not AutoTakeoff and not BrakeLanding then
+                if collisionTarget and not BrakeLanding then
                     local body = collisionTarget[1]
                     local far, near = collisionTarget[2],collisionTarget[3] 
                     local collisionDistance = math.min(far, near or far)
                     local collisionTime = collisionDistance/velMag
+                    if (AltitudeHold or VectorToTarget or LockPitch) and not AutoTakeoff and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
+                            BrakeIsOn = true
+                            cmdThrottle(0)
+                            if AltitudeHold then ToggleAltitudeHold() end
+                            if LockPitch then ToggleLockPitch() end
+                            msgText = "Autopilot Cancelled due to possible collision"
+                            if VectorToTarget then 
+                                ToggleAutopilot()
+                            end
+                            StrongBrakes = true
+                            BrakeLanding = true
+                            autoRoll = true
+                    end
                     if collisionTime < 11 then 
                         collisionAlertStatus = body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2)
                     else
                         collisionAlertStatus = body.name.." collision "..FormatTimeString(collisionTime)
                     end
-                    --if near then system.print("COLLISION: "..body.name.." D: "..math.max(far, near or far).." BD*2: "..brakeDistance*2) end 
-                    if collisionTime < 5 then
-                        play("alarm","AL",2) 
-                    end
-                    if (AltitudeHold or VectorToTarget or LockPitch) and (brakeDistance*2.5 > collisionDistance or collisionTime < 1) then
-                        BrakeIsOn = true
-                        cmdThrottle(0)
-                        if AltitudeHold then ToggleAltitudeHold() end
-                        if LockPitch then ToggleLockPitch() end
-                        msgText = "Autopilot Cancelled due to possible collision"
-                        if VectorToTarget then 
-                            ToggleAutopilot()
-                        end
-                        StrongBrakes = true
-                        BrakeLanding = true
-                        autoRoll = true
-                    end
+                    if collisionTime < 6 then play("alarm","AL",2) end
                 else
                     collisionAlertStatus = false
                 end
@@ -5539,6 +5536,31 @@ VERSION_NUMBER = 1.321
             end
 
             if AltitudeHold or BrakeLanding or Reentry or VectorToTarget or LockPitch ~= nil then
+                -- We want current brake value, not max
+                local curBrake = LastMaxBrakeInAtmo
+                if curBrake then
+                    curBrake = curBrake * uclamp(velMag/100,0.1,1) * atmosDensity
+                else
+                    curBrake = LastMaxBrake
+                end
+                if atmosDensity < 0.01 then
+                    curBrake = LastMaxBrake -- Assume space brakes
+                end
+
+
+                local airFrictionVec = vec3(core.getWorldAirFrictionAcceleration())
+                local airFriction = math.sqrt(airFrictionVec:len() - airFrictionVec:project_on(up):len()) * coreMass
+                -- Assume it will halve over our duration, if not sqrt.  We'll try sqrt because it's underestimating atm
+                -- First calculate stopping to 100 - that all happens with full brake power
+                if velMag > 100 then 
+                    brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(velMag, 100, coreMass, 0, 0,
+                                                    curBrake + airFriction)
+                    -- Then add in stopping from 100 to 0 at what averages to half brake power.  Assume no friction for this
+                    local lastDist, brakeTime2 = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, curBrake/2)
+                    brakeDistance = brakeDistance + lastDist
+                else -- Just calculate it regularly assuming the value will be halved while we do it, assuming no friction
+                    brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, curBrake/2)
+                end
                 -- HoldAltitude is the alt we want to hold at
                 local nearPlanet = unit.getClosestPlanetInfluence() > 0
                 -- Dampen this.
@@ -5694,31 +5716,7 @@ VERSION_NUMBER = 1.321
                         --local worldPosPlanetary = worldPos - planet.center
                         --local distanceToTarget = (planet.radius+coreAltitude) * math.atan(worldPosPlanetary:cross(targetPosAtAltitude):len(), worldPosPlanetary:dot(targetPosAtAltitude))
 
-                        -- We want current brake value, not max
-                        local curBrake = LastMaxBrakeInAtmo
-                        if curBrake then
-                            curBrake = curBrake * uclamp(velMag/100,0.1,1) * atmosDensity
-                        else
-                            curBrake = LastMaxBrake
-                        end
-                        if atmosDensity < 0.01 then
-                            curBrake = LastMaxBrake -- Assume space brakes
-                        end
-
                         local hSpd = constructVelocity:len() - mabs(vSpd)
-                        local airFrictionVec = vec3(core.getWorldAirFrictionAcceleration())
-                        local airFriction = math.sqrt(airFrictionVec:len() - airFrictionVec:project_on(up):len()) * coreMass
-                        -- Assume it will halve over our duration, if not sqrt.  We'll try sqrt because it's underestimating atm
-                        -- First calculate stopping to 100 - that all happens with full brake power
-                        if velMag > 100 then 
-                            brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(velMag, 100, coreMass, 0, 0,
-                                                            curBrake + airFriction)
-                            -- Then add in stopping from 100 to 0 at what averages to half brake power.  Assume no friction for this
-                            local lastDist, brakeTime2 = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, curBrake/2)
-                            brakeDistance = brakeDistance + lastDist
-                        else -- Just calculate it regularly assuming the value will be halved while we do it, assuming no friction
-                            brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, curBrake/2)
-                        end
                     
                         --StrongBrakes = ((planet.gravity * 9.80665 * coreMass) < LastMaxBrakeInAtmo)
                         StrongBrakes = true -- We don't care about this or glide landing anymore and idk where all it gets used
@@ -8152,11 +8150,11 @@ VERSION_NUMBER = 1.321
             ToggleAltitudeHold()
             toggleView = false
         elseif action == "option7" then
-            sounds = not sounds
-            if sounds then 
-                msgText = "All HUD sounds enabled"
+            CollisionSystem = not CollisionSystem
+            if CollisionSystem then 
+                msgText = "Collision System Enabled"
             else 
-                msgText = "All HUD sounds disabled"
+                msgText = "Collision System Secured"
             end
             toggleView = false
         elseif action == "option8" then
