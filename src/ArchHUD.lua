@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.353
+VERSION_NUMBER = 1.354
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -200,7 +200,7 @@ VERSION_NUMBER = 1.353
     local time = systime()
     local clearAllCheck = systime()
     local coreOffset = 16
-    coreHalfDiag = 13
+    local coreHalfDiag = 13
     local PrimaryR = SafeR
     local PrimaryB = SafeB
     local PrimaryG = SafeG
@@ -209,8 +209,7 @@ VERSION_NUMBER = 1.353
     local ThrottleLimited = false
     local calculatedThrottle = 0
     local WasInCruise = false
-    local halfResolutionX = round(ResolutionX / 2,0)
-    local halfResolutionY = round(ResolutionY / 2,0)
+
     local apThrottleSet = false -- Do not save this, because when they re-enter, throttle won't be set anymore
     local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in
     local reentryMode = false
@@ -345,10 +344,13 @@ VERSION_NUMBER = 1.353
     local radarMessage = ""
     local pipeMessage = ""
     local ReversalIsOn = nil
-    contacts = {}
+    local contacts = {}
+    nearPlanet = unit.getClosestPlanetInfluence() > 0
+    timeCount = 0
+    totalTime = 0
     collisionAlertStatus = false
     collisionTarget = nil
-    nearPlanet = unit.getClosestPlanetInfluence() > 0
+    
 
 
 -- Function Definitions that are used in more than one areause 
@@ -4157,10 +4159,9 @@ VERSION_NUMBER = 1.353
         --successCount = 0
         --rePlotCount = 0
         function Hud.UpdateRadarRoutine()
-            --system.print("START URR: "..time)
-            local knownContacts = {}
+            local startURR = time
+
             local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
-                local st = time
                 p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
                 local r1s, r2s, r3s = r1*r1, r2*r2, r3*r3
                 local v2 = p2 - p1
@@ -4222,6 +4223,7 @@ VERSION_NUMBER = 1.353
 
             if (radar_1) then
                 local radarContacts = radar_1.getEntries()
+                local knownContacts = {}
                 local radarData = radar_1.getData()
                 local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
                 local radarX = ConvertResolutionX(1770)
@@ -4245,14 +4247,9 @@ VERSION_NUMBER = 1.353
                                 local name = radar_1.getConstructName(id)
                                 local construct = contacts[id]
                                 if construct == nil then
-                                    contacts[id] = {}
-                                    contacts[id].pts = {}
-                                    contacts[id].ref = wp
-                                    contacts[id].name = name
-                                    contacts[id].i = 0
-                                    if size == "L" then sz = 110
-                                    elseif size == "M" then sz = 55
-                                    elseif size == "S" then sz = 27 end
+                                    contacts[id] = {pts = {}, ref = wp, name = name, i = 0, radius = sz}
+                                    local sizeMap = { XS = 13, S = 27, M = 55, L = 110}
+                                    sz = sizeMap[size]
                                     contacts[id].radius = (sz+coreHalfDiag)
                                     construct = contacts[id]
                                 end
@@ -4329,7 +4326,14 @@ VERSION_NUMBER = 1.353
                     end
                 end
             end
-            --system.print("FINISH URR: "..time)
+            if timeCount < 250 then
+                totalTime = totalTime + (time-startURR)
+                timeCount = timeCount+1
+            else
+                system.print("Avg of 250 URR: "..(totalTime/250))
+                timeCount = 0
+                totalTime = 0
+            end
         end
 
         function Hud.UpdateRadar()
@@ -6017,8 +6021,6 @@ VERSION_NUMBER = 1.353
                     coroutine.yield()
                     if valuesAreSet then
                         msgText = "Loaded Saved Variables"
-                        halfResolutionX = round(ResolutionX / 2,0)
-                        halfResolutionY = round(ResolutionY / 2,0)
                         resolutionWidth = ResolutionX
                         resolutionHeight = ResolutionY
                         BrakeToggleStatus = BrakeToggleDefault
@@ -7255,6 +7257,8 @@ VERSION_NUMBER = 1.353
                         end
                     end
                 end
+                local halfResolutionX = round(ResolutionX / 2,0)
+                local halfResolutionY = round(ResolutionY / 2,0)
             local newContent = {}
             HUD.HUDPrologue(newContent)
             if showHud then
