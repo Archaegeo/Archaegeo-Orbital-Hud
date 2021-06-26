@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.320
+VERSION_NUMBER = 1.350
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -41,6 +41,7 @@ VERSION_NUMBER = 1.320
     Cockpit = false --export:
     voices = true --export:
     alerts = true --export:
+    CollisionSystem = true --export:
     
     -- Ship Handling variables
     YawStallAngle = 35 --export:
@@ -343,6 +344,9 @@ VERSION_NUMBER = 1.320
     local radarMessage = ""
     local pipeMessage = ""
     local ReversalIsOn = nil
+    contacts = {}
+    collisionAlertStatus = false
+    collisionTarget = nil
 
 
 -- Function Definitions that are used in more than one areause 
@@ -374,7 +378,7 @@ VERSION_NUMBER = 1.320
                 "InvertMouse", "autoRollPreference", "turnAssist", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
                 "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd", "BarFuelDisplay", "showHelp", "Cockpit",
-                "voices", "alerts"}
+                "voices", "alerts", "CollisionSystem"}
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
@@ -634,6 +638,7 @@ VERSION_NUMBER = 1.320
         local function ToggleVectorToTarget(SpaceTarget)
             -- This is a feature to vector toward the target destination in atmo or otherwise on-planet
             -- Uses altitude hold.  
+            collisionAlertStatus = false
             VectorToTarget = not VectorToTarget
             if VectorToTarget then
                 TurnBurn = false
@@ -1017,7 +1022,71 @@ VERSION_NUMBER = 1.320
             end
         end
     end
- 
+
+    function getTrueWorldPos()
+        local function getLocalToWorldConverter()
+            local v1 = core.getConstructWorldOrientationRight()
+            local v2 = core.getConstructWorldOrientationForward()
+            local v3 = core.getConstructWorldOrientationUp()
+            local v1t = library.systemResolution3(v1, v2, v3, {1,0,0})
+            local v2t = library.systemResolution3(v1, v2, v3, {0,1,0})
+            local v3t = library.systemResolution3(v1, v2, v3, {0,0,1})
+            return function(cref)
+                return library.systemResolution3(v1t, v2t, v3t, cref)
+            end
+        end
+        local cal = getLocalToWorldConverter()
+        local cWorldPos = core.getConstructWorldPos()
+        local pos = core.getElementPositionById(1)
+        local offsetPosition = {pos[1] - coreOffset, pos[2] - coreOffset, pos[3] - coreOffset}
+        local adj = cal(offsetPosition)
+        local adjPos = {cWorldPos[1] - adj[1], cWorldPos[2] - adj[2], cWorldPos[3] - adj[3]}
+        return adjPos
+    end
+
+    function castIntersections(origin, direction, collection, sizeCalculator, bodyIds)
+        local sizeCalculator = sizeCalculator or function(body)
+            return 1.00 * body.radius
+        end
+        local candidates = {}
+        if bodyIds then
+            for _, i in ipairs(bodyIds) do
+                candidates[i] = collection[i]
+            end
+        else
+            bodyIds = {}
+            for k, body in pairs(collection) do
+                table.insert(bodyIds, k)
+                candidates[k] = body
+            end
+        end
+        local function compare(b1, b2)
+            local v1 = candidates[b1].center - origin
+            local v2 = candidates[b2].center - origin
+            return v1:len() < v2:len()
+        end
+        table.sort(bodyIds, compare)
+        local dir = direction:normalize()
+        for i, id in ipairs(bodyIds) do
+            local body = candidates[id]
+            local c_oV3 = body.center - origin
+            local radius = sizeCalculator(body)
+            local dot = c_oV3:dot(dir)
+            local desc = dot ^ 2 - (c_oV3:len2() - radius ^ 2)
+            if desc >= 0 then
+                local root = math.sqrt(desc)
+                local farSide = dot + root
+                local nearSide = dot - root
+                if nearSide > 0 then
+                    return body, farSide, nearSide
+                elseif farSide > 0 then
+                    return body, farSide, nil
+                end
+            end
+        end
+        return nil, nil, nil
+    end
+
 -- Planet Info - https://gitlab.com/JayleBreak/dualuniverse/-/tree/master/DUflightfiles/autoconf/custom with modifications to support HUD, vanilla JayleBreak will not work anymore
     local function Atlas()
         return {
@@ -2428,46 +2497,7 @@ VERSION_NUMBER = 1.320
         end
 
         function PlanetarySystem:castIntersections(origin, direction, sizeCalculator, bodyIds)
-            local sizeCalculator = sizeCalculator or function(body)
-                return 1.05 * body.radius
-            end
-            local candidates = {}
-            if bodyIds then
-                for _, i in ipairs(bodyIds) do
-                    candidates[i] = self[i]
-                end
-            else
-                bodyIds = {}
-                for k, body in pairs(self) do
-                    table.insert(bodyIds, k)
-                    candidates[k] = body
-                end
-            end
-            local function compare(b1, b2)
-                local v1 = candidates[b1].center - origin
-                local v2 = candidates[b2].center - origin
-                return v1:len() < v2:len()
-            end
-            table.sort(bodyIds, compare)
-            local dir = direction:normalize()
-            for i, id in ipairs(bodyIds) do
-                local body = candidates[id]
-                local c_oV3 = body.center - origin
-                local radius = sizeCalculator(body)
-                local dot = c_oV3:dot(dir)
-                local desc = dot ^ 2 - (c_oV3:len2() - radius ^ 2)
-                if desc >= 0 then
-                    local root = math.sqrt(desc)
-                    local farSide = dot + root
-                    local nearSide = dot - root
-                    if nearSide > 0 then
-                        return body, farSide, nearSide
-                    elseif farSide > 0 then
-                        return body, farSide, nil
-                    end
-                end
-            end
-            return nil, nil, nil
+            castIntersections(origin, direction, self, sizeCalculator, bodyIds)
         end
 
         function PlanetarySystem:closestBody(coordinates)
@@ -3514,11 +3544,6 @@ VERSION_NUMBER = 1.320
                 elseif Reentry then
                     newContent[#newContent + 1] = svgText(warningX, apY+20, "Re-entry in Progress", "warn")
                 end
-                local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
-                local atmoDistance = farSide
-                if nearSide ~= nil and farSide ~= nil then
-                    atmoDistance = math.min(nearSide,farSide)
-                end
                 if AltitudeHold or VertTakeOff then
                     local displayText = getDistanceDisplayString(HoldAltitude, 2)
                     if VertTakeOff then
@@ -3570,13 +3595,22 @@ VERSION_NUMBER = 1.320
                 if RetrogradeIsOn then
                     newContent[#newContent + 1] = svgText(warningX, apY, "Retrograde Alignment", "crit")
                 end
+                local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
+                local atmoDistance = farSide
+                if nearSide ~= nil and farSide ~= nil then
+                    atmoDistance = math.min(nearSide,farSide)
+                end
                 if atmoDistance ~= nil and atmosDensity == 0 then
                         local displayText = getDistanceDisplayString(atmoDistance)
                         local travelTime = Kinematic.computeTravelTime(velMag, 0, atmoDistance)
                         local displayCollisionType = "Collision"
                         if intersectBody.noAtmosphericDensityAltitude > 0 then displayCollisionType = "Atmosphere" end
                         newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, intersectBody.name.." "..displayCollisionType.." "..FormatTimeString(travelTime).." In "..displayText, "crit")
-                    
+                end
+                if collisionAlertStatus then
+                    local type
+                    if string.find(collisionAlertStatus, "COLLISION") then type = "warnings" else type = "crit" end
+                    newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, collisionAlertStatus, type)
                 end
                 if VectorToTarget and not IntoOrbit then
                     newContent[#newContent + 1] = svgText(warningX, apY+35, VectorStatus, "warn")
@@ -4119,15 +4153,136 @@ VERSION_NUMBER = 1.320
             end
             getClosestPipe()           
         end
+        --failCount = 0
+        --successCount = 0
+        --rePlotCount = 0
+        function Hud.UpdateRadarRoutine()
+            --system.print("START URR: "..time)
+            local knownContacts = {}
+            local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
+                p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
+                local r1s, r2s, r3s = r1*r1, r2*r2, r3*r3
+                local v2 = p2 - p1
+                local ax = v2:normalize()
+                local U = v2:len()
+                local v3 = p3 - p1
+                local ay = (v3 - v3:project_on(ax)):normalize()
+                local v3x, v3y = v3:dot(ax), v3:dot(ay)
+                local vs = v3x*v3x + v3y*v3y
+                local az = ax:cross(ay)  
+                local x = (r1s - r2s + U*U) / (2*U) 
+                local y = (r1s - r3s + vs - 2*v3x*x)/(2*v3y)
+                local m = r1s - (x^2) - (y^2) 
+                local z = math.sqrt(m)
+                local t1 = p1 + ax*x + ay*y + az*z
+                local t2 = p1 + ax*x + ay*y - az*z
+              
+                if math.abs((p4 - t1):len() - r4) < math.abs((p4 - t2):len() - r4) then
+                  return t1
+                else
+                  return t2
+                end
+            end
+            
+            local function updateVariables(construct, d, wp) -- Thanks to EasternGamer and Dimencia
+                local pts = construct.pts
+                local index = #pts
+                local ref = construct.ref
+                if index > 4 then
+                    local in1, in2, in3, in4 = pts[index], pts[index-1], pts[index-2], pts[index-3]
+                    construct.ref = wp
+                    local pos = trilaterate(in1[1], in1[2], in2[1], in2[2], in3[1], in3[2], in4[1], in4[2])
+                    local x,y,z = pos.x, pos.y, pos.z
+                    if x == x and y == y and z == z then
+                        x = x + ref[1]
+                        y = y + ref[2]
+                        z = z + ref[3]
+                        local save = construct.center
+                        if save == nil or construct.i > 2 then 
+                            --if construct.i > 2 then rePlotCount = rePlotCount + 1 else successCount =  successCount + 1 end
+                            construct.center = vec3(x,y,z)
+                            construct.i = 0
+                            --system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}')
+                        elseif mabs(save.x - x) > 2 or mabs(save.y - y) > 2 then
+                            construct.i = construct.i + 1
+                            --failCount = failCount + 1
+                            --system.print(construct.name.." "..construct.i)
+                        else
+                            --successCount =  successCount + 1
+                        end
+                    end
+                    construct.pts = {}
+                else
+                    local offset = {wp[1]-ref[1],wp[2]-ref[2],wp[3]-ref[3]}
+                    pts[index+1] = {d,offset}
+                end
+            end
 
-        function Hud.UpdateRadar()
             if (radar_1) then
                 local radarContacts = radar_1.getEntries()
                 local radarData = radar_1.getData()
+                local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
                 local radarX = ConvertResolutionX(1770)
                 local radarY = ConvertResolutionY(350)
+                local wp = getTrueWorldPos()
                 
                 if #radarContacts > 0 then
+                    local friendlies = {}
+                    local count, count2, static, knownStatic = 0, 0, 0, 0
+
+                    for v in contactData do
+                        local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
+                        local sz = 16
+                        distance = tonumber(distance)
+                        if radar_1.hasMatchingTransponder(id) == 1 then
+                            table.insert(friendlies,id)
+                        end
+                        if distance > 0 and radar_1.getConstructType(id) == "static" then
+                            static = static + 1
+                            if CollisionSystem then
+                                local name = radar_1.getConstructName(id)
+                                local construct = contacts[id]
+                                if construct == nil then
+                                    contacts[id] = {}
+                                    contacts[id].pts = {}
+                                    contacts[id].ref = wp
+                                    contacts[id].name = name
+                                    contacts[id].i = 0
+                                    if size == "L" then sz = 128
+                                    elseif size == "M" then sz = 64
+                                    elseif size == "S" then sz = 32 end
+                                    contacts[id].radius = (sz/2+coreOffset/2)
+                                    construct = contacts[id]
+                                end
+                                updateVariables(construct, distance, wp)
+                                if construct.center then table.insert(knownContacts, construct) end
+                                count2 = count2 + 1
+                            end
+                        end
+                        count = count + 1
+                        if count > 500 or count2 > 50 then
+                            coroutine.yield()
+                            count, count2 = 0, 0
+                        end
+                    end
+                    if #knownContacts > 0 then 
+                        local body, far, near, vect
+                        local innerCount = 0
+                        vect = constructVelocity:normalize()
+                        while innerCount < #knownContacts do
+                            coroutine.yield()
+                            local innerList = { table.unpack(knownContacts, innerCount, math.min(innerCount + 75, #knownContacts)) }
+                            body, far, near = castIntersections(worldPos, vect, innerList)
+                            if body and near then collisionTarget = {body, far, near} break end
+                            innerCount = innerCount + 75
+                        end
+                        if not body then collisionTarget = nil end
+                        knownStatic = #knownContacts
+                        knownContacts = {}
+                    else
+                        collisionTarget = nil
+                    end
+
                     local target = radarData:find('identifiedConstructs":%[%]')
                     if target == nil and perisPanelID == nil then
                         peris = 1
@@ -4139,13 +4294,14 @@ VERSION_NUMBER = 1.320
                     if radarPanelID == nil then
                         ToggleRadarPanel()
                     end
-                    radarMessage = svgText(radarX, radarY, "Radar: "..#radarContacts.." contacts", "pbright txtbig txtmid")
-                    local friendlies = {}
-                    for k, v in pairs(radarContacts) do
-                        if radar_1.hasMatchingTransponder(v) == 1 then
-                            table.insert(friendlies,v)
-                        end
+                    local msg
+                    if CollisionSystem then 
+                        msg = knownStatic.."/"..static.." Buildings : "..(#radarContacts-static).." Ships" 
+                    else 
+                        msg = static.." Buildings : "..(#radarContacts-static).." Ships" 
                     end
+                    radarMessage = svgText(radarX, radarY, msg, "pbright txtbig txtmid")
+
                     if #friendlies > 0 then
                         local y = ConvertResolutionY(15)
                         local x = ConvertResolutionX(1370)
@@ -4169,6 +4325,18 @@ VERSION_NUMBER = 1.320
                     end
                 end
             end
+            --system.print("FINISH URR: "..time)
+        end
+
+        function Hud.UpdateRadar()
+            local cont = coroutine.status (UpdateRadarCoroutine)
+            if cont == "suspended" then 
+                local value, done = coroutine.resume(UpdateRadarCoroutine)
+                if done then system.print("ERROR UPDATE RADAR: "..done) end
+            elseif cont == "dead" then
+                UpdateRadarCoroutine = coroutine.create(Hud.UpdateRadarRoutine)
+                local value, done = coroutine.resume(UpdateRadarCoroutine)
+            end
         end
 
         function Hud.DrawSettings(newContent)
@@ -4189,6 +4357,8 @@ VERSION_NUMBER = 1.320
             end
             return newContent
         end
+
+        UpdateRadarCoroutine = coroutine.create(Hud.UpdateRadarRoutine)
         return Hud
     end 
     local function AtlasClass() -- Atlas and Interplanetary functions including Update Autopilot Target
@@ -4481,13 +4651,43 @@ VERSION_NUMBER = 1.320
         end
 
         function ap.APTick()
-
+            local function checkCollision()
+                if collisionTarget and not BrakeLanding then
+                    local body = collisionTarget[1]
+                    local far, near = collisionTarget[2],collisionTarget[3] 
+                    local collisionDistance = math.min(far, near or far)
+                    local collisionTime = collisionDistance/velMag
+                    if (AltitudeHold or VectorToTarget or LockPitch) and not AutoTakeoff and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
+                            BrakeIsOn = true
+                            cmdThrottle(0)
+                            if AltitudeHold then ToggleAltitudeHold() end
+                            if LockPitch then ToggleLockPitch() end
+                            msgText = "Autopilot Cancelled due to possible collision"
+                            if VectorToTarget then 
+                                ToggleAutopilot()
+                            end
+                            StrongBrakes = true
+                            BrakeLanding = true
+                            autoRoll = true
+                    end
+                    if collisionTime < 11 then 
+                        collisionAlertStatus = body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2)
+                    else
+                        collisionAlertStatus = body.name.." collision "..FormatTimeString(collisionTime)
+                    end
+                    if collisionTime < 6 then play("alarm","AL",2) end
+                else
+                    collisionAlertStatus = false
+                end
+            end
             inAtmo = (atmosphere() > 0)
             atmosDensity = atmosphere()
             coreAltitude = core.getAltitude()
             abvGndDet = AboveGroundLevel()
             time = systime()
             lastApTickTime = time
+
+            if CollisionSystem then checkCollision() end
 
             if antigrav then
                 antigravOn = (antigrav.getState() == 1)
@@ -5336,6 +5536,31 @@ VERSION_NUMBER = 1.320
             end
 
             if AltitudeHold or BrakeLanding or Reentry or VectorToTarget or LockPitch ~= nil then
+                -- We want current brake value, not max
+                local curBrake = LastMaxBrakeInAtmo
+                if curBrake then
+                    curBrake = curBrake * uclamp(velMag/100,0.1,1) * atmosDensity
+                else
+                    curBrake = LastMaxBrake
+                end
+                if atmosDensity < 0.01 then
+                    curBrake = LastMaxBrake -- Assume space brakes
+                end
+
+
+                local airFrictionVec = vec3(core.getWorldAirFrictionAcceleration())
+                local airFriction = math.sqrt(airFrictionVec:len() - airFrictionVec:project_on(up):len()) * coreMass
+                -- Assume it will halve over our duration, if not sqrt.  We'll try sqrt because it's underestimating atm
+                -- First calculate stopping to 100 - that all happens with full brake power
+                if velMag > 100 then 
+                    brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(velMag, 100, coreMass, 0, 0,
+                                                    curBrake + airFriction)
+                    -- Then add in stopping from 100 to 0 at what averages to half brake power.  Assume no friction for this
+                    local lastDist, brakeTime2 = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, curBrake/2)
+                    brakeDistance = brakeDistance + lastDist
+                else -- Just calculate it regularly assuming the value will be halved while we do it, assuming no friction
+                    brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, curBrake/2)
+                end
                 -- HoldAltitude is the alt we want to hold at
                 local nearPlanet = unit.getClosestPlanetInfluence() > 0
                 -- Dampen this.
@@ -5487,39 +5712,18 @@ VERSION_NUMBER = 1.320
                         local targetAltitude = planet:getAltitude(CustomTarget.position)
                         local distanceToTarget = math.sqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
 
-                        -- We want current brake value, not max
-                        local curBrake = LastMaxBrakeInAtmo
-                        if curBrake then
-                            curBrake = curBrake * uclamp(velMag/100,0.1,1) * atmosDensity
-                        else
-                            curBrake = LastMaxBrake
-                        end
-                        if atmosDensity < 0.01 then
-                            curBrake = LastMaxBrake -- Assume space brakes
-                        end
+                        --local targetPosAtAltitude = CustomTarget.position + worldVertical*(coreAltitude - targetAltitude) - planet.center
+                        --local worldPosPlanetary = worldPos - planet.center
+                        --local distanceToTarget = (planet.radius+coreAltitude) * math.atan(worldPosPlanetary:cross(targetPosAtAltitude):len(), worldPosPlanetary:dot(targetPosAtAltitude))
 
                         local hSpd = constructVelocity:len() - mabs(vSpd)
-                        local airFrictionVec = vec3(core.getWorldAirFrictionAcceleration())
-                        local airFriction = math.sqrt(airFrictionVec:len() - airFrictionVec:project_on(up):len()) * coreMass
-                        -- Assume it will halve over our duration, if not sqrt.  We'll try sqrt because it's underestimating atm
-                        -- First calculate stopping to 100 - that all happens with full brake power
-                        if velMag > 100 then 
-                            brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(velMag, 100, coreMass, 0, 0,
-                                                            curBrake + airFriction)
-                            -- Then add in stopping from 100 to 0 at what averages to half brake power.  Assume no friction for this
-                            local lastDist, brakeTime2 = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, curBrake/2)
-                            brakeDistance = brakeDistance + lastDist
-                        else -- Just calculate it regularly assuming the value will be halved while we do it, assuming no friction
-                            brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, curBrake/2)
-                        end
                     
-
                         --StrongBrakes = ((planet.gravity * 9.80665 * coreMass) < LastMaxBrakeInAtmo)
                         StrongBrakes = true -- We don't care about this or glide landing anymore and idk where all it gets used
                         
                         -- Fudge it with the distance we'll travel in a tick - or half that and the next tick accounts for the other? idk
-                        if not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance + (velMag*deltaTick)/2 and (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99 
-                            or VectorStatus == "Finalizing Approach") then 
+                        if (not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance + (velMag*deltaTick)/2 and 
+                                (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99  or VectorStatus == "Finalizing Approach")) then 
                             VectorStatus = "Finalizing Approach" 
                             cmdThrottle(0) -- Kill throttle in case they weren't in cruise
                             if AltitudeHold then
@@ -5532,13 +5736,14 @@ VERSION_NUMBER = 1.320
                         elseif not AutoTakeoff then
                             BrakeIsOn = false
                         end
-                        if VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget)) then
+                        if (VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget))) then
                             if not antigravOn then  
                                 play("bklOn","BL")
                                 BrakeLanding = true 
                             end
                             VectorToTarget = false
                             VectorStatus = "Proceeding to Waypoint"
+                            collisionAlertStatus = false
                         end
                         LastDistanceToTarget = distanceToTarget
                     end
@@ -5597,15 +5802,12 @@ VERSION_NUMBER = 1.320
                     local distanceToStop = 30 
                     if maxKinematicUp ~= nil and maxKinematicUp > 0 then
 
-                        local airFriction = 0
-
                         -- Funny enough, LastMaxBrakeInAtmo has stuff done to it to convert to a flat value
                         -- But we need the instant one back, to know how good we are at braking at this exact moment
                         local atmos = uclamp(atmosDensity,0.4,2) -- Assume at least 40% atmo when they land, to keep things fast in low atmo
                         local curBrake = LastMaxBrakeInAtmo * uclamp(velMag/100,0.1,1) * atmos
-                        local totalNewtons = maxKinematicUp * atmos + curBrake + airFriction - gravity -- Ignore air friction for leeway, KinematicUp and Brake are already in newtons
-                        --local brakeNewtons = curBrake + airFriction - gravity
-                        local weakBreakNewtons = curBrake/2 + airFriction - gravity
+                        local totalNewtons = maxKinematicUp * atmos + curBrake - gravity -- Ignore air friction for leeway, KinematicUp and Brake are already in newtons
+                        local weakBreakNewtons = curBrake/2 - gravity
 
                         local speedAfterBraking = velMag - math.sqrt((mabs(weakBreakNewtons/2)*20)/(0.5*coreMass))*utils.sign(weakBreakNewtons)
                         if speedAfterBraking < 0 then  
@@ -5628,10 +5830,10 @@ VERSION_NUMBER = 1.320
                             local stopDistance = 0
                             if speedAfterBraking > 100 then
                                 local stopDistance1, _ = Kinematic.computeDistanceAndTime(speedAfterBraking, 100, coreMass, 0, 0, totalNewtons) 
-                                local stopDistance2, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, maxKinematicUp * atmos + math.sqrt(curBrake) + airFriction - gravity) -- Low brake power for the last 100kph
+                                local stopDistance2, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, maxKinematicUp * atmos + math.sqrt(curBrake) - gravity) -- Low brake power for the last 100kph
                                 stopDistance = stopDistance1 + stopDistance2
                             else
-                                stopDistance, _ = Kinematic.computeDistanceAndTime(speedAfterBraking, 0, coreMass, 0, 0, maxKinematicUp * atmos + math.sqrt(curBrake) + airFriction - gravity) 
+                                stopDistance, _ = Kinematic.computeDistanceAndTime(speedAfterBraking, 0, coreMass, 0, 0, maxKinematicUp * atmos + math.sqrt(curBrake) - gravity) 
                             end
                             --if LandingGearGroundHeight == 0 then
                             stopDistance = (stopDistance+15+(velMag*deltaTick))*1.1 -- Add leeway for large ships with forcefields or landing gear, and for lag
@@ -5681,7 +5883,10 @@ VERSION_NUMBER = 1.320
                                 BrakeLanding = false
                                 AltitudeHold = false
                                 GearExtended = true
-                                Nav.control.extendLandingGears()
+                                if hasGear then
+                                    Nav.control.extendLandingGears()
+                                    play("grOut","LG",1)
+                                end
                                 navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                                 upAmount = 0
                                 BrakeIsOn = true
@@ -5844,6 +6049,7 @@ VERSION_NUMBER = 1.320
                 end
 
                 if safeMass == 0 then safeMass = coreMass end
+                VectorStatus = "Proceeding to Waypoint"
             end
 
             local function ProcessElements()
@@ -6483,9 +6689,13 @@ VERSION_NUMBER = 1.320
             unit.setTimer("fiveSecond", 5) 
             play("start","SU")
         end)
+        coroutine.resume(beginSetup)
     end
 
     function script.onStop()
+        --system.print("Fail Count: " .. failCount)
+        --system.print("RePlot Count: " .. rePlotCount )
+        --system.print("Success Count: " .. successCount )
         _autoconf.hideCategoryPanels()
         if antigrav ~= nil  and not ExternalAGG then
             antigrav.hide()
@@ -6871,7 +7081,6 @@ VERSION_NUMBER = 1.320
                 compareMass() 
             end
             updateDistance()
-            HUD.UpdateRadar()
             HUD.UpdatePipe()
             updateWeapons()
             -- Update odometer output string
@@ -7045,6 +7254,7 @@ VERSION_NUMBER = 1.320
             if showSettings and settingsVariables ~= {} then 
                 HUD.DrawSettings(newContent) 
             end
+            HUD.UpdateRadar()
             HUD.HUDEpilogue(newContent)
             newContent[#newContent + 1] = stringf(
                 [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
@@ -7250,7 +7460,6 @@ VERSION_NUMBER = 1.320
         brakeFlatFactor = math.max(brakeFlatFactor, 0.01)
         autoRollFactor = math.max(autoRollFactor, 0.01)
         turnAssistFactor = math.max(turnAssistFactor, 0.01)
-
         -- final inputs
         local finalPitchInput = uclamp(pitchInput + pitchInput2 + system.getControlDeviceForwardInput(),-1,1)
         local finalRollInput = uclamp(rollInput + rollInput2 + system.getControlDeviceYawInput(),-1,1)
@@ -7263,11 +7472,11 @@ VERSION_NUMBER = 1.320
             worldVertical = (planet.center - worldPos):normalize() -- I think also along gravity hopefully?
         end
 
-        worldPos = vec3(core.getConstructWorldPos())
         constructUp = vec3(core.getConstructWorldOrientationUp())
         constructForward = vec3(core.getConstructWorldOrientationForward())
         constructRight = vec3(core.getConstructWorldOrientationRight())
         constructVelocity = vec3(core.getWorldVelocity())
+        worldPos = vec3(core.getConstructWorldPos())
         coreMass =  core.getConstructMass()
         velMag = vec3(constructVelocity):len()
         vSpd = -worldVertical:dot(constructVelocity)
@@ -7659,11 +7868,15 @@ VERSION_NUMBER = 1.320
 
     function script.onUpdate()
         if not SetupComplete then
-            local _, result = coroutine.resume(beginSetup)
-            if result then
+            local cont = coroutine.status (beginSetup)
+            if cont == "suspended" then 
+                local value, done = coroutine.resume(beginSetup)
+                if done then system.print("ERROR STARTUP: "..done) end
+            elseif cont == "dead" then
                 SetupComplete = true
             end
-        else
+        end
+        if SetupComplete then
             Nav:update()
             if not Animating and content ~= LastContent then
                 if not Cockpit then 
@@ -7919,7 +8132,7 @@ VERSION_NUMBER = 1.320
             ToggleAutopilot()
             toggleView = false            
         elseif action == "option5" then
-            local function ToggleLockPitch()
+            function ToggleLockPitch()
                 if LockPitch == nil then
                     play("lkPOn","LP")
                     LockPitch = adjustedPitch
@@ -7937,11 +8150,11 @@ VERSION_NUMBER = 1.320
             ToggleAltitudeHold()
             toggleView = false
         elseif action == "option7" then
-            sounds = not sounds
-            if sounds then 
-                msgText = "All HUD sounds enabled"
+            CollisionSystem = not CollisionSystem
+            if CollisionSystem then 
+                msgText = "Collision System Enabled"
             else 
-                msgText = "All HUD sounds disabled"
+                msgText = "Collision System Secured"
             end
             toggleView = false
         elseif action == "option8" then
@@ -8421,6 +8634,13 @@ VERSION_NUMBER = 1.320
     function script.onEnter(id)
         if radar_1 and not inAtmo and not notPvPZone then 
             unit.setTimer("contact",0.1) 
+        end
+    end
+
+    function script.onLeave(id)
+        if radar_1 and CollisionSystem then 
+            id = tostring(id)
+            contacts[id] = nil 
         end
     end
 

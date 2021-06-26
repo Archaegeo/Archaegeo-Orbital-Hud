@@ -1,5 +1,21 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.350 - Collision Detection and Avoidance System (Atmospheric Static Contacts)
+(MANY THANKS to both Dimencia and EasternGamer for tons of help over the past week developing this system.)
+Collision System is on by Default.  Alt-7 to toggle it on/off.  Also settable by user variable or shift button. 
+NOTE: With collision system on, there is very little room for other scripts to avoid CPU overload if in high count contact area.
+
+Collision is detected by your vector of flight, not direction you are facing.
+When you get in seat with atmo radar connected you will see X/Y Building : Z Ships.  X is known location, Y is total buildings.
+Z is total ships (Y + Z is total contacts).  The system will identify the location of the statics (buildings) and then use them
+in the warning and avoidance system.
+
+Manual Flight - 3 Levels of Warning - Dull red with countdown timer.  Bright red if you are within 10 seconds of crash. Sound Alarm
+if soundPack is active and within 5 sec of crash
+AP Flight Avoidance - If in Altitude Hold, LockPitch, or Vector To Target (AP to save on same planet) and not in Autotakeoff, ship will autostop and 
+brakeland if you get within 1.5 x current brake distance or within 1 second at current velocity.
+- Added landing gear deployed announcement when doing brake landing from up high AP
+
 Version 1.320 - Randomized sound file support (Requirs 1.1.1+ audioframework if using soundPack features)
 - Added support for audioframework 1.1.1 - This will require the new audioPack where sounds are played by folder name.
 If more than one soundfile is in the folder the player will randomize which one is played.  Sorry about the change in
