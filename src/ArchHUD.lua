@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.352
+VERSION_NUMBER = 1.353
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -4203,7 +4203,7 @@ VERSION_NUMBER = 1.352
                             --if construct.i > 2 then rePlotCount = rePlotCount + 1 else successCount =  successCount + 1 end
                             construct.center = vec3(x,y,z)
                             construct.i = 0
-                            system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}')
+                            --system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}')
                         elseif mabs(save.x - x) > 2 or mabs(save.y - y) > 2 then
                             construct.i = construct.i + 1
                             --failCount = failCount + 1

@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.353 - Turn off debug info 
+- Turned off spaming of ::pos debug info.
+
 Version 1.352 - Space Collision support and intersect refinement
 - Added support for collision determination when in space.  Only warnings at this time.
 - Change how collision intersect determination is made to 1/2 diagonal of ship size + 1/2 diagonal of
