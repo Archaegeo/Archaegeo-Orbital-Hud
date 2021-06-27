@@ -1,5 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.354 - Fix small issues, massive efficiency improvement of collision
+
 Version 1.353 - Turn off debug info 
 - Turned off spaming of ::pos debug info.
 

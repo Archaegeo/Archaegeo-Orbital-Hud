@@ -3508,7 +3508,7 @@ VERSION_NUMBER = 1.354
                     end
                 end
                 if ReversalIsOn then
-                    newContent[#newContent + 1] = svgText(warningX, apY+70, "Flight Assist in Progress", "warnings")
+                    newContent[#newContent + 1] = svgText(warningX, apY+90, "Flight Assist in Progress", "warnings")
                 end
 
                 if gyroIsOn then
@@ -4152,7 +4152,7 @@ VERSION_NUMBER = 1.354
         end
 
         function Hud.UpdateRadarRoutine()
-            --local startURR = time
+            local startURR = time
 
             local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
                 p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
@@ -4314,7 +4314,7 @@ VERSION_NUMBER = 1.354
                     end
                 end
             end
-            --[[  Timeing check
+            ---[[  Timeing check
             if timeCount < 250 then
                 totalTime = totalTime + (time-startURR)
                 timeCount = timeCount+1
