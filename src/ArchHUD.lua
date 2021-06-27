@@ -191,6 +191,8 @@ VERSION_NUMBER = 1.354
     local sysAddData = system.addDataToWidget
     local sysLockVw = system.lockView
     local sysIsVwLock = system.isViewLocked
+    local msqrt = math.sqrt
+    local tonum = tonumber
 
     local function round(num, numDecimalPlaces) -- rounds variable num to numDecimalPlaces
         local mult = 10 ^ (numDecimalPlaces or 0)
@@ -263,13 +265,10 @@ VERSION_NUMBER = 1.354
     local damageMessage = ""
     local UnitHidden = true
     local Buttons = {}
-    local ControlButtons = {}
-    local SettingButtons = {}
     local resolutionWidth = ResolutionX
     local resolutionHeight = ResolutionY
-    local valuesAreSet = false
-    local doubleCheck = false
-    local lastMaxBrakeAtG = nil
+
+
     local atmoTanks = {}
     local spaceTanks = {}
     local rocketTanks = {}
@@ -345,12 +344,11 @@ VERSION_NUMBER = 1.354
     local pipeMessage = ""
     local ReversalIsOn = nil
     local contacts = {}
-    nearPlanet = unit.getClosestPlanetInfluence() > 0
+    local nearPlanet = unit.getClosestPlanetInfluence() > 0
+    local collisionAlertStatus = false
+    local collisionTarget = nil
     timeCount = 0
-    totalTime = 0
-    collisionAlertStatus = false
-    collisionTarget = nil
-    
+    totalTime = 0    
 
 
 -- Function Definitions that are used in more than one areause 
@@ -2188,7 +2186,7 @@ VERSION_NUMBER = 1.354
             return type(n) == 'number'
         end
         local function isSNumber(n)
-            return type(tonumber(n)) == 'number'
+            return type(tonum(n)) == 'number'
         end
         local function isTable(t)
             return type(t) == 'table'
@@ -2280,11 +2278,11 @@ VERSION_NUMBER = 1.354
                 'Argument 4 (worldCoordinates) must be a array or vec3.' .. type(worldCoordinates))
             assert(isSNumber(GM), 'Argument 5 (GM) must be a number:' .. type(GM))
             return setmetatable({
-                planetarySystemId = tonumber(systemId),
-                bodyId = tonumber(bodyId),
-                radius = tonumber(radius),
+                planetarySystemId = tonum(systemId),
+                bodyId = tonum(bodyId),
+                radius = tonum(radius),
                 center = vec3(worldCoordinates),
-                GM = tonumber(GM)
+                GM = tonum(GM)
             }, BodyParameters)
         end
         -- MapPosition: Geographical coordinates of a point on a planetary body.
@@ -2314,11 +2312,11 @@ VERSION_NUMBER = 1.354
                 assert(isSNumber(longitude), 'Argument 4 (longitude) must be in degrees:' .. type(longitude))
                 assert(isSNumber(altitude), 'Argument 5 (altitude) must be in meters:' .. type(altitude))
             end
-            systemId = tonumber(systemId)
-            bodyId = tonumber(bodyId)
-            latitude = tonumber(latitude)
-            longitude = tonumber(longitude)
-            altitude = tonumber(altitude)
+            systemId = tonum(systemId)
+            bodyId = tonum(bodyId)
+            latitude = tonum(latitude)
+            longitude = tonum(longitude)
+            altitude = tonum(altitude)
             if bodyId == 0 then -- this is a hack to represent points in space
                 return setmetatable({
                     latitude = latitude,
@@ -2428,7 +2426,7 @@ VERSION_NUMBER = 1.354
                 'Argument 6 (altitude) must be in meters:' .. type(altitudeAtPosition))
             assert(isSNumber(gravityAtPosition),
                 'Argument 7 (gravityAtPosition) must be number:' .. type(gravityAtPosition))
-            local radius = math.sqrt(surfaceArea / 4 / math.pi)
+            local radius = msqrt(surfaceArea / 4 / math.pi)
             local distance = radius + altitudeAtPosition
             local center = vec3(aPosition) + distance * vec3(verticalAtPosition)
             local GM = gravityAtPosition * distance * distance
@@ -2457,39 +2455,36 @@ VERSION_NUMBER = 1.354
             -- return nil
         end
 
-        function PlanetarySystem:castIntersections(origin, direction, sizeCalculator, bodyIds, collection)
-            local sizeCalculator = sizeCalculator or function(body)
-                return 1.05 * body.radius
-            end
+        function PlanetarySystem:sizeCalculator(body)
+            return 1.05*body.radius
+         end
+         
+         function PlanetarySystem:castIntersections(origin, direction, sizeCalculator, bodyIds, collection, sorted)
             local candidates = {}
-            local selfie
-            if collection then selfie = collection else selfie = self end
-            if bodyIds then
-                for _, i in ipairs(bodyIds) do
-                    candidates[i] = selfie[i]
-                end
-            else
-                bodyIds = {}
-                for k, body in pairs(selfie) do
-                    table.insert(bodyIds, k)
-                    candidates[k] = body
-                end
+            local selfie = collection or self
+            -- Since we don't use bodyIds anywhere, got rid of them
+            -- It was two tables doing basically the same thing
+            
+            -- Changed this to insert the body to candidates
+            for _, body in pairs(selfie) do
+                table.insert(candidates, body)
             end
-            local function compare(b1, b2)
-                local v1 = candidates[b1].center - origin
-                local v2 = candidates[b2].center - origin
-                return v1:len() < v2:len()
+            -- Added this because, your knownContacts list is already sorted, can skip an expensive re-sort
+            if not sorted then
+                table.sort(candidates, function (b1, b2)
+                    return (b1.center - origin):len() < (b2.center - origin):len()
+                end)
             end
-            table.sort(bodyIds, compare)
             local dir = direction:normalize()
-            for i, id in ipairs(bodyIds) do
-                local body = candidates[id]
+            -- Use the body directly from the for loop instead of getting it with i
+            for _, body in ipairs(candidates) do
                 local c_oV3 = body.center - origin
-                local radius = sizeCalculator(body)
+                -- Changed to the new method.  IDK if this is how self works but I think so
+                local radius = self:sizeCalculator(body)
                 local dot = c_oV3:dot(dir)
                 local desc = dot ^ 2 - (c_oV3:len2() - radius ^ 2)
                 if desc >= 0 then
-                    local root = math.sqrt(desc)
+                    local root = msqrt(desc)
                     local farSide = dot + root
                     local nearSide = dot - root
                     if nearSide > 0 then
@@ -2602,7 +2597,7 @@ VERSION_NUMBER = 1.354
         function BodyParameters:getGravity(worldCoordinates)
             local radial = self.center - vec3(worldCoordinates) -- directed towards body
             local len2 = radial:len2()
-            return (self.GM / len2) * radial / math.sqrt(len2)
+            return (self.GM / len2) * radial / msqrt(len2)
         end
         -- end of module
         return setmetatable(PlanetaryReference, {
@@ -2620,7 +2615,7 @@ VERSION_NUMBER = 1.354
         local C2 = C * C
         local ITERATIONS = 100 -- iterations over engine "warm-up" period
         local function lorentz(v)
-            return 1 / math.sqrt(1 - v * v / C2)
+            return 1 / msqrt(1 - v * v / C2)
         end
     
         function Kinematic.computeAccelerationTime(initial, acceleration, final)
@@ -2651,7 +2646,7 @@ VERSION_NUMBER = 1.354
                 local v = function(t)
                     local w = (c1 * t - c2 * math.sin(math.pi * t / 2 / t50) + c3 * k1) / c3
                     local tan = math.tan(w)
-                    return C * tan / math.sqrt(tan * tan + 1)
+                    return C * tan / msqrt(tan * tan + 1)
                 end
                 local speedchk = speedUp and function(s)
                     return s >= final
@@ -2736,8 +2731,8 @@ VERSION_NUMBER = 1.354
             -- v = sqrt(2GM/r1)
             local distance = altitude + self.body.radius
             if not float_eq(distance, 0) then
-                local orbit = math.sqrt(self.body.GM / distance)
-                return math.sqrt(2) * orbit, orbit
+                local orbit = msqrt(self.body.GM / distance)
+                return msqrt(2) * orbit, orbit
             end
             return nil, nil
         end
@@ -2761,8 +2756,8 @@ VERSION_NUMBER = 1.354
             local ad = a * (1 + ecc)
             local per = pd * dir + self.body.center
             local apo = ecc <= 1 and -ad * dir + self.body.center or nil
-            local trm = math.sqrt(a * mu * (1 - ecc * ecc))
-            local Period = apo and 2 * math.pi * math.sqrt(a ^ 3 / mu)
+            local trm = msqrt(a * mu * (1 - ecc * ecc))
+            local Period = apo and 2 * math.pi * msqrt(a ^ 3 / mu)
             -- These are great and all, but, I need more.
             local trueAnomaly = math.acos((e:dot(r)) / (ecc * d))
             if r:dot(v) < 0 then
@@ -2801,13 +2796,13 @@ VERSION_NUMBER = 1.354
                 periapsis = {
                     position = per,
                     speed = trm / pd,
-                    circularOrbitSpeed = math.sqrt(mu / pd),
+                    circularOrbitSpeed = msqrt(mu / pd),
                     altitude = pd - self.body.radius
                 },
                 apoapsis = apo and {
                     position = apo,
                     speed = trm / ad,
-                    circularOrbitSpeed = math.sqrt(mu / ad),
+                    circularOrbitSpeed = msqrt(mu / ad),
                     altitude = ad - self.body.radius
                 },
                 currentVelocity = v,
@@ -3327,7 +3322,7 @@ VERSION_NUMBER = 1.354
                     local x = centerX + dx
                     local y = centerY + dy
             
-                    local distance = math.sqrt((dx)^2 + (dy)^2)
+                    local distance = msqrt((dx)^2 + (dy)^2)
             
                     local progradeDot = [[<circle
                     cx="]] .. x .. [["
@@ -3381,7 +3376,7 @@ VERSION_NUMBER = 1.354
                         x = centerX + dx
                         y = centerY + dy
             
-                        distance = math.sqrt((dx)^2 + (dy)^2)
+                        distance = msqrt((dx)^2 + (dy)^2)
                         -- Retrograde Dot
                         
                         if distance < horizonRadius then
@@ -4155,9 +4150,9 @@ VERSION_NUMBER = 1.354
             end
             getClosestPipe()           
         end
-        --failCount = 0
-        --successCount = 0
-        --rePlotCount = 0
+        failCount = 0
+        successCount = 0
+        rePlotCount = 0
         function Hud.UpdateRadarRoutine()
             local startURR = time
 
@@ -4175,11 +4170,11 @@ VERSION_NUMBER = 1.354
                 local x = (r1s - r2s + U*U) / (2*U) 
                 local y = (r1s - r3s + vs - 2*v3x*x)/(2*v3y)
                 local m = r1s - (x^2) - (y^2) 
-                local z = math.sqrt(m)
+                local z = msqrt(m)
                 local t1 = p1 + ax*x + ay*y + az*z
                 local t2 = p1 + ax*x + ay*y - az*z
               
-                if math.abs((p4 - t1):len() - r4) < math.abs((p4 - t2):len() - r4) then
+                if mabs((p4 - t1):len() - r4) < mabs((p4 - t2):len() - r4) then
                   return t1
                 else
                   return t2
@@ -4199,20 +4194,14 @@ VERSION_NUMBER = 1.354
                         x = x + ref[1]
                         y = y + ref[2]
                         z = z + ref[3]
-                        local save = construct.center
-                        if save == nil or construct.i > 2 then 
-                            --if construct.i > 2 then rePlotCount = rePlotCount + 1 else successCount =  successCount + 1 end
-                            construct.center = vec3(x,y,z)
-                            construct.i = 0
-                            --system.print(construct.name..' rdrD: '..d..' ::pos{0,0,'..construct.center.x..','..construct.center.y..','..construct.center.z..'}')
-                        elseif mabs(save.x - x) > 2 or mabs(save.y - y) > 2 then
-                            construct.i = construct.i + 1
-                            --failCount = failCount + 1
-                            --system.print(construct.name.." "..construct.i)
-                        else
-                            construct.i = 0
-                            --successCount =  successCount + 1
+                        local newPos = vec3(x,y,z)
+                        if not construct.lastPos then
+                            construct.center = newPos
+                        elseif (construct.lastPos - newPos):len() < 2 then
+                            construct.center = newPos
+                            construct.skipCalc = true
                         end
+                        construct.lastPos = newPos
                     end
                     construct.pts = {}
                 else
@@ -4237,7 +4226,7 @@ VERSION_NUMBER = 1.354
                     for v in contactData do
                         local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
                         local sz = 13
-                        distance = tonumber(distance)
+                        distance = tonum(distance)
                         if radar_1.hasMatchingTransponder(id) == 1 then
                             table.insert(friendlies,id)
                         end
@@ -4247,13 +4236,13 @@ VERSION_NUMBER = 1.354
                                 local name = radar_1.getConstructName(id)
                                 local construct = contacts[id]
                                 if construct == nil then
-                                    contacts[id] = {pts = {}, ref = wp, name = name, i = 0, radius = sz}
-                                    local sizeMap = { XS = 13, S = 27, M = 55, L = 110}
+                                    contacts[id] = {pts = {}, ref = wp, name = name, i = 0, radius = sz, skipCalc = false}
+                                    local sizeMap = { XS = 13, S = 27, M = 55, L = 110, XL = 221}
                                     sz = sizeMap[size]
                                     contacts[id].radius = (sz+coreHalfDiag)
                                     construct = contacts[id]
                                 end
-                                updateVariables(construct, distance, wp)
+                                if not construct.skipCalc then updateVariables(construct, distance, wp) end
                                 if construct.center then table.insert(knownContacts, construct) end
                                 count2 = count2 + 1
                             end
@@ -4743,7 +4732,7 @@ VERSION_NUMBER = 1.354
             else
                 simulatedX = simulatedX + deltaX
                 simulatedY = simulatedY + deltaY
-                distance = math.sqrt(simulatedX * simulatedX + simulatedY * simulatedY)
+                distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
                 if not holdingCtrl and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                     if userControlScheme == "virtual joystick" then -- Virtual Joystick
                         -- Do navigation things
@@ -5377,7 +5366,7 @@ VERSION_NUMBER = 1.354
                     if CustomTarget ~= nil then
                         targetVec = CustomTarget.position - worldPos
                         --targetAltitude = planet:getAltitude(CustomTarget.position)
-                        --horizontalDistance = math.sqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
+                        --horizontalDistance = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
                     end
                     if (CustomTarget ~=nil and CustomTarget.planetname == "Space" and velMag < 50) then
                         finishAutopilot("Autopilot complete, arrived at space location")
@@ -5507,7 +5496,7 @@ VERSION_NUMBER = 1.354
                 -- distance needs to be calculated using only construct forward and right
                 local distanceForward = vec3(distancePos):project_on(constructForward):len()
                 local distanceRight = vec3(distancePos):project_on(constructRight):len()
-                local distance = math.sqrt(distanceForward * distanceForward + distanceRight * distanceRight)
+                local distance = msqrt(distanceForward * distanceForward + distanceRight * distanceRight)
                 AlignToWorldVector(distancePos:normalize())
                 local targetDistance = 40
                 -- local onShip = false
@@ -5558,7 +5547,7 @@ VERSION_NUMBER = 1.354
 
 
                 local airFrictionVec = vec3(core.getWorldAirFrictionAcceleration())
-                local airFriction = math.sqrt(airFrictionVec:len() - airFrictionVec:project_on(up):len()) * coreMass
+                local airFriction = msqrt(airFrictionVec:len() - airFrictionVec:project_on(up):len()) * coreMass
                 -- Assume it will halve over our duration, if not sqrt.  We'll try sqrt because it's underestimating atm
                 -- First calculate stopping to 100 - that all happens with full brake power
                 if velMag > 100 then 
@@ -5719,7 +5708,7 @@ VERSION_NUMBER = 1.354
                         -- We just don't know the last leg
                         -- a2 + b2 = c2.  c2 - b2 = a2
                         local targetAltitude = planet:getAltitude(CustomTarget.position)
-                        local distanceToTarget = math.sqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
+                        local distanceToTarget = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
 
                         --local targetPosAtAltitude = CustomTarget.position + worldVertical*(coreAltitude - targetAltitude) - planet.center
                         --local worldPosPlanetary = worldPos - planet.center
@@ -5760,7 +5749,7 @@ VERSION_NUMBER = 1.354
                     if CustomTarget ~= nil and autopilotTargetPlanet.name == planet.name then
                         local targetVec = CustomTarget.position - worldPos
                         local targetAltitude = planet:getAltitude(CustomTarget.position)
-                        local distanceToTarget = math.sqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
+                        local distanceToTarget = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
                         local curBrake = LastMaxBrakeInAtmo
                         if curBrake then
 
@@ -5818,7 +5807,7 @@ VERSION_NUMBER = 1.354
                         local totalNewtons = maxKinematicUp * atmos + curBrake - gravity -- Ignore air friction for leeway, KinematicUp and Brake are already in newtons
                         local weakBreakNewtons = curBrake/2 - gravity
 
-                        local speedAfterBraking = velMag - math.sqrt((mabs(weakBreakNewtons/2)*20)/(0.5*coreMass))*utils.sign(weakBreakNewtons)
+                        local speedAfterBraking = velMag - msqrt((mabs(weakBreakNewtons/2)*20)/(0.5*coreMass))*utils.sign(weakBreakNewtons)
                         if speedAfterBraking < 0 then  
                             speedAfterBraking = 0 -- Just in case it gives us negative values
                         end
@@ -5827,10 +5816,10 @@ VERSION_NUMBER = 1.354
                         local brakeStopDistance
                         if velMag > 100 then
                             local brakeStopDistance1, _ = Kinematic.computeDistanceAndTime(velMag, 100, coreMass, 0, 0, curBrake)
-                            local brakeStopDistance2, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, math.sqrt(curBrake))
+                            local brakeStopDistance2, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, msqrt(curBrake))
                             brakeStopDistance = brakeStopDistance1+brakeStopDistance2
                         else
-                            brakeStopDistance = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, math.sqrt(curBrake))
+                            brakeStopDistance = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, msqrt(curBrake))
                         end
                         if brakeStopDistance < 20 then
                             BrakeIsOn = false -- We can stop in less than 20m from just brakes, we don't need to do anything
@@ -5839,10 +5828,10 @@ VERSION_NUMBER = 1.354
                             local stopDistance = 0
                             if speedAfterBraking > 100 then
                                 local stopDistance1, _ = Kinematic.computeDistanceAndTime(speedAfterBraking, 100, coreMass, 0, 0, totalNewtons) 
-                                local stopDistance2, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, maxKinematicUp * atmos + math.sqrt(curBrake) - gravity) -- Low brake power for the last 100kph
+                                local stopDistance2, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, maxKinematicUp * atmos + msqrt(curBrake) - gravity) -- Low brake power for the last 100kph
                                 stopDistance = stopDistance1 + stopDistance2
                             else
-                                stopDistance, _ = Kinematic.computeDistanceAndTime(speedAfterBraking, 0, coreMass, 0, 0, maxKinematicUp * atmos + math.sqrt(curBrake) - gravity) 
+                                stopDistance, _ = Kinematic.computeDistanceAndTime(speedAfterBraking, 0, coreMass, 0, 0, maxKinematicUp * atmos + msqrt(curBrake) - gravity) 
                             end
                             --if LandingGearGroundHeight == 0 then
                             stopDistance = (stopDistance+15+(velMag*deltaTick))*1.1 -- Add leeway for large ships with forcefields or landing gear, and for lag
@@ -5854,7 +5843,7 @@ VERSION_NUMBER = 1.354
                                 local distanceToGround = coreAltitude - targetAltitude - 100 -- Try to aim for like 100m above the ground, give it lots of time
                                 -- We don't have to squeeze out the little bits of performance
                                 local targetVec = CustomTarget.position - worldPos
-                                local horizontalDistance = math.sqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
+                                local horizontalDistance = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
 
                                 if horizontalDistance > 100 then
                                     -- We are too far off, don't trust our altitude data
@@ -5992,6 +5981,9 @@ VERSION_NUMBER = 1.354
 -- DU Events written for wrap and minimization. Written by Dimencia and Archaegeo. Optimization and Automation of scripting by ChronosWS  Linked sources where appropriate, most have been modified.
     function script.onStart()
         -- Local functions for onStart
+        local ControlButtons = {}
+        local SettingButtons = {}
+        local valuesAreSet = false
             local function LoadVariables()
 
                 local function processVariableList(varList)
@@ -6105,7 +6097,7 @@ VERSION_NUMBER = 1.354
                         hasGear = true
                     end
                     local sz = 13.8564064606
-                    distance = tonumber(distance)
+                    distance = tonum(distance)
                     if radar_1.hasMatchingTransponder(id) == 1 then
                         table.insert(friendlies,id)
                     end
@@ -6708,9 +6700,9 @@ VERSION_NUMBER = 1.354
     end
 
     function script.onStop()
-        --system.print("Fail Count: " .. failCount)
-        --system.print("RePlot Count: " .. rePlotCount )
-        --system.print("Success Count: " .. successCount )
+        system.print("Fail Count: " .. failCount)
+        system.print("RePlot Count: " .. rePlotCount )
+        system.print("Success Count: " .. successCount )
         _autoconf.hideCategoryPanels()
         if antigrav ~= nil  and not ExternalAGG then
             antigrav.hide()
@@ -6746,6 +6738,7 @@ VERSION_NUMBER = 1.354
     end
 
     function script.onTick(timerId)
+        local lastMaxBrakeAtG = nil
         -- Various tick timers
         if timerId == "contact" then
             if not contactTimer then contactTimer = 0 end
@@ -6757,6 +6750,7 @@ VERSION_NUMBER = 1.354
             unit.stopTimer("contact")
         elseif timerId == "tenthSecond" then -- Timer executed ever tenth of a second
             -- Local Functions for tenthSecond
+
                 local function SetupInterplanetaryPanel() -- Interplanetary helper
                     local sysCrData = system.createData
                     local sysCrWid = system.createWidget
@@ -7271,7 +7265,7 @@ VERSION_NUMBER = 1.354
             if showSettings and settingsVariables ~= {} then 
                 HUD.DrawSettings(newContent) 
             end
-            HUD.UpdateRadar()
+
             HUD.HUDEpilogue(newContent)
             newContent[#newContent + 1] = stringf(
                 [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
@@ -7342,6 +7336,7 @@ VERSION_NUMBER = 1.354
             end        
         elseif timerId == "apTick" then -- Timer for all autopilot functions
             AP.APTick()
+            HUD.UpdateRadar()
         end
     end
 
@@ -8448,7 +8443,6 @@ VERSION_NUMBER = 1.354
                 msgText =
                     "Databank wiped except Save Locations. New variables will save after re-enter seat and exit"
                 msgTimer = 5
-                valuesAreSet = false
             end
 
             local function mwpConversion(name, pos)
@@ -8459,7 +8453,7 @@ VERSION_NUMBER = 1.354
                     if v.name == name then
                         longitude = math.rad(longitude)
                         latitude = math.rad(latitude)
-                        local planet = atlas[tonumber(systemId)][tonumber(bodyId)]  
+                        local planet = atlas[tonum(systemId)][tonum(bodyId)]  
                         local xproj = math.cos(latitude);   
                         local planetxyz = vec3(xproj*math.cos(longitude),
                                             xproj*math.sin(longitude),
@@ -8477,13 +8471,13 @@ VERSION_NUMBER = 1.354
                     local posPattern = '::pos{' .. num .. ',' .. num .. ',' ..  num .. ',' .. num ..  ',' .. num .. '}'    
                     local systemId, bodyId, latitude, longitude, altitude = stringmatch(pos, posPattern)
                     if (systemId == "0" and bodyId == "0") then
-                        return vec3(tonumber(latitude),
-                                    tonumber(longitude),
-                                    tonumber(altitude))
+                        return vec3(tonum(latitude),
+                                    tonum(longitude),
+                                    tonum(altitude))
                     end
                     longitude = math.rad(longitude)
                     latitude = math.rad(latitude)
-                    local planet = atlas[tonumber(systemId)][tonumber(bodyId)]  
+                    local planet = atlas[tonum(systemId)][tonum(bodyId)]  
                     local xproj = math.cos(latitude);   
                     local planetxyz = vec3(xproj*math.cos(longitude),
                                         xproj*math.sin(longitude),
@@ -8569,9 +8563,9 @@ VERSION_NUMBER = 1.354
             local num        = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
             local posPattern = '::pos{' .. num .. ',' .. num .. ',' ..  num .. ',' .. num ..  ',' .. num .. '}'    
             local systemId, bodyId, latitude, longitude, altitude = stringmatch(pos, posPattern);
-            local planet = atlas[tonumber(systemId)][tonumber(bodyId)]
+            local planet = atlas[tonum(systemId)][tonum(bodyId)]
             if planet.name == "Space" then
-                local newPos = vec3(tonumber(latitude), tonumber(longitude), tonumber(altitude))
+                local newPos = vec3(tonum(latitude), tonum(longitude), tonum(altitude))
                 local p = sys:closestBody(newPos)
                 if (newPos-p.center):len() < p.radius + p.noAtmosphericDensityAltitude then
                     planet = p
@@ -8585,7 +8579,7 @@ VERSION_NUMBER = 1.354
                 msgText = "Usage: /agg targetheight"
                 return
             end
-            arguement = tonumber(arguement)
+            arguement = tonum(arguement)
             if arguement < 1000 then arguement = 1000 end
             AntigravTargetAltitude = arguement
             msgText = "AGG Target Height set to "..arguement
@@ -8618,7 +8612,7 @@ VERSION_NUMBER = 1.354
                     msgText = "Variable "..globalVariableName.." changed to "..newGlobalValue
                     local varType = type(_G[v])
                     if varType == "number" then
-                        newGlobalValue = tonumber(newGlobalValue)
+                        newGlobalValue = tonum(newGlobalValue)
                     elseif varType == "boolean" then
                         if string.lower(newGlobalValue) == "true" then
                             newGlobalValue = true
