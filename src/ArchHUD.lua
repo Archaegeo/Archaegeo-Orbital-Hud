@@ -4150,11 +4150,9 @@ VERSION_NUMBER = 1.354
             end
             getClosestPipe()           
         end
-        failCount = 0
-        successCount = 0
-        rePlotCount = 0
+
         function Hud.UpdateRadarRoutine()
-            local startURR = time
+            --local startURR = time
 
             local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
                 p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
@@ -4200,6 +4198,7 @@ VERSION_NUMBER = 1.354
                         elseif (construct.lastPos - newPos):len() < 2 then
                             construct.center = newPos
                             construct.skipCalc = true
+                            --system.print(construct.name.." ::pos{0,0,"..newPos.x..","..newPos.y..","..newPos.z.."}")
                         end
                         construct.lastPos = newPos
                     end
@@ -4315,6 +4314,7 @@ VERSION_NUMBER = 1.354
                     end
                 end
             end
+            --[[  Timeing check
             if timeCount < 250 then
                 totalTime = totalTime + (time-startURR)
                 timeCount = timeCount+1
@@ -4323,6 +4323,7 @@ VERSION_NUMBER = 1.354
                 timeCount = 0
                 totalTime = 0
             end
+            --]]
         end
 
         function Hud.UpdateRadar()
@@ -6096,11 +6097,6 @@ VERSION_NUMBER = 1.354
                     if (type == "Landing Gear") then
                         hasGear = true
                     end
-                    local sz = 13.8564064606
-                    distance = tonum(distance)
-                    if radar_1.hasMatchingTransponder(id) == 1 then
-                        table.insert(friendlies,id)
-                    end
                     if (type == "Dynamic Core Unit") then
                         local hp = eleMaxHp(elementsID[k])
                         if hp > 10000 then
@@ -6700,9 +6696,6 @@ VERSION_NUMBER = 1.354
     end
 
     function script.onStop()
-        system.print("Fail Count: " .. failCount)
-        system.print("RePlot Count: " .. rePlotCount )
-        system.print("Success Count: " .. successCount )
         _autoconf.hideCategoryPanels()
         if antigrav ~= nil  and not ExternalAGG then
             antigrav.hide()
