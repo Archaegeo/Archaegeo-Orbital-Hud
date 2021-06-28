@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.354 - Fix small issues, massive efficiency improvement of collision
+- Numerous improvements to collision detection efficiency.
+- Improvement to Flight Assist (Hard bank with Alt-Q/E and 180 with ALT-S).
+Now if you hit ALT-Q/E/S while already in a ALT-Q/E/S it cancels and you can then
+immeditately ALT-Q/E/S again.
+
 Version 1.353 - Turn off debug info 
 - Turned off spaming of ::pos debug info.
 
