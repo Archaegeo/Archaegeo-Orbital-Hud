@@ -193,6 +193,7 @@ VERSION_NUMBER = 1.354
     local sysIsVwLock = system.isViewLocked
     local msqrt = math.sqrt
     local tonum = tonumber
+    local core = core
 
     local function round(num, numDecimalPlaces) -- rounds variable num to numDecimalPlaces
         local mult = 10 ^ (numDecimalPlaces or 0)
@@ -352,27 +353,6 @@ VERSION_NUMBER = 1.354
 
 
 -- Function Definitions that are used in more than one areause 
-
-    function getTrueWorldPos()
-        local function getLocalToWorldConverter()
-            local v1 = core.getConstructWorldOrientationRight()
-            local v2 = core.getConstructWorldOrientationForward()
-            local v3 = core.getConstructWorldOrientationUp()
-            local v1t = library.systemResolution3(v1, v2, v3, {1,0,0})
-            local v2t = library.systemResolution3(v1, v2, v3, {0,1,0})
-            local v3t = library.systemResolution3(v1, v2, v3, {0,0,1})
-            return function(cref)
-                return library.systemResolution3(v1t, v2t, v3t, cref)
-            end
-        end
-        local cal = getLocalToWorldConverter()
-        local cWorldPos = core.getConstructWorldPos()
-        local pos = core.getElementPositionById(1)
-        local offsetPosition = {pos[1] - coreOffset, pos[2] - coreOffset, pos[3] - coreOffset}
-        local adj = cal(offsetPosition)
-        local adjPos = {cWorldPos[1] - adj[1], cWorldPos[2] - adj[2], cWorldPos[3] - adj[3]}
-        return adjPos
-    end
 
     local function play(sound, ID, type)
         if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" or not sounds then return end
@@ -621,38 +601,6 @@ VERSION_NUMBER = 1.354
             AutoTakeoff = false
             VectorToTarget = false
             ahDoubleClick = 0
-        end
-    end
-
-    local function ToggleFollowMode() -- Toggle Follow Mode on and off
-        if isRemote() == 1 then
-            followMode = not followMode
-            if followMode then
-                Autopilot = false
-                RetrogradeIsOn = false
-                ProgradeIsOn = false
-                AltitudeHold = false
-                Reentry = false
-                BrakeLanding = false
-                AutoTakeoff = false
-                OldGearExtended = GearExtended
-                GearExtended = false
-                Nav.control.retractLandingGears()
-                navCom:setTargetGroundAltitude(TargetHoverHeight)
-                play("folOn","F")
-            else
-                play("folOff","F")
-                BrakeIsOn = true
-                autoRoll = autoRollPreference
-                GearExtended = OldGearExtended
-                if GearExtended then
-                    Nav.control.extendLandingGears()
-                    navCom:setTargetGroundAltitude(LandingGearGroundHeight)
-                end
-            end
-        else
-            msgText = "Follow Mode only works with Remote controller"
-            followMode = false
         end
     end
 
@@ -3729,7 +3677,7 @@ VERSION_NUMBER = 1.354
                     return newContent
                 end
             end
-
+            local perisPanelID
             local function ToggleRadarPanel()
                 if radarPanelID ~= nil and peris == 0 then
                     sysDestWid(radarPanelID)
@@ -4152,7 +4100,7 @@ VERSION_NUMBER = 1.354
         end
 
         function Hud.UpdateRadarRoutine()
-            local startURR = time
+            --local startURR = time
 
             local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
                 p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
@@ -4177,6 +4125,27 @@ VERSION_NUMBER = 1.354
                 else
                   return t2
                 end
+            end
+
+            local function getTrueWorldPos()
+                local function getLocalToWorldConverter()
+                    local v1 = core.getConstructWorldOrientationRight()
+                    local v2 = core.getConstructWorldOrientationForward()
+                    local v3 = core.getConstructWorldOrientationUp()
+                    local v1t = library.systemResolution3(v1, v2, v3, {1,0,0})
+                    local v2t = library.systemResolution3(v1, v2, v3, {0,1,0})
+                    local v3t = library.systemResolution3(v1, v2, v3, {0,0,1})
+                    return function(cref)
+                        return library.systemResolution3(v1t, v2t, v3t, cref)
+                    end
+                end
+                local cal = getLocalToWorldConverter()
+                local cWorldPos = core.getConstructWorldPos()
+                local pos = core.getElementPositionById(1)
+                local offsetPosition = {pos[1] - coreOffset, pos[2] - coreOffset, pos[3] - coreOffset}
+                local adj = cal(offsetPosition)
+                local adjPos = {cWorldPos[1] - adj[1], cWorldPos[2] - adj[2], cWorldPos[3] - adj[3]}
+                return adjPos
             end
             
             local function updateVariables(construct, d, wp) -- Thanks to EasternGamer and Dimencia
@@ -4241,13 +4210,16 @@ VERSION_NUMBER = 1.354
                                     contacts[id].radius = (sz+coreHalfDiag)
                                     construct = contacts[id]
                                 end
-                                if not construct.skipCalc then updateVariables(construct, distance, wp) end
+                                if not construct.skipCalc then 
+                                    updateVariables(construct, distance, wp) 
+                                    count2 = count2 + 1
+                                end
                                 if construct.center then table.insert(knownContacts, construct) end
-                                count2 = count2 + 1
+                                
                             end
                         end
                         count = count + 1
-                        if count > 500 or count2 > 50 then
+                        if count > 750 or count2 > 75 then
                             coroutine.yield()
                             count, count2 = 0, 0
                         end
@@ -4314,7 +4286,7 @@ VERSION_NUMBER = 1.354
                     end
                 end
             end
-            ---[[  Timeing check
+            --[[  Timeing check
             if timeCount < 250 then
                 totalTime = totalTime + (time-startURR)
                 timeCount = timeCount+1
@@ -4519,7 +4491,6 @@ VERSION_NUMBER = 1.354
     end
     local function APClass() -- Autopiloting functions including tick
         local ap = {}
-        local deathBlossomList = {vec3(constructVelocity), -vec3(constructVelocity), vec3(constructUp), -vec3(constructUp), vec3(constructRight), -vec3(constructRight) }
             local function GetAutopilotBrakeDistanceAndTime(speed)
                 -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
                 -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
@@ -5648,7 +5619,7 @@ VERSION_NUMBER = 1.354
                            targetVec = -worldVertical:cross(constructVelocity)*5000
                         elseif ReversalIsOn >= 3 then
                             targetVec = worldVertical:cross(constructVelocity)*5000
-                        elseif ReversalIsOn == 0 then
+                        elseif ReversalIsOn < 0 then
                             targetVec = constructVelocity*25000
                         end
                     elseif CustomTarget ~= nil then
@@ -5674,8 +5645,10 @@ VERSION_NUMBER = 1.354
 
                     local yawDiff = currentYaw-targetYaw
 
-                    if (type(ReversalIsOn) == "table" or ReversalIsOn == 0) and mabs(yawDiff) <= 0.0001 then
-                        if ReversalIsOn == 0 then ToggleAltitudeHold() end
+                    if ReversalIsOn and mabs(yawDiff) <= 0.0001 and
+                                        ((type(ReversalIsOn) == "table") or 
+                                         (type(ReversalIsOn) ~= "table" and ReversalIsOn < 0 and mabs(adjustedRoll) < 1)) then
+                        if ReversalIsOn == -2 then ToggleAltitudeHold() end
                         ReversalIsOn = nil
                         play("180Off", "BR")
                         return
@@ -6481,6 +6454,38 @@ VERSION_NUMBER = 1.354
                     safeMass = coreMass 
                 end
 
+                local function ToggleFollowMode() -- Toggle Follow Mode on and off
+                    if isRemote() == 1 then
+                        followMode = not followMode
+                        if followMode then
+                            Autopilot = false
+                            RetrogradeIsOn = false
+                            ProgradeIsOn = false
+                            AltitudeHold = false
+                            Reentry = false
+                            BrakeLanding = false
+                            AutoTakeoff = false
+                            OldGearExtended = GearExtended
+                            GearExtended = false
+                            Nav.control.retractLandingGears()
+                            navCom:setTargetGroundAltitude(TargetHoverHeight)
+                            play("folOn","F")
+                        else
+                            play("folOff","F")
+                            BrakeIsOn = true
+                            autoRoll = autoRollPreference
+                            GearExtended = OldGearExtended
+                            if GearExtended then
+                                Nav.control.extendLandingGears()
+                                navCom:setTargetGroundAltitude(LandingGearGroundHeight)
+                            end
+                        end
+                    else
+                        msgText = "Follow Mode only works with Remote controller"
+                        followMode = false
+                    end
+                end
+            
                 -- BEGIN BUTTON DEFINITIONS
             
                 -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
@@ -7972,7 +7977,7 @@ VERSION_NUMBER = 1.354
                             ToggleAutopilot() 
                         end
                         play("180On", "BR")
-                    elseif t==1 then
+                    elseif vectorType==1 then
                         play("bnkLft","BR")
                     else
                         play("bnkRht", "BR")
@@ -7984,7 +7989,7 @@ VERSION_NUMBER = 1.354
                         end
                     end
                     ReversalIsOn = vectorType
-                elseif t == "table" then 
+                else 
                     play("180Off", "BR")
                     ReversalIsOn = nil
                 end                
@@ -8302,10 +8307,14 @@ VERSION_NUMBER = 1.354
         elseif action == "backward" then
             pitchInput = 0
         elseif action == "left" then
-            if ReversalIsOn == 2 then ReversalIsOn = 0 else ReversalIsOn = nil end
+            if ReversalIsOn then
+                if ReversalIsOn == 2 then ReversalIsOn = -2 else ReversalIsOn = -1 end
+            end
             rollInput = 0
         elseif action == "right" then
-            if ReversalIsOn == 4 then ReversalIsOn = 0 else ReversalIsOn = nil end
+            if ReversalIsOn then
+                if ReversalIsOn == 4 then ReversalIsOn = -2 else ReversalIsOn = -1 end
+            end
             rollInput = 0
         elseif action == "yawright" then
             yawInput = 0
