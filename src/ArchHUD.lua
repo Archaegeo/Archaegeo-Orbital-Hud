@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.354
+VERSION_NUMBER = 1.355
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -156,7 +156,6 @@ VERSION_NUMBER = 1.354
     safeMass = 0
     iphCondition = "All"
     stablized = true
-    sounds = true
 
     -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
         local autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
@@ -166,8 +165,7 @@ VERSION_NUMBER = 1.354
                     "AutopilotPlanetGravity", "PrevViewLock", "AutopilotTargetName", "AutopilotTargetCoords",
                     "AutopilotTargetIndex", "TotalDistanceTravelled",
                     "TotalFlightTime", "SavedLocations", "VectorToTarget", "LocationIndex", "LastMaxBrake", 
-                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "safeMass", "iphCondition", "stablized", 
-                    "sounds"}
+                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "safeMass", "iphCondition", "stablized"}
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -355,7 +353,7 @@ VERSION_NUMBER = 1.354
 -- Function Definitions that are used in more than one areause 
 
     local function play(sound, ID, type)
-        if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" or not sounds then return end
+        if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
         if type ~= nil then
             if type == 2 then
                 system.logInfo("sound_loop|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
@@ -4189,7 +4187,8 @@ VERSION_NUMBER = 1.354
                 
                 if #radarContacts > 0 then
                     local friendlies = {}
-                    local count, count2, static, knownStatic = 0, 0, 0, 0
+                    local count, count2, static, knownStatic = 700, 70, 0, 0
+                    if not nearPlanet then count = 400 count2 = 40 end
 
                     for v in contactData do
                         local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
@@ -4219,7 +4218,7 @@ VERSION_NUMBER = 1.354
                             end
                         end
                         count = count + 1
-                        if count > 750 or count2 > 75 then
+                        if count > 700 or count2 > 70 then
                             coroutine.yield()
                             count, count2 = 0, 0
                         end
@@ -5955,9 +5954,9 @@ VERSION_NUMBER = 1.354
 -- DU Events written for wrap and minimization. Written by Dimencia and Archaegeo. Optimization and Automation of scripting by ChronosWS  Linked sources where appropriate, most have been modified.
     function script.onStart()
         -- Local functions for onStart
-        local ControlButtons = {}
-        local SettingButtons = {}
-        local valuesAreSet = false
+            local ControlButtons = {}
+            local SettingButtons = {}
+            local valuesAreSet = false
             local function LoadVariables()
 
                 local function processVariableList(varList)
