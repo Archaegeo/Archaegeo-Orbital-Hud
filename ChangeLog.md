@@ -1,5 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.355 - Changed limits for counting of contacts when in space to avoid CPU overload while AP in space
+
 Version 1.354 - Fix small issues, massive efficiency improvement of collision
 - Numerous improvements to collision detection efficiency.
 - Improvement to Flight Assist (Hard bank with Alt-Q/E and 180 with ALT-S).
