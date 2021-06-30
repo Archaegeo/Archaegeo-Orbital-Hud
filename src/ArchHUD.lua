@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.355
+VERSION_NUMBER = 1.356
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -48,6 +48,7 @@ VERSION_NUMBER = 1.355
     PitchStallAngle = 35 --export:
     brakeLandingRate = 30 --export:
     MaxPitch = 30 --export:
+    LockPitchTarget = 0 --export:
     TargetOrbitRadius = 1.4 --export:
     LowOrbitHeight = 1000 --export:
     AtmoSpeedLimit = 1050 --export:
@@ -380,7 +381,7 @@ VERSION_NUMBER = 1.355
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
                 "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd", "BarFuelDisplay", "showHelp", "Cockpit",
                 "voices", "alerts", "CollisionSystem"}
-            local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "TargetOrbitRadius", "LowOrbitHeight",
+            local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "LockPitchTarget", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
                 "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization"}
@@ -2778,6 +2779,7 @@ VERSION_NUMBER = 1.355
         local pvpDist = 0
 
         --Local Huds Functions
+
             local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
                 local radius = 500000
                 local distsz, distp, key = math.huge
@@ -2952,13 +2954,13 @@ VERSION_NUMBER = 1.355
                     end
                     newContent[#newContent + 1] = stringf([[
                         <g class="pbright txt txtvspd" transform="translate(%d %d) scale(0.6)">
-                                <text x="31" y="-41">1000</text>
-                                <text x="-10" y="-65">100</text>
-                                <text x="-54" y="-45">10</text>
+                                <text x="55" y="-41">1000</text>
+                                <text x="10" y="-65">100</text>
+                                <text x="-45" y="-45">10</text>
                                 <text x="-73" y="3">O</text>
-                                <text x="-56" y="52">-10</text>
-                                <text x="-14" y="72">-100</text>
-                                <text x="29" y="50">-1000</text>
+                                <text x="-45" y="52">-10</text>
+                                <text x="10" y="72">-100</text>
+                                <text x="55" y="50">-1000</text>
                                 <text x="85" y="0" class="txtvspdval txtend">%d m/s</text>
                             <g class="linethick">
                                 <path d="m-41 75 2.5-4.4m17 12 1.2-4.9m20 7.5v-10m-75-34 4.4-2.5m-12-17 4.9-1.2m17 40 7-7m-32-53h10m34-75 2.5 4.4m17-12 1.2 4.9m20-7.5v10m-75 34 4.4 2.5m-12 17 4.9 1.2m17-40 7 7m-32 53h10m116 75-2.5-4.4m-17 12-1.2-4.9m40-17-7-7m-12-128-2.5 4.4m-17-12-1.2 4.9m40 17-7 7"/>
@@ -3162,6 +3164,7 @@ VERSION_NUMBER = 1.355
                     local divisor = 1
                     local forwardFract = 0
                     local isNegative = altitude < 0
+                    local isLand = altitude < planet.surfaceMaxAltitude
                     local rolloverDigit = 9
                     if isNegative then
                         rolloverDigit = 0
@@ -3184,6 +3187,8 @@ VERSION_NUMBER = 1.355
             
                         if isNegative then  
                             class = class .. " red"
+                        elseif isLand then
+                            class = class .. " orange"
                         end
             
                         local digit = (altitude / divisor) % 10
@@ -3538,22 +3543,23 @@ VERSION_NUMBER = 1.355
                 if RetrogradeIsOn then
                     newContent[#newContent + 1] = svgText(warningX, apY, "Retrograde Alignment", "crit")
                 end
-                local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
-                local atmoDistance = farSide
-                if nearSide ~= nil and farSide ~= nil then
-                    atmoDistance = math.min(nearSide,farSide)
-                end
-                if atmoDistance ~= nil and atmosDensity == 0 then
+                if collisionAlertStatus then
+                    local type
+                    if string.find(collisionAlertStatus, "COLLISION") then type = "warnings" else type = "crit" end
+                    newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, collisionAlertStatus, type)
+                elseif atmosDensity == 0 then
+                    local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
+                    local atmoDistance = farSide
+                    if nearSide ~= nil and farSide ~= nil then
+                        atmoDistance = math.min(nearSide,farSide)
+                    end
+                    if atmoDistance ~= nil then
                         local displayText = getDistanceDisplayString(atmoDistance)
                         local travelTime = Kinematic.computeTravelTime(velMag, 0, atmoDistance)
                         local displayCollisionType = "Collision"
                         if intersectBody.noAtmosphericDensityAltitude > 0 then displayCollisionType = "Atmosphere" end
                         newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, intersectBody.name.." "..displayCollisionType.." "..FormatTimeString(travelTime).." In "..displayText, "crit")
-                end
-                if collisionAlertStatus then
-                    local type
-                    if string.find(collisionAlertStatus, "COLLISION") then type = "warnings" else type = "crit" end
-                    newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, collisionAlertStatus, type)
+                    end
                 end
                 if VectorToTarget and not IntoOrbit then
                     newContent[#newContent + 1] = svgText(warningX, apY+35, VectorStatus, "warn")
@@ -3708,10 +3714,10 @@ VERSION_NUMBER = 1.355
                 local y = 275
                 local help = {"Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-3: Toggle Vanilla Widget view"}
                 local helpAtmo = { "", "------------------IN ATMO-----------------", "Alt-4: Autopilot in atmo to target", "Alt-4-4: Autopilot to LowOrbitHeight over atmosphere and orbit to target", 
-                                    "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere"}
+                                    "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", "Alt-Q/E: Hard Bankroll left/right till released", "Alt-S: 180 deg bank turn"}
                 local helpSpace = {"", "------------------NO ATMO-----------------", "Alt-4 (Alt < 100k): Autopilot to Orbit and land", "Alt-4 (Alt > 100k): Autopilot to target", "Alt-6: Orbit at current altitude",
                                     "Alt-6-6: Orbit at LowOrbitHeight over atmosphere"}
-                local helpGeneral = {"", "------------------ALWAYS--------------------", "Alt-5: Lock Pitch at current pitch","Alt-7: Toggle InHud Sounds", "Alt-8: Toggle ground stabilization (underwater flight)","Alt-9: Activate Gyroscope", 
+                local helpGeneral = {"", "------------------ALWAYS--------------------", "Alt-5: Lock Pitch at current pitch","Alt-7: Toggle Collision System on and offset", "Alt-8: Toggle ground stabilization (underwater flight)","Alt-9: Activate Gyroscope", 
                                     "", "CTRL: Toggle Brakes on and off, cancels active AP", "LeftAlt: Tap to shift freelook on and off", "Shift: Hold while not in freelook to see Buttons",
                                     "Type /commands or /help in lua chat to see text commands"}
                 if inAtmo then 
@@ -4177,7 +4183,7 @@ VERSION_NUMBER = 1.355
             end
 
             if (radar_1) then
-                local radarContacts = radar_1.getEntries()
+                local radarContacts = #radar_1.getEntries()
                 local knownContacts = {}
                 local radarData = radar_1.getData()
                 local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
@@ -4185,10 +4191,9 @@ VERSION_NUMBER = 1.355
                 local radarY = ConvertResolutionY(350)
                 local wp = getTrueWorldPos()
                 
-                if #radarContacts > 0 then
+                if radarContacts > 0 then
                     local friendlies = {}
-                    local count, count2, static, knownStatic = 700, 70, 0, 0
-                    if not nearPlanet then count = 400 count2 = 40 end
+                    local count, count2, static = 0, 0, 0
 
                     for v in contactData do
                         local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
@@ -4197,9 +4202,9 @@ VERSION_NUMBER = 1.355
                         if radar_1.hasMatchingTransponder(id) == 1 then
                             table.insert(friendlies,id)
                         end
-                        if distance > 0 and radar_1.getConstructType(id) == "static" or radar_1.getConstructType(id) == "space" then
-                            static = static + 1
-                            if CollisionSystem then
+                        if CollisionSystem then
+                            if distance > 0 and radar_1.getConstructType(id) == "static" or radar_1.getConstructType(id) == "space" then
+                                static = static + 1
                                 local name = radar_1.getConstructName(id)
                                 local construct = contacts[id]
                                 if construct == nil then
@@ -4214,30 +4219,29 @@ VERSION_NUMBER = 1.355
                                     count2 = count2 + 1
                                 end
                                 if construct.center then table.insert(knownContacts, construct) end
-                                
+                            end
+                            count = count + 1
+                            if (nearPlanet and count > 700 or count2 > 70) or (not nearPlanet and count > 300 or count2 > 30) then
+                                coroutine.yield()
+                                count, count2 = 0, 0
                             end
                         end
-                        count = count + 1
-                        if count > 700 or count2 > 70 then
-                            coroutine.yield()
-                            count, count2 = 0, 0
-                        end
                     end
-                    if #knownContacts > 0 then 
+                    local numKnown = #knownContacts
+                    if numKnown > 0 and velMag > 20 
+                    then 
                         local body, far, near, vect
                         local innerCount = 0
                         local galxRef = galaxyReference:getPlanetarySystem(0)
                         vect = constructVelocity:normalize()
-                        while innerCount < #knownContacts do
+                        while innerCount < numKnown do
                             coroutine.yield()
-                            local innerList = { table.unpack(knownContacts, innerCount, math.min(innerCount + 75, #knownContacts)) }
+                            local innerList = { table.unpack(knownContacts, innerCount, math.min(innerCount + 75, numKnown)) }
                             body, far, near = galxRef:castIntersections(worldPos, vect, nil, nil, innerList)
                             if body and near then collisionTarget = {body, far, near} break end
                             innerCount = innerCount + 75
                         end
                         if not body then collisionTarget = nil end
-                        knownStatic = #knownContacts
-                        knownContacts = {}
                     else
                         collisionTarget = nil
                     end
@@ -4254,11 +4258,15 @@ VERSION_NUMBER = 1.355
                         ToggleRadarPanel()
                     end
                     local msg, where
-                    if nearPlanet then where = "Buildings" else where = "Stations" end
                     if CollisionSystem then 
-                        msg = knownStatic.."/"..static.." "..where.." : "..(#radarContacts-static).." Ships" 
-                    else 
-                        msg = static.." "..where.." : "..(#radarContacts-static).." Ships" 
+                        if nearPlanet then where = "Buildings" else where = "Stations" end
+                        if numKnown > 0 then 
+                            msg = numKnown.."/"..static.." "..where.." : "..(radarContacts-static).." Ships" 
+                        else 
+                            msg = "0/"..static.." "..where.." : "..(radarContacts-static).." Ships" 
+                        end
+                    else
+                        msg = "Radar Contacts: "..radarContacts
                     end
                     radarMessage = svgText(radarX, radarY, msg, "pbright txtbig txtmid")
 
@@ -4286,11 +4294,20 @@ VERSION_NUMBER = 1.355
                 end
             end
             --[[  Timeing check
+            if contacts.time == nil then contacts.time = 0 contacts.tcount = -1 end
             if timeCount < 250 then
                 totalTime = totalTime + (time-startURR)
-                timeCount = timeCount+1
+                timeCount = timeCount + 1
+            elseif contacts.tcount > -1 then
+                local avg = totalTime*0.004
+                system.print("Avg of 250 URR: "..avg)
+                contacts.time = contacts.time + avg 
+                contacts.tcount = contacts.tcount + 1
+                system.print("Overall Avg after "..contacts.tcount.." runs: "..(contacts.time / contacts.tcount))
+                timeCount = 0
+                totalTime = 0
             else
-                system.print("Avg of 250 URR: "..(totalTime/250))
+                contacts.tcount = 0
                 timeCount = 0
                 totalTime = 0
             end
@@ -8144,7 +8161,8 @@ VERSION_NUMBER = 1.355
             function ToggleLockPitch()
                 if LockPitch == nil then
                     play("lkPOn","LP")
-                    LockPitch = adjustedPitch
+                    if not holdingCtrl then LockPitch = adjustedPitch
+                    else LockPitch = LockPitchTarget end
                     AutoTakeoff = false
                     AltitudeHold = false
                     BrakeLanding = false

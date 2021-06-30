@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.356
+- Added `LockPitchTarget` user variable, default 0, and alt-shift-5 setting to target pitch.  Alt-5 will continue to lock pitch at current pitch.
+- Altitude Display is Red if below sea level (0 m), orange if 0 to max surface altitude on current planet, normal hud color if > max surface altitude.
+- Changed collision system to only check for collisions on known contacts when moving > 20 m/s (72km/hr) as damage doesnt occur before then.  
+- Clean up vSpd meter.
+- Updated dynamic help text.
+
 Version 1.355 - Changed limits for counting of contacts when in space to avoid CPU overload while AP in space
 
 Version 1.354 - Fix small issues, massive efficiency improvement of collision
