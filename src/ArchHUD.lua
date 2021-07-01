@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.356
+VERSION_NUMBER = 1.357
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -3804,6 +3804,14 @@ VERSION_NUMBER = 1.356
                     pipeMessage = svgText(pipeX, pipeY, "Pipe ("..pipeOriginPlanet.name.."--"..nearestPipePlanet.name.."): "..pipeDistance, txtadd.."pbright txtmid") 
                 end
             end
+            local radarX = ConvertResolutionX(1770)
+            local radarY = ConvertResolutionY(350)
+            local friendy = ConvertResolutionY(15)
+            local friendx = ConvertResolutionX(1370)
+            local msg, where
+            local friendlies = {}
+            local sizeMap = { XS = 13, S = 27, M = 55, L = 110, XL = 221}
+            local knownContacts = {}
 
         local Hud = {}
         
@@ -4184,34 +4192,32 @@ VERSION_NUMBER = 1.356
 
             if (radar_1) then
                 local radarContacts = #radar_1.getEntries()
-                local knownContacts = {}
                 local radarData = radar_1.getData()
                 local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
-                local radarX = ConvertResolutionX(1770)
-                local radarY = ConvertResolutionY(350)
-                local wp = getTrueWorldPos()
                 
                 if radarContacts > 0 then
-                    local friendlies = {}
+
+                    local wp = getTrueWorldPos()
+
                     local count, count2, static = 0, 0, 0
 
                     for v in contactData do
                         local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
-                        local sz = 13
+                        local sz = sizeMap[size]
                         distance = tonum(distance)
                         if radar_1.hasMatchingTransponder(id) == 1 then
                             table.insert(friendlies,id)
                         end
+                        local cType = radar_1.getConstructType(id)
                         if CollisionSystem then
-                            if distance > 0 and radar_1.getConstructType(id) == "static" or radar_1.getConstructType(id) == "space" then
+                            if sz > 27 or cType == "static" or cType == "space"
+                            then
                                 static = static + 1
                                 local name = radar_1.getConstructName(id)
                                 local construct = contacts[id]
                                 if construct == nil then
+                                    sz = sz+coreHalfDiag
                                     contacts[id] = {pts = {}, ref = wp, name = name, i = 0, radius = sz, skipCalc = false}
-                                    local sizeMap = { XS = 13, S = 27, M = 55, L = 110, XL = 221}
-                                    sz = sizeMap[size]
-                                    contacts[id].radius = (sz+coreHalfDiag)
                                     construct = contacts[id]
                                 end
                                 if not construct.skipCalc then 
@@ -4237,7 +4243,7 @@ VERSION_NUMBER = 1.356
                         while innerCount < numKnown do
                             coroutine.yield()
                             local innerList = { table.unpack(knownContacts, innerCount, math.min(innerCount + 75, numKnown)) }
-                            body, far, near = galxRef:castIntersections(worldPos, vect, nil, nil, innerList)
+                            body, far, near = galxRef:castIntersections(worldPos, vect, nil, nil, innerList, true)
                             if body and near then collisionTarget = {body, far, near} break end
                             innerCount = innerCount + 75
                         end
@@ -4245,6 +4251,7 @@ VERSION_NUMBER = 1.356
                     else
                         collisionTarget = nil
                     end
+                    knownContacts = {}
 
                     local target = radarData:find('identifiedConstructs":%[%]')
                     if target == nil and perisPanelID == nil then
@@ -4257,27 +4264,21 @@ VERSION_NUMBER = 1.356
                     if radarPanelID == nil then
                         ToggleRadarPanel()
                     end
-                    local msg, where
+
                     if CollisionSystem then 
-                        if nearPlanet then where = "Buildings" else where = "Stations" end
-                        if numKnown > 0 then 
-                            msg = numKnown.."/"..static.." "..where.." : "..(radarContacts-static).." Ships" 
-                        else 
-                            msg = "0/"..static.." "..where.." : "..(radarContacts-static).." Ships" 
-                        end
+                        msg = numKnown.."/"..static.." Plotted : "..(radarContacts-static).." Ignored" 
                     else
                         msg = "Radar Contacts: "..radarContacts
                     end
                     radarMessage = svgText(radarX, radarY, msg, "pbright txtbig txtmid")
 
                     if #friendlies > 0 then
-                        local y = ConvertResolutionY(15)
-                        local x = ConvertResolutionX(1370)
                         radarMessage = radarMessage..svgText( x, y, "Friendlies In Range", "pbright txtbig txtmid")
                         for k, v in pairs(friendlies) do
-                            y = y + 20
-                            radarMessage = radarMessage..svgText(x, y, radar_1.getConstructName(v), "pdim txtmid")
+                            friendy = friendy + 20
+                            radarMessage = radarMessage..svgText(friendx, friendy, radar_1.getConstructName(v), "pdim txtmid")
                         end
+                        friendlies = {}
                     end
                 else
                     local data
@@ -7333,7 +7334,7 @@ VERSION_NUMBER = 1.356
                         -- Note that because SVG lines fucking suck, we have to do a translate and they can't use calc in their params
                         if DisplayDeadZone then DrawCursorLine(newContent) end
                     end
-                elseif not AltIsOn then
+                elseif not AltIsOn or (AltIsOn and holdingCtrl) then
                     SetButtonContains()
                     DrawButtons(newContent)
                 end

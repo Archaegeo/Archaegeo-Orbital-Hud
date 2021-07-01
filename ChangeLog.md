@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.357 - Collision detection on M or larger unmoving ships (AGG)
+- Collision system now includes checking on all static/space cores and all M+ dynamic cores (to catch AGG collisions)
+- For keyboard users with freeLookToggle off, holding alt-shift will show the buttons menu (alt-shift-c/spacebar will still work for preset heights)
+
 Version 1.356
 - Added `LockPitchTarget` user variable, default 0, and alt-shift-5 setting to target pitch.  Alt-5 will continue to lock pitch at current pitch.
 - Altitude Display is Red if below sea level (0 m), orange if 0 to max surface altitude on current planet, normal hud color if > max surface altitude.
