@@ -4112,7 +4112,7 @@ VERSION_NUMBER = 1.357
         end
 
         function Hud.UpdateRadarRoutine()
-            local startURR = time
+            --local startURR = time
 
             local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
                 p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
@@ -4192,30 +4192,30 @@ VERSION_NUMBER = 1.357
 
             if (radar_1) then
                 local radarContacts = #radar_1.getEntries()
-
                 local radarData = radar_1.getData()
                 local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
-
-                local wp = getTrueWorldPos()
                 
                 if radarContacts > 0 then
+
+                    local wp = getTrueWorldPos()
 
                     local count, count2, static = 0, 0, 0
 
                     for v in contactData do
                         local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
-                        local sz = 13
+                        local sz = sizeMap[size]
                         distance = tonum(distance)
                         if radar_1.hasMatchingTransponder(id) == 1 then
                             table.insert(friendlies,id)
                         end
+                        local cType = radar_1.getConstructType(id)
                         if CollisionSystem then
-                            if distance > 0 and radar_1.getConstructType(id) == "static" or radar_1.getConstructType(id) == "space" then
+                            if sz > 27 or cType == "static" or cType == "space"
+                            then
                                 static = static + 1
                                 local name = radar_1.getConstructName(id)
                                 local construct = contacts[id]
                                 if construct == nil then
-                                    sz = sizeMap[size]
                                     sz = sz+coreHalfDiag
                                     contacts[id] = {pts = {}, ref = wp, name = name, i = 0, radius = sz, skipCalc = false}
                                     construct = contacts[id]
@@ -4234,7 +4234,7 @@ VERSION_NUMBER = 1.357
                         end
                     end
                     local numKnown = #knownContacts
-                    if numKnown > 0 --and velMag > 20 
+                    if numKnown > 0 and velMag > 20 
                     then 
                         local body, far, near, vect
                         local innerCount = 0
@@ -4266,12 +4266,7 @@ VERSION_NUMBER = 1.357
                     end
 
                     if CollisionSystem then 
-                        if nearPlanet then where = "Buildings" else where = "Stations" end
-                        if numKnown > 0 then 
-                            msg = numKnown.."/"..static.." "..where.." : "..(radarContacts-static).." Ships" 
-                        else 
-                            msg = "0/"..static.." "..where.." : "..(radarContacts-static).." Ships" 
-                        end
+                        msg = numKnown.."/"..static.." Plotted : "..(radarContacts-static).." Ignored" 
                     else
                         msg = "Radar Contacts: "..radarContacts
                     end
@@ -4299,7 +4294,7 @@ VERSION_NUMBER = 1.357
                     end
                 end
             end
-            ---[[  Timeing check
+            --[[  Timeing check
             if contacts.time == nil then contacts.time = 0 contacts.tcount = -1 end
             if timeCount < 250 then
                 totalTime = totalTime + (time-startURR)

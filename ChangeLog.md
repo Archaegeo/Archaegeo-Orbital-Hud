@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.357
+Version 1.357 - Collision detection on M or larger unmoving ships (AGG)
+- Collision system now includes checking on all static/space cores and all M+ dynamic cores (to catch AGG collisions)
 - For keyboard users with freeLookToggle off, holding alt-shift will show the buttons menu (alt-shift-c/spacebar will still work for preset heights)
 
 Version 1.356
