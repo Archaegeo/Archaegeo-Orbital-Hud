@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.358 - 
+- Added clamp of 500m max change per tick in alt when holding alt-C or alt-Spacebar to raise and lower set heights. (Help prevent driving -5000m target low)
+- Added in space autopilot to collision automatic brake action.  Should be very hard to trigger.
+- Added "-COLLISION ON" beside TRAVEL/CRUISE up top when collision system is actively checking for collisions. (system on and > 20m/s speed)
+
+
 Version 1.357 - Collision detection on M or larger unmoving ships (AGG)
 - Collision system now includes checking on all static/space cores and all M+ dynamic cores (to catch AGG collisions)
 - For keyboard users with freeLookToggle off, holding alt-shift will show the buttons menu (alt-shift-c/spacebar will still work for preset heights)

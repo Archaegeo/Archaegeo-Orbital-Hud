@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.357
+VERSION_NUMBER = 1.358
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -3791,7 +3791,7 @@ VERSION_NUMBER = 1.357
                             end
                         end
                     end
-                end
+                end 
                 local pipeX = ConvertResolutionX(1770)
                 local pipeY = ConvertResolutionY(330)
                 if nearestDistance then
@@ -4016,6 +4016,7 @@ VERSION_NUMBER = 1.357
             local brakeValue = 0
             local flightStyle = GetFlightStyle()
             if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
+            if CollisionSystem and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
             if TurnBurn then flightStyle = "TB-"..flightStyle end
             if not stablized then flightStyle = flightStyle.."-DeCoupled" end
 
@@ -4643,13 +4644,13 @@ VERSION_NUMBER = 1.357
                     local far, near = collisionTarget[2],collisionTarget[3] 
                     local collisionDistance = math.min(far, near or far)
                     local collisionTime = collisionDistance/velMag
-                    if (AltitudeHold or VectorToTarget or LockPitch) and not AutoTakeoff and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
+                    if (AltitudeHold or VectorToTarget or LockPitch or Autopilot) and not AutoTakeoff and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
                             BrakeIsOn = true
                             cmdThrottle(0)
                             if AltitudeHold then ToggleAltitudeHold() end
                             if LockPitch then ToggleLockPitch() end
                             msgText = "Autopilot Cancelled due to possible collision"
-                            if VectorToTarget then 
+                            if VectorToTarget or Autopilot then 
                                 ToggleAutopilot()
                             end
                             StrongBrakes = true
@@ -8402,8 +8403,9 @@ VERSION_NUMBER = 1.357
 
     function script.onActionLoop(action)
         -- Local functions onActionLoop
-            local mult = 1
+
             local function groundLoop(down)
+                local mult = 1
                 if down then mult = -1 end
                 if not ExternalAGG and antigravOn then
                     if AntigravTargetAltitude ~= nil then 
@@ -8412,7 +8414,7 @@ VERSION_NUMBER = 1.357
                         if AltitudeHold and AntigravTargetAltitude < HoldAltitude + 10 and AntigravTargetAltitude > HoldAltitude - 10 then 
                             HoldAltitude = AntigravTargetAltitude
                         end
-                        currentAggModifier = currentAggModifier * 1.05
+                        currentAggModifier = uclamp(currentAggModifier * 1.05, antiGravButtonModifier, 500)
                         BrakeIsOn = false
                     else
                         AntigravTargetAltitude = desiredBaseAltitude + mult*100
@@ -8425,7 +8427,7 @@ VERSION_NUMBER = 1.357
                     else
                         HoldAltitude = HoldAltitude + mult*currentHoldAltModifier
                     end
-                    currentHoldAltModifier = currentHoldAltModifier * 1.05
+                    currentHoldAltModifier = uclamp(currentHoldAltModifier * 1.05, holdAltitudeButtonModifier, 500)
                 else
                     navCom:updateTargetGroundAltitudeFromActionLoop(mult*1.0)
                 end                
