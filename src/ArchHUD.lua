@@ -4388,15 +4388,14 @@ VERSION_NUMBER = 1.358
     local function AtlasClass() -- Atlas and Interplanetary functions including Update Autopilot Target
 
         -- Atlas functions
-            local function spaceCheck(position)
+            local function getPlanet(position)
                 local p = sys:closestBody(position)
-                if (position-p.center):len() < p.radius + p.noAtmosphericDensityAltitude then
-                    p = planet
-                else
+                if (position-p.center):len() > p.radius + p.noAtmosphericDensityAltitude then
                     p = atlas[0][0]
                 end
-                return p, position
+                return p
             end
+
             local function UpdateAtlasLocationsList()
                 local function atlasCmp (left, right)
                     return left.name < right.name
@@ -4535,7 +4534,62 @@ VERSION_NUMBER = 1.358
                     play("iph","AP")
                 end
             end
+
+            local function ClearCurrentPosition()
+                local index = -1
+                index = findAtlasIndex(atlas[0])
+                if index > -1 then
+                    table.remove(atlas[0], index)
+                end
+                -- And SavedLocations
+                index = -1
+                index = findAtlasIndex(SavedLocations)
+                if index ~= -1 then
+                    msgText = CustomTarget.name .. " saved location cleared"
+                    table.remove(SavedLocations, index)
+                end
+                adjustAutopilotTargetIndex()
+                UpdateAtlasLocationsList()
+            end
             
+            local function AddNewLocation(name, position, temp, safe)
+                if dbHud_1 or temp then
+        
+                    local p = getPlanet(position)
+                    local gravity = p.gravity
+                    local atmo = p.atmosphericDensityAboveSurface
+                    if safe then
+                        atmo = atmosDensity
+                        gravity = unit.getClosestPlanetInfluence()
+                    end
+                    local newLocation = {
+                        position = position,
+                        name = name,
+                        atmosphere = atmo,
+                        planetname = p.name,
+                        gravity = gravity,
+                        safe = safe, -- This indicates we can extreme land here, if this was a real positional waypoint
+                    }
+                    if not temp then 
+                        SavedLocations[#SavedLocations + 1] = newLocation
+                    else
+                        for k, v in pairs(atlas[0]) do
+                            if v.name and name == v.name then
+                                table.remove(atlas[0], k)
+                            end
+                        end
+                    end
+                    -- Nearest planet, gravity also important - if it's 0, we don't autopilot to the target planet, the target isn't near a planet.                      
+                    table.insert(atlas[0], newLocation)
+                    UpdateAtlasLocationsList()
+                    UpdateAutopilotTarget() -- This is safe and necessary to do right?
+                    -- Store atmosphere so we know whether the location is in space or not
+                    msgText = "Location saved as " .. name.."("..p.name..")"
+                else
+                    msgText = "Databank must be installed to save permanent locations"
+                end
+            end
+
         local Atlas = {}
 
         function Atlas.UpdateAtlasLocationsList()
@@ -4555,92 +4609,29 @@ VERSION_NUMBER = 1.358
         end
 
         function Atlas.UpdatePosition(newName) -- Update a saved location with new position
-            local index = -1
-            local newLocation
-            index = findAtlasIndex(SavedLocations)
+            local index = findAtlasIndex(SavedLocations)
             if index ~= -1 then
-                local updatedName
                 if newName ~= nil then
-                    newLocation = {
-                        position = SavedLocations[index].position,
-                        name = newName,
-                        atmosphere = SavedLocations[index].atmosphere,
-                        planetname = SavedLocations[index].planetname,
-                        gravity = SavedLocations[index].gravity
-                    } 
+                    SavedLocations[index].name = newName
                 else
-                    local p, pos = spaceCheck(worldPos)
-                    newLocation = {
-                        position = pos,
-                        name = SavedLocations[index].name,
-                        atmosphere = atmosDensity,
-                        planetname = p.name,
-                        gravity = unit.getClosestPlanetInfluence(),
-                        safe = true
-                    }   
+                    local location = SavedLocations[index]
+                    ClearCurrentPosition()
+                    AddNewLocation(location.name, worldPos, false, true)
                 end
-                SavedLocations[index] = newLocation
-                index = -1
-                index = findAtlasIndex(atlas[0])
-                if index > -1 then
-                    atlas[0][index] = newLocation
-                end
-                UpdateAtlasLocationsList()
-                msgText = newLocation.name .. " position updated ("..newLocation.planetname..")"
-                --AutopilotTargetIndex = 0
-                UpdateAutopilotTarget()
+                --UpdateAtlasLocationsList() -- Do we need these, if we only changed the name?  They are already done in AddNewLocation otherwise
+                msgText = SavedLocations[index].name .. " position updated ("..SavedLocations[index].planetname..")"
+                --UpdateAutopilotTarget()
             else
                 msgText = "Name Not Found"
             end
         end
 
-        function Atlas.AddNewLocation()
-            if dbHud_1 then
-
-                local p, position = spaceCheck(worldPos)
-
-                local name = p.name .. ". " .. #SavedLocations
-                if radar_1 then -- Just match the first one
-                    local id,_ = radar_1.getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
-                    if id ~= nil and id ~= "" then
-                        name = name .. " " .. radar_1.getConstructName(id)
-                    end
-                end
-                local newLocation = {}
-                newLocation = {
-                    position = position,
-                    name = name,
-                    atmosphere = p.atmosphericDensityAboveSurface,
-                    planetname = p.name,
-                    gravity = p.gravity,
-                    safe = true -- This indicates we can extreme land here, because this was a real positional waypoint
-                }
-                SavedLocations[#SavedLocations + 1] = newLocation
-                -- Nearest planet, gravity also important - if it's 0, we don't autopilot to the target planet, the target isn't near a planet.                      
-                table.insert(atlas[0], newLocation)
-                UpdateAtlasLocationsList()
-                -- Store atmosphere so we know whether the location is in space or not
-                msgText = "Location saved as " .. name.."("..p.name..")"
-            else
-                msgText = "Databank must be installed to save locations"
-            end
+        function Atlas.AddNewLocation(name, position, temp, safe)
+            AddNewLocation(name, position, temp, safe)
         end
 
         function Atlas.ClearCurrentPosition()
-            local index = -1
-            index = findAtlasIndex(atlas[0])
-            if index > -1 then
-                table.remove(atlas[0], index)
-            end
-            -- And SavedLocations
-            index = -1
-            index = ATLAS.findAtlasIndex(SavedLocations)
-            if index ~= -1 then
-                msgText = CustomTarget.name .. " saved location cleared"
-                table.remove(SavedLocations, index)
-            end
-            adjustAutopilotTargetIndex()
-            UpdateAtlasLocationsList()
+            ClearCurrentPosition()
         end
 
         --Initial Setup
@@ -4654,6 +4645,7 @@ VERSION_NUMBER = 1.358
 
         return Atlas
     end
+
     local function APClass() -- Autopiloting functions including tick
         local ap = {}
             local function GetAutopilotBrakeDistanceAndTime(speed)
@@ -6509,9 +6501,19 @@ VERSION_NUMBER = 1.358
             end
             
             local function ControlsButtons()
-                local function AddNewLocation() -- Don't call this unless they have a databank or it's kinda pointless
+                local function AddNewLocation()
                     -- Add a new location to SavedLocations
-                    ATLAS.AddNewLocation()
+                    local position = worldPos
+                    local name = planet.name .. ". " .. #SavedLocations
+                    if radar_1 then -- Just match the first one
+                        local id,_ = radar_1.getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
+                        if id ~= nil and id ~= "" then
+                            name = name .. " " .. radar_1.getConstructName(id)
+                        end
+                    end
+                    
+                    return ATLAS.AddNewLocation(name, position, false, true)
+                    
                 end
                 
                 local function ToggleTurnBurn()
@@ -8588,7 +8590,7 @@ VERSION_NUMBER = 1.358
                 msgTimer = 5
             end
 
-            local function AddNewLocationByWaypoint(savename, planet, pos, temp)
+            local function AddNewLocationByWaypoint(savename, pos, temp)
 
                 local function zeroConvertToWorldCoordinates(pos) -- Many thanks to SilverZero for this.
                     local num  = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
@@ -8607,42 +8609,9 @@ VERSION_NUMBER = 1.358
                                         xproj*math.sin(longitude),
                                             math.sin(latitude));
                     return planet.center + (planet.radius + altitude) * planetxyz
-                end    
-            
-                if dbHud_1 or temp then
-                    local newLocation = {}
-                    local position = zeroConvertToWorldCoordinates(pos)
-                    if planet.name == "Space" then
-                        newLocation = {
-                            position = position,
-                            name = savename,
-                            atmosphere = 0,
-                            planetname = planet.name,
-                            gravity = planet.gravity
-                        }
-                    else
-                        newLocation = {
-                            position = position,
-                            name = savename,
-                            atmosphere = planet.atmosphericDensityAboveSurface,
-                            planetname = planet.name,
-                            gravity = planet.gravity
-                        }
-                    end
-                    if not temp then 
-                        SavedLocations[#SavedLocations + 1] = newLocation
-                    else
-                        for k, v in pairs(atlas[0]) do
-                            if v.name and savename == v.name then
-                                table.remove(atlas[0], k)
-                            end
-                        end
-                    end
-                    table.insert(atlas[0], newLocation)
-                    ATLAS.UpdateAtlasLocationsList()
-                else
-                    msgText = "Databank must be installed to save permanent locations"
-                end
+                end   
+                local position = zeroConvertToWorldCoordinates(pos)
+                return ATLAS.AddNewLocation(savename, position, temp)
             end
 
         local i
@@ -8684,22 +8653,8 @@ VERSION_NUMBER = 1.358
             i = string.find(arguement, "::")
             if not temp then savename = string.sub(arguement, 1, i-2) end
             local pos = string.sub(arguement, i)
-            local num        = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
-            local posPattern = '::pos{' .. num .. ',' .. num .. ',' ..  num .. ',' .. num ..  ',' .. num .. '}'    
-            local systemId, bodyId, latitude, longitude, altitude = stringmatch(pos, posPattern);
-            local planet = atlas[tonum(systemId)][tonum(bodyId)]
-            if planet.name == "Space" then
-                local newPos = vec3(tonum(latitude), tonum(longitude), tonum(altitude))
-                local p = sys:closestBody(newPos)
-                if (newPos-p.center):len() < p.radius + p.noAtmosphericDensityAltitude then
-                    system.print(pos.." recognized as: "..p.name)
-                    planet = p
-                end
-            end
-            AddNewLocationByWaypoint(savename, planet, pos, temp) 
-            msgText = "Added "..savename.." to saved locations,\nplanet "..planet.name.." at "..pos
-            msgTimer = 5    
-        elseif command == "/agg" then
+            AddNewLocationByWaypoint(savename, pos, temp)
+         elseif command == "/agg" then
             if arguement == nil or arguement == "" then
                 msgText = "Usage: /agg targetheight"
                 return
