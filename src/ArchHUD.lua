@@ -804,57 +804,6 @@ VERSION_NUMBER = 1.358
         end
     end
 
-    local function spaceCheck()
-        local position = worldPos
-        local p = sys:closestBody(position)
-        if (position-p.center):len() < p.radius + p.noAtmosphericDensityAltitude then
-            p = planet
-        else
-            p = atlas[0][0]
-        end
-        return p, position
-    end
-    
-    local function UpdatePosition(newName) -- Update a saved location with new position
-        local index = -1
-        local newLocation
-        index = ATLAS.findAtlasIndex(SavedLocations)
-        if index ~= -1 then
-            local updatedName
-            if newName ~= nil then
-                newLocation = {
-                    position = SavedLocations[index].position,
-                    name = newName,
-                    atmosphere = SavedLocations[index].atmosphere,
-                    planetname = SavedLocations[index].planetname,
-                    gravity = SavedLocations[index].gravity
-                } 
-            else
-                local p, pos = spaceCheck()
-                newLocation = {
-                    position = pos,
-                    name = SavedLocations[index].name,
-                    atmosphere = atmosDensity,
-                    planetname = p.name,
-                    gravity = unit.getClosestPlanetInfluence(),
-                    safe = true
-                }   
-            end
-            SavedLocations[index] = newLocation
-            index = -1
-            index = ATLAS.findAtlasIndex(atlas[0])
-            if index > -1 then
-                atlas[0][index] = newLocation
-            end
-            ATLAS.UpdateAtlasLocationsList()
-            msgText = newLocation.name .. " position updated ("..newLocation.planetname..")"
-            --AutopilotTargetIndex = 0
-            ATLAS.UpdateAutopilotTarget()
-        else
-            msgText = "Name Not Found"
-        end
-    end
-
     local function BrakeToggle() -- Toggle brakes on and off
         -- Toggle brakes
         BrakeIsOn = not BrakeIsOn
@@ -4439,6 +4388,15 @@ VERSION_NUMBER = 1.358
     local function AtlasClass() -- Atlas and Interplanetary functions including Update Autopilot Target
 
         -- Atlas functions
+            local function spaceCheck(position)
+                local p = sys:closestBody(position)
+                if (position-p.center):len() < p.radius + p.noAtmosphericDensityAltitude then
+                    p = planet
+                else
+                    p = atlas[0][0]
+                end
+                return p, position
+            end
             local function UpdateAtlasLocationsList()
                 local function atlasCmp (left, right)
                     return left.name < right.name
@@ -4451,6 +4409,133 @@ VERSION_NUMBER = 1.358
                 table.sort(AtlasOrdered, atlasCmp)
             end
             
+            local function findAtlasIndex(atlasList)
+                for k, v in pairs(atlasList) do
+                    if v.name and v.name == CustomTarget.name then
+                        return k
+                    end
+                end
+                return -1
+            end
+
+            local function UpdateAutopilotTarget()
+                -- So the indices are weird.  I think we need to do a pairs
+                if AutopilotTargetIndex == 0 then
+                    AutopilotTargetName = "None"
+                    autopilotTargetPlanet = nil
+                    CustomTarget = nil
+                    return true
+                end
+    
+                local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
+                local autopilotEntry = atlas[0][atlasIndex]
+    
+                if autopilotEntry.center then -- Is a real atlas entry
+                    AutopilotTargetName = autopilotEntry.name
+                    autopilotTargetPlanet = galaxyReference[0][atlasIndex]
+                    if CustomTarget ~= nil then
+                        if atmosDensity == 0 then
+                            if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) ~= 1 then
+                                sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
+                            if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) ~= 1 then
+                                sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
+                            if sysUpData(widgetCurBrakeTimeText, widgetCurBrakeTime) ~= 1 then
+                                sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime) end
+                            if sysUpData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) ~= 1 then
+                                sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
+                            if sysUpData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) ~= 1 then
+                                sysAddData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
+                        end
+                        if sysUpData(widgetMaxMassText, widgetMaxMass) ~= 1 then
+                            sysAddData(widgetMaxMassText, widgetMaxMass) end
+                        if sysUpData(widgetTravelTimeText, widgetTravelTime) ~= 1 then
+                            sysAddData(widgetTravelTimeText, widgetTravelTime) end
+                        if sysUpData(widgetTargetOrbitText, widgetTargetOrbit) ~= 1 then
+                            sysAddData(widgetTargetOrbitText, widgetTargetOrbit) end
+                    end
+                    CustomTarget = nil
+                else
+                    CustomTarget = autopilotEntry
+                    for _, v in pairs(galaxyReference[0]) do
+                        if v.name == CustomTarget.planetname then
+                            autopilotTargetPlanet = v
+                            AutopilotTargetName = CustomTarget.name
+                            break
+                        end
+                    end
+                    if sysUpData(widgetMaxMassText, widgetMaxMass) ~= 1 then
+                        sysAddData(widgetMaxMassText, widgetMaxMass) end
+                    if sysUpData(widgetTravelTimeText, widgetTravelTime) ~= 1 then
+                        sysAddData(widgetTravelTimeText, widgetTravelTime) end
+                end
+                if CustomTarget == nil then
+                    AutopilotTargetCoords = vec3(autopilotTargetPlanet.center) -- Aim center until we align
+                else
+                    AutopilotTargetCoords = CustomTarget.position
+                end
+                -- Determine the end speed
+                if autopilotTargetPlanet.planetname ~= "Space" then
+                    if autopilotTargetPlanet.hasAtmosphere then 
+                        AutopilotTargetOrbit = mfloor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.noAtmosphericDensityAltitude)
+                    else
+                        AutopilotTargetOrbit = mfloor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.surfaceMaxAltitude)
+                    end
+                else
+                    AutopilotTargetOrbit = 1000
+                end
+                if CustomTarget ~= nil and CustomTarget.planetname == "Space" then 
+                    AutopilotEndSpeed = 0
+                else
+                    _, AutopilotEndSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed(AutopilotTargetOrbit)
+                end
+                AutopilotPlanetGravity = 0 -- This is inaccurate unless we integrate and we're not doing that.  
+                AutopilotAccelerating = false
+                AutopilotBraking = false
+                AutopilotCruising = false
+                Autopilot = false
+                AutopilotRealigned = false
+                AutopilotStatus = "Aligning"
+                return true
+
+            end
+
+            local function adjustAutopilotTargetIndex(up)
+                if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then -- added to prevent crash when index == 0
+                    if up == nil then 
+                        AutopilotTargetIndex = AutopilotTargetIndex + 1
+                        if AutopilotTargetIndex > #AtlasOrdered then
+                            AutopilotTargetIndex = 0
+                        end
+                    else
+                        AutopilotTargetIndex = AutopilotTargetIndex - 1
+                        if AutopilotTargetIndex < 0 then
+                            AutopilotTargetIndex = #AtlasOrdered
+                        end  
+                    end
+                    if AutopilotTargetIndex == 0 then
+                        UpdateAutopilotTarget()
+                    else
+                        local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
+                        local autopilotEntry = atlas[0][atlasIndex]
+                        if autopilotEntry.name == "Space" or 
+                           (iphCondition == "Custom Only" and autopilotEntry.center) or
+                           (iphCondition == "No Moons" and string.find(autopilotEntry.name, "Moon") ~= nil)
+                        then 
+                            if up == nil then 
+                                adjustAutopilotTargetIndex()
+                            else
+                                adjustAutopilotTargetIndex(1)
+                            end
+                        else
+                            UpdateAutopilotTarget()
+                        end
+                    end        
+                else
+                    msgText = "Disengage autopilot before changing Interplanetary Helper"
+                    play("iph","AP")
+                end
+            end
+            
         local Atlas = {}
 
         function Atlas.UpdateAtlasLocationsList()
@@ -4458,129 +4543,104 @@ VERSION_NUMBER = 1.358
         end
         
         function Atlas.UpdateAutopilotTarget()
-            -- So the indices are weird.  I think we need to do a pairs
-            if AutopilotTargetIndex == 0 then
-                AutopilotTargetName = "None"
-                autopilotTargetPlanet = nil
-                CustomTarget = nil
-                return true
-            end
-
-            local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
-            local autopilotEntry = atlas[0][atlasIndex]
-
-            if autopilotEntry.center then -- Is a real atlas entry
-                AutopilotTargetName = autopilotEntry.name
-                autopilotTargetPlanet = galaxyReference[0][atlasIndex]
-                if CustomTarget ~= nil then
-                    if atmosDensity == 0 then
-                        if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) ~= 1 then
-                            sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
-                        if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) ~= 1 then
-                            sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
-                        if sysUpData(widgetCurBrakeTimeText, widgetCurBrakeTime) ~= 1 then
-                            sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime) end
-                        if sysUpData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) ~= 1 then
-                            sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
-                        if sysUpData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) ~= 1 then
-                            sysAddData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
-                    end
-                    if sysUpData(widgetMaxMassText, widgetMaxMass) ~= 1 then
-                        sysAddData(widgetMaxMassText, widgetMaxMass) end
-                    if sysUpData(widgetTravelTimeText, widgetTravelTime) ~= 1 then
-                        sysAddData(widgetTravelTimeText, widgetTravelTime) end
-                    if sysUpData(widgetTargetOrbitText, widgetTargetOrbit) ~= 1 then
-                        sysAddData(widgetTargetOrbitText, widgetTargetOrbit) end
-                end
-                CustomTarget = nil
-            else
-                CustomTarget = autopilotEntry
-                for _, v in pairs(galaxyReference[0]) do
-                    if v.name == CustomTarget.planetname then
-                        autopilotTargetPlanet = v
-                        AutopilotTargetName = CustomTarget.name
-                        break
-                    end
-                end
-                if sysUpData(widgetMaxMassText, widgetMaxMass) ~= 1 then
-                    sysAddData(widgetMaxMassText, widgetMaxMass) end
-                if sysUpData(widgetTravelTimeText, widgetTravelTime) ~= 1 then
-                    sysAddData(widgetTravelTimeText, widgetTravelTime) end
-            end
-            if CustomTarget == nil then
-                AutopilotTargetCoords = vec3(autopilotTargetPlanet.center) -- Aim center until we align
-            else
-                AutopilotTargetCoords = CustomTarget.position
-            end
-            -- Determine the end speed
-            if autopilotTargetPlanet.planetname ~= "Space" then
-                if autopilotTargetPlanet.hasAtmosphere then 
-                    AutopilotTargetOrbit = mfloor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.noAtmosphericDensityAltitude)
-                else
-                    AutopilotTargetOrbit = mfloor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.surfaceMaxAltitude)
-                end
-            else
-                AutopilotTargetOrbit = 1000
-            end
-            if CustomTarget ~= nil and CustomTarget.planetname == "Space" then 
-                AutopilotEndSpeed = 0
-            else
-                _, AutopilotEndSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed(AutopilotTargetOrbit)
-            end
-            AutopilotPlanetGravity = 0 -- This is inaccurate unless we integrate and we're not doing that.  
-            AutopilotAccelerating = false
-            AutopilotBraking = false
-            AutopilotCruising = false
-            Autopilot = false
-            AutopilotRealigned = false
-            AutopilotStatus = "Aligning"
-            return true
+            UpdateAutopilotTarget()
         end
 
         function Atlas.adjustAutopilotTargetIndex(up)
-            if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then -- added to prevent crash when index == 0
-                if up == nil then 
-                    AutopilotTargetIndex = AutopilotTargetIndex + 1
-                    if AutopilotTargetIndex > #AtlasOrdered then
-                        AutopilotTargetIndex = 0
-                    end
-                else
-                    AutopilotTargetIndex = AutopilotTargetIndex - 1
-                    if AutopilotTargetIndex < 0 then
-                        AutopilotTargetIndex = #AtlasOrdered
-                    end  
-                end
-                if AutopilotTargetIndex == 0 then
-                    ATLAS.UpdateAutopilotTarget()
-                else
-                    local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
-                    local autopilotEntry = atlas[0][atlasIndex]
-                    if autopilotEntry.name == "Space" or 
-                       (iphCondition == "Custom Only" and autopilotEntry.center) or
-                       (iphCondition == "No Moons" and string.find(autopilotEntry.name, "Moon") ~= nil)
-                    then 
-                        if up == nil then 
-                            ATLAS.adjustAutopilotTargetIndex()
-                        else
-                            ATLAS.adjustAutopilotTargetIndex(1)
-                        end
-                    else
-                        ATLAS.UpdateAutopilotTarget()
-                    end
-                end        
-            else
-                msgText = "Disengage autopilot before changing Interplanetary Helper"
-                play("iph","AP")
-            end
+            adjustAutopilotTargetIndex(up)
         end 
 
         function Atlas.findAtlasIndex(atlasList)
-            for k, v in pairs(atlasList) do
-                if v.name and v.name == CustomTarget.name then
-                    return k
+            findAtlasIndex(atlasList)
+        end
+
+        function Atlas.UpdatePosition(newName) -- Update a saved location with new position
+            local index = -1
+            local newLocation
+            index = findAtlasIndex(SavedLocations)
+            if index ~= -1 then
+                local updatedName
+                if newName ~= nil then
+                    newLocation = {
+                        position = SavedLocations[index].position,
+                        name = newName,
+                        atmosphere = SavedLocations[index].atmosphere,
+                        planetname = SavedLocations[index].planetname,
+                        gravity = SavedLocations[index].gravity
+                    } 
+                else
+                    local p, pos = spaceCheck(worldPos)
+                    newLocation = {
+                        position = pos,
+                        name = SavedLocations[index].name,
+                        atmosphere = atmosDensity,
+                        planetname = p.name,
+                        gravity = unit.getClosestPlanetInfluence(),
+                        safe = true
+                    }   
                 end
+                SavedLocations[index] = newLocation
+                index = -1
+                index = findAtlasIndex(atlas[0])
+                if index > -1 then
+                    atlas[0][index] = newLocation
+                end
+                UpdateAtlasLocationsList()
+                msgText = newLocation.name .. " position updated ("..newLocation.planetname..")"
+                --AutopilotTargetIndex = 0
+                UpdateAutopilotTarget()
+            else
+                msgText = "Name Not Found"
             end
-            return -1
+        end
+
+        function Atlas.AddNewLocation()
+            if dbHud_1 then
+
+                local p, position = spaceCheck(worldPos)
+
+                local name = p.name .. ". " .. #SavedLocations
+                if radar_1 then -- Just match the first one
+                    local id,_ = radar_1.getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
+                    if id ~= nil and id ~= "" then
+                        name = name .. " " .. radar_1.getConstructName(id)
+                    end
+                end
+                local newLocation = {}
+                newLocation = {
+                    position = position,
+                    name = name,
+                    atmosphere = p.atmosphericDensityAboveSurface,
+                    planetname = p.name,
+                    gravity = p.gravity,
+                    safe = true -- This indicates we can extreme land here, because this was a real positional waypoint
+                }
+                SavedLocations[#SavedLocations + 1] = newLocation
+                -- Nearest planet, gravity also important - if it's 0, we don't autopilot to the target planet, the target isn't near a planet.                      
+                table.insert(atlas[0], newLocation)
+                UpdateAtlasLocationsList()
+                -- Store atmosphere so we know whether the location is in space or not
+                msgText = "Location saved as " .. name.."("..p.name..")"
+            else
+                msgText = "Databank must be installed to save locations"
+            end
+        end
+
+        function Atlas.ClearCurrentPosition()
+            local index = -1
+            index = findAtlasIndex(atlas[0])
+            if index > -1 then
+                table.remove(atlas[0], index)
+            end
+            -- And SavedLocations
+            index = -1
+            index = ATLAS.findAtlasIndex(SavedLocations)
+            if index ~= -1 then
+                msgText = CustomTarget.name .. " saved location cleared"
+                table.remove(SavedLocations, index)
+            end
+            adjustAutopilotTargetIndex()
+            UpdateAtlasLocationsList()
         end
 
         --Initial Setup
@@ -6451,35 +6511,7 @@ VERSION_NUMBER = 1.358
             local function ControlsButtons()
                 local function AddNewLocation() -- Don't call this unless they have a databank or it's kinda pointless
                     -- Add a new location to SavedLocations
-                    if dbHud_1 then
-
-                        local p, position = spaceCheck()
-
-                        local name = p.name .. ". " .. #SavedLocations
-                        if radar_1 then -- Just match the first one
-                            local id,_ = radar_1.getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
-                            if id ~= nil and id ~= "" then
-                                name = name .. " " .. radar_1.getConstructName(id)
-                            end
-                        end
-                        local newLocation = {}
-                        newLocation = {
-                            position = position,
-                            name = name,
-                            atmosphere = p.atmosphericDensityAboveSurface,
-                            planetname = p.name,
-                            gravity = p.gravity,
-                            safe = true -- This indicates we can extreme land here, because this was a real positional waypoint
-                        }
-                        SavedLocations[#SavedLocations + 1] = newLocation
-                        -- Nearest planet, gravity also important - if it's 0, we don't autopilot to the target planet, the target isn't near a planet.                      
-                        table.insert(atlas[0], newLocation)
-                        ATLAS.UpdateAtlasLocationsList()
-                        -- Store atmosphere so we know whether the location is in space or not
-                        msgText = "Location saved as " .. name.."("..p.name..")"
-                    else
-                        msgText = "Databank must be installed to save locations"
-                    end
+                    ATLAS.AddNewLocation()
                 end
                 
                 local function ToggleTurnBurn()
@@ -6507,23 +6539,12 @@ VERSION_NUMBER = 1.358
                     -- Toggle Progrades
                     gradeToggle(1)
                 end
-
+                local function UpdatePosition()
+                    ATLAS.UpdatePosition()
+                end
                 local function ClearCurrentPosition()
                     -- So AutopilotTargetIndex is special and not a real index.  We have to do this by hand.
-                    local index = -1
-                    index = ATLAS.findAtlasIndex(atlas[0])
-                    if index > -1 then
-                        table.remove(atlas[0], index)
-                    end
-                    -- And SavedLocations
-                    index = -1
-                    index = ATLAS.findAtlasIndex(SavedLocations)
-                    if index ~= -1 then
-                        msgText = CustomTarget.name .. " saved location cleared"
-                        table.remove(SavedLocations, index)
-                    end
-                    ATLAS.adjustAutopilotTargetIndex()
-                    ATLAS.UpdateAtlasLocationsList()
+                        ATLAS.ClearCurrentPosition()
                 end
                 
                 local function getAPEnableName()
@@ -8649,7 +8670,7 @@ VERSION_NUMBER = 1.358
                 return
             end
             if AutopilotTargetIndex > 0 and CustomTarget ~= nil then
-                UpdatePosition(arguement)
+                ATLAS.UpdatePosition(arguement)
             else
                 msgText = "Select a saved target to rename first"
             end
