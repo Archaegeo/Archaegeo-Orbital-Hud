@@ -1,9 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.358 - 
+Version 1.358 - Fixes and improvements
+- Changed Save and Update buttons to save any point outside a planets atmosphere as Space location for AP purposes. Note: To paste a Save waypoint with /addlocation
+or ::pos in lua chat, it must start with 0,0 otherwise its considered planet based and AP will not perform properly if its in space.
 - Added clamp of 500m max change per tick in alt when holding alt-C or alt-Spacebar to raise and lower set heights. (Help prevent driving -5000m target low)
 - Added in space autopilot to collision automatic brake action.  Should be very hard to trigger.
 - Added "-COLLISION ON" beside TRAVEL/CRUISE up top when collision system is actively checking for collisions. (system on and > 20m/s speed)
+- Added EliasV's timing stuff to .lua but commented out for use in doing efficiency checks when needed. (only scripters care)
 
 
 Version 1.357 - Collision detection on M or larger unmoving ships (AGG)

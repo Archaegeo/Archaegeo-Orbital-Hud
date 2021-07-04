@@ -256,7 +256,6 @@ VERSION_NUMBER = 1.358
     local coreMass = core.getConstructMass()
     local mousePause = false
     local gyroIsOn = nil
-    local speedLimitBreaking = false
     local rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
     local rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..   mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]
     local markers = {}
@@ -352,7 +351,83 @@ VERSION_NUMBER = 1.358
 
 
 -- Function Definitions that are used in more than one areause 
+    --[[    -- EliasVilld Log Code .
+            -- local t0 = system.getTime()
+            -- <code to be checked>
+            -- _logCompute.addValue(system.getTime() - t0)
+    function Log(name,ty)
+        local self={}
+        self.Name = name or 'Log'
+        self.Value = (ty == 'number' and 0) or {}
+        self.Type = ty or 'mean'
 
+        function self.Update(v)
+            if self.Type == 'number' then
+                self.Value = v
+            else
+                self.Value[#self.Value] = v
+            end
+        end
+
+        function self.getString()
+            if self.Type == 'number' then
+                return tostring(self.Value)
+            elseif self.Type == 'time' then
+                return utils.round(self.getMean()*1000,0.0001) .. 'ms'
+            elseif self.Type == 'mean' then
+                return tostring(utils.round(self.getMean(),0.01));
+            end
+        end
+        
+        function self.getValue()
+            if self.Type == 'number' then
+                return self.value
+            else
+                return self.getMean()
+            end
+        end
+            
+        function self.addValue(v)
+            if self.Type == 'number' then return end
+            
+            table.insert(self.Value,1,v)
+            if #self.Value > 200 then self.Value[201] = nil end
+        end
+        
+        function self.getMean()
+            local m = 0;
+            for i=1,#self.Value do
+                m = m + self.Value[i]
+            end
+            return m/#self.Value;
+        end
+
+        return self
+    end
+    function Logger()
+        local self={}
+        self.Logs={}
+
+        function self.CreateLog(name,type)
+            local log = Log(name,type)
+            Register(log)
+            return log;
+        end
+        
+        function self.getLogs()
+            local logs = {}
+            for _,l in pairs(self.Logs) do
+                logs[#logs+1] = l.Name .. ': ' .. l.getString()
+            end
+            return logs
+        end
+        
+        function Register(log)
+            self.Logs[#self.Logs+1] = log;
+        end
+        return self
+    end
+    --]]
     local function play(sound, ID, type)
         if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
         if type ~= nil then
@@ -729,6 +804,17 @@ VERSION_NUMBER = 1.358
         end
     end
 
+    local function spaceCheck()
+        local position = worldPos
+        local p = sys:closestBody(position)
+        if (position-p.center):len() < p.radius + p.noAtmosphericDensityAltitude then
+            p = planet
+        else
+            p = atlas[0][0]
+        end
+        return p, position
+    end
+    
     local function UpdatePosition(newName) -- Update a saved location with new position
         local index = -1
         local newLocation
@@ -744,11 +830,12 @@ VERSION_NUMBER = 1.358
                     gravity = SavedLocations[index].gravity
                 } 
             else
+                local p, pos = spaceCheck()
                 newLocation = {
-                    position = worldPos,
+                    position = pos,
                     name = SavedLocations[index].name,
                     atmosphere = atmosDensity,
-                    planetname = planet.name,
+                    planetname = p.name,
                     gravity = unit.getClosestPlanetInfluence(),
                     safe = true
                 }   
@@ -760,7 +847,7 @@ VERSION_NUMBER = 1.358
                 atlas[0][index] = newLocation
             end
             ATLAS.UpdateAtlasLocationsList()
-            msgText = CustomTarget.name .. " position updated"
+            msgText = newLocation.name .. " position updated ("..newLocation.planetname..")"
             --AutopilotTargetIndex = 0
             ATLAS.UpdateAutopilotTarget()
         else
@@ -4534,7 +4621,7 @@ VERSION_NUMBER = 1.358
                 return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, Nav:maxForceForward(),
                         warmup, LastMaxBrake - (AutopilotPlanetGravity * coreMass))
             end
-
+        local speedLimitBreaking = false
         function ap.GetAutopilotBrakeDistanceAndTime(speed)
             return GetAutopilotBrakeDistanceAndTime(speed)
         end
@@ -6365,8 +6452,10 @@ VERSION_NUMBER = 1.358
                 local function AddNewLocation() -- Don't call this unless they have a databank or it's kinda pointless
                     -- Add a new location to SavedLocations
                     if dbHud_1 then
-                        local position = worldPos
-                        local name = planet.name .. ". " .. #SavedLocations
+
+                        local p, position = spaceCheck()
+
+                        local name = p.name .. ". " .. #SavedLocations
                         if radar_1 then -- Just match the first one
                             local id,_ = radar_1.getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
                             if id ~= nil and id ~= "" then
@@ -6377,9 +6466,9 @@ VERSION_NUMBER = 1.358
                         newLocation = {
                             position = position,
                             name = name,
-                            atmosphere = planet.atmosphericDensityAboveSurface,
-                            planetname = planet.name,
-                            gravity = planet.gravity,
+                            atmosphere = p.atmosphericDensityAboveSurface,
+                            planetname = p.name,
+                            gravity = p.gravity,
                             safe = true -- This indicates we can extreme land here, because this was a real positional waypoint
                         }
                         SavedLocations[#SavedLocations + 1] = newLocation
@@ -6387,7 +6476,7 @@ VERSION_NUMBER = 1.358
                         table.insert(atlas[0], newLocation)
                         ATLAS.UpdateAtlasLocationsList()
                         -- Store atmosphere so we know whether the location is in space or not
-                        msgText = "Location saved as " .. name
+                        msgText = "Location saved as " .. name.."("..p.name..")"
                     else
                         msgText = "Databank must be installed to save locations"
                     end
@@ -6664,6 +6753,12 @@ VERSION_NUMBER = 1.358
         SetupComplete = false
 
         beginSetup = coroutine.create(function()
+            
+            --[[ --EliasVilld Log Code setup material.
+            Logs = Logger()
+            _logCompute = Logs.CreateLog("Computation", "time")
+            --]]
+
             navCom:setupCustomTargetSpeedRanges(axisCommandId.longitudinal,
                 {1000, 5000, 10000, 20000, 30000})
 
@@ -6751,6 +6846,11 @@ VERSION_NUMBER = 1.358
         end
         if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
         play("stop","SU")
+        --[[ --EliasVilld Log Code for printing timing checks.
+        for _,s in pairs(Logs.getLogs()) do
+            system.print(s)
+        end
+        --]]
     end
 
     function script.onTick(timerId)
@@ -8467,25 +8567,6 @@ VERSION_NUMBER = 1.358
                 msgTimer = 5
             end
 
-            local function mwpConversion(name, pos)
-                local found = false
-                local posPattern = '::pos{' .. num .. ',' .. num .. ',' ..  num .. ',' .. num ..  ',' .. num .. '}'    
-                local systemId, bodyId, latitude, longitude, altitude = stringmatch(pos, posPattern)
-                for _, v in pairs(galaxyReference[0]) do
-                    if v.name == name then
-                        longitude = math.rad(longitude)
-                        latitude = math.rad(latitude)
-                        local planet = atlas[tonum(systemId)][tonum(bodyId)]  
-                        local xproj = math.cos(latitude);   
-                        local planetxyz = vec3(xproj*math.cos(longitude),
-                                            xproj*math.sin(longitude),
-                                                math.sin(latitude));
-                        return planet.center + (planet.radius + altitude) * planetxyz
-                    end
-                end                        
-                return name.." not found"
-            end
-
             local function AddNewLocationByWaypoint(savename, planet, pos, temp)
 
                 local function zeroConvertToWorldCoordinates(pos) -- Many thanks to SilverZero for this.
@@ -8590,6 +8671,7 @@ VERSION_NUMBER = 1.358
                 local newPos = vec3(tonum(latitude), tonum(longitude), tonum(altitude))
                 local p = sys:closestBody(newPos)
                 if (newPos-p.center):len() < p.radius + p.noAtmosphericDensityAltitude then
+                    system.print(pos.." recognized as: "..p.name)
                     planet = p
                 end
             end
