@@ -269,15 +269,7 @@ VERSION_NUMBER = 1.359
     local rocketTanks = {}
     local eleTotalMaxHp = 0
     local repairArrows = false
-    local fuelTimeLeftR = {}
-    local fuelPercentR = {}
-    local fuelUpdateDelay = mfloor(1 / apTickRate) * 2
-    local fuelTimeLeftS = {}
-    local fuelPercentS = {}
-    local fuelTimeLeft = {}
-    local fuelPercent = {}
-    local updateTanks = false
-    local updateCount = 0
+
     local atlas = nil
     local MapXRatio = nil
     local MapYRatio = nil
@@ -336,7 +328,7 @@ VERSION_NUMBER = 1.359
     local oldShowHud = showHud
     local AtlasOrdered = {}
     local notPvPZone = false
-    local radarMessage = ""
+
     local pipeMessage = ""
     local ReversalIsOn = nil
     local contacts = {}
@@ -2958,6 +2950,8 @@ VERSION_NUMBER = 1.359
                 end
                 return flightStyle
             end
+            local radarMessage = ""
+            local tankMessage = ""
             -- DrawTank variables
                 local tankID = 1
                 local tankName = 2
@@ -2967,10 +2961,17 @@ VERSION_NUMBER = 1.359
                 local tankLastTime = 6
                 local slottedTankType = ""
                 local slottedTanks = 0
-            local function DrawTank(newContent, updateTanks, x, nameSearchPrefix, nameReplacePrefix, tankTable, fuelTimeLeftTable,
-                fuelPercentTable)
-
+                local fuelUpdateDelay = (mfloor(1 / apTickRate) * 2)*hudTickRate
+                local fuelTimeLeftR = {}
+                local fuelPercentR = {}
+                local fuelTimeLeftS = {}
+                local fuelPercentS = {}
+                local fuelTimeLeft = {}
+                local fuelPercent = {}
             
+            local function DrawTank(x, nameSearchPrefix, nameReplacePrefix, tankTable, fuelTimeLeftTable,
+                fuelPercentTable)
+                
                 local y1 = fuelY
                 local y2 = fuelY+5
                 if not BarFuelDisplay then y2=y2+5 end
@@ -2997,12 +2998,13 @@ VERSION_NUMBER = 1.359
                                 break
                             end
                         end
-                        if updateTanks or fuelTimeLeftTable[i] == nil or fuelPercentTable[i] == nil then
 
+                        local curTime = systime()
+
+                        if fuelTimeLeftTable[i] == nil or fuelPercentTable[i] == nil or (curTime - tankTable[i][tankLastTime]) > fuelUpdateDelay then
+                            
                             local fuelMassLast
                             local fuelMass = 0
-
-                            local curTime = systime()
                             if slottedIndex ~= 0 then
                                 fuelPercentTable[i] = jdecode(unit[slottedTankType .. "_" .. slottedIndex].getData())
                                                         .percentage
@@ -3043,25 +3045,23 @@ VERSION_NUMBER = 1.359
                             local color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
                             local class = ""
                             if ((fuelTimeDisplay ~= "" and fuelTimeLeftTable[i] < 120) or fuelPercentTable[i] < 5) then
-                                if updateTanks then
-                                    class = [[class="red"]]
-                                end
+                                class = [[class="red"]]
                             end
                             if BarFuelDisplay then
-                                table.insert(newContent, stringf([[
+                                tankMessage = tankMessage..stringf([[
                                     <g class="pdim">                        
                                     <rect fill=grey class="bar" x="%d" y="%d" width="100" height="13"></rect></g>
                                     <g class="bar txtstart">
                                     <rect fill=%s width="%d" height="13" x="%d" y="%d"></rect>
                                     <text fill=black x="%d" y="%d">%s%% %s</text>
                                     </g>]], x, y2, color, fuelPercentTable[i], x, y2, x+2, y2+10, fuelPercentTable[i], fuelTimeDisplay
-                                ))
-                                newContent[#newContent + 1] = svgText(x, y1, name, class.."txtstart pdim txtfuel") 
+                                )
+                                tankMessage = tankMessage..svgText(x, y1, name, class.."txtstart pdim txtfuel") 
                                 y1 = y1 - 30
                                 y2 = y2 - 30
                             else
-                                newContent[#newContent + 1] = svgText(x, y1, name, class.." pdim txtfuel") 
-                                newContent[#newContent + 1] = svgText( x, y2, stringf("%d%% %s", fuelPercentTable[i], fuelTimeDisplay), "pdim txtfuel","fill:"..color)
+                                tankMessage = tankMessage..svgText(x, y1, name, class.." pdim txtfuel") 
+                                tankMessage = tankMessage..svgText( x, y2, stringf("%d%% %s", fuelPercentTable[i], fuelTimeDisplay), "pdim txtfuel","fill:"..color)
                                 y1 = y1 + 30
                                 y2 = y2 + 30
                             end
@@ -4033,23 +4033,8 @@ VERSION_NUMBER = 1.359
 
             if pipeMessage ~= "" then newContent[#newContent +1] = pipeMessage end
         
-            -- FUEL TANKS
-        
-            if (updateCount % fuelUpdateDelay == 0) then
-                updateTanks = true
-            end
-            if (fuelX ~= 0 and fuelY ~= 0) then
-                DrawTank(newContent, updateTanks, fuelX, "Atmospheric ", "ATMO", atmoTanks, fuelTimeLeft, fuelPercent)
-                DrawTank(newContent, updateTanks, fuelX+120, "Space fuel t", "SPACE", spaceTanks, fuelTimeLeftS, fuelPercentS)
-                DrawTank(newContent, updateTanks, fuelX+240, "Rocket fuel ", "ROCKET", rocketTanks, fuelTimeLeftR, fuelPercentR)
-            end
-        
-            if updateTanks then
-                updateTanks = false
-                updateCount = 0
-            end
-            updateCount = updateCount + 1
-        
+
+            if tankMessage ~= "" then newContent[#newContent + 1] = tankMessage end
             -- PRIMARY FLIGHT INSTRUMENTS
         
             DrawVerticalSpeed(newContent, coreAltitude) -- Weird this is draw during remote control...?
@@ -4211,6 +4196,7 @@ VERSION_NUMBER = 1.359
             end
             return newContent
         end
+
             -- DrawRadarInfo() variables
             local perisPanelID
             local radarX = ConvertResolutionX(1770)
@@ -4219,6 +4205,7 @@ VERSION_NUMBER = 1.359
             local friendx = ConvertResolutionX(1370)
             local msg, where
             local peris = 0
+
         function Hud.DrawRadarInfo()
             local function ToggleRadarPanel()
                 if radarPanelID ~= nil and peris == 0 then
@@ -4283,6 +4270,17 @@ VERSION_NUMBER = 1.359
                     ToggleRadarPanel()
                 end
             end
+        end
+
+        function Hud.DrawTanks()
+            -- FUEL TANKS
+            if (fuelX ~= 0 and fuelY ~= 0) then
+                tankMessage = svgText(fuelX, fuelY, "", "txtstart pdim txtfuel")
+                DrawTank( fuelX, "Atmospheric ", "ATMO", atmoTanks, fuelTimeLeft, fuelPercent)
+                DrawTank( fuelX+120, "Space fuel t", "SPACE", spaceTanks, fuelTimeLeftS, fuelPercentS)
+                DrawTank( fuelX+240, "Rocket fuel ", "ROCKET", rocketTanks, fuelTimeLeftR, fuelPercentR)
+            end
+
         end
 
         return Hud
@@ -7120,6 +7118,7 @@ VERSION_NUMBER = 1.359
                     showWarpWidget = false
                 end
             end
+            HUD.DrawTanks()
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
             -- Local Functions for oneSecond
 
@@ -7415,6 +7414,7 @@ VERSION_NUMBER = 1.359
                 HUD.DrawSettings(newContent) 
             end
             HUD.DrawRadarInfo()
+
             HUD.HUDEpilogue(newContent)
             newContent[#newContent + 1] = stringf(
                 [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
