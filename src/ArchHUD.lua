@@ -180,7 +180,6 @@ VERSION_NUMBER = 1.359
     local isRemote = Nav.control.isRemoteControlled
     local atan = math.atan
     local stringmatch = string.match
-    local utilsround = utils.round
     local systime = system.getTime
     local vec3 = vec3
     local uclamp = utils.clamp
@@ -241,7 +240,7 @@ VERSION_NUMBER = 1.359
     local msgTimer = 3
     local distance = 0
     local lastOdometerOutput = ""
-    local peris = 0
+
     local spaceLand = false
     local spaceLaunch = false
     local finalLand = false
@@ -2646,7 +2645,7 @@ VERSION_NUMBER = 1.359
             assert(isTable(velocity))
             local pos = (isString(overload) or PlanetRef.isMapPosition(overload)) and
                             self.body:convertToWorldCoordinates(overload) or vec3(overload)
-            local v = vec3(velocity)
+            local v = constructVelocity
             local r = pos - self.body.center
             local v2 = v:len2()
             local d = r:len()
@@ -2745,7 +2744,6 @@ VERSION_NUMBER = 1.359
             local static
 
         local function UpdateRadarRoutine()
-            local t0 = system.getTime()
             
             local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
                 p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
@@ -2888,7 +2886,6 @@ VERSION_NUMBER = 1.359
                     data = radarData:find('worksInEnvironment":false')
                 end
             end
-            _logCompute.addValue(system.getTime() - t0)  
         end
 
         function Radar.UpdateRadar()
@@ -2911,23 +2908,23 @@ VERSION_NUMBER = 1.359
         local pvpDist = 0
 
         --Local Huds Functions
-
-            local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
-                local radius = 500000
-                local distsz, distp, key = math.huge
-                local safe = false
+            -- safezone() variables
                 local safeWorldPos = vec3({13771471,7435803,-128971})
-                local safeRadius = 18000000 
+                local safeRadius = 18000000
+                local szradius = 500000
+                local distsz, distp = math.huge
+                local szsafe 
+            local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
                 distsz = vec3(WorldPos):dist(safeWorldPos)
                 if distsz < safeRadius then  
-                    return true, mabs(distsz - safeRadius), "Safe Zone", 0
+                    return true, mabs(distsz - safeRadius)
                 end
                 distp = vec3(WorldPos):dist(vec3(planet.center))
-                if distp < radius then safe = true end
-                if mabs(distp - radius) < mabs(distsz - safeRadius) then 
-                    return safe, mabs(distp - radius), planet.name, planet.bodyId
+                if distp < szradius then szsafe = true else szsafe = false end
+                if mabs(distp - szradius) < mabs(distsz - safeRadius) then 
+                    return szsafe, mabs(distp - szradius)
                 else
-                    return safe, mabs(distsz - safeRadius), "Safe Zone", 0
+                    return szsafe, mabs(distsz - safeRadius)
                 end
             end
 
@@ -2961,9 +2958,7 @@ VERSION_NUMBER = 1.359
                 end
                 return flightStyle
             end
-
-            local function DrawTank(newContent, updateTanks, x, nameSearchPrefix, nameReplacePrefix, tankTable, fuelTimeLeftTable,
-                fuelPercentTable)
+            -- DrawTank variables
                 local tankID = 1
                 local tankName = 2
                 local tankMaxVol = 3
@@ -2972,6 +2967,9 @@ VERSION_NUMBER = 1.359
                 local tankLastTime = 6
                 local slottedTankType = ""
                 local slottedTanks = 0
+            local function DrawTank(newContent, updateTanks, x, nameSearchPrefix, nameReplacePrefix, tankTable, fuelTimeLeftTable,
+                fuelPercentTable)
+
             
                 local y1 = fuelY
                 local y2 = fuelY+5
@@ -3000,10 +2998,10 @@ VERSION_NUMBER = 1.359
                             end
                         end
                         if updateTanks or fuelTimeLeftTable[i] == nil or fuelPercentTable[i] == nil then
-                            local fuelMassMax = 0
-                            local fuelMassLast = 0
+
+                            local fuelMassLast
                             local fuelMass = 0
-                            local fuelLastTime = 0
+
                             local curTime = systime()
                             if slottedIndex ~= 0 then
                                 fuelPercentTable[i] = jdecode(unit[slottedTankType .. "_" .. slottedIndex].getData())
@@ -3015,16 +3013,14 @@ VERSION_NUMBER = 1.359
                                 end
                             else
                                 fuelMass = (eleMass(tankTable[i][tankID]) - tankTable[i][tankMassEmpty])
-                                fuelMassMax = tankTable[i][tankMaxVol]
-                                fuelPercentTable[i] = mfloor(0.5 + fuelMass * 100 / fuelMassMax)
+                                fuelPercentTable[i] = mfloor(0.5 + fuelMass * 100 / tankTable[i][tankMaxVol])
                                 fuelMassLast = tankTable[i][tankLastMass]
-                                fuelLastTime = tankTable[i][tankLastTime]
                                 if fuelMassLast <= fuelMass then
                                     fuelTimeLeftTable[i] = 0
                                 else
                                     fuelTimeLeftTable[i] = mfloor(
                                                             0.5 + fuelMass /
-                                                                ((fuelMassLast - fuelMass) / (curTime - fuelLastTime)))
+                                                                ((fuelMassLast - fuelMass) / (curTime - tankTable[i][tankLastTime])))
                                 end
                                 tankTable[i][tankLastMass] = fuelMass
                                 tankTable[i][tankLastTime] = curTime
@@ -3363,7 +3359,6 @@ VERSION_NUMBER = 1.359
             end
 
             local function getRelativePitch(velocity)
-                velocity = vec3(velocity)
                 local pitch = -math.deg(atan(velocity.y, velocity.z)) + 180
                 -- This is 0-360 where 0 is straight up
                 pitch = pitch - 90
@@ -3380,7 +3375,6 @@ VERSION_NUMBER = 1.359
             end
 
             local function getRelativeYaw(velocity)
-                velocity = vec3(velocity)
                 local yaw = math.deg(atan(velocity.y, velocity.x)) - 90
                 if yaw < -180 then
                     yaw = 360 + yaw
@@ -3393,9 +3387,8 @@ VERSION_NUMBER = 1.359
                     local horizonRadius = circleRad -- Aliased global
                     local pitchRange = 20
                     local yawRange = 20
-                    local velo = vec3(velocity)
-                    local relativePitch = getRelativePitch(velo)
-                    local relativeYaw = getRelativeYaw(velo)
+                    local relativePitch = getRelativePitch(velocity)
+                    local relativeYaw = getRelativeYaw(velocity)
             
                     local dotSize = 14
                     local dotRadius = dotSize/2
@@ -3451,8 +3444,8 @@ VERSION_NUMBER = 1.359
                     end
             
                     if(not inAtmo) then
-                        relativePitch = getRelativePitch(-velo)
-                        relativeYaw = getRelativeYaw(-velo)
+                        relativePitch = getRelativePitch(-constructVelocity)
+                        relativeYaw = getRelativeYaw(-constructVelocity)
                         
                         dx = (-relativeYaw/yawRange)*horizonRadius -- Values from -1 to 1 indicating offset from the center
                         dy = (relativePitch/pitchRange)*horizonRadius
@@ -3907,17 +3900,12 @@ VERSION_NUMBER = 1.359
                     pipeMessage = svgText(pipeX, pipeY, "Pipe ("..pipeOriginPlanet.name.."--"..nearestPipePlanet.name.."): "..pipeDistance, txtadd.."pbright txtmid") 
                 end
             end
-            local perisPanelID
-            local radarX = ConvertResolutionX(1770)
-            local radarY = ConvertResolutionY(350)
-            local friendy = ConvertResolutionY(15)
-            local friendx = ConvertResolutionX(1370)
-            local msg, where
+
 
         local Hud = {}
-        
+
         function Hud.HUDPrologue(newContent)
-            notPvPZone, pvpDist, _, _ = safeZone(worldPos)
+            notPvPZone, pvpDist = safeZone(worldPos)
             if not notPvPZone then -- misnamed variable, fix later
                 PrimaryR = PvPR
                 PrimaryG = PvPG
@@ -3990,21 +3978,18 @@ VERSION_NUMBER = 1.359
             DrawVerticalSpeed(newContent, altitude)
         end
 
+
         function Hud.UpdateHud(newContent)
 
-            local altitude = coreAltitude
-            local velocity = core.getVelocity()
-            local speed = vec3(velocity):len()
             local pitch = adjustedPitch
             local roll = adjustedRoll
             local originalRoll = roll
-            local originalPitch = adjustedPitch
+            local originalPitch = pitch
             local throt = mfloor(unit.getThrottle())
-            local spd = speed * 3.6
+            local spd = velMag * 3.6
             local flightValue = unit.getAxisCommandValue(0)
             local pvpBoundaryX = ConvertResolutionX(1770)
             local pvpBoundaryY = ConvertResolutionY(310)
-        
             if AtmoSpeedAssist and throttleMode then
                 flightValue = PlayerThrottle
                 throt = PlayerThrottle*100
@@ -4016,9 +4001,9 @@ VERSION_NUMBER = 1.359
             if throt == nil then throt = 0 end
         
             if (not nearPlanet) then
-                if (speed > 5) then
-                    pitch = getRelativePitch(velocity)
-                    roll = getRelativeYaw(velocity)
+                if (velMag > 5) then
+                    pitch = getRelativePitch(constructVelocity)
+                    roll = getRelativeYaw(constructVelocity)
                 else
                     pitch = 0
                     roll = 0
@@ -4028,11 +4013,7 @@ VERSION_NUMBER = 1.359
             
             if pvpDist > 50000 and not inAtmo then
                 local dist
-                if pvpDist > 200000 then
-                    dist = round((pvpDist/200000),2).." su"
-                else
-                    dist = round((pvpDist/1000),1).." km"
-                end
+                dist = getDistanceDisplayString(pvpDist)
                 newContent[#newContent + 1] = svgText(pvpBoundaryX, pvpBoundaryY, "PvP Boundary: "..dist, "pbright txtbig txtmid")
             end
 
@@ -4071,7 +4052,7 @@ VERSION_NUMBER = 1.359
         
             -- PRIMARY FLIGHT INSTRUMENTS
         
-            DrawVerticalSpeed(newContent, altitude) -- Weird this is draw during remote control...?
+            DrawVerticalSpeed(newContent, coreAltitude) -- Weird this is draw during remote control...?
         
         
             if isRemote() == 0 or RemoteHud then
@@ -4079,13 +4060,13 @@ VERSION_NUMBER = 1.359
                 if not IsInFreeLook() or brightHud then
                     if nearPlanet then -- use real pitch, roll, and heading
                         DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
-                        DrawArtificialHorizon(newContent, originalPitch, originalRoll, centerX, centerY, nearPlanet, mfloor(getRelativeYaw(velocity)), speed)
+                        DrawArtificialHorizon(newContent, originalPitch, originalRoll, centerX, centerY, nearPlanet, mfloor(getRelativeYaw(constructVelocity)), velMag)
                     else -- use Relative Pitch and Relative Yaw
                         DrawRollLines (newContent, centerX, centerY, roll, bottomText, nearPlanet)
-                        DrawArtificialHorizon(newContent, pitch, roll, centerX, centerY, nearPlanet, mfloor(roll), speed)
+                        DrawArtificialHorizon(newContent, pitch, roll, centerX, centerY, nearPlanet, mfloor(roll), velMag)
                     end
-                    DrawAltitudeDisplay(newContent, altitude, nearPlanet)
-                    DrawPrograde(newContent, velocity, speed, centerX, centerY)
+                    DrawAltitudeDisplay(newContent, coreAltitude, nearPlanet)
+                    DrawPrograde(newContent, constructVelocity, velMag, centerX, centerY)
                 end
             end
 
@@ -4230,7 +4211,14 @@ VERSION_NUMBER = 1.359
             end
             return newContent
         end
-
+            -- DrawRadarInfo() variables
+            local perisPanelID
+            local radarX = ConvertResolutionX(1770)
+            local radarY = ConvertResolutionY(350)
+            local friendy = ConvertResolutionY(15)
+            local friendx = ConvertResolutionX(1370)
+            local msg, where
+            local peris = 0
         function Hud.DrawRadarInfo()
             local function ToggleRadarPanel()
                 if radarPanelID ~= nil and peris == 0 then
@@ -4697,7 +4685,9 @@ VERSION_NUMBER = 1.359
                     local far, near = collisionTarget[2],collisionTarget[3] 
                     local collisionDistance = math.min(far, near or far)
                     local collisionTime = collisionDistance/velMag
-                    if (AltitudeHold or VectorToTarget or LockPitch or Autopilot) and not AutoTakeoff and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
+                    local ignoreCollision = AutoTakeoff and (velMag < 42 or abvGndDet ~= -1)
+                    local apAction = (AltitudeHold or VectorToTarget or LockPitch or Autopilot)
+                    if apAction and not ignoreCollision and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
                             BrakeIsOn = true
                             cmdThrottle(0)
                             if AltitudeHold then ToggleAltitudeHold() end
@@ -5212,7 +5202,7 @@ VERSION_NUMBER = 1.359
                         end
                     else
                         local orbitalMultiplier = 2.75
-                        local pcs = mabs(utilsround(escapeVel*orbitalMultiplier))
+                        local pcs = mabs(round(escapeVel*orbitalMultiplier))
                         local mod = pcs%50
                         if mod > 0 then pcs = (pcs - mod) + 50 end
                         BrakeIsOn = false
@@ -5468,7 +5458,7 @@ VERSION_NUMBER = 1.359
                     end
                     local throttle = unit.getThrottle()
                     if AtmoSpeedAssist then throttle = PlayerThrottle end
-                    if (vec3(core.getVelocity()):len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet)) then
+                    if constructVelocity:len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet) then
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Cruising" then
                             play("apCru","AP")
@@ -6228,11 +6218,11 @@ VERSION_NUMBER = 1.359
                         if stringmatch(tostring(core.getElementTagsById(elementsID[k])), '^.*vertical.*$') then
                             local enrot = core.getElementRotationById(elementsID[k])
                             if enrot[4] < 0 then
-                                if utilsround(-enrot[4],0.1) == 0.5 then
+                                if round(-enrot[4],0.1) == 0.5 then
                                     SpaceEngineVertUp = true
                                 end
                             else
-                                if utilsround(enrot[4],0.1) == 0.5 then
+                                if round(enrot[4],0.1) == 0.5 then
                                     SpaceEngineVertDn = true
                                 end
                             end
@@ -6376,7 +6366,7 @@ VERSION_NUMBER = 1.359
                 end
 
                 -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
-                if abvGndDet ~= -1 or (not inAtmo and vec3(core.getVelocity()):len() < 50) then
+                if abvGndDet ~= -1 or (not inAtmo and constructVelocity:len() < 50) then
                     BrakeIsOn = true
                     GearExtended = true
                     if hasGear then
@@ -7016,8 +7006,7 @@ VERSION_NUMBER = 1.359
                     end
                     gravity = round(gravity, 5) -- round to avoid insignificant updates
                     if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
-                        local velocity = core.getVelocity()
-                        local speed = vec3(velocity):len()
+                        local speed = constructVelocity:len()
                         local maxBrake = jdecode(unit.getData()).maxBrake 
                         if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
                             maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
@@ -7131,7 +7120,6 @@ VERSION_NUMBER = 1.359
                     showWarpWidget = false
                 end
             end
-            HUD.DrawRadarInfo()
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
             -- Local Functions for oneSecond
 
@@ -7411,9 +7399,13 @@ VERSION_NUMBER = 1.359
                 local halfResolutionX = round(ResolutionX / 2,0)
                 local halfResolutionY = round(ResolutionY / 2,0)
             local newContent = {}
+            local t0 = system.getTime()
             HUD.HUDPrologue(newContent)
+
             if showHud then
+                local t0 = system.getTime()
                 HUD.UpdateHud(newContent) -- sets up Content for us
+                _logCompute.addValue(system.getTime() - t0)
             else
                 if AlwaysVSpd then HUD.DrawVerticalSpeed(newContent, coreAltitude) end
                 HUD.DisplayOrbitScreen(newContent)
@@ -7422,7 +7414,7 @@ VERSION_NUMBER = 1.359
             if showSettings and settingsVariables ~= {} then 
                 HUD.DrawSettings(newContent) 
             end
-
+            HUD.DrawRadarInfo()
             HUD.HUDEpilogue(newContent)
             newContent[#newContent + 1] = stringf(
                 [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
@@ -7521,7 +7513,7 @@ VERSION_NUMBER = 1.359
                 local airResistanceAcceleration = vec3(core.getWorldAirFrictionAcceleration())
                 local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
             
-                local currentVelocity = vec3(core.getVelocity())
+                local currentVelocity = constructVelocity
                 local currentAxisSpeedMS = currentVelocity:dot(axisCRefDirection)
             
                 local targetAxisSpeedMS = targetSpeed * constants.kph2m
@@ -7567,7 +7559,7 @@ VERSION_NUMBER = 1.359
                 local airResistanceAcceleration = vec3(core.getWorldAirFrictionAcceleration())
                 local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
             
-                local currentVelocity = vec3(core.getVelocity())
+                local currentVelocity = constructVelocity
                 local currentAxisSpeedMS = currentVelocity:dot(axisCRefDirection)
             
                 local targetAxisSpeedMS = targetSpeed * constants.kph2m
@@ -7994,7 +7986,7 @@ VERSION_NUMBER = 1.359
         Nav:setBoosterCommand('rocket_engine')
         -- Dodgin's Don't Die Rocket Govenor - Cruise Control Edition
         if isBoosting and not VanillaRockets then 
-            local speed = vec3(core.getVelocity()):len()
+            local speed = core:len()
             local maxSpeedLag = 0.15
             if not throttleMode then -- Cruise control rocket boost assist, Dodgin's modified.
                 local cc_speed = navCom:getTargetSpeed(axisCommandId.longitudinal)
