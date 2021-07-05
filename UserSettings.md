@@ -2,6 +2,7 @@
 * DATABANK USAGE: The hud databank must be manually slotted to the control unit one time and then the HUD Autoconf file re-ran.
 When you stand up, all current user settings are saved to a manually linked databank.  When you sit down, the settings on a databank will override those
 in Edit Lua Parameters unless useTheseSettings is checked.
+NOTE: Edit Lua Parameters UI never updates with values that apply from databank, we cant push them that way.
 ## To modify user settings:
 * While out of seat, right click the control unit and go to _Advanced_ -> _Edit Lua Parameters_  Mouse over a name to see its default value.
 * While in seat, hold SHIFT while not in freelook mode, mouse over View Settings, and release SHIFT (Thats how you click a button)
