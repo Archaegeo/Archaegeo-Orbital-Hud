@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.358
+VERSION_NUMBER = 1.359
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -211,7 +211,6 @@ VERSION_NUMBER = 1.358
     local ThrottleLimited = false
     local calculatedThrottle = 0
     local WasInCruise = false
-
     local apThrottleSet = false -- Do not save this, because when they re-enter, throttle won't be set anymore
     local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in
     local reentryMode = false
@@ -266,8 +265,6 @@ VERSION_NUMBER = 1.358
     local Buttons = {}
     local resolutionWidth = ResolutionX
     local resolutionHeight = ResolutionY
-
-
     local atmoTanks = {}
     local spaceTanks = {}
     local rocketTanks = {}
@@ -294,6 +291,7 @@ VERSION_NUMBER = 1.358
     local HUD = nil
     local ATLAS = nil
     local AP = nil
+    local RADAR = nil
     local Animating = false
     local Animated = false
     local autoRoll = autoRollPreference
@@ -346,12 +344,9 @@ VERSION_NUMBER = 1.358
     local nearPlanet = unit.getClosestPlanetInfluence() > 0
     local collisionAlertStatus = false
     local collisionTarget = nil
-    timeCount = 0
-    totalTime = 0    
-
 
 -- Function Definitions that are used in more than one areause 
-    --[[    -- EliasVilld Log Code .
+    ---[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
             -- local t0 = system.getTime()
             -- <code to be checked>
             -- _logCompute.addValue(system.getTime() - t0)
@@ -373,7 +368,7 @@ VERSION_NUMBER = 1.358
             if self.Type == 'number' then
                 return tostring(self.Value)
             elseif self.Type == 'time' then
-                return utils.round(self.getMean()*1000,0.0001) .. 'ms'
+                return utils.round(self.getMean()*1000,0.0001) .. 'ms ('..#self.Value..")"
             elseif self.Type == 'mean' then
                 return tostring(utils.round(self.getMean(),0.01));
             end
@@ -391,7 +386,7 @@ VERSION_NUMBER = 1.358
             if self.Type == 'number' then return end
             
             table.insert(self.Value,1,v)
-            if #self.Value > 200 then self.Value[201] = nil end
+            if #self.Value > 1000 then self.Value[1001] = nil end
         end
         
         function self.getMean()
@@ -850,93 +845,6 @@ VERSION_NUMBER = 1.358
             upAmount = 0
         else
             play("bkOff","B",1)
-        end
-    end
-
-    local function AlignToWorldVector(vector, tolerance, damping) -- Aligns ship to vector with a tolerance and a damping override of user damping if needed.
-        local function getMagnitudeInDirection(vector, direction)
-            -- return vec3(vector):project_on(vec3(direction)):len()
-            vector = vec3(vector)
-            direction = vec3(direction):normalize()
-            local result = vector * direction -- To preserve sign, just add them I guess
-            
-            return result.x + result.y + result.z
-        end
-        -- Sets inputs to attempt to point at the autopilot target
-        -- Meant to be called from Update or Tick repeatedly
-        local alignmentTolerance = 0.001 -- How closely it must align to a planet before accelerating to it
-        local autopilotStrength = 1 -- How strongly autopilot tries to point at a target
-        if not inAtmo or not stalling or abvGndDet ~= -1 or velMag < minAutopilotSpeed then
-            if damping == nil then
-                damping = DampingMultiplier
-            end
-
-            if tolerance == nil then
-                tolerance = alignmentTolerance
-            end
-            vector = vec3(vector):normalize()
-            local targetVec = (vec3() - vector)
-            local yawAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationRight()) * autopilotStrength
-            local pitchAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationUp()) * autopilotStrength
-            if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
-            if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
-            -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
-            -- Instead of taking literal forever to converge
-            if mabs(yawAmount) < 0.1 then
-                yawInput2 = yawInput2 - yawAmount*2
-            else
-                yawInput2 = yawInput2 - (yawAmount + (yawAmount - previousYawAmount) * damping)
-            end
-            if mabs(pitchAmount) < 0.1 then
-                pitchInput2 = pitchInput2 + pitchAmount*2
-            else
-                pitchInput2 = pitchInput2 + (pitchAmount + (pitchAmount - previousPitchAmount) * damping)
-            end
-
-
-            previousYawAmount = yawAmount
-            previousPitchAmount = pitchAmount
-            -- Return true or false depending on whether or not we're aligned
-            if mabs(yawAmount) < tolerance and mabs(pitchAmount) < tolerance then
-                return true
-            end
-            return false
-        elseif stalling and abvGndDet == -1 then
-            -- If stalling, align to velocity to fix the stall
-            -- IDK I'm just copy pasting all this
-            vector = constructVelocity
-            if damping == nil then
-                damping = DampingMultiplier
-            end
-
-            if tolerance == nil then
-                tolerance = alignmentTolerance
-            end
-            vector = vec3(vector):normalize()
-            local targetVec = (constructForward - vector)
-            local yawAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationRight()) * autopilotStrength
-            local pitchAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationUp()) * autopilotStrength
-            if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
-            if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
-            -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
-            -- Instead of taking literal forever to converge
-            if mabs(yawAmount) < 0.1 then
-                yawInput2 = yawInput2 - yawAmount*5
-            else
-                yawInput2 = yawInput2 - (yawAmount + (yawAmount - previousYawAmount) * damping)
-            end
-            if mabs(pitchAmount) < 0.1 then
-                pitchInput2 = pitchInput2 + pitchAmount*5
-            else
-                pitchInput2 = pitchInput2 + (pitchAmount + (pitchAmount - previousPitchAmount) * damping)
-            end
-            previousYawAmount = yawAmount
-            previousPitchAmount = pitchAmount
-            -- Return true or false depending on whether or not we're aligned
-            if mabs(yawAmount) < tolerance and mabs(pitchAmount) < tolerance then
-                return true
-            end
-            return false
         end
     end
 
@@ -2822,7 +2730,183 @@ VERSION_NUMBER = 1.358
                 return new(...)
             end
         })
-    end    
+    end   
+    local function RadarClass() -- Everything related to radar but draw data passed to HUD Class.
+        local Radar = {}
+        -- Radar Class locals
+
+            local friendlies = {}
+            local sizeMap = { XS = 13, S = 27, M = 55, L = 110, XL = 221}
+            local knownContacts = {}
+            local radarContacts
+            local target
+            local data
+            local numKnown
+            local static
+
+        local function UpdateRadarRoutine()
+            local t0 = system.getTime()
+            
+            local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
+                p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
+                local r1s, r2s, r3s = r1*r1, r2*r2, r3*r3
+                local v2 = p2 - p1
+                local ax = v2:normalize()
+                local U = v2:len()
+                local v3 = p3 - p1
+                local ay = (v3 - v3:project_on(ax)):normalize()
+                local v3x, v3y = v3:dot(ax), v3:dot(ay)
+                local vs = v3x*v3x + v3y*v3y
+                local az = ax:cross(ay)  
+                local x = (r1s - r2s + U*U) / (2*U) 
+                local y = (r1s - r3s + vs - 2*v3x*x)/(2*v3y)
+                local m = r1s - (x^2) - (y^2) 
+                local z = msqrt(m)
+                local t1 = p1 + ax*x + ay*y + az*z
+                local t2 = p1 + ax*x + ay*y - az*z
+              
+                if mabs((p4 - t1):len() - r4) < mabs((p4 - t2):len() - r4) then
+                  return t1
+                else
+                  return t2
+                end
+            end
+
+            local function getTrueWorldPos()
+                local function getLocalToWorldConverter()
+                    local v1 = core.getConstructWorldOrientationRight()
+                    local v2 = core.getConstructWorldOrientationForward()
+                    local v3 = core.getConstructWorldOrientationUp()
+                    local v1t = library.systemResolution3(v1, v2, v3, {1,0,0})
+                    local v2t = library.systemResolution3(v1, v2, v3, {0,1,0})
+                    local v3t = library.systemResolution3(v1, v2, v3, {0,0,1})
+                    return function(cref)
+                        return library.systemResolution3(v1t, v2t, v3t, cref)
+                    end
+                end
+                local cal = getLocalToWorldConverter()
+                local cWorldPos = core.getConstructWorldPos()
+                local pos = core.getElementPositionById(1)
+                local offsetPosition = {pos[1] - coreOffset, pos[2] - coreOffset, pos[3] - coreOffset}
+                local adj = cal(offsetPosition)
+                local adjPos = {cWorldPos[1] - adj[1], cWorldPos[2] - adj[2], cWorldPos[3] - adj[3]}
+                return adjPos
+            end
+            
+            local function updateVariables(construct, d, wp) -- Thanks to EasternGamer and Dimencia
+                local pts = construct.pts
+                local index = #pts
+                local ref = construct.ref
+                if index > 3 then
+                    local in1, in2, in3, in4 = pts[index], pts[index-1], pts[index-2], pts[index-3]
+                    construct.ref = wp
+                    local pos = trilaterate(in1[1], in1[2], in2[1], in2[2], in3[1], in3[2], in4[1], in4[2])
+                    local x,y,z = pos.x, pos.y, pos.z
+                    if x == x and y == y and z == z then
+                        x = x + ref[1]
+                        y = y + ref[2]
+                        z = z + ref[3]
+                        local newPos = vec3(x,y,z)
+                        if not construct.lastPos then
+                            construct.center = newPos
+                        elseif (construct.lastPos - newPos):len() < 2 then
+                            construct.center = newPos
+                            construct.skipCalc = true
+                            --system.print(construct.name.." ::pos{0,0,"..newPos.x..","..newPos.y..","..newPos.z.."}")
+                        end
+                        construct.lastPos = newPos
+                    end
+                    construct.pts = {}
+                else
+                    local offset = {wp[1]-ref[1],wp[2]-ref[2],wp[3]-ref[3]}
+                    pts[index+1] = {d,offset}
+                end
+            end
+
+            if (radar_1) then
+                radarContacts = #radar_1.getEntries()
+                local radarData = radar_1.getData()
+                local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
+             
+                if radarContacts > 0 then
+                    local wp = getTrueWorldPos()
+                    local count, count2 = 0, 0
+                    static = 0
+                    for v in contactData do
+                        local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
+                        local sz = sizeMap[size]
+                        distance = tonum(distance)
+                        if radar_1.hasMatchingTransponder(id) == 1 then
+                            table.insert(friendlies,id)
+                        end
+                        local cType = radar_1.getConstructType(id)
+                        if CollisionSystem then
+                            if sz > 27 or cType == "static" or cType == "space"
+                            then
+                                static = static + 1
+                                local name = radar_1.getConstructName(id)
+                                local construct = contacts[id]
+                                if construct == nil then
+                                    sz = sz+coreHalfDiag
+                                    contacts[id] = {pts = {}, ref = wp, name = name, i = 0, radius = sz, skipCalc = false}
+                                    construct = contacts[id]
+                                end
+                                if not construct.skipCalc then 
+                                    updateVariables(construct, distance, wp) 
+                                    count2 = count2 + 1
+                                end
+                                if construct.center then table.insert(knownContacts, construct) end
+                            end
+                            count = count + 1
+                            if (nearPlanet and count > 700 or count2 > 70) or (not nearPlanet and count > 300 or count2 > 30) then
+                                coroutine.yield()
+                                count, count2 = 0, 0
+                            end
+                        end
+                    end
+                    numKnown = #knownContacts
+                    if numKnown > 0 and velMag > 20 
+                    then 
+                        local body, far, near, vect
+                        local innerCount = 0
+                        local galxRef = galaxyReference:getPlanetarySystem(0)
+                        vect = constructVelocity:normalize()
+                        while innerCount < numKnown do
+                            coroutine.yield()
+                            local innerList = { table.unpack(knownContacts, innerCount, math.min(innerCount + 75, numKnown)) }
+                            body, far, near = galxRef:castIntersections(worldPos, vect, nil, nil, innerList, true)
+                            if body and near then collisionTarget = {body, far, near} break end
+                            innerCount = innerCount + 75
+                        end
+                        if not body then collisionTarget = nil end
+                    else
+                        collisionTarget = nil
+                    end
+                    knownContacts = {}
+                    target = radarData:find('identifiedConstructs":%[%]')
+                else
+                    data = radarData:find('worksInEnvironment":false')
+                end
+            end
+            _logCompute.addValue(system.getTime() - t0)  
+        end
+
+        function Radar.UpdateRadar()
+            local cont = coroutine.status (UpdateRadarCoroutine)
+            if cont == "suspended" then 
+                local value, done = coroutine.resume(UpdateRadarCoroutine)
+                if done then system.print("ERROR UPDATE RADAR: "..done) end
+            elseif cont == "dead" then
+                UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
+                local value, done = coroutine.resume(UpdateRadarCoroutine)
+            end
+        end
+        function Radar.GetRadarHud()
+            return target, data, radarContacts, numKnown, static, friendlies
+        end
+        UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
+        return Radar
+    end 
     local function HudClass() -- Everything HUD display releated including tick
         local pvpDist = 0
 
@@ -3726,33 +3810,7 @@ VERSION_NUMBER = 1.358
                     return newContent
                 end
             end
-            local perisPanelID
-            local function ToggleRadarPanel()
-                if radarPanelID ~= nil and peris == 0 then
-                    sysDestWid(radarPanelID)
-                    radarPanelID = nil
-                    if perisPanelID ~= nil then
-                        sysDestWid(perisPanelID)
-                        perisPanelID = nil
-                    end
-                else
-                    -- If radar is installed but no weapon, don't show periscope
-                    if peris == 1 then
-                        sysDestWid(radarPanelID)
-                        radarPanelID = nil
-                        _autoconf.displayCategoryPanel(radar, radar_size, L_TEXT("ui_lua_widget_periscope", "Periscope"),
-                            "periscope")
-                        perisPanelID = _autoconf.panels[_autoconf.panels_size]
-                    end
-                    placeRadar = true
-                    if radarPanelID == nil and placeRadar then
-                        _autoconf.displayCategoryPanel(radar, radar_size, L_TEXT("ui_lua_widget_radar", "Radar"), "radar")
-                        radarPanelID = _autoconf.panels[_autoconf.panels_size]
-                        placeRadar = false
-                    end
-                    peris = 0
-                end
-            end            
+          
 
             local function DisplayHelp(newContent)
                 local x = 30
@@ -3849,14 +3907,12 @@ VERSION_NUMBER = 1.358
                     pipeMessage = svgText(pipeX, pipeY, "Pipe ("..pipeOriginPlanet.name.."--"..nearestPipePlanet.name.."): "..pipeDistance, txtadd.."pbright txtmid") 
                 end
             end
+            local perisPanelID
             local radarX = ConvertResolutionX(1770)
             local radarY = ConvertResolutionY(350)
             local friendy = ConvertResolutionY(15)
             local friendx = ConvertResolutionX(1370)
             local msg, where
-            local friendlies = {}
-            local sizeMap = { XS = 13, S = 27, M = 55, L = 110, XL = 221}
-            local knownContacts = {}
 
         local Hud = {}
         
@@ -4156,222 +4212,6 @@ VERSION_NUMBER = 1.358
             end
             getClosestPipe()           
         end
-
-        function Hud.UpdateRadarRoutine()
-            --local startURR = time
-
-            local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
-                p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
-                local r1s, r2s, r3s = r1*r1, r2*r2, r3*r3
-                local v2 = p2 - p1
-                local ax = v2:normalize()
-                local U = v2:len()
-                local v3 = p3 - p1
-                local ay = (v3 - v3:project_on(ax)):normalize()
-                local v3x, v3y = v3:dot(ax), v3:dot(ay)
-                local vs = v3x*v3x + v3y*v3y
-                local az = ax:cross(ay)  
-                local x = (r1s - r2s + U*U) / (2*U) 
-                local y = (r1s - r3s + vs - 2*v3x*x)/(2*v3y)
-                local m = r1s - (x^2) - (y^2) 
-                local z = msqrt(m)
-                local t1 = p1 + ax*x + ay*y + az*z
-                local t2 = p1 + ax*x + ay*y - az*z
-              
-                if mabs((p4 - t1):len() - r4) < mabs((p4 - t2):len() - r4) then
-                  return t1
-                else
-                  return t2
-                end
-            end
-
-            local function getTrueWorldPos()
-                local function getLocalToWorldConverter()
-                    local v1 = core.getConstructWorldOrientationRight()
-                    local v2 = core.getConstructWorldOrientationForward()
-                    local v3 = core.getConstructWorldOrientationUp()
-                    local v1t = library.systemResolution3(v1, v2, v3, {1,0,0})
-                    local v2t = library.systemResolution3(v1, v2, v3, {0,1,0})
-                    local v3t = library.systemResolution3(v1, v2, v3, {0,0,1})
-                    return function(cref)
-                        return library.systemResolution3(v1t, v2t, v3t, cref)
-                    end
-                end
-                local cal = getLocalToWorldConverter()
-                local cWorldPos = core.getConstructWorldPos()
-                local pos = core.getElementPositionById(1)
-                local offsetPosition = {pos[1] - coreOffset, pos[2] - coreOffset, pos[3] - coreOffset}
-                local adj = cal(offsetPosition)
-                local adjPos = {cWorldPos[1] - adj[1], cWorldPos[2] - adj[2], cWorldPos[3] - adj[3]}
-                return adjPos
-            end
-            
-            local function updateVariables(construct, d, wp) -- Thanks to EasternGamer and Dimencia
-                local pts = construct.pts
-                local index = #pts
-                local ref = construct.ref
-                if index > 3 then
-                    local in1, in2, in3, in4 = pts[index], pts[index-1], pts[index-2], pts[index-3]
-                    construct.ref = wp
-                    local pos = trilaterate(in1[1], in1[2], in2[1], in2[2], in3[1], in3[2], in4[1], in4[2])
-                    local x,y,z = pos.x, pos.y, pos.z
-                    if x == x and y == y and z == z then
-                        x = x + ref[1]
-                        y = y + ref[2]
-                        z = z + ref[3]
-                        local newPos = vec3(x,y,z)
-                        if not construct.lastPos then
-                            construct.center = newPos
-                        elseif (construct.lastPos - newPos):len() < 2 then
-                            construct.center = newPos
-                            construct.skipCalc = true
-                            --system.print(construct.name.." ::pos{0,0,"..newPos.x..","..newPos.y..","..newPos.z.."}")
-                        end
-                        construct.lastPos = newPos
-                    end
-                    construct.pts = {}
-                else
-                    local offset = {wp[1]-ref[1],wp[2]-ref[2],wp[3]-ref[3]}
-                    pts[index+1] = {d,offset}
-                end
-            end
-
-            if (radar_1) then
-                local radarContacts = #radar_1.getEntries()
-                local radarData = radar_1.getData()
-                local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
-                
-                if radarContacts > 0 then
-
-                    local wp = getTrueWorldPos()
-
-                    local count, count2, static = 0, 0, 0
-
-                    for v in contactData do
-                        local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
-                        local sz = sizeMap[size]
-                        distance = tonum(distance)
-                        if radar_1.hasMatchingTransponder(id) == 1 then
-                            table.insert(friendlies,id)
-                        end
-                        local cType = radar_1.getConstructType(id)
-                        if CollisionSystem then
-                            if sz > 27 or cType == "static" or cType == "space"
-                            then
-                                static = static + 1
-                                local name = radar_1.getConstructName(id)
-                                local construct = contacts[id]
-                                if construct == nil then
-                                    sz = sz+coreHalfDiag
-                                    contacts[id] = {pts = {}, ref = wp, name = name, i = 0, radius = sz, skipCalc = false}
-                                    construct = contacts[id]
-                                end
-                                if not construct.skipCalc then 
-                                    updateVariables(construct, distance, wp) 
-                                    count2 = count2 + 1
-                                end
-                                if construct.center then table.insert(knownContacts, construct) end
-                            end
-                            count = count + 1
-                            if (nearPlanet and count > 700 or count2 > 70) or (not nearPlanet and count > 300 or count2 > 30) then
-                                coroutine.yield()
-                                count, count2 = 0, 0
-                            end
-                        end
-                    end
-                    local numKnown = #knownContacts
-                    if numKnown > 0 and velMag > 20 
-                    then 
-                        local body, far, near, vect
-                        local innerCount = 0
-                        local galxRef = galaxyReference:getPlanetarySystem(0)
-                        vect = constructVelocity:normalize()
-                        while innerCount < numKnown do
-                            coroutine.yield()
-                            local innerList = { table.unpack(knownContacts, innerCount, math.min(innerCount + 75, numKnown)) }
-                            body, far, near = galxRef:castIntersections(worldPos, vect, nil, nil, innerList, true)
-                            if body and near then collisionTarget = {body, far, near} break end
-                            innerCount = innerCount + 75
-                        end
-                        if not body then collisionTarget = nil end
-                    else
-                        collisionTarget = nil
-                    end
-                    knownContacts = {}
-
-                    local target = radarData:find('identifiedConstructs":%[%]')
-                    if target == nil and perisPanelID == nil then
-                        peris = 1
-                        ToggleRadarPanel()
-                    end
-                    if target ~= nil and perisPanelID ~= nil then
-                        ToggleRadarPanel()
-                    end
-                    if radarPanelID == nil then
-                        ToggleRadarPanel()
-                    end
-
-                    if CollisionSystem then 
-                        msg = numKnown.."/"..static.." Plotted : "..(radarContacts-static).." Ignored" 
-                    else
-                        msg = "Radar Contacts: "..radarContacts
-                    end
-                    radarMessage = svgText(radarX, radarY, msg, "pbright txtbig txtmid")
-
-                    if #friendlies > 0 then
-                        radarMessage = radarMessage..svgText( x, y, "Friendlies In Range", "pbright txtbig txtmid")
-                        for k, v in pairs(friendlies) do
-                            friendy = friendy + 20
-                            radarMessage = radarMessage..svgText(friendx, friendy, radar_1.getConstructName(v), "pdim txtmid")
-                        end
-                        friendlies = {}
-                    end
-                else
-                    local data
-                    data = radarData:find('worksInEnvironment":false')
-                    if data then
-                        radarMessage = svgText(radarX, radarY, "Radar: Jammed", "pbright txtbig txtmid")
-                    else
-                        radarMessage = svgText(radarX, radarY, "Radar: No Contacts", "pbright txtbig txtmid")
-                    end
-                    if radarPanelID ~= nil then
-                        peris = 0
-                        ToggleRadarPanel()
-                    end
-                end
-            end
-            --[[  Timeing check
-            if contacts.time == nil then contacts.time = 0 contacts.tcount = -1 end
-            if timeCount < 250 then
-                totalTime = totalTime + (time-startURR)
-                timeCount = timeCount + 1
-            elseif contacts.tcount > -1 then
-                local avg = totalTime*0.004
-                system.print("Avg of 250 URR: "..avg)
-                contacts.time = contacts.time + avg 
-                contacts.tcount = contacts.tcount + 1
-                system.print("Overall Avg after "..contacts.tcount.." runs: "..(contacts.time / contacts.tcount))
-                timeCount = 0
-                totalTime = 0
-            else
-                contacts.tcount = 0
-                timeCount = 0
-                totalTime = 0
-            end
-            --]]
-        end
-
-        function Hud.UpdateRadar()
-            local cont = coroutine.status (UpdateRadarCoroutine)
-            if cont == "suspended" then 
-                local value, done = coroutine.resume(UpdateRadarCoroutine)
-                if done then system.print("ERROR UPDATE RADAR: "..done) end
-            elseif cont == "dead" then
-                UpdateRadarCoroutine = coroutine.create(Hud.UpdateRadarRoutine)
-                local value, done = coroutine.resume(UpdateRadarCoroutine)
-            end
-        end
-
         function Hud.DrawSettings(newContent)
             if #settingsVariables > 0  then
                 local x = ConvertResolutionX(640)
@@ -4391,7 +4231,72 @@ VERSION_NUMBER = 1.358
             return newContent
         end
 
-        UpdateRadarCoroutine = coroutine.create(Hud.UpdateRadarRoutine)
+        function Hud.DrawRadarInfo()
+            local function ToggleRadarPanel()
+                if radarPanelID ~= nil and peris == 0 then
+                    sysDestWid(radarPanelID)
+                    radarPanelID = nil
+                    if perisPanelID ~= nil then
+                        sysDestWid(perisPanelID)
+                        perisPanelID = nil
+                    end
+                else
+                    -- If radar is installed but no weapon, don't show periscope
+                    if peris == 1 then
+                        sysDestWid(radarPanelID)
+                        radarPanelID = nil
+                        _autoconf.displayCategoryPanel(radar, radar_size, L_TEXT("ui_lua_widget_periscope", "Periscope"),
+                            "periscope")
+                        perisPanelID = _autoconf.panels[_autoconf.panels_size]
+                    end
+                    placeRadar = true
+                    if radarPanelID == nil and placeRadar then
+                        _autoconf.displayCategoryPanel(radar, radar_size, L_TEXT("ui_lua_widget_radar", "Radar"), "radar")
+                        radarPanelID = _autoconf.panels[_autoconf.panels_size]
+                        placeRadar = false
+                    end
+                    peris = 0
+                end
+            end 
+            local target, data, radarContacts, numKnown, static, friendlies = RADAR.GetRadarHud() 
+            if radarContacts > 0 then 
+                if CollisionSystem then 
+                    msg = numKnown.."/"..static.." Plotted : "..(radarContacts-static).." Ignored" 
+                else
+                    msg = "Radar Contacts: "..radarContacts
+                end
+                radarMessage = svgText(radarX, radarY, msg, "pbright txtbig txtmid")
+                if #friendlies > 0 then
+                    radarMessage = radarMessage..svgText( friendx, friendy, "Friendlies In Range", "pbright txtbig txtmid")
+                    for k, v in pairs(friendlies) do
+                        friendy = friendy + 20
+                        radarMessage = radarMessage..svgText(friendx, friendy, radar_1.getConstructName(v), "pdim txtmid")
+                    end
+                    friendlies = {}
+                end
+                if target == nil and perisPanelID == nil then
+                    peris = 1
+                    ToggleRadarPanel()
+                end
+                if target ~= nil and perisPanelID ~= nil then
+                    ToggleRadarPanel()
+                end
+                if radarPanelID == nil then
+                    ToggleRadarPanel()
+                end
+            else
+                if data then
+                    radarMessage = svgText(radarX, radarY, "Radar: Jammed", "pbright txtbig txtmid")
+                else
+                    radarMessage = svgText(radarX, radarY, "Radar: No Contacts", "pbright txtbig txtmid")
+                end
+                if radarPanelID ~= nil then
+                    peris = 0
+                    ToggleRadarPanel()
+                end
+            end
+        end
+
         return Hud
     end 
     local function AtlasClass() -- Atlas and Interplanetary functions including Update Autopilot Target
@@ -4813,6 +4718,92 @@ VERSION_NUMBER = 1.358
                     if collisionTime < 6 then play("alarm","AL",2) end
                 else
                     collisionAlertStatus = false
+                end
+            end
+            local function AlignToWorldVector(vector, tolerance, damping) -- Aligns ship to vector with a tolerance and a damping override of user damping if needed.
+                local function getMagnitudeInDirection(vector, direction)
+                    -- return vec3(vector):project_on(vec3(direction)):len()
+                    vector = vec3(vector)
+                    direction = vec3(direction):normalize()
+                    local result = vector * direction -- To preserve sign, just add them I guess
+                    
+                    return result.x + result.y + result.z
+                end
+                -- Sets inputs to attempt to point at the autopilot target
+                -- Meant to be called from Update or Tick repeatedly
+                local alignmentTolerance = 0.001 -- How closely it must align to a planet before accelerating to it
+                local autopilotStrength = 1 -- How strongly autopilot tries to point at a target
+                if not inAtmo or not stalling or abvGndDet ~= -1 or velMag < minAutopilotSpeed then
+                    if damping == nil then
+                        damping = DampingMultiplier
+                    end
+        
+                    if tolerance == nil then
+                        tolerance = alignmentTolerance
+                    end
+                    vector = vec3(vector):normalize()
+                    local targetVec = (vec3() - vector)
+                    local yawAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationRight()) * autopilotStrength
+                    local pitchAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationUp()) * autopilotStrength
+                    if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
+                    if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
+                    -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
+                    -- Instead of taking literal forever to converge
+                    if mabs(yawAmount) < 0.1 then
+                        yawInput2 = yawInput2 - yawAmount*2
+                    else
+                        yawInput2 = yawInput2 - (yawAmount + (yawAmount - previousYawAmount) * damping)
+                    end
+                    if mabs(pitchAmount) < 0.1 then
+                        pitchInput2 = pitchInput2 + pitchAmount*2
+                    else
+                        pitchInput2 = pitchInput2 + (pitchAmount + (pitchAmount - previousPitchAmount) * damping)
+                    end
+        
+        
+                    previousYawAmount = yawAmount
+                    previousPitchAmount = pitchAmount
+                    -- Return true or false depending on whether or not we're aligned
+                    if mabs(yawAmount) < tolerance and mabs(pitchAmount) < tolerance then
+                        return true
+                    end
+                    return false
+                elseif stalling and abvGndDet == -1 then
+                    -- If stalling, align to velocity to fix the stall
+                    -- IDK I'm just copy pasting all this
+                    vector = constructVelocity
+                    if damping == nil then
+                        damping = DampingMultiplier
+                    end
+        
+                    if tolerance == nil then
+                        tolerance = alignmentTolerance
+                    end
+                    vector = vec3(vector):normalize()
+                    local targetVec = (constructForward - vector)
+                    local yawAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationRight()) * autopilotStrength
+                    local pitchAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationUp()) * autopilotStrength
+                    if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
+                    if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
+                    -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
+                    -- Instead of taking literal forever to converge
+                    if mabs(yawAmount) < 0.1 then
+                        yawInput2 = yawInput2 - yawAmount*5
+                    else
+                        yawInput2 = yawInput2 - (yawAmount + (yawAmount - previousYawAmount) * damping)
+                    end
+                    if mabs(pitchAmount) < 0.1 then
+                        pitchInput2 = pitchInput2 + pitchAmount*5
+                    else
+                        pitchInput2 = pitchInput2 + (pitchAmount + (pitchAmount - previousPitchAmount) * damping)
+                    end
+                    previousYawAmount = yawAmount
+                    previousPitchAmount = pitchAmount
+                    -- Return true or false depending on whether or not we're aligned
+                    if mabs(yawAmount) < tolerance and mabs(pitchAmount) < tolerance then
+                        return true
+                    end
+                    return false
                 end
             end
             inAtmo = (atmosphere() > 0)
@@ -6128,7 +6119,7 @@ VERSION_NUMBER = 1.358
                         antigrav.setBaseAltitude(desiredBaseAltitude)
                     end
             end
-         end
+        end
         abvGndDet = AboveGroundLevel()
         return ap
     end
@@ -6800,7 +6791,7 @@ VERSION_NUMBER = 1.358
 
         beginSetup = coroutine.create(function()
             
-            --[[ --EliasVilld Log Code setup material.
+            ---[[ --EliasVilld Log Code setup material.
             Logs = Logger()
             _logCompute = Logs.CreateLog("Computation", "time")
             --]]
@@ -6834,11 +6825,13 @@ VERSION_NUMBER = 1.358
             Kinematic = Kinematics()
             Kep = Keplers()
 
+            RADAR = RadarClass()
             HUD = HudClass()
 
             ATLAS = AtlasClass()
 
-            AP = APClass()
+            --AP = APClass()
+
          
             coroutine.yield()
  
@@ -6850,6 +6843,7 @@ VERSION_NUMBER = 1.358
             coroutine.yield()
 
             unit.setTimer("apTick", apTickRate)
+            unit.setTimer("radarTick", apTickRate)
             unit.setTimer("hudTick", hudTickRate)
             unit.setTimer("oneSecond", 1)
             unit.setTimer("tenthSecond", 1/10)
@@ -6892,7 +6886,7 @@ VERSION_NUMBER = 1.358
         end
         if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
         play("stop","SU")
-        --[[ --EliasVilld Log Code for printing timing checks.
+        ---[[ --EliasVilld Log Code for printing timing checks.
         for _,s in pairs(Logs.getLogs()) do
             system.print(s)
         end
@@ -7137,6 +7131,7 @@ VERSION_NUMBER = 1.358
                     showWarpWidget = false
                 end
             end
+            HUD.DrawRadarInfo()
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
             -- Local Functions for oneSecond
 
@@ -7253,6 +7248,7 @@ VERSION_NUMBER = 1.358
             end
             updateDistance()
             HUD.UpdatePipe()
+
             updateWeapons()
             -- Update odometer output string
             local newContent = {}
@@ -7322,6 +7318,7 @@ VERSION_NUMBER = 1.358
             simulatedY = 0
             unit.stopTimer("animateTick")
         elseif timerId == "hudTick" then -- Timer for all hud updates not called elsewhere
+
             -- Local Functions for hudTick
                 local function DrawCursorLine(newContent)
                     local strokeColor = mfloor(uclamp((distance / (resolutionWidth / 4)) * 255, 0, 255))
@@ -7349,8 +7346,6 @@ VERSION_NUMBER = 1.358
                             return false
                         end
                     end
-                    
-                
                     local x = simulatedX + resolutionWidth / 2
                     local y = simulatedY + resolutionHeight / 2
                     for _, v in pairs(Buttons) do
@@ -7492,13 +7487,11 @@ VERSION_NUMBER = 1.358
             end
             newContent[#newContent + 1] = [[</svg></body>]]
             content = table.concat(newContent, "")
-            if not DidLogOutput then
-                system.logInfo(LastContent)
-                DidLogOutput = true
-            end        
+
         elseif timerId == "apTick" then -- Timer for all autopilot functions
             AP.APTick()
-            HUD.UpdateRadar()
+        elseif timerId == "radarTick" then
+            RADAR.UpdateRadar()
         end
     end
 
