@@ -428,6 +428,17 @@ VERSION_NUMBER = 1.358
         return self
     end
     --]]
+    
+    local function checkLOS(vector)
+        local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, vector,
+            function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
+        local atmoDistance = farSide
+        if nearSide ~= nil and farSide ~= nil then
+            atmoDistance = math.min(nearSide,farSide)
+        end
+        if atmoDistance ~= nil then return intersectBody, atmoDistance else return nil, nil end
+    end
+
     local function play(sound, ID, type)
         if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
         if type ~= nil then
@@ -717,6 +728,7 @@ VERSION_NUMBER = 1.358
         if AutopilotTargetIndex > 0 and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
             ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
             AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
+
             if CustomTarget ~= nil then
                 LockPitch = nil
                 SpaceTarget = (CustomTarget.planetname == "Space")
@@ -3460,6 +3472,7 @@ VERSION_NUMBER = 1.358
             end
 
             local function DrawWarnings(newContent)
+
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(1900), ConvertResolutionY(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
                 newContent[#newContent + 1] = [[<g class="warnings">]]
                 if unit.isMouseControlActivated() == 1 then
@@ -3584,11 +3597,7 @@ VERSION_NUMBER = 1.358
                     if string.find(collisionAlertStatus, "COLLISION") then type = "warnings" else type = "crit" end
                     newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, collisionAlertStatus, type)
                 elseif atmosDensity == 0 then
-                    local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
-                    local atmoDistance = farSide
-                    if nearSide ~= nil and farSide ~= nil then
-                        atmoDistance = math.min(nearSide,farSide)
-                    end
+                    local intersectBody, atmoDistance = checkLOS((constructVelocity):normalize())
                     if atmoDistance ~= nil then
                         local displayText = getDistanceDisplayString(atmoDistance)
                         local travelTime = Kinematic.computeTravelTime(velMag, 0, atmoDistance)
@@ -4645,7 +4654,6 @@ VERSION_NUMBER = 1.358
 
         return Atlas
     end
-
     local function APClass() -- Autopiloting functions including tick
         local ap = {}
             local function GetAutopilotBrakeDistanceAndTime(speed)
@@ -4771,6 +4779,7 @@ VERSION_NUMBER = 1.358
                     return true
                 end
             end
+            local AutopilotPaused = false
 
         function ap.showWayPoint(planet, coordinates, dontSet)
             return showWaypoint(planet, coordinates, dontSet)
@@ -5439,11 +5448,25 @@ VERSION_NUMBER = 1.358
                         _, AutopilotEndSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed(projectedAltitude)
                     end
                 end
-
-                if not AutopilotCruising and not AutopilotBraking and not skipAlign then
-                    aligned = AlignToWorldVector((targetCoords - worldPos):normalize())
-                elseif TurnBurn and (AutopilotBraking or AutopilotCruising) then
-                    aligned = AlignToWorldVector(-vec3(constructVelocity):normalize())
+                if Autopilot and not AutopilotAccelerating and not AutopilotCruising and not AutopilotBraking then
+                    local intersectBody, atmoDistance = checkLOS( (AutopilotTargetCoords-worldPos):normalize())
+                    if autopilotTargetPlanet.name ~= planet.name then 
+                        if intersectBody ~= nil then 
+                            msgText = "Collision with "..intersectBody.name.." in ".. getDistanceDisplayString(atmoDistance).."\nClear LOS to continue."
+                            msgTimer = 5
+                            AutopilotPaused = true
+                        else
+                            AutopilotPaused = false
+                            msgText = ""
+                        end
+                    end
+                end
+                if not AutopilotPaused then
+                    if not AutopilotCruising and not AutopilotBraking and not skipAlign then
+                        aligned = AlignToWorldVector((targetCoords - worldPos):normalize())
+                    elseif TurnBurn and (AutopilotBraking or AutopilotCruising) then
+                        aligned = AlignToWorldVector(-vec3(constructVelocity):normalize())
+                    end
                 end
                 if AutopilotAccelerating then
                     if not apThrottleSet then
@@ -5577,19 +5600,19 @@ VERSION_NUMBER = 1.358
                                 AutopilotShipRight = constructRight
                             end
                             AutopilotRealigned = true
-                        elseif aligned then
-                            AutopilotAccelerating = true
-                            if AutopilotStatus ~= "Accelerating" then
-                                AutopilotStatus = "Accelerating"
-                                play("apAcc","AP")
-                            end
-                            -- Set throttle to max
-                            if not apThrottleSet then
-                                cmdThrottle(AutopilotInterplanetaryThrottle, true)
-                                PlayerThrottle = round(AutopilotInterplanetaryThrottle,2)
-                                apThrottleSet = true
-                                BrakeIsOn = false
-                            end
+                        elseif aligned and not AutopilotPaused then
+                                AutopilotAccelerating = true
+                                if AutopilotStatus ~= "Accelerating" then
+                                    AutopilotStatus = "Accelerating"
+                                    play("apAcc","AP")
+                                end
+                                -- Set throttle to max
+                                if not apThrottleSet then
+                                    cmdThrottle(AutopilotInterplanetaryThrottle, true)
+                                    PlayerThrottle = round(AutopilotInterplanetaryThrottle,2)
+                                    apThrottleSet = true
+                                    BrakeIsOn = false
+                                end
                         end
                     end
                     -- If it's not aligned yet, don't try to burn yet.

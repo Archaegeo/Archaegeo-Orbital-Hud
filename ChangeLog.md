@@ -1,9 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.358 - Fixes and improvements
+- Fixed Autopilot to pause if there isnt a clear LOS between you and target destination (for planet to another planet starting in space).
 - Changed /addlocation /::pos and Save and Update buttons to save any point outside a planets atmosphere as Space location for AP purposes.
 - Added clamp of 500m max change per tick in alt when holding alt-C or alt-Spacebar to raise and lower set heights. (Help prevent driving -5000m target low)
-- Added in space autopilot to collision automatic brake action.  Should be very hard to trigger.
+- Added space autopilot collision automatic brake action.  Should be very hard to trigger.
 - Added "-COLLISION ON" beside TRAVEL/CRUISE up top when collision system is actively checking for collisions. (system on and > 20m/s speed)
 - Added EliasV's timing stuff to .lua but commented out for use in doing efficiency checks when needed. (only scripters care)
 
