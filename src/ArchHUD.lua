@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.359
+VERSION_NUMBER = 1.400
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -2637,7 +2637,7 @@ VERSION_NUMBER = 1.359
             assert(isTable(velocity))
             local pos = (isString(overload) or PlanetRef.isMapPosition(overload)) and
                             self.body:convertToWorldCoordinates(overload) or vec3(overload)
-            local v = constructVelocity
+            local v = vec3(velocity)
             local r = pos - self.body.center
             local v2 = v:len2()
             local d = r:len()
@@ -3359,6 +3359,7 @@ VERSION_NUMBER = 1.359
             end
 
             local function getRelativePitch(velocity)
+                velocity = vec3(velocity)
                 local pitch = -math.deg(atan(velocity.y, velocity.z)) + 180
                 -- This is 0-360 where 0 is straight up
                 pitch = pitch - 90
@@ -3375,6 +3376,7 @@ VERSION_NUMBER = 1.359
             end
 
             local function getRelativeYaw(velocity)
+                velocity = vec3(velocity)
                 local yaw = math.deg(atan(velocity.y, velocity.x)) - 90
                 if yaw < -180 then
                     yaw = 360 + yaw
@@ -3444,8 +3446,9 @@ VERSION_NUMBER = 1.359
                     end
             
                     if(not inAtmo) then
-                        relativePitch = getRelativePitch(-constructVelocity)
-                        relativeYaw = getRelativeYaw(-constructVelocity)
+                        local velo = vec3(velocity)
+                        relativePitch = getRelativePitch(-velo)
+                        relativeYaw = getRelativeYaw(-velo)
                         
                         dx = (-relativeYaw/yawRange)*horizonRadius -- Values from -1 to 1 indicating offset from the center
                         dy = (relativePitch/pitchRange)*horizonRadius
@@ -3982,6 +3985,7 @@ VERSION_NUMBER = 1.359
         function Hud.UpdateHud(newContent)
 
             local pitch = adjustedPitch
+            local velocity = core.getVelocity()
             local roll = adjustedRoll
             local originalRoll = roll
             local originalPitch = pitch
@@ -4002,8 +4006,8 @@ VERSION_NUMBER = 1.359
         
             if (not nearPlanet) then
                 if (velMag > 5) then
-                    pitch = getRelativePitch(constructVelocity)
-                    roll = getRelativeYaw(constructVelocity)
+                    pitch = getRelativePitch(velocity)
+                    roll = getRelativeYaw(velocity)
                 else
                     pitch = 0
                     roll = 0
@@ -4045,13 +4049,13 @@ VERSION_NUMBER = 1.359
                 if not IsInFreeLook() or brightHud then
                     if nearPlanet then -- use real pitch, roll, and heading
                         DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
-                        DrawArtificialHorizon(newContent, originalPitch, originalRoll, centerX, centerY, nearPlanet, mfloor(getRelativeYaw(constructVelocity)), velMag)
+                        DrawArtificialHorizon(newContent, originalPitch, originalRoll, centerX, centerY, nearPlanet, mfloor(getRelativeYaw(velocity)), velMag)
                     else -- use Relative Pitch and Relative Yaw
                         DrawRollLines (newContent, centerX, centerY, roll, bottomText, nearPlanet)
                         DrawArtificialHorizon(newContent, pitch, roll, centerX, centerY, nearPlanet, mfloor(roll), velMag)
                     end
                     DrawAltitudeDisplay(newContent, coreAltitude, nearPlanet)
-                    DrawPrograde(newContent, constructVelocity, velMag, centerX, centerY)
+                    DrawPrograde(newContent, velocity, velMag, centerX, centerY)
                 end
             end
 
@@ -5456,7 +5460,7 @@ VERSION_NUMBER = 1.359
                     end
                     local throttle = unit.getThrottle()
                     if AtmoSpeedAssist then throttle = PlayerThrottle end
-                    if constructVelocity:len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet) then
+                    if (vec3(core.getVelocity()):len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet)) then
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Cruising" then
                             play("apCru","AP")
@@ -6364,7 +6368,7 @@ VERSION_NUMBER = 1.359
                 end
 
                 -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
-                if abvGndDet ~= -1 or (not inAtmo and constructVelocity:len() < 50) then
+                if abvGndDet ~= -1 or (not inAtmo and vec3(core.getVelocity()):len() < 50) then
                     BrakeIsOn = true
                     GearExtended = true
                     if hasGear then
@@ -7004,7 +7008,8 @@ VERSION_NUMBER = 1.359
                     end
                     gravity = round(gravity, 5) -- round to avoid insignificant updates
                     if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
-                        local speed = constructVelocity:len()
+                        local velocity = core.getVelocity()
+                        local speed = vec3(velocity):len()
                         local maxBrake = jdecode(unit.getData()).maxBrake 
                         if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
                             maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
@@ -7513,7 +7518,7 @@ VERSION_NUMBER = 1.359
                 local airResistanceAcceleration = vec3(core.getWorldAirFrictionAcceleration())
                 local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
             
-                local currentVelocity = constructVelocity
+                local currentVelocity = vec3(core.getVelocity())
                 local currentAxisSpeedMS = currentVelocity:dot(axisCRefDirection)
             
                 local targetAxisSpeedMS = targetSpeed * constants.kph2m
@@ -7559,7 +7564,7 @@ VERSION_NUMBER = 1.359
                 local airResistanceAcceleration = vec3(core.getWorldAirFrictionAcceleration())
                 local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
             
-                local currentVelocity = constructVelocity
+                local currentVelocity = vec3(core.getVelocity())
                 local currentAxisSpeedMS = currentVelocity:dot(axisCRefDirection)
             
                 local targetAxisSpeedMS = targetSpeed * constants.kph2m
@@ -7986,7 +7991,7 @@ VERSION_NUMBER = 1.359
         Nav:setBoosterCommand('rocket_engine')
         -- Dodgin's Don't Die Rocket Govenor - Cruise Control Edition
         if isBoosting and not VanillaRockets then 
-            local speed = core:len()
+            local speed = vec3(core.getVelocity()):len()
             local maxSpeedLag = 0.15
             if not throttleMode then -- Cruise control rocket boost assist, Dodgin's modified.
                 local cc_speed = navCom:getTargetSpeed(axisCommandId.longitudinal)
