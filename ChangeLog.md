@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.400 
+- Refactored radar into a class and pass info to hudclass.
+- Fix for Update Position bug.
+
 Version 1.358 - Fixes and improvements
 - Fixed Autopilot to pause if there isnt a clear LOS between you and target destination (for planet to another planet starting in space).
 - Changed /addlocation /::pos and Save and Update buttons to save any point outside a planets atmosphere as Space location for AP purposes.
