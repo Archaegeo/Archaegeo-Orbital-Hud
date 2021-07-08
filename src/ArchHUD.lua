@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.400
+VERSION_NUMBER = 1.401
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -338,7 +338,7 @@ VERSION_NUMBER = 1.400
     local collisionTarget = nil
 
 -- Function Definitions that are used in more than one areause 
-    ---[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
+    --[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
             -- local t0 = system.getTime()
             -- <code to be checked>
             -- _logCompute.addValue(system.getTime() - t0)
@@ -6784,7 +6784,7 @@ VERSION_NUMBER = 1.400
 
         beginSetup = coroutine.create(function()
             
-            ---[[ --EliasVilld Log Code setup material.
+            --[[ --EliasVilld Log Code setup material.
             Logs = Logger()
             _logCompute = Logs.CreateLog("Computation", "time")
             --]]
@@ -6879,7 +6879,7 @@ VERSION_NUMBER = 1.400
         end
         if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
         play("stop","SU")
-        ---[[ --EliasVilld Log Code for printing timing checks.
+        --[[ --EliasVilld Log Code for printing timing checks.
         for _,s in pairs(Logs.getLogs()) do
             system.print(s)
         end
@@ -7403,13 +7403,13 @@ VERSION_NUMBER = 1.400
                 local halfResolutionX = round(ResolutionX / 2,0)
                 local halfResolutionY = round(ResolutionY / 2,0)
             local newContent = {}
-            local t0 = system.getTime()
+            --local t0 = system.getTime()
             HUD.HUDPrologue(newContent)
 
             if showHud then
-                local t0 = system.getTime()
+                --local t0 = system.getTime()
                 HUD.UpdateHud(newContent) -- sets up Content for us
-                _logCompute.addValue(system.getTime() - t0)
+                --_logCompute.addValue(system.getTime() - t0)
             else
                 if AlwaysVSpd then HUD.DrawVerticalSpeed(newContent, coreAltitude) end
                 HUD.DisplayOrbitScreen(newContent)

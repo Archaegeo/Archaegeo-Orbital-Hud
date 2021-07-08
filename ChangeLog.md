@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.401
+- Comment out timing checks.
+
 Version 1.400 
 - Refactored radar into a class and pass info to hudclass.
 - Fix for Update Position bug.
