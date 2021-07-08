@@ -311,6 +311,7 @@ VERSION_NUMBER = 1.400
     local constructUp = vec3(core.getConstructWorldOrientationUp())
     local constructForward = vec3(core.getConstructWorldOrientationForward())
     local constructRight = vec3(core.getConstructWorldOrientationRight())
+    local coreVelocity = vec3(core.getVelocity())
     local constructVelocity = vec3(core.getWorldVelocity())
     local velMag = vec3(constructVelocity):len()
     local worldVertical = vec3(core.getWorldVertical())
@@ -2821,7 +2822,7 @@ VERSION_NUMBER = 1.400
                 if radarContacts > 0 then
                     local wp = getTrueWorldPos()
                     local count, count2 = 0, 0
-                    static = 0
+                    static, numKnown = 0, 0
                     for v in contactData do
                         local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
                         local sz = sizeMap[size]
@@ -3359,7 +3360,6 @@ VERSION_NUMBER = 1.400
             end
 
             local function getRelativePitch(velocity)
-                velocity = vec3(velocity)
                 local pitch = -math.deg(atan(velocity.y, velocity.z)) + 180
                 -- This is 0-360 where 0 is straight up
                 pitch = pitch - 90
@@ -3376,7 +3376,6 @@ VERSION_NUMBER = 1.400
             end
 
             local function getRelativeYaw(velocity)
-                velocity = vec3(velocity)
                 local yaw = math.deg(atan(velocity.y, velocity.x)) - 90
                 if yaw < -180 then
                     yaw = 360 + yaw
@@ -3985,7 +3984,6 @@ VERSION_NUMBER = 1.400
         function Hud.UpdateHud(newContent)
 
             local pitch = adjustedPitch
-            local velocity = core.getVelocity()
             local roll = adjustedRoll
             local originalRoll = roll
             local originalPitch = pitch
@@ -4006,8 +4004,8 @@ VERSION_NUMBER = 1.400
         
             if (not nearPlanet) then
                 if (velMag > 5) then
-                    pitch = getRelativePitch(velocity)
-                    roll = getRelativeYaw(velocity)
+                    pitch = getRelativePitch(coreVelocity)
+                    roll = getRelativeYaw(coreVelocity)
                 else
                     pitch = 0
                     roll = 0
@@ -4049,13 +4047,13 @@ VERSION_NUMBER = 1.400
                 if not IsInFreeLook() or brightHud then
                     if nearPlanet then -- use real pitch, roll, and heading
                         DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
-                        DrawArtificialHorizon(newContent, originalPitch, originalRoll, centerX, centerY, nearPlanet, mfloor(getRelativeYaw(velocity)), velMag)
+                        DrawArtificialHorizon(newContent, originalPitch, originalRoll, centerX, centerY, nearPlanet, mfloor(getRelativeYaw(coreVelocity)), velMag)
                     else -- use Relative Pitch and Relative Yaw
                         DrawRollLines (newContent, centerX, centerY, roll, bottomText, nearPlanet)
                         DrawArtificialHorizon(newContent, pitch, roll, centerX, centerY, nearPlanet, mfloor(roll), velMag)
                     end
                     DrawAltitudeDisplay(newContent, coreAltitude, nearPlanet)
-                    DrawPrograde(newContent, velocity, velMag, centerX, centerY)
+                    DrawPrograde(newContent, coreVelocity, velMag, centerX, centerY)
                 end
             end
 
@@ -4237,10 +4235,11 @@ VERSION_NUMBER = 1.400
                     peris = 0
                 end
             end 
-            local target, data, radarContacts, numKnown, static, friendlies = RADAR.GetRadarHud() 
+            local target, data, radarContacts, numKnown, static, friendlies = RADAR.GetRadarHud()
+            local num = numKnown or 0 
             if radarContacts > 0 then 
                 if CollisionSystem then 
-                    msg = numKnown.."/"..static.." Plotted : "..(radarContacts-static).." Ignored" 
+                    msg = num.."/"..static.." Plotted : "..(radarContacts-static).." Ignored" 
                 else
                     msg = "Radar Contacts: "..radarContacts
                 end
@@ -4519,8 +4518,10 @@ VERSION_NUMBER = 1.400
                     SavedLocations[index].name = newName
                 else
                     local location = SavedLocations[index]
-                    ClearCurrentPosition()
-                    AddNewLocation(location.name, worldPos, false, true)
+                    location.atmosphere = atmosDensity
+                    location.gravity = unit.getClosestPlanetInfluence()
+                    location.position = worldPos
+                    location.safe = true
                 end
                 --UpdateAtlasLocationsList() -- Do we need these, if we only changed the name?  They are already done in AddNewLocation otherwise
                 msgText = SavedLocations[index].name .. " position updated ("..SavedLocations[index].planetname..")"
@@ -5460,7 +5461,7 @@ VERSION_NUMBER = 1.400
                     end
                     local throttle = unit.getThrottle()
                     if AtmoSpeedAssist then throttle = PlayerThrottle end
-                    if (vec3(core.getVelocity()):len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet)) then
+                    if (coreVelocity:len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet)) then
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Cruising" then
                             play("apCru","AP")
@@ -6368,7 +6369,7 @@ VERSION_NUMBER = 1.400
                 end
 
                 -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
-                if abvGndDet ~= -1 or (not inAtmo and vec3(core.getVelocity()):len() < 50) then
+                if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 50) then
                     BrakeIsOn = true
                     GearExtended = true
                     if hasGear then
@@ -7008,8 +7009,7 @@ VERSION_NUMBER = 1.400
                     end
                     gravity = round(gravity, 5) -- round to avoid insignificant updates
                     if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
-                        local velocity = core.getVelocity()
-                        local speed = vec3(velocity):len()
+                        local speed = coreVelocity:len()
                         local maxBrake = jdecode(unit.getData()).maxBrake 
                         if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
                             maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
@@ -7418,7 +7418,7 @@ VERSION_NUMBER = 1.400
             if showSettings and settingsVariables ~= {} then 
                 HUD.DrawSettings(newContent) 
             end
-            HUD.DrawRadarInfo()
+            if radar_1 then HUD.DrawRadarInfo() end
 
             HUD.HUDEpilogue(newContent)
             newContent[#newContent + 1] = stringf(
@@ -7518,8 +7518,8 @@ VERSION_NUMBER = 1.400
                 local airResistanceAcceleration = vec3(core.getWorldAirFrictionAcceleration())
                 local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
             
-                local currentVelocity = vec3(core.getVelocity())
-                local currentAxisSpeedMS = currentVelocity:dot(axisCRefDirection)
+
+                local currentAxisSpeedMS = coreVelocity:dot(axisCRefDirection)
             
                 local targetAxisSpeedMS = targetSpeed * constants.kph2m
             
@@ -7564,8 +7564,7 @@ VERSION_NUMBER = 1.400
                 local airResistanceAcceleration = vec3(core.getWorldAirFrictionAcceleration())
                 local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
             
-                local currentVelocity = vec3(core.getVelocity())
-                local currentAxisSpeedMS = currentVelocity:dot(axisCRefDirection)
+                local currentAxisSpeedMS = coreVelocity:dot(axisCRefDirection)
             
                 local targetAxisSpeedMS = targetSpeed * constants.kph2m
             
@@ -7640,6 +7639,7 @@ VERSION_NUMBER = 1.400
         constructForward = vec3(core.getConstructWorldOrientationForward())
         constructRight = vec3(core.getConstructWorldOrientationRight())
         constructVelocity = vec3(core.getWorldVelocity())
+        coreVelocity = vec3(core.getVelocity())
         worldPos = vec3(core.getConstructWorldPos())
         coreMass =  core.getConstructMass()
         velMag = vec3(constructVelocity):len()
@@ -7991,7 +7991,7 @@ VERSION_NUMBER = 1.400
         Nav:setBoosterCommand('rocket_engine')
         -- Dodgin's Don't Die Rocket Govenor - Cruise Control Edition
         if isBoosting and not VanillaRockets then 
-            local speed = vec3(core.getVelocity()):len()
+            local speed = coreVelocity:len()
             local maxSpeedLag = 0.15
             if not throttleMode then -- Cruise control rocket boost assist, Dodgin's modified.
                 local cc_speed = navCom:getTargetSpeed(axisCommandId.longitudinal)
@@ -8056,9 +8056,9 @@ VERSION_NUMBER = 1.400
     function script.onActionStart(action)
         -- Local function for onActionStart items in more than one
 
-            local mult=1
+
             local function groundAltStart(down)
-                
+                local mult=1
                 local function nextTargetHeight(curTarget, down)
                     local targetHeights = { planet.surfaceMaxAltitude+100, (planet.spaceEngineMinAltitude-50), planet.noAtmosphericDensityAltitude + LowOrbitHeight,
                         planet.radius*(TargetOrbitRadius-1) + planet.noAtmosphericDensityAltitude }
@@ -8107,6 +8107,7 @@ VERSION_NUMBER = 1.400
                 end
             end
             local function changeSpd(down)
+                local mult=1
                 if down then mult = -1 end
                 if not holdingCtrl then
                     if AtmoSpeedAssist and not AltIsOn then
@@ -8550,7 +8551,7 @@ VERSION_NUMBER = 1.400
                         if AltitudeHold and AntigravTargetAltitude < HoldAltitude + 10 and AntigravTargetAltitude > HoldAltitude - 10 then 
                             HoldAltitude = AntigravTargetAltitude
                         end
-                        currentAggModifier = uclamp(currentAggModifier * 1.05, antiGravButtonModifier, 500)
+                        currentAggModifier = uclamp(currentAggModifier * 1.05, antiGravButtonModifier, 50)
                         BrakeIsOn = false
                     else
                         AntigravTargetAltitude = desiredBaseAltitude + mult*100
@@ -8563,12 +8564,13 @@ VERSION_NUMBER = 1.400
                     else
                         HoldAltitude = HoldAltitude + mult*currentHoldAltModifier
                     end
-                    currentHoldAltModifier = uclamp(currentHoldAltModifier * 1.05, holdAltitudeButtonModifier, 500)
+                    currentHoldAltModifier = uclamp(currentHoldAltModifier * 1.05, holdAltitudeButtonModifier, 50)
                 else
                     navCom:updateTargetGroundAltitudeFromActionLoop(mult*1.0)
                 end                
             end
             local function spdLoop(down)
+                local mult = 1
                 if down then mult = -1 end
                 if not holdingCtrl then
                     if AtmoSpeedAssist and not AltIsOn then
