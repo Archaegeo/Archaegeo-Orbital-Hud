@@ -18,30 +18,30 @@ fi
 # Parse args, or use defaults
 MINIFY="${1:-false}"
 # We expect this file to be run from the <repo>/scripts directory
-LUA_SRC=${2:-$ROOTDIR/src/ArchHUD.lua}
-CONF_DST=${3:-$ROOTDIR/ArchHUD.conf}
+LUA_SRC=${2:-$ROOTDIR/src/ArchHUD-N.lua}
+CONF_DST=${3:-$ROOTDIR/ArchHUD-N.conf}
 
 # Make a fresh work dir
 WORK_DIR=${ROOTDIR}/scripts/work
 (rm -rf $WORK_DIR/* || true) && mkdir -p $WORK_DIR
 
 # Extract the exports because the minifier will eat them.
-grep "\-- \?export:" $LUA_SRC | sed -e 's/^[ \t]*/        /' -e 's/-- export:/--export:/' > $WORK_DIR/ArchHUD.exports
+grep "\-- \?export:" $LUA_SRC | sed -e 's/^[ \t]*/        /' -e 's/-- export:/--export:/' > $WORK_DIR/ArchHUD-N.exports
 
 VERSION_NUMBER=`grep "VERSION_NUMBER = .*" $LUA_SRC | sed -E "s/\s*VERSION_NUMBER = (.*)/\1/"`
 if [[ "${VERSION_NUMBER}" == "" ]]; then
     echo "ERROR: Failed to detect version number"; exit 1
 fi
 
-sed "/-- \?export:/d;/require 'src.slots'/d" $LUA_SRC > $WORK_DIR/ArchHUD.extracted.lua
+sed "/-- \?export:/d;/require 'src.slots'/d" $LUA_SRC > $WORK_DIR/ArchHUD-N.extracted.lua
 
 # Minify the lua
 if [[ "$MINIFY" == "true" ]]; then
     echo "Minifying ... "
     # Using stdin pipe to avoid a bug in luamin complaining about "No such file: ``"
-    echo "$WORK_DIR/ArchHUD.extracted.lua" | $LUAMIN --file > $WORK_DIR/ArchHUD.min.lua
+    echo "$WORK_DIR/ArchHUD-N.extracted.lua" | $LUAMIN --file > $WORK_DIR/ArchHUD-N.min.lua
 else
-    cp $WORK_DIR/ArchHUD.extracted.lua $WORK_DIR/ArchHUD.min.lua
+    cp $WORK_DIR/ArchHUD-N.extracted.lua $WORK_DIR/ArchHUD-N.min.lua
 fi
 
 # Wrap in AutoConf
@@ -66,21 +66,21 @@ SLOTS=(
 
 echo "Wrapping ..."
 lua ${ROOTDIR}/scripts/wrap.lua --handle-errors --output yaml \
-             --name "ArchHud - Archaegeo v$VERSION_NUMBER (Minified)" \
-             $WORK_DIR/ArchHUD.min.lua $WORK_DIR/ArchHUD.wrapped.conf \
+             --name "ArchHUD-N - Archaegeo v$VERSION_NUMBER (Minified)" \
+             $WORK_DIR/ArchHUD-N.min.lua $WORK_DIR/ArchHUD-N.wrapped.conf \
              --slots ${SLOTS[*]}
 
 # Re-insert the exports
 if [[ "$MINIFY" == "true" ]]; then
-    sed "/script={}/e cat $WORK_DIR/ArchHUD.exports" $WORK_DIR/ArchHUD.wrapped.conf > $CONF_DST
+    sed "/script={}/e cat $WORK_DIR/ArchHUD-N.exports" $WORK_DIR/ArchHUD-N.wrapped.conf > $CONF_DST
 else
-    sed "/script = {}/e cat $WORK_DIR/ArchHUD.exports" $WORK_DIR/ArchHUD.wrapped.conf > $CONF_DST
+    sed "/script = {}/e cat $WORK_DIR/ArchHUD-N.exports" $WORK_DIR/ArchHUD-N.wrapped.conf > $CONF_DST
 fi
 
 # Fix up minified L_TEXTs which requires a space after the comma
 sed -i -E 's/L_TEXT\(("[^"]*"),("[^"]*")\)/L_TEXT(\1, \2)/g' $CONF_DST
 
-echo "$VERSION_NUMBER" > ${ROOTDIR}/ArchHUD.conf.version
+echo "$VERSION_NUMBER" > ${ROOTDIR}/ArchHUD-N.conf.version
 
 echo "Compiled v$VERSION_NUMBER at ${CONF_DST}"
 

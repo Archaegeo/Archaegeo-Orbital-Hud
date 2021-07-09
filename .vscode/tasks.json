@@ -12,7 +12,7 @@
                 "Wrap (minified)"
             ],
             "args": [
-                "ArchHUD.conf",
+                "ArchHUD-N.conf",
                 "${config:du.autoconfdir}/${config:du.testconffilename}"
             ],
             "problemMatcher": []
