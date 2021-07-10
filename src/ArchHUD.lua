@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.401
+VERSION_NUMBER = 1.402
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -4419,7 +4419,7 @@ VERSION_NUMBER = 1.401
                     else
                         local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
                         local autopilotEntry = atlas[0][atlasIndex]
-                        if autopilotEntry.name == "Space" or 
+                        if autopilotEntry ~= nil and autopilotEntry.name == "Space" or 
                            (iphCondition == "Custom Only" and autopilotEntry.center) or
                            (iphCondition == "No Moons" and string.find(autopilotEntry.name, "Moon") ~= nil)
                         then 
@@ -4516,6 +4516,8 @@ VERSION_NUMBER = 1.401
             if index ~= -1 then
                 if newName ~= nil then
                     SavedLocations[index].name = newName
+                    AutopilotTargetIndex = AutopilotTargetIndex - 1
+                    adjustAutopilotTargetIndex()
                 else
                     local location = SavedLocations[index]
                     location.atmosphere = atmosDensity
