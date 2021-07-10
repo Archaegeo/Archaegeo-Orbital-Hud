@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Verion 1.402
+- Fixed Clear Position intermittant bug
+- Fixed /setname showing proper selecting in IPH when complete.
+
 Version 1.401
 - Comment out timing checks.
 
