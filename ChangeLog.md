@@ -1,5 +1,20 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.403
+- Alt-6 and alt-4 combos will not initiate autotakeoff (brake and wait for power up) if moving > 70k/hr while AGL detects something. (Before if you alt-4 low altitude it would brake and set up for takeoff).
+- Changed Glide re-entry height to be either SurfaceMaxAltitude+ReEntryHeight or planet.spaceEngineMinAltitude - 50, which ever is lower.
+- Changed manually initiated (button) glide re-entry to not align to selected IPH target (use Autopilot to align to target if desired)
+- Changed user variable `ReEntryHeight` = 100000 so that it will always use 11% atmosphere for re-entry UNLESS you want to set it lower. 
+NOTE: Existing installs will require manually changing that variable. In the LUA chat window, type "/G ReEntryHeight 100000" 
+NOTE: `ReEntryHeight` is added to surface max altitude so setting it to 0 would mean you want to potentially hit a mountain.  if Re-Entry height + surface max altitude > space engine kick on point, it uses
+11% atmosphere instead.
+- Fixed AP Re-entries to indicate re-entry still in progress rather than looking like AP is off and just doing Altitude Hold.
+- Removed default vanilla "turnAssist" and its associated variables
+- Fixed 11% atmosphere calculation to be more accurate for all planets.
+- Changed Max Mass display up top (based on forward thrust) and in IPH on right (based on brakes) to 50% of previous value to help show a more realistic limit.
+(The previous values were the absolute maxes to move forward at all and brake land against gravity speed only)
+- Starting AP with mass > max mass will give a 5 second visual warning message.
+
 Verion 1.402
 - Fixed Clear Position intermittant bug
 - Fixed /setname showing proper selecting in IPH when complete.

@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.402
+VERSION_NUMBER = 1.403
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -20,7 +20,6 @@ VERSION_NUMBER = 1.402
     VanillaRockets = false --export:
     InvertMouse = false --export:
     autoRollPreference = false --export:
-    turnAssist = true --export:
     ExternalAGG = false --export:
     UseSatNav = false --export:
     ShouldCheckDamage = true --export:
@@ -56,7 +55,7 @@ VERSION_NUMBER = 1.402
     AutoTakeoffAltitude = 1000 --export:
     TargetHoverHeight = 50 --export:
     LandingGearGroundHeight = 0 --export:
-    ReEntryHeight = 5000 -- export:
+    ReEntryHeight = 100000 -- export:
     MaxGameVelocity = 8333.00 --export:
     AutopilotInterplanetaryThrottle = 1.0 --export:
     warmup = 32 --export:
@@ -101,7 +100,6 @@ VERSION_NUMBER = 1.402
     rollSpeedFactor = 1.5 --export:
     autoRollRollThreshold = 180 --export:
     minRollVelocity = 150 --export:
-    turnAssistFactor = 2 --export:
     TrajectoryAlignmentStrength = 0.002 --export:
     torqueFactor = 2 --export:
     pitchSpeedFactor = 0.8 --export:
@@ -450,7 +448,7 @@ VERSION_NUMBER = 1.402
         local returnSet = {}
             -- Complete list of user variables above, must be in saveableVariables to be stored on databank
             local saveableVariablesBoolean = {"userControlScheme", "soundFolder", "freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
-                "InvertMouse", "autoRollPreference", "turnAssist", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
+                "InvertMouse", "autoRollPreference", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
                 "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd", "BarFuelDisplay", "showHelp", "Cockpit",
                 "voices", "alerts", "CollisionSystem"}
@@ -463,7 +461,7 @@ VERSION_NUMBER = 1.402
                 "vSpdMeterX", "vSpdMeterY","altMeterX", "altMeterY","fuelX", "fuelY","DeadZone",
                 "OrbitMapSize", "OrbitMapX", "OrbitMapY", "soundVolume"}
             local savableVariablesPhysics = {"speedChangeLarge", "speedChangeSmall", "MouseXSensitivity", "MouseYSensitivity", "autoRollFactor",
-                "rollSpeedFactor", "autoRollRollThreshold", "minRollVelocity", "turnAssistFactor", "TrajectoryAlignmentStrength",
+                "rollSpeedFactor", "autoRollRollThreshold", "minRollVelocity", "TrajectoryAlignmentStrength",
                 "torqueFactor", "pitchSpeedFactor", "yawSpeedFactor", "brakeSpeedFactor", "brakeFlatFactor", "DampingMultiplier", 
                 "apTickRate",  "hudTickRate", "ExtraLongitudeTags", "ExtraLateralTags", "ExtraVerticalTags"}
         if not subset then
@@ -599,7 +597,7 @@ VERSION_NUMBER = 1.402
         if (time - ahDoubleClick) < 1.5 then
             if planet.hasAtmosphere  then
                 if atmosDensity > 0 then
-                    HoldAltitude = planet.spaceEngineMinAltitude - 50
+                    HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude
                     play("11","EP")
                 else
                     if nearPlanet then
@@ -641,16 +639,7 @@ VERSION_NUMBER = 1.402
             autoRoll = true
             LockPitch = nil
             OrbitAchieved = false
-            if abvGndDet == -1 then
-                play("altOn","AH")
-                AutoTakeoff = false
-                if ahDoubleClick > -1 then
-                    if unit.getClosestPlanetInfluence() > 0 then
-                        HoldAltitude = coreAltitude
-                    end
-                end
-                if VertTakeOff then ToggleVerticalTakeoff() end
-            else
+            if abvGndDet ~= -1 and velMag < 20 then
                 play("lfs", "LS")
                 AutoTakeoff = true
                 if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
@@ -661,6 +650,15 @@ VERSION_NUMBER = 1.402
                 if VertTakeOffEngine and UpVertAtmoEngine then 
                     ToggleVerticalTakeoff()
                 end
+            else
+                play("altOn","AH")
+                AutoTakeoff = false
+                if ahDoubleClick > -1 then
+                    if unit.getClosestPlanetInfluence() > 0 then
+                        HoldAltitude = coreAltitude
+                    end
+                end
+                if VertTakeOff then ToggleVerticalTakeoff() end
             end
             if spaceLaunch then HoldAltitude = 100000 end
         else
@@ -713,6 +711,7 @@ VERSION_NUMBER = 1.402
         TargetSet = false -- No matter what
         -- Toggle Autopilot, as long as the target isn't None
         if AutopilotTargetIndex > 0 and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
+            if 0.5 * Nav:maxForceForward() / core.g() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
             ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
             AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
 
@@ -795,7 +794,6 @@ VERSION_NUMBER = 1.402
             apThrottleSet = false
             AutoTakeoff = false
             AltitudeHold = false
-            VectorToTarget = false
             HoldAltitude = coreAltitude
             TargetSet = false
             Reentry = false
@@ -865,7 +863,7 @@ VERSION_NUMBER = 1.402
             autoRoll = true
             BrakeIsOn = false
             HoldAltitude = planet.surfaceMaxAltitude + ReEntryHeight
-            if HoldAltitude > planet.spaceEngineMinAltitude then HoldAltitude = planet.spaceEngineMinAltitude - (planet.spaceEngineMinAltitude / 10) end
+            if HoldAltitude > planet.spaceEngineMinAltitude then HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude end
             local text = getDistanceDisplayString(HoldAltitude)
             msgText = "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text 
             play("glide","RE")
@@ -2509,9 +2507,6 @@ VERSION_NUMBER = 1.402
         local C = 30000000 / 3600
         local C2 = C * C
         local ITERATIONS = 100 -- iterations over engine "warm-up" period
-        local function lorentz(v)
-            return 1 / msqrt(1 - v * v / C2)
-        end
     
         function Kinematic.computeAccelerationTime(initial, acceleration, final)
             -- The low speed limit of following is: t=(vf-vi)/a (from: vf=vi+at)
@@ -2601,9 +2596,6 @@ VERSION_NUMBER = 1.402
             return distance / initial
         end
     
-        function Kinematic.lorentz(v)
-            return lorentz(v)
-        end
         return Kinematic
     end
     local function Keplers() -- Part of Jaylebreak's flight files, modified slightly for hud
@@ -3617,7 +3609,7 @@ VERSION_NUMBER = 1.402
                     newContent[#newContent + 1] = svgText(warningX, apY+20, stringf("LockedPitch: %d", mfloor(LockPitch)), "warn")
                 elseif followMode then
                     newContent[#newContent + 1] = svgText(warningX, apY+20, "Follow Mode Engaged", "warn")
-                elseif Reentry then
+                elseif Reentry or finalLand then
                     newContent[#newContent + 1] = svgText(warningX, apY+20, "Re-entry in Progress", "warn")
                 end
                 if AltitudeHold or VertTakeOff then
@@ -4114,7 +4106,7 @@ VERSION_NUMBER = 1.402
             local reqThrust = 0
             local brakeValue = 0
             if inAtmo then brakeValue = LastMaxBrakeInAtmo else brakeValue = LastMaxBrake end
-            maxThrust = Nav:maxForceForward()
+            local maxThrust = Nav:maxForceForward()
             gravity = core.g()
             if gravity > 0.1 then
                 reqThrust = coreMass * gravity
@@ -4134,7 +4126,7 @@ VERSION_NUMBER = 1.402
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(10), stringf("Max Brake: %.2f kN",  (brakeValue / 1000)), "txtend") 
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(30), stringf("Max Thrust: %.2f kN", (maxThrust / 1000)), "txtend") 
                     if gravity > 0.1 then
-                    newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(30), stringf("Max Mass: %.2f Tons", (maxMass / 1000)), "txtstart") 
+                    newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(30), stringf("Max Mass: %.2f Tons", (maxMass * 0.5 / 1000)), "txtstart") 
                     newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(20), stringf("Req Thrust: %.2f kN", (reqThrust / 1000)), "txtend") 
                 else
                     newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(30), "Max Mass: n/a", "txtstart") 
@@ -4926,7 +4918,7 @@ VERSION_NUMBER = 1.402
                 if spaceLand then 
                     BrakeIsOn = false -- wtf how does this keep turning on, and why does it matter if we're in cruise?
                     local aligned = false
-                    if CustomTarget ~= nil then
+                    if CustomTarget ~= nil and spaceLand ~= 1 then
                         aligned = AlignToWorldVector(CustomTarget.position-worldPos,0.1) 
                     else
                         aligned = AlignToWorldVector(vec3(constructVelocity),0.01) 
@@ -4939,8 +4931,8 @@ VERSION_NUMBER = 1.402
                             BrakeIsOn = false
                             ProgradeIsOn = false
                             reentryMode = true
+                            if spaceLand ~= 1 then finalLand = true end
                             spaceLand = false
-                            finalLand = true
                             Autopilot = false
                             --autoRoll = autoRollPreference   
                             BeginReentry()
@@ -5605,7 +5597,7 @@ VERSION_NUMBER = 1.402
                 end
                 -- If we accidentally hit atmo while autopiloting to a custom target, cancel it and go straight to pulling up
             elseif Autopilot and (CustomTarget ~= nil and CustomTarget.planetname ~= "Space" and atmosDensity > 0) then
-                msgText = "Autopilot complete, proceeding with reentry"
+                msgText = "Autopilot complete, starting reentry"
                 play("apCom", "AP")
                 AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
                 BrakeIsOn = false -- Leaving these on makes it screw up alignment...?
@@ -5765,10 +5757,10 @@ VERSION_NUMBER = 1.402
                     elseif coreAltitude <= planet.noAtmosphericDensityAltitude + 5000 then
 
                         cmdCruise(ReentrySpeed)-- Then we have to wait a tick for it to take our new speed.
-                        if not throttleMode and navCom:getTargetSpeed(axisCommandId.longitudinal) == adjustedAtmoSpeedLimit then
+                        if not throttleMode and navCom:getTargetSpeed(axisCommandId.longitudinal) == ReentrySpeed and velMag < ((ReentrySpeed/3.6)+1) then
                             reentryMode = false
                             Reentry = false
-                            autoRoll = true -- wtf?  On some ships this makes it flail around because of the -80 and never recover
+                            autoRoll = true 
                         end
                     end
                 end
@@ -6192,7 +6184,7 @@ VERSION_NUMBER = 1.402
             end
 
             local function ProcessElements()
-
+                
                 local function CalculateFuelVolume(curMass, vanillaMaxVolume)
                     if curMass > vanillaMaxVolume then
                         vanillaMaxVolume = curMass
@@ -6537,19 +6529,15 @@ VERSION_NUMBER = 1.402
                         RetrogradeIsOn = not RetrogradeIsOn
                         ProgradeIsOn = false
                     end        
-                        Autopilot = false
-                        AltitudeHold = false
-                        followMode = false
-                        BrakeLanding = false
-                        LockPitch = nil
-                        Reentry = false
-                        AutoTakeoff = false
+                    Autopilot = false
+                    AltitudeHold = false
+                    followMode = false
+                    BrakeLanding = false
+                    LockPitch = nil
+                    Reentry = false
+                    AutoTakeoff = false
                 end
 
-                local function ProgradeToggle()
-                    -- Toggle Progrades
-                    gradeToggle(1)
-                end
                 local function UpdatePosition()
                     ATLAS.UpdatePosition()
                 end
@@ -6646,7 +6634,7 @@ VERSION_NUMBER = 1.402
                     resolutionWidth / 2 - buttonWidth / 2 - 50 - brake.width, resolutionHeight / 2 - buttonHeight + 380,
                     function()
                         return ProgradeIsOn
-                    end, ProgradeToggle)
+                    end, function() gradeToggle(1) end)
                 MakeButton("Align Retrograde", "Disable Retrograde", buttonWidth, buttonHeight,
                     resolutionWidth / 2 - buttonWidth / 2 + brake.width + 50, resolutionHeight / 2 - buttonHeight + 380,
                     function()
@@ -6719,7 +6707,7 @@ VERSION_NUMBER = 1.402
                         end)
                 y = y + buttonHeight + 20
                 MakeButton("Glide Re-Entry", "Cancel Glide Re-Entry", buttonWidth, buttonHeight, x, y,
-                    function() return Reentry end, function() spaceLand = true ProgradeToggle() end, function() return (planet.hasAtmosphere and not inAtmo) end )
+                    function() return Reentry end, function() spaceLand = 1 gradeToggle(1) end, function() return (planet.hasAtmosphere and not inAtmo) end )
                 MakeButton("Parachute Re-Entry", "Cancel Parachute Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
                     function() return Reentry end, BeginReentry, function() return (planet.hasAtmosphere and not inAtmo) end )
                 y = y + buttonHeight + 20
@@ -7087,7 +7075,7 @@ VERSION_NUMBER = 1.402
                     sysUpData(widgetMaxBrakeTimeText, '{"label": "Max Brake Time", "value": "' ..
                         FormatTimeString(maxBrakeTime) .. '", "unit":""}')
                     sysUpData(widgetMaxMassText, '{"label": "Maximum Mass", "value": "' ..
-                        stringf("%.2f", (planetMaxMass / 1000)) .. '", "unit":" Tons"}')
+                        stringf("%.2f", (planetMaxMass * 0.5 / 1000)) .. '", "unit":" Tons"}')
                     displayText = getDistanceDisplayString(AutopilotTargetOrbit)
                     sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
                     displayText .. '"}')
@@ -7242,7 +7230,7 @@ VERSION_NUMBER = 1.402
             end
             updateDistance()
             HUD.UpdatePipe()
-
+            
             updateWeapons()
             -- Update odometer output string
             local newContent = {}
@@ -7624,7 +7612,6 @@ VERSION_NUMBER = 1.402
         brakeSpeedFactor = math.max(brakeSpeedFactor, 0.01)
         brakeFlatFactor = math.max(brakeFlatFactor, 0.01)
         autoRollFactor = math.max(autoRollFactor, 0.01)
-        turnAssistFactor = math.max(turnAssistFactor, 0.01)
         -- final inputs
         local finalPitchInput = uclamp(pitchInput + pitchInput2 + system.getControlDeviceForwardInput(),-1,1)
         local finalRollInput = uclamp(rollInput + rollInput2 + system.getControlDeviceYawInput(),-1,1)
@@ -7683,33 +7670,7 @@ VERSION_NUMBER = 1.402
                 targetAngularVelocity = targetAngularVelocity + autoRollInput * constructForward
             end
         end
-        if worldVertical:len() > 0.01 and atmosDensity > 0.0 then
-            local turnAssistRollThreshold = 20.0
-            -- turnAssist AND adjustedRoll is big enough AND player is not pitching or yawing
-            if turnAssist == true and currentRollDegAbs > turnAssistRollThreshold and finalPitchInput == 0 and finalYawInput ==
-                0 then
-                local rollToPitchFactor = turnAssistFactor * 0.1 -- magic number tweaked to have a default factor in the 1-10 range
-                local rollToYawFactor = turnAssistFactor * 0.025 -- magic number tweaked to have a default factor in the 1-10 range
 
-                -- rescale (turnAssistRollThreshold -> 180) to (0 -> 180)
-                local rescaleRollDegAbs =
-                    ((currentRollDegAbs - turnAssistRollThreshold) / (180 - turnAssistRollThreshold)) * 180
-                local rollVerticalRatio = 0
-                if rescaleRollDegAbs < 90 then
-                    rollVerticalRatio = rescaleRollDegAbs / 90
-                elseif rescaleRollDegAbs < 180 then
-                    rollVerticalRatio = (180 - rescaleRollDegAbs) / 90
-                end
-
-                rollVerticalRatio = rollVerticalRatio * rollVerticalRatio
-
-                local turnAssistYawInput = -currentRollDegSign * rollToYawFactor * (1.0 - rollVerticalRatio)
-                local turnAssistPitchInput = rollToPitchFactor * rollVerticalRatio
-
-                targetAngularVelocity = targetAngularVelocity + turnAssistPitchInput * constructRight + turnAssistYawInput *
-                                            constructUp
-            end
-        end
 
         -- Engine commands
         local keepCollinearity = 1 -- for easier reading
@@ -8062,7 +8023,7 @@ VERSION_NUMBER = 1.402
             local function groundAltStart(down)
                 local mult=1
                 local function nextTargetHeight(curTarget, down)
-                    local targetHeights = { planet.surfaceMaxAltitude+100, (planet.spaceEngineMinAltitude-50), planet.noAtmosphericDensityAltitude + LowOrbitHeight,
+                    local targetHeights = { planet.surfaceMaxAltitude+100, (planet.spaceEngineMinAltitude-0.01*planet.noAtmosphericDensityAltitude), planet.noAtmosphericDensityAltitude + LowOrbitHeight,
                         planet.radius*(TargetOrbitRadius-1) + planet.noAtmosphericDensityAltitude }
                     local origTarget = curTarget
                     for _,v in ipairs(targetHeights) do
