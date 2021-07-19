@@ -413,7 +413,8 @@ VERSION_NUMBER = 1.404
         return self
     end
     --]]
-    --[[function p(msg)
+    --[[
+    function p(msg)
         system.print(time..": "..msg)
     end
     --]]
@@ -5762,7 +5763,7 @@ VERSION_NUMBER = 1.404
                             targetPitch = 0
                             autoRoll = autoRollPreference
                         end
-                    elseif planet.noAtmosphericDensityAltitude > 0 and coreAltitude > planet.noAtmosphericDensityAltitude + 5000 then -- 5km is good
+                    elseif planet.noAtmosphericDensityAltitude > 0 and freeFallHeight then -- 5km is good
 
                         autoRoll = true -- It shouldn't actually do it, except while aligning
                     elseif coreAltitude <= planet.noAtmosphericDensityAltitude + 5000 then
