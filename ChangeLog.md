@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.404
+- Fixed Glide Re-entry to not spam throttle/cruise modes and to properly switch back to throttle mode when doign AP Re-Entry (already did manual)
+
 Version 1.403
 - Alt-6 and alt-4 combos will not initiate autotakeoff (brake and wait for power up) if moving > 70k/hr while AGL detects something. (Before if you alt-4 low altitude it would brake and set up for takeoff).
 - Changed Glide re-entry height to be either SurfaceMaxAltitude+ReEntryHeight or planet.spaceEngineMinAltitude - 50, which ever is lower.
