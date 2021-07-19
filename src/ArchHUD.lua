@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.403
+VERSION_NUMBER = 1.404
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -413,7 +413,11 @@ VERSION_NUMBER = 1.403
         return self
     end
     --]]
-    
+    --[[
+    function p(msg)
+        system.print(time..": "..msg)
+    end
+    --]]
     local function checkLOS(vector)
         local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, vector,
             function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
@@ -5733,15 +5737,23 @@ VERSION_NUMBER = 1.403
 
                     local brakeDistancer, brakeTimer = Kinematic.computeDistanceAndTime(velMag, ReentrySpeed/3.6, coreMass, 0, 0, LastMaxBrake - planet.gravity*9.8*coreMass)
                     local distanceToTarget = coreAltitude - (planet.noAtmosphericDensityAltitude + 5000)
-
-                    if not throttleMode and coreAltitude > planet.noAtmosphericDensityAltitude + 5000 and velMag <= ReentrySpeed/3.6 and velMag > (ReentrySpeed/3.6)-10 and mabs(constructVelocity:normalize():dot(constructForward)) > 0.9 then
-                        cmdThrottle(0)
-                    elseif throttleMode and velMag > ReentrySpeed/3.6 and ((brakeDistancer > -1 and distanceToTarget <= brakeDistancer) or coreAltitude <= planet.noAtmosphericDensityAltitude + 5000) then
-                        BrakeIsOn = true
+                    local freeFallHeight = coreAltitude > planet.noAtmosphericDensityAltitude + 5000
+                    if freeFallHeight and velMag <= ReentrySpeed/3.6 and velMag > (ReentrySpeed/3.6)-10 and mabs(constructVelocity:normalize():dot(constructForward)) > 0.9 then
+                        if not throttleMode then
+                            cmdThrottle(0)
+                        end
+                    elseif throttleMode and not freeFallHeight and not inAtmo then 
+                        cmdCruise(ReentrySpeed, true) 
+                    end
+                    if throttleMode then
+                        if velMag > ReentrySpeed/3.6 and ((brakeDistancer > -1 and distanceToTarget <= brakeDistancer) or not freeFallHeight) then
+                            BrakeIsOn = true
+                        else
+                            BrakeIsOn = false
+                        end
                     else
                         BrakeIsOn = false
                     end
-                    cmdCruise(ReentrySpeed, true)
                     if not reentryMode then
                         targetPitch = -80
                         if atmosDensity > 0.02 then
@@ -5751,13 +5763,15 @@ VERSION_NUMBER = 1.403
                             targetPitch = 0
                             autoRoll = autoRollPreference
                         end
-                    elseif planet.noAtmosphericDensityAltitude > 0 and coreAltitude > planet.noAtmosphericDensityAltitude + 5000 then -- 5km is good
+                    elseif planet.noAtmosphericDensityAltitude > 0 and freeFallHeight then -- 5km is good
 
                         autoRoll = true -- It shouldn't actually do it, except while aligning
                     elseif coreAltitude <= planet.noAtmosphericDensityAltitude + 5000 then
-
-                        cmdCruise(ReentrySpeed)-- Then we have to wait a tick for it to take our new speed.
-                        if not throttleMode and navCom:getTargetSpeed(axisCommandId.longitudinal) == ReentrySpeed and velMag < ((ReentrySpeed/3.6)+1) then
+                        BrakeIsOn = false
+                        if not inAtmo and (throttleMode or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= ReentrySpeed) then 
+                            cmdCruise(ReentrySpeed) 
+                        end
+                        if velMag < ((ReentrySpeed/3.6)+1) then
                             reentryMode = false
                             Reentry = false
                             autoRoll = true 
@@ -7019,14 +7033,6 @@ VERSION_NUMBER = 1.403
                     end
                 end
             RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
-            if atmosDensity > 0 and not WasInAtmo then
-                if not throttleMode and AtmoSpeedAssist and (AltitudeHold or Reentry) then
-                    -- If they're reentering atmo from cruise, and have atmo speed Assist
-                    -- Put them in throttle mode at 100%
-                    cmdThrottle(1)
-                    WasInCruise = false -- And override the thing that would reset it, in this case
-                end
-            end
             if setCruiseSpeed ~= nil then
                 if navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
                     cmdCruise(setCruiseSpeed, TRUE)
@@ -7086,6 +7092,13 @@ VERSION_NUMBER = 1.403
                         system.removeDataFromWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
                         system.removeDataFromWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
                         WasInAtmo = true
+                        if not throttleMode and AtmoSpeedAssist and (AltitudeHold or Reentry or finalLand) then
+                            -- If they're reentering atmo from cruise, and have atmo speed Assist
+                            -- Put them in throttle mode at 100%
+                            cmdThrottle(1)
+                            BrakeIsOn = false
+                            WasInCruise = false -- And override the thing that would reset it, in this case
+                        end
                     end
                     if atmosDensity == 0 and WasInAtmo then
                         if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) == 1 then
