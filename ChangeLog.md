@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.405
+- Added Shield support for PTS.  Display in upper right.  `shieldX` and `shieldY` user variables to move it. LAlt-LShift-5 will toggle shield off and on.
+NOTE: Shield is manually slotted, this means you must hook it up to chair one time like with fuel tanks or databanks or radar.  Then HUD will remember.
+
 Version 1.404
 - Fixed Glide Re-entry to not spam throttle/cruise modes and to properly switch back to throttle mode when doign AP Re-Entry (already did manual)
 

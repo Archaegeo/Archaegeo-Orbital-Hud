@@ -17,6 +17,7 @@ forcefield = ForceFieldUnit -- select=manual
 atmofueltank = AtmoFuelContainer -- select=manual
 spacefueltank = SpaceFuelContainer -- select=manual
 rocketfueltank = RocketFuelContainer -- select=manual
+shield = ShieldGeneratorUnit -- select=manual
 
 -- Auto-generated items from slots above (there are likely more we don't use)
 weapon_size = nil
