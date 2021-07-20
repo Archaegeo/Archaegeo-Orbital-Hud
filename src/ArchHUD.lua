@@ -85,6 +85,8 @@ VERSION_NUMBER = 1.404
     altMeterY = 540 --export:
     fuelX = 30 --export:
     fuelY = 700 --export:
+    shieldX = 1750 --export:
+    shieldY = 250 --export:
     DeadZone = 50 --export:
     OrbitMapSize = 250 --export:
     OrbitMapX = 75 --export:
@@ -335,6 +337,7 @@ VERSION_NUMBER = 1.404
     local collisionAlertStatus = false
     local collisionTarget = nil
 
+
 -- Function Definitions that are used in more than one areause 
     --[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
             -- local t0 = system.getTime()
@@ -462,7 +465,7 @@ VERSION_NUMBER = 1.404
                 "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization"}
             local savableVariablesHud = {"ResolutionX","ResolutionY","circleRad","SafeR", "SafeG", "SafeB", 
                 "PvPR", "PvPG", "PvPB","centerX", "centerY", "throtPosX", "throtPosY",
-                "vSpdMeterX", "vSpdMeterY","altMeterX", "altMeterY","fuelX", "fuelY","DeadZone",
+                "vSpdMeterX", "vSpdMeterY","altMeterX", "altMeterY","fuelX", "fuelY", "shieldX", "shieldY", "DeadZone",
                 "OrbitMapSize", "OrbitMapX", "OrbitMapY", "soundVolume"}
             local savableVariablesPhysics = {"speedChangeLarge", "speedChangeSmall", "MouseXSensitivity", "MouseYSensitivity", "autoRollFactor",
                 "rollSpeedFactor", "autoRollRollThreshold", "minRollVelocity", "TrajectoryAlignmentStrength",
@@ -2949,6 +2952,7 @@ VERSION_NUMBER = 1.404
             end
             local radarMessage = ""
             local tankMessage = ""
+            local shieldMessage = ""
             -- DrawTank variables
                 local tankID = 1
                 local tankName = 2
@@ -3042,7 +3046,7 @@ VERSION_NUMBER = 1.404
                             local color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
                             local class = ""
                             if ((fuelTimeDisplay ~= "" and fuelTimeLeftTable[i] < 120) or fuelPercentTable[i] < 5) then
-                                class = [[class="red"]]
+                                class = "red "
                             end
                             if BarFuelDisplay then
                                 tankMessage = tankMessage..stringf([[
@@ -3057,7 +3061,7 @@ VERSION_NUMBER = 1.404
                                 y1 = y1 - 30
                                 y2 = y2 - 30
                             else
-                                tankMessage = tankMessage..svgText(x, y1, name, class.." pdim txtfuel") 
+                                tankMessage = tankMessage..svgText(x, y1, name, class.."pdim txtfuel") 
                                 tankMessage = tankMessage..svgText( x, y2, stringf("%d%% %s", fuelPercentTable[i], fuelTimeDisplay), "pdim txtfuel","fill:"..color)
                                 y1 = y1 + 30
                                 y2 = y2 + 30
@@ -4033,6 +4037,7 @@ VERSION_NUMBER = 1.404
         
 
             if tankMessage ~= "" then newContent[#newContent + 1] = tankMessage end
+            if shieldMessage ~= "" then newContent[#newContent +1] = shieldMessage end
             -- PRIMARY FLIGHT INSTRUMENTS
         
             DrawVerticalSpeed(newContent, coreAltitude) -- Weird this is draw during remote control...?
@@ -4280,6 +4285,28 @@ VERSION_NUMBER = 1.404
                 DrawTank( fuelX+240, "Rocket fuel ", "ROCKET", rocketTanks, fuelTimeLeftR, fuelPercentR)
             end
 
+        end
+
+        function Hud.DrawShield()
+            local shieldState = shield_1.getState()
+            if shieldState == 1 then shieldState = "Shield Active" else shieldState = "Shield Disabled" end
+            local x, y = shieldX -60, shieldY+30
+            local shieldPercent = mfloor(0.5 + shield_1.getShieldHitPoints() * 100 / shield_1.getMaxShieldHitPoints())
+            local colorMod = mfloor(shieldPercent * 2.55)
+            local color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
+            local class = ""
+            shieldMessage = svgText(x, y, "", "txtmid pdim txtfuel")
+            if shieldPercent < 10 and shieldState ~= "Shield Disabled" then
+                class = "red "
+            end
+            shieldMessage = shieldMessage..stringf([[
+                <g class="pdim">                        
+                <rect fill=grey class="bar" x="%d" y="%d" width="100" height="13"></rect></g>
+                <g class="bar txtstart">
+                <rect fill=%s width="%d" height="13" x="%d" y="%d"></rect>
+                <text fill=black x="%d" y="%d">%s%%</text>
+                </g>]], x, y, color, shieldPercent, x, y, x+2, y+10, shieldPercent)
+            shieldMessage = shieldMessage..svgText(x, y-5, shieldState, class.."txtstart pbright txtbig") 
         end
 
         return Hud
@@ -7127,6 +7154,7 @@ VERSION_NUMBER = 1.404
                 end
             end
             HUD.DrawTanks()
+            if shield_1 then HUD.DrawShield() end
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
             -- Local Functions for oneSecond
 
@@ -8273,6 +8301,11 @@ VERSION_NUMBER = 1.404
             ToggleAutopilot()
             toggleView = false            
         elseif action == "option5" then
+            if AltIsOn and holdingCtrl and shield_1 then 
+                shield_1.toggle() 
+                toggleView = false 
+                return 
+            end
             function ToggleLockPitch()
                 if LockPitch == nil then
                     play("lkPOn","LP")
