@@ -90,6 +90,8 @@ You can lower or raise (up to this limit) the current value by using Alt+Mousewh
 * altMeterY = 540 --  (Default: 540) Y postion of Altimeter.  Default 500
 * fuelX = 30 --  (Default: 30) X position of fuel tanks, set to 100 for non-bar style fuel display, set both fuelX and fuelY to 0 to hide fuel display
 * fuelY = 700 --  (Default: 700) Y position of fuel tanks, set to 300 for non-bar style fuel display, set both fuelX and fuelY to 0 to hide fuel display
+* shieldX = 1750 -- (Default: 1750) X position of shield indicator
+* shieldY = 250 -- (Default: 250) Y position of shield indicator
 * DeadZone = 50 --  (Default: 50) Number of pixels of deadzone at the center of the screen
 * OrbitMapSize = 250 --  (Default: 250) Size of the orbit map, make sure it is divisible by 4
 * OrbitMapX = 75 --  (Default: 75) X postion of Orbit Display Disabled
