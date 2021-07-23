@@ -1,5 +1,16 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.406 - Engine control and removal of Intruder Alert
+- Added toggle support for the `ExtraLongitudeTags`, `ExtraLateralTags`, and `ExtraVerticalTags` engine tag variables.
+To use: LALT-LSHIFT-9 will toggle extra tags between states: All, Longitude, Lateral, Vertical, Off.
+If not "Off" then up top you will see (All) or (Longitude) etc beside travel mode
+Example Use: "/G ExtraLongitudeTags light" in LUA Chat will make only engines with where you have added tag of "light" fire in longitudinal direction if in mode All or Longitude
+NOTE: When toggled on, only Engines WITH those extra tags will fire, others will not.
+NOTE: If toggled, all engines are turned off, otherwise the ones without tag will keep firing at current strength.  Recommend toggling when stopped or can safely glide a moment.
+Remember you can MMB to jump from 0 to 100% throttle.
+- Given that boaring another players construct without permission is now an Exploit, removed Intruder Alert system from HUD
+https://discord.com/channels/184691218184273920/748512451967975424/868105796297306172
+
 Version 1.405
 - Added Shield support for PTS.  Display in upper right.  `shieldX` and `shieldY` user variables to move it. LAlt-LShift-5 will toggle shield off and on.
 NOTE: Shield is manually slotted, this means you must hook it up to chair one time like with fuel tanks or databanks or radar.  Then HUD will remember.

@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.405
+VERSION_NUMBER = 1.406
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -33,7 +33,6 @@ VERSION_NUMBER = 1.405
     ShiftShowsRemoteButtons = true --export:
     DisplayOrbit = true --export: 
     SetWaypointOnExit = false --export:
-    IntruderAlertSystem = false --export:
     AlwaysVSpd = false --export:
     BarFuelDisplay = true --export:
     showHelp = true --export:
@@ -154,9 +153,9 @@ VERSION_NUMBER = 1.405
     SpaceTarget = false
     LeftAmount = 0
     IntoOrbit = false
-    safeMass = 0
     iphCondition = "All"
     stablized = true
+    UseExtra = "Off"
 
     -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
         local autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
@@ -166,7 +165,7 @@ VERSION_NUMBER = 1.405
                     "AutopilotPlanetGravity", "PrevViewLock", "AutopilotTargetName", "AutopilotTargetCoords",
                     "AutopilotTargetIndex", "TotalDistanceTravelled",
                     "TotalFlightTime", "SavedLocations", "VectorToTarget", "LocationIndex", "LastMaxBrake", 
-                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "safeMass", "iphCondition", "stablized"}
+                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "iphCondition", "stablized", "UseExtra"}
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -416,7 +415,7 @@ VERSION_NUMBER = 1.405
         return self
     end
     --]]
-    --[[
+    ---[[
     function p(msg)
         system.print(time..": "..msg)
     end
@@ -457,7 +456,7 @@ VERSION_NUMBER = 1.405
             local saveableVariablesBoolean = {"userControlScheme", "soundFolder", "freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
                 "InvertMouse", "autoRollPreference", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
-                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "IntruderAlertSystem", "AlwaysVSpd", "BarFuelDisplay", "showHelp", "Cockpit",
+                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", "showHelp", "Cockpit",
                 "voices", "alerts", "CollisionSystem"}
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "LockPitchTarget", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
@@ -3654,10 +3653,6 @@ VERSION_NUMBER = 1.405
                         newContent[#newContent + 1] = svgText(warningX, apY, orbitMsg, "warn")
                     end
                 end
-                if IntruderAlertSystem and safeMass == -1 then
-                    newContent[#newContent + 1] = svgText(warningX, apY+70, "POSSIBLE INTRUDER ALERT - MASS GAIN OF "..soundAlarm.."kg DETECTED", "warnings")
-                    play("alarm","AL",2)                    
-                end
                 if BrakeLanding then
                     if StrongBrakes then
                         newContent[#newContent + 1] = svgText(warningX, apY, "Brake-Landing", "warnings")
@@ -4087,6 +4082,7 @@ VERSION_NUMBER = 1.405
             local flightStyle = GetFlightStyle()
             if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
             if CollisionSystem and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
+            if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
             if TurnBurn then flightStyle = "TB-"..flightStyle end
             if not stablized then flightStyle = flightStyle.."-DeCoupled" end
 
@@ -4288,8 +4284,7 @@ VERSION_NUMBER = 1.405
         end
 
         function Hud.DrawShield()
-            local shieldState = shield_1.getState()
-            if shieldState == 1 then shieldState = "Shield Active" else shieldState = "Shield Disabled" end
+            local shieldState = (shield_1.getState() == 1) and "Shield Active" or "Shield Disabled"
             local x, y = shieldX -60, shieldY+30
             local shieldPercent = mfloor(0.5 + shield_1.getShieldHitPoints() * 100 / shield_1.getMaxShieldHitPoints())
             local colorMod = mfloor(shieldPercent * 2.55)
@@ -6220,7 +6215,6 @@ VERSION_NUMBER = 1.405
                     antigrav.setBaseAltitude(AntigravTargetAltitude)
                 end
 
-                if safeMass == 0 then safeMass = coreMass end
                 VectorStatus = "Proceeding to Waypoint"
             end
 
@@ -6611,17 +6605,6 @@ VERSION_NUMBER = 1.405
                     return "Disable Autopilot: " .. name
                 end        
 
-                local function handleMass()
-                    if safeMass > 0 then 
-                        msgText = "Safe Mass set to "..round(coreMass,2).." kg" 
-                    else 
-                        msgText = "Intruder Detection reset\nSafe Mass set to "..round(coreMass,2).." kg"
-                        msgTimer = 5 
-                        soundAlarm = 0
-                    end 
-                    safeMass = coreMass 
-                end
-
                 local function ToggleFollowMode() -- Toggle Follow Mode on and off
                     if isRemote() == 1 then
                         followMode = not followMode
@@ -6775,9 +6758,6 @@ VERSION_NUMBER = 1.405
                     return antigravOn end, ToggleAntigrav, function()
                     return antigrav ~= nil end)
                 end
-                MakeButton("Reset Intruder Alert", "Set Safe Mass", buttonWidth, buttonHeight, x + buttonWidth + 20,y,
-                    function() return safeMass > 0 end, handleMass , function() return IntruderAlertSystem end)   
-                y = y + buttonHeight + 20
                 MakeButton(function() return stringf("Switch IPH Mode - Current: %s", iphCondition)
                 end, function()
                     return stringf("IPH Mode: %s", iphCondition)
@@ -6903,7 +6883,6 @@ VERSION_NUMBER = 1.405
                 v.toggle()
             end
         end
-        safeMass = coreMass
         SaveDataBank()
         if button then
             button.activate()
@@ -7251,24 +7230,7 @@ VERSION_NUMBER = 1.405
                     TotalFlightTime = TotalFlightTime + elapsedTime
                     lastTravelTime = curTime
                 end
-                local function compareMass()
-                    if safeMass > 0 then 
-                        if coreMass > safeMass+50 then
-                            soundAlarm = mfloor(coreMass - safeMass)
-                            safeMass = -1
-                        elseif coreMass < safeMass then
-                            safeMass = coreMass
-                        end
-                    elseif safeMass == -1 then
-                        safeMass = -2
-                    else
-                        safeMass = -1
-                    end
-                end
 
-            if IntruderAlertSystem then 
-                compareMass() 
-            end
             updateDistance()
             HUD.UpdatePipe()
             
@@ -7520,6 +7482,15 @@ VERSION_NUMBER = 1.405
             AP.APTick()
         elseif timerId == "radarTick" then
             RADAR.UpdateRadar()
+        elseif timerId == "tagTick" then
+            if UseExtra == "Off" then UseExtra = "All"
+            elseif UseExtra == "All" then UseExtra = "Longitude"
+            elseif UseExtra == "Longitude" then UseExtra = "Lateral"
+            elseif UseExtra == "Lateral" then UseExtra = "Vertical"
+            else UseExtra = "Off"
+            end
+            msgText = "Extra Engine Tags: "..UseExtra 
+            unit.stopTimer("tagTick")
         end
     end
 
@@ -7837,7 +7808,7 @@ VERSION_NUMBER = 1.405
             --autoNavigationAcceleration = autoNavigationAcceleration + verticalStrafeAcceleration
 
             local longitudinalEngineTags = 'thrust analog longitudinal '
-            if ExtraLongitudeTags ~= "none" then longitudinalEngineTags = longitudinalEngineTags..ExtraLongitudeTags end
+            if (UseExtra=="All" or UseExtra=="Longitude") then longitudinalEngineTags = longitudinalEngineTags..ExtraLongitudeTags end
             local longitudinalCommandType = navCom:getAxisCommandType(axisCommandId.longitudinal)
             local longitudinalAcceleration = navCom:composeAxisAccelerationFromThrottle(
                                                     longitudinalEngineTags, axisCommandId.longitudinal)
@@ -7857,8 +7828,8 @@ VERSION_NUMBER = 1.405
             local verticalStrafeEngineTags = 'thrust analog vertical fueled '
             local lateralStrafeEngineTags = 'thrust analog lateral fueled '
 
-            if ExtraLateralTags ~= "none" then lateralStrafeEngineTags = lateralStrafeEngineTags..ExtraLateralTags end
-            if ExtraVerticalTags ~= "none" then verticalStrafeEngineTags = verticalStrafeEngineTags..ExtraVerticalTags end
+            if (UseExtra=="All" or UseExtra=="Lateral")then lateralStrafeEngineTags = lateralStrafeEngineTags..ExtraLateralTags end
+            if (UseExtra=="All" or UseExtra=="Vertical") then verticalStrafeEngineTags = verticalStrafeEngineTags..ExtraVerticalTags end
 
             -- Vertical also handles the non-airfoils separately
             if upAmount ~= 0 or (BrakeLanding and BrakeIsOn) or (not GearExtended and not stablized) then
@@ -7911,7 +7882,7 @@ VERSION_NUMBER = 1.405
 
             -- Longitudinal Translation
             local longitudinalEngineTags = 'thrust analog longitudinal '
-            if ExtraLongitudeTags ~= "none" then longitudinalEngineTags = longitudinalEngineTags..ExtraLongitudeTags end
+            if (UseExtra=="All" or UseExtra=="Longitude") then longitudinalEngineTags = longitudinalEngineTags..ExtraLongitudeTags end
             local longitudinalCommandType = navCom:getAxisCommandType(axisCommandId.longitudinal)
             if (longitudinalCommandType == axisCommandType.byThrottle) then
                 local longitudinalAcceleration = navCom:composeAxisAccelerationFromThrottle(
@@ -7933,7 +7904,7 @@ VERSION_NUMBER = 1.405
 
             -- Lateral Translation
             local lateralStrafeEngineTags = 'thrust analog lateral '
-            if ExtraLateralTags ~= "none" then lateralStrafeEngineTags = lateralStrafeEngineTags..ExtraLateralTags end
+            if (UseExtra=="All" or UseExtra=="Lateral") then lateralStrafeEngineTags = lateralStrafeEngineTags..ExtraLateralTags end
             local lateralCommandType = navCom:getAxisCommandType(axisCommandId.lateral)
             if (lateralCommandType == axisCommandType.byThrottle) then
                 local lateralStrafeAcceleration = navCom:composeAxisAccelerationFromThrottle(
@@ -7947,7 +7918,7 @@ VERSION_NUMBER = 1.405
 
             -- Vertical Translation
             local verticalStrafeEngineTags = 'thrust analog vertical '
-            if ExtraVerticalTags ~= "none" then verticalStrafeEngineTags = verticalStrafeEngineTags..ExtraVerticalTags end
+            if (UseExtra=="All" or UseExtra=="Vertical") then verticalStrafeEngineTags = verticalStrafeEngineTags..ExtraVerticalTags end
             local verticalCommandType = navCom:getAxisCommandType(axisCommandId.vertical)
             if (verticalCommandType == axisCommandType.byThrottle)  then
                 local verticalStrafeAcceleration = navCom:composeAxisAccelerationFromThrottle(
@@ -8346,7 +8317,13 @@ VERSION_NUMBER = 1.405
             end
             toggleView = false
         elseif action == "option9" then
-            if gyro ~= nil then
+            if AltIsOn and holdingCtrl then 
+                navCom:resetCommand(axisCommandId.longitudinal)
+                navCom:resetCommand(axisCommandId.lateral)
+                navCom:resetCommand(axisCommandId.vertical)
+                cmdThrottle(0)
+                unit.setTimer("tagTick",0.1)
+            elseif gyro ~= nil then
                 gyro.toggle()
                 gyroIsOn = gyro.getState() == 1
                 if gyroIsOn then play("gyOn", "GA") else play("gyOff", "GA") end
