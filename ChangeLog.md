@@ -1,5 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.407
+- Added support for pvpTimer to shield status display.
+- Added shield widget when in widget mode (alt-3)
+- Added support for shield events to wrap.sh. Only care if you use wrap feature.
+
 Version 1.406 - Engine control and removal of Intruder Alert
 - Added toggle support for the `ExtraLongitudeTags`, `ExtraLateralTags`, and `ExtraVerticalTags` engine tag variables.
 To use: LALT-LSHIFT-9 will toggle extra tags between states: All, Longitude, Lateral, Vertical, Off.

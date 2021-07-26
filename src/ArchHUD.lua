@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.406
+VERSION_NUMBER = 1.407
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -4285,6 +4285,7 @@ VERSION_NUMBER = 1.406
 
         function Hud.DrawShield()
             local shieldState = (shield_1.getState() == 1) and "Shield Active" or "Shield Disabled"
+            local pvpTime = core.getPvPTimer()
             local x, y = shieldX -60, shieldY+30
             local shieldPercent = mfloor(0.5 + shield_1.getShieldHitPoints() * 100 / shield_1.getMaxShieldHitPoints())
             local colorMod = mfloor(shieldPercent * 2.55)
@@ -4294,13 +4295,14 @@ VERSION_NUMBER = 1.406
             if shieldPercent < 10 and shieldState ~= "Shield Disabled" then
                 class = "red "
             end
+            pvpTime = pvpTime > 0 and "   PvPTime: "..FormatTimeString(pvpTime) or ""
             shieldMessage = shieldMessage..stringf([[
                 <g class="pdim">                        
-                <rect fill=grey class="bar" x="%d" y="%d" width="100" height="13"></rect></g>
+                <rect fill=grey class="bar" x="%d" y="%d" width="200" height="13"></rect></g>
                 <g class="bar txtstart">
                 <rect fill=%s width="%d" height="13" x="%d" y="%d"></rect>
-                <text fill=black x="%d" y="%d">%s%%</text>
-                </g>]], x, y, color, shieldPercent, x, y, x+2, y+10, shieldPercent)
+                <text fill=black x="%d" y="%d">%s%%%s</text>
+                </g>]], x, y, color, shieldPercent*2, x, y, x+2, y+10, shieldPercent, pvpTime)
             shieldMessage = shieldMessage..svgText(x, y-5, shieldState, class.."txtstart pbright txtbig") 
         end
 
@@ -8239,6 +8241,7 @@ VERSION_NUMBER = 1.406
                             L_TEXT("ui_lua_widget_rocketfuel", "Rocket Fuel"), "fuel_container")
                         rocketfuelPanelID = _autoconf.panels[_autoconf.panels_size]
                     end
+                    if shield_1 ~= nil then shield_1.show() end
                 else
                     play("hud","DH")
                     unit.hide()
@@ -8255,6 +8258,7 @@ VERSION_NUMBER = 1.406
                         sysDestWid(rocketfuelPanelID)
                         rocketfuelPanelID = nil
                     end
+                    if shield_1 ~= nil then shield_1.hide() end
                 end
             end
 

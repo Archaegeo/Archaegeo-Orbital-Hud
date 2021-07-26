@@ -3274,7 +3274,10 @@ local types = {
   weapon = {
     class = "WeaponUnit"
   },
-
+  shield = {
+    class = "ShieldGeneratorUnit",
+    filters = { "absorbed(hitpoints)", "down()", "restored()" }
+  },
   -- abstract
   enterable = {
     filters = { "enter(id)", "leave(id)" }
