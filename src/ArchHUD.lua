@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.407
+VERSION_NUMBER = 1.408
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -332,7 +332,7 @@ VERSION_NUMBER = 1.407
     local pipeMessage = ""
     local ReversalIsOn = nil
     local contacts = {}
-    local nearPlanet = unit.getClosestPlanetInfluence() > 0
+    local nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
     local collisionAlertStatus = false
     local collisionTarget = nil
 
@@ -415,7 +415,7 @@ VERSION_NUMBER = 1.407
         return self
     end
     --]]
-    ---[[
+    --[[
     function p(msg)
         system.print(time..": "..msg)
     end
@@ -660,7 +660,7 @@ VERSION_NUMBER = 1.407
                 play("altOn","AH")
                 AutoTakeoff = false
                 if ahDoubleClick > -1 then
-                    if unit.getClosestPlanetInfluence() > 0 then
+                    if nearPlanet then
                         HoldAltitude = coreAltitude
                     end
                 end
@@ -4827,7 +4827,7 @@ VERSION_NUMBER = 1.407
             abvGndDet = AboveGroundLevel()
             time = systime()
             lastApTickTime = time
-            nearPlanet = unit.getClosestPlanetInfluence() > 0
+
 
             if CollisionSystem then checkCollision() end
 
@@ -4857,6 +4857,7 @@ VERSION_NUMBER = 1.407
             if coreAltitude == 0 then
                 coreAltitude = (worldPos - planet.center):len() - planet.radius
             end
+            nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
 
             local gravity = planet:getGravity(core.getConstructWorldPos()):len() * coreMass
             targetRoll = 0
@@ -5760,17 +5761,20 @@ VERSION_NUMBER = 1.407
                     local ReentrySpeed = mfloor(adjustedAtmoSpeedLimit)
 
                     local brakeDistancer, brakeTimer = Kinematic.computeDistanceAndTime(velMag, ReentrySpeed/3.6, coreMass, 0, 0, LastMaxBrake - planet.gravity*9.8*coreMass)
-                    local distanceToTarget = coreAltitude - (planet.noAtmosphericDensityAltitude + 5000)
-                    local freeFallHeight = coreAltitude > planet.noAtmosphericDensityAltitude + 5000
-                    if freeFallHeight and velMag <= ReentrySpeed/3.6 and velMag > (ReentrySpeed/3.6)-10 and mabs(constructVelocity:normalize():dot(constructForward)) > 0.9 then
-                        if not throttleMode then
-                            cmdThrottle(0)
+                    brakeDistancer = brakeDistancer == -1 and 5000 or brakeDistancer
+                    local distanceToTarget = coreAltitude - (planet.noAtmosphericDensityAltitude + brakeDistancer)
+                    local freeFallHeight = coreAltitude > (planet.noAtmosphericDensityAltitude + brakeDistancer*1.25)
+                    if freeFallHeight then
+                        targetPitch = -60
+                        if velMag <= ReentrySpeed/3.6 and velMag > (ReentrySpeed/3.6)-10 and mabs(constructVelocity:normalize():dot(constructForward)) > 0.9 and not throttleMode then
+                            WasInCruise = false
+                            cmdThrottle(1)
                         end
                     elseif throttleMode and not freeFallHeight and not inAtmo then 
                         cmdCruise(ReentrySpeed, true) 
                     end
                     if throttleMode then
-                        if velMag > ReentrySpeed/3.6 and ((brakeDistancer > -1 and distanceToTarget <= brakeDistancer) or not freeFallHeight) then
+                        if velMag > ReentrySpeed/3.6 and not freeFallHeight then
                             BrakeIsOn = true
                         else
                             BrakeIsOn = false
@@ -5778,6 +5782,7 @@ VERSION_NUMBER = 1.407
                     else
                         BrakeIsOn = false
                     end
+                    if vSpd > 0 then BrakeIsOn = true end
                     if not reentryMode then
                         targetPitch = -80
                         if atmosDensity > 0.02 then
@@ -5790,10 +5795,10 @@ VERSION_NUMBER = 1.407
                     elseif planet.noAtmosphericDensityAltitude > 0 and freeFallHeight then -- 5km is good
 
                         autoRoll = true -- It shouldn't actually do it, except while aligning
-                    elseif coreAltitude <= planet.noAtmosphericDensityAltitude + 5000 then
+                    elseif not freeFallHeight then
                         BrakeIsOn = false
                         if not inAtmo and (throttleMode or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= ReentrySpeed) then 
-                            cmdCruise(ReentrySpeed) 
+                            cmdCruise(ReentrySpeed)
                         end
                         if velMag < ((ReentrySpeed/3.6)+1) then
                             reentryMode = false
