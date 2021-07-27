@@ -1,5 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.408 - Faster Re-Entry and Potentially fixed Madis and other wierd planet approaches
+- More improvements to glide re-entry for safer and faster re-entry.  Recommend brown shorts if starting outside low orbit height.
+- Change nearPlanet check to be nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000) in attempt to solve some of the wierd planet issues.
+Before getClosestPlanetInfluence would return 0 even though right on top of some planets (no gravity felt from planet)
+
 Version 1.407
 - Added support for pvpTimer to shield status display.
 - Added shield widget when in widget mode (alt-3)
@@ -13,7 +18,7 @@ Example Use: "/G ExtraLongitudeTags light" in LUA Chat will make only engines wi
 NOTE: When toggled on, only Engines WITH those extra tags will fire, others will not.
 NOTE: If toggled, all engines are turned off, otherwise the ones without tag will keep firing at current strength.  Recommend toggling when stopped or can safely glide a moment.
 Remember you can MMB to jump from 0 to 100% throttle.
-- Given that boaring another players construct without permission is now an Exploit, removed Intruder Alert system from HUD
+- Given that boarding another players construct without permission is now an Exploit, removed Intruder Alert system from HUD
 https://discord.com/channels/184691218184273920/748512451967975424/868105796297306172
 
 Version 1.405
