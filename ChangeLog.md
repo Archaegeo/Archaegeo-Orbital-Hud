@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.409
+TIP: If you are spiraling or flipping on AP or manual button re-entry, its lack of adjustors to stop you when you pitch to -60 initially.
+- Changed display values in odometer to G instead of newtons, cleaned up mass numbers to be more readable.
+- Fixed collision detect during autopilot start to ignore starting planet AND destination planet
+- Fix possible issue with friendly contact list not clearing.
+
 Version 1.408 - Faster Re-Entry and Potentially fixed Madis and other wierd planet approaches
 - More improvements to glide re-entry for safer and faster re-entry.  Recommend brown shorts if starting outside low orbit height.
 - Change nearPlanet check to be nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000) in attempt to solve some of the wierd planet issues.

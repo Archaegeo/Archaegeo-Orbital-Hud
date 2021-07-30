@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.408
+VERSION_NUMBER = 1.409
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -415,7 +415,7 @@ VERSION_NUMBER = 1.408
         return self
     end
     --]]
-    --[[
+    ---[[
     function p(msg)
         system.print(time..": "..msg)
     end
@@ -2889,14 +2889,19 @@ VERSION_NUMBER = 1.408
                 local value, done = coroutine.resume(UpdateRadarCoroutine)
             end
         end
+
         function Radar.GetRadarHud()
-            return target, data, radarContacts, numKnown, static, friendlies
+            local friends = friendlies
+            friendlies = {}
+            return target, data, radarContacts, numKnown, static, friends
         end
+        
         UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
         return Radar
     end 
     local function HudClass() -- Everything HUD display releated including tick
         local pvpDist = 0
+        local gravConstant = 9.80665
 
         --Local Huds Functions
             -- safezone() variables
@@ -4110,13 +4115,18 @@ VERSION_NUMBER = 1.408
             local maxMass = 0
             local reqThrust = 0
             local brakeValue = 0
+            local mass = coreMass > 1000000 and round(coreMass / 1000000,2).." kTons" or round(coreMass / 1000, 2).." Tons"
             if inAtmo then brakeValue = LastMaxBrakeInAtmo else brakeValue = LastMaxBrake end
+            brakeValue = round((brakeValue / (coreMass * gravConstant)),2).." g"
             local maxThrust = Nav:maxForceForward()
             gravity = core.g()
             if gravity > 0.1 then
                 reqThrust = coreMass * gravity
-                maxMass = maxThrust / gravity
+                reqThrust = round((reqThrust / (coreMass * gravConstant)),2).." g"
+                maxMass = 0.5 * maxThrust / gravity
+                maxMass = maxMass > 1000000 and round(maxMass / 1000000,2).." kTons" or round(maxMass / 1000, 2).." Tons"
             end
+            maxThrust = round((maxThrust / (coreMass * gravConstant)),2).." g"
             newContent[#newContent + 1] = stringf([[
                 <g class="pbright txt">
                 <path class="linethick" d="M %d 0 L %d %d Q %d %d %d %d L %d 0"/>]],
@@ -4127,12 +4137,12 @@ VERSION_NUMBER = 1.408
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(30), stringf("Lifetime: %.2f kSU", (TotalDistanceTravelled / 200000)), "txtstart") 
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(20), "Trip Time: "..FormatTimeString(flightTime), "txtstart") 
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(30), "Total Time: "..FormatTimeString(TotalFlightTime), "txtstart") 
-                newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(20), stringf("Mass: %.2f Tons", (coreMass / 1000 )), "txtstart") 
-                newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(10), stringf("Max Brake: %.2f kN",  (brakeValue / 1000)), "txtend") 
-                newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(30), stringf("Max Thrust: %.2f kN", (maxThrust / 1000)), "txtend") 
-                    if gravity > 0.1 then
-                    newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(30), stringf("Max Mass: %.2f Tons", (maxMass * 0.5 / 1000)), "txtstart") 
-                    newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(20), stringf("Req Thrust: %.2f kN", (reqThrust / 1000)), "txtend") 
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(20), stringf("Mass: %s", mass), "txtstart") 
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(10), stringf("Max Brake: %s",  brakeValue), "txtend") 
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(30), stringf("Max Thrust: %s", maxThrust), "txtend") 
+                if gravity > 0.1 then
+                    newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(30), stringf("Max Thrust Mass: %s", (maxMass)), "txtstart")
+                    newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(20), stringf("Req Thrust: %s", reqThrust ), "txtend") 
                 else
                     newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(30), "Max Mass: n/a", "txtstart") 
                     newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(20), "Req Thrust: n/a", "txtend") 
@@ -4177,6 +4187,7 @@ VERSION_NUMBER = 1.408
             end
             getClosestPipe()           
         end
+        
         function Hud.DrawSettings(newContent)
             if #settingsVariables > 0  then
                 local x = ConvertResolutionX(640)
@@ -4247,7 +4258,6 @@ VERSION_NUMBER = 1.408
                         friendy = friendy + 20
                         radarMessage = radarMessage..svgText(friendx, friendy, radar_1.getConstructName(v), "pdim txtmid")
                     end
-                    friendlies = {}
                 end
                 if target == nil and perisPanelID == nil then
                     peris = 1
@@ -5458,7 +5468,7 @@ VERSION_NUMBER = 1.408
                 if Autopilot and not AutopilotAccelerating and not AutopilotCruising and not AutopilotBraking then
                     local intersectBody, atmoDistance = checkLOS( (AutopilotTargetCoords-worldPos):normalize())
                     if autopilotTargetPlanet.name ~= planet.name then 
-                        if intersectBody ~= nil then 
+                        if intersectBody ~= nil and autopilotTargetPlanet.name ~= intersectBody.name then 
                             msgText = "Collision with "..intersectBody.name.." in ".. getDistanceDisplayString(atmoDistance).."\nClear LOS to continue."
                             msgTimer = 5
                             AutopilotPaused = true
@@ -5763,7 +5773,7 @@ VERSION_NUMBER = 1.408
                     local brakeDistancer, brakeTimer = Kinematic.computeDistanceAndTime(velMag, ReentrySpeed/3.6, coreMass, 0, 0, LastMaxBrake - planet.gravity*9.8*coreMass)
                     brakeDistancer = brakeDistancer == -1 and 5000 or brakeDistancer
                     local distanceToTarget = coreAltitude - (planet.noAtmosphericDensityAltitude + brakeDistancer)
-                    local freeFallHeight = coreAltitude > (planet.noAtmosphericDensityAltitude + brakeDistancer*1.25)
+                    local freeFallHeight = coreAltitude > (planet.noAtmosphericDensityAltitude + brakeDistancer*1.35)
                     if freeFallHeight then
                         targetPitch = -60
                         if velMag <= ReentrySpeed/3.6 and velMag > (ReentrySpeed/3.6)-10 and mabs(constructVelocity:normalize():dot(constructForward)) > 0.9 and not throttleMode then
@@ -7059,10 +7069,11 @@ VERSION_NUMBER = 1.408
                 end
                 if AutopilotTargetName ~= nil then
                     local customLocation = CustomTarget ~= nil
-                    local planetMaxMass = LastMaxBrakeInAtmo /
+                    local planetMaxMass = 0.5 * LastMaxBrakeInAtmo /
                         (autopilotTargetPlanet:getGravity(
                         autopilotTargetPlanet.center + (vec3(0, 0, 1) * autopilotTargetPlanet.radius))
                         :len())
+                    planetMaxMass = planetMaxMass > 1000000 and round(planetMaxMass / 1000000,2).." kTons" or round(planetMaxMass / 1000, 2).." Tons"
                     sysUpData(interplanetaryHeaderText,
                         '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "unit":""}')
                     travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
@@ -7093,8 +7104,8 @@ VERSION_NUMBER = 1.408
                         displayText.. '"}')
                     sysUpData(widgetMaxBrakeTimeText, '{"label": "Max Brake Time", "value": "' ..
                         FormatTimeString(maxBrakeTime) .. '", "unit":""}')
-                    sysUpData(widgetMaxMassText, '{"label": "Maximum Mass", "value": "' ..
-                        stringf("%.2f", (planetMaxMass * 0.5 / 1000)) .. '", "unit":" Tons"}')
+                    sysUpData(widgetMaxMassText, '{"label": "Max Brake Mass", "value": "' ..
+                        stringf("%s", planetMaxMass ) .. '", "unit":""}')
                     displayText = getDistanceDisplayString(AutopilotTargetOrbit)
                     sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
                     displayText .. '"}')
