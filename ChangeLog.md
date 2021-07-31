@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.410
+- Changed pitch on glide re-entry to user variable `ReEntryPitch` - Default is -30.
+ReEntry now will use 'ReEntryPitch' when you are in Freefall height, this will control your approach to atmosphere.  Once at atmo, 'MaxPitch' will take over again.
+
 Version 1.409
 TIP: If you are spiraling or flipping on AP or manual button re-entry, its lack of adjustors to stop you when you pitch to -60 initially.
 - Changed display values in odometer to G instead of newtons, cleaned up mass numbers to be more readable.

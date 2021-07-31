@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.409
+VERSION_NUMBER = 1.410
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -46,6 +46,7 @@ VERSION_NUMBER = 1.409
     PitchStallAngle = 35 --export:
     brakeLandingRate = 30 --export:
     MaxPitch = 30 --export:
+    ReEntryPitch = -30 --export:
     LockPitchTarget = 0 --export:
     TargetOrbitRadius = 1.4 --export:
     LowOrbitHeight = 1000 --export:
@@ -458,7 +459,7 @@ VERSION_NUMBER = 1.409
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
                 "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", "showHelp", "Cockpit",
                 "voices", "alerts", "CollisionSystem"}
-            local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "LockPitchTarget", "TargetOrbitRadius", "LowOrbitHeight",
+            local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "ReEntryPitch","LockPitchTarget", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
                 "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization"}
@@ -5775,7 +5776,7 @@ VERSION_NUMBER = 1.409
                     local distanceToTarget = coreAltitude - (planet.noAtmosphericDensityAltitude + brakeDistancer)
                     local freeFallHeight = coreAltitude > (planet.noAtmosphericDensityAltitude + brakeDistancer*1.35)
                     if freeFallHeight then
-                        targetPitch = -60
+                        targetPitch = ReEntryPitch
                         if velMag <= ReentrySpeed/3.6 and velMag > (ReentrySpeed/3.6)-10 and mabs(constructVelocity:normalize():dot(constructForward)) > 0.9 and not throttleMode then
                             WasInCruise = false
                             cmdThrottle(1)
