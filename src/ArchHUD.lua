@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.410
+VERSION_NUMBER = 1.411
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -416,7 +416,7 @@ VERSION_NUMBER = 1.410
         return self
     end
     --]]
-    ---[[
+    --[[
     function p(msg)
         system.print(time..": "..msg)
     end
@@ -4118,6 +4118,7 @@ VERSION_NUMBER = 1.410
             local brakeValue = 0
             local mass = coreMass > 1000000 and round(coreMass / 1000000,2).." kTons" or round(coreMass / 1000, 2).." Tons"
             if inAtmo then brakeValue = LastMaxBrakeInAtmo else brakeValue = LastMaxBrake end
+            local brkDist, brkTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, brakeValue)
             brakeValue = round((brakeValue / (coreMass * gravConstant)),2).." g"
             local maxThrust = Nav:maxForceForward()
             gravity = core.g()
@@ -4133,9 +4134,11 @@ VERSION_NUMBER = 1.410
                 <path class="linethick" d="M %d 0 L %d %d Q %d %d %d %d L %d 0"/>]],
                 ConvertResolutionX(660), ConvertResolutionX(700), ConvertResolutionY(35), ConvertResolutionX(960), ConvertResolutionY(55),
                 ConvertResolutionX(1240), ConvertResolutionY(35), ConvertResolutionX(1280))
-            if isRemote() == 0 or RemoteHud then
+            if isRemote() == 0 or RemoteHud then 
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(10), stringf("BrkTime: %s", FormatTimeString(brkTime)), "txtstart")
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(20), stringf("Trip: %.2f km", totalDistanceTrip), "txtstart") 
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(30), stringf("Lifetime: %.2f kSU", (TotalDistanceTravelled / 200000)), "txtstart") 
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(10), stringf("BrkDist: %s", getDistanceDisplayString(brkDist)) , "txtstart")
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(20), "Trip Time: "..FormatTimeString(flightTime), "txtstart") 
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(30), "Total Time: "..FormatTimeString(TotalFlightTime), "txtstart") 
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(20), stringf("Mass: %s", mass), "txtstart") 
@@ -5807,11 +5810,11 @@ VERSION_NUMBER = 1.410
 
                         autoRoll = true -- It shouldn't actually do it, except while aligning
                     elseif not freeFallHeight then
-                        BrakeIsOn = false
                         if not inAtmo and (throttleMode or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= ReentrySpeed) then 
                             cmdCruise(ReentrySpeed)
                         end
                         if velMag < ((ReentrySpeed/3.6)+1) then
+                            BrakeIsOn = false
                             reentryMode = false
                             Reentry = false
                             autoRoll = true 
