@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.411
+- Added Brake Distance and Time to top Odometer, values are to 0 speed.
+- Added extra braking on re-entry if still > AtmoSpeedLimit when you hit atmo.
+
 Version 1.410
 - Changed pitch on glide re-entry to user variable `ReEntryPitch` - Default is -30.
 ReEntry now will use 'ReEntryPitch' when you are in Freefall height, this will control your approach to atmosphere.  Once at atmo, 'MaxPitch' will take over again.
