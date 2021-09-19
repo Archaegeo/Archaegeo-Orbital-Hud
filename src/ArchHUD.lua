@@ -4301,7 +4301,7 @@ VERSION_NUMBER = 1.411
             local shieldState = (shield_1.getState() == 1) and "Shield Active" or "Shield Disabled"
             local pvpTime = core.getPvPTimer()
             local x, y = shieldX -60, shieldY+30
-            local shieldPercent = mfloor(0.5 + shield_1.getShieldHitPoints() * 100 / shield_1.getMaxShieldHitPoints())
+            local shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitPoints())
             local colorMod = mfloor(shieldPercent * 2.55)
             local color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
             local class = ""

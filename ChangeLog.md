@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.412
+- Fix shield hitpoint bar change for changes to shield variable call.
+
 Version 1.411
 - Added Brake Distance and Time to top Odometer, values are to 0 speed.
 - Added extra braking on re-entry if still > AtmoSpeedLimit when you hit atmo.
