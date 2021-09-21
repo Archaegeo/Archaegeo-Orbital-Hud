@@ -4301,7 +4301,7 @@ VERSION_NUMBER = 1.412
             local shieldState = (shield_1.getState() == 1) and "Shield Active" or "Shield Disabled"
             local pvpTime = core.getPvPTimer()
             local x, y = shieldX -60, shieldY+30
-            local shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitPoints())
+            local shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints())
             local colorMod = mfloor(shieldPercent * 2.55)
             local color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
             local class = ""
@@ -8261,6 +8261,9 @@ VERSION_NUMBER = 1.412
                             L_TEXT("ui_lua_widget_rocketfuel", "Rocket Fuel"), "fuel_container")
                         rocketfuelPanelID = _autoconf.panels[_autoconf.panels_size]
                     end
+                    parentingPanelId = system.createWidgetPanel("Docking")
+                    parentingWidgetId = system.createWidget(parentingPanelId,"parenting")
+                    system.addDataToWidget(unit.getDataId(),parentingWidgetId)
                     if shield_1 ~= nil then shield_1.show() end
                 else
                     play("hud","DH")
@@ -8269,6 +8272,10 @@ VERSION_NUMBER = 1.412
                     if fuelPanelID ~= nil then
                         sysDestWid(fuelPanelID)
                         fuelPanelID = nil
+                    end
+                    if parentingPanelId ~=nil then
+                        sysDestWid(parentingPanelId)
+                        parentingPanelId=nil
                     end
                     if spacefuelPanelID ~= nil then
                         sysDestWid(spacefuelPanelID)

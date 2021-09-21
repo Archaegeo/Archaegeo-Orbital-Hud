@@ -2,6 +2,7 @@
 
 Version 1.412
 - Fix shield hitpoint bar change for changes to shield variable call.
+- Added bar for core damage
 
 Version 1.411
 - Added Brake Distance and Time to top Odometer, values are to 0 speed.
