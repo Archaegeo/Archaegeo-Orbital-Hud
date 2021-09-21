@@ -1,5 +1,14 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.412 - NOTE-ARES patch causes a HARD Crash To Desktop with no crash detection if you Edit Lua Parameters on the seat/remote with ArchHUD installed
+- Fix shield hitpoint bar change for changes to shield variable call.
+- Added shield widget support when alt-3 widget mode is on
+- Added core stress widget support when alt-3 widget mode is on
+- Added /resist command to set shield resistances.  Values must total 0.6 or less.  Format is /resist 0.15, 0.15, 0.15, 0.15
+- LALT+LSHIFT+6 will initiate venting of shields if shield hit points < max hit points and you are not in the venting cooldown timer.
+(As a reminder LALT+LSHIFT+5 toggles shield on or off)
+- Added new user variable `AutopilotSpaceDistance` default is 5000.  This is the distance you want the autopilot to stop from a space waypoint (useful for asteroid hunting)
+
 Version 1.411
 - Added Brake Distance and Time to top Odometer, values are to 0 speed.
 - Added extra braking on re-entry if still > AtmoSpeedLimit when you hit atmo.

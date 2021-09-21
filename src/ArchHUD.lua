@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.411
+VERSION_NUMBER = 1.412
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -48,6 +48,7 @@ VERSION_NUMBER = 1.411
     MaxPitch = 30 --export:
     ReEntryPitch = -30 --export:
     LockPitchTarget = 0 --export:
+    AutopilotSpaceDistance = 5000 --export:
     TargetOrbitRadius = 1.4 --export:
     LowOrbitHeight = 1000 --export:
     AtmoSpeedLimit = 1050 --export:
@@ -459,7 +460,7 @@ VERSION_NUMBER = 1.411
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
                 "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", "showHelp", "Cockpit",
                 "voices", "alerts", "CollisionSystem"}
-            local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "ReEntryPitch","LockPitchTarget", "TargetOrbitRadius", "LowOrbitHeight",
+            local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "ReEntryPitch","LockPitchTarget", "AutopilotSpaceDistance", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
                 "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization"}
@@ -4300,8 +4301,10 @@ VERSION_NUMBER = 1.411
         function Hud.DrawShield()
             local shieldState = (shield_1.getState() == 1) and "Shield Active" or "Shield Disabled"
             local pvpTime = core.getPvPTimer()
+            local resistances = shield_1.getResistances()
+            local resistString = "A: "..(10+resistances[1]*100).."% / E: "..(10+resistances[2]*100).."% / K:"..(10+resistances[3]*100).."% / T: "..(10+resistances[4]*100).."%"
             local x, y = shieldX -60, shieldY+30
-            local shieldPercent = mfloor(0.5 + shield_1.getShieldHitPoints() * 100 / shield_1.getMaxShieldHitPoints())
+            local shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints())
             local colorMod = mfloor(shieldPercent * 2.55)
             local color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
             local class = ""
@@ -4318,6 +4321,7 @@ VERSION_NUMBER = 1.411
                 <text fill=black x="%d" y="%d">%s%%%s</text>
                 </g>]], x, y, color, shieldPercent*2, x, y, x+2, y+10, shieldPercent, pvpTime)
             shieldMessage = shieldMessage..svgText(x, y-5, shieldState, class.."txtstart pbright txtbig") 
+            shieldMessage = shieldMessage..svgText(x,y+30, resistString, class.."txtstart pbright txtsmall")
         end
 
         return Hud
@@ -4417,7 +4421,7 @@ VERSION_NUMBER = 1.411
                         AutopilotTargetOrbit = mfloor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.surfaceMaxAltitude)
                     end
                 else
-                    AutopilotTargetOrbit = 1000
+                    AutopilotTargetOrbit = AutopilotSpaceDistance
                 end
                 if CustomTarget ~= nil and CustomTarget.planetname == "Space" then 
                     AutopilotEndSpeed = 0
@@ -5510,7 +5514,12 @@ VERSION_NUMBER = 1.411
                     end
                     -- Check if accel needs to stop for braking
                     --if brakeForceRequired >= LastMaxBrake then
-                    if AutopilotDistance <= brakeDistance then
+                    local apDist = AutopilotDistance
+                    if autopilotTargetPlanet.name == "Space" then
+                        apDist = apDist - AutopilotSpaceDistance
+                    end
+
+                    if apDist <= brakeDistance then
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Braking" then
                             play("apBrk","AP")
@@ -5590,7 +5599,13 @@ VERSION_NUMBER = 1.411
                     end
                 elseif AutopilotCruising then
                     --if brakeForceRequired >= LastMaxBrake then
-                    if AutopilotDistance <= brakeDistance then
+                    --if brakeForceRequired >= LastMaxBrake then
+                    local apDist = AutopilotDistance
+                    if autopilotTargetPlanet.name == "Space" then
+                        apDist = apDist - AutopilotSpaceDistance
+                    end
+
+                    if apDist <= brakeDistance then
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Braking" then
                             play("apBrk","AP")
@@ -8261,6 +8276,12 @@ VERSION_NUMBER = 1.411
                             L_TEXT("ui_lua_widget_rocketfuel", "Rocket Fuel"), "fuel_container")
                         rocketfuelPanelID = _autoconf.panels[_autoconf.panels_size]
                     end
+                    parentingPanelId = system.createWidgetPanel("Docking")
+                    parentingWidgetId = system.createWidget(parentingPanelId,"parenting")
+                    system.addDataToWidget(unit.getDataId(),parentingWidgetId)
+                    coreCombatStressPanelId = system.createWidgetPanel("Core combat stress")
+                    coreCombatStressgWidgetId = system.createWidget(coreCombatStressPanelId,"core_stress")
+                    system.addDataToWidget(core.getDataId(),coreCombatStressgWidgetId)
                     if shield_1 ~= nil then shield_1.show() end
                 else
                     play("hud","DH")
@@ -8269,6 +8290,14 @@ VERSION_NUMBER = 1.411
                     if fuelPanelID ~= nil then
                         sysDestWid(fuelPanelID)
                         fuelPanelID = nil
+                    end
+                    if parentingPanelId ~=nil then
+                        sysDestWid(parentingPanelId)
+                        parentingPanelId=nil
+                    end
+                    if coreCombatStressPanelId ~=nil then
+                        sysDestWid(coreCombatStressPanelId)
+                        coreCombatStressPanelId=nil
                     end
                     if spacefuelPanelID ~= nil then
                         sysDestWid(spacefuelPanelID)
@@ -8317,6 +8346,13 @@ VERSION_NUMBER = 1.411
             ToggleLockPitch()
             toggleView = false
         elseif action == "option6" then
+            if AltIsOn and holdingCtrl and shield_1 then 
+                toggleView = false 
+                local vcd = shield_1.getVentingCooldown()
+                if vcd > 0 then msgText="Cannot vent again for "..vcd.." seconds" return end
+                if shield_1.getShieldHitpoints()<shield_1.getMaxShieldHitpoints() then shield_1.startVenting() msgText="Shields Venting Enabled - NO SHIELDS WHILE VENTING" else msgText="Shields already at max hitpoints" end
+                return 
+            end
             ToggleAltitudeHold()
             toggleView = false
         elseif action == "option7" then
@@ -8646,7 +8682,8 @@ VERSION_NUMBER = 1.411
                 "/addlocation SafeZoneCenter ::pos{0,0,13771471,7435803,-128971} - adds a saved location by waypoint, not as accurate as making one at location\n"..
                 "/::pos{0,0,13771471,7435803,-128971} - adds a temporary waypoint that is not saved to databank with name 0Temp\n"..
                 "/copydatabank - copies dbHud databank to a blank databank\n"..
-                "/iphWP - displays current IPH target's ::pos waypoint in lua chat"
+                "/iphWP - displays current IPH target's ::pos waypoint in lua chat\n"..
+                "/resist 0.15, 0.15, 0.15, 0.15 - Sets shield resistance distribution of the floating 60% extra available, usable once per minute"
         i = string.find(text, " ")
         command = text
         if i ~= nil then
@@ -8668,6 +8705,16 @@ VERSION_NUMBER = 1.411
             else
                 msgText = "Select a saved target to rename first"
             end
+        elseif shield_1 and command =="/resist" then
+            if arguement == nil or shield_1.getResistancesCooldown()>0 then
+                msgText = "Usable once per min.  Usage: /resist 0.15, 0.15, 0.15, 0.15"
+                return
+            end
+            local num  = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
+            local posPattern = num .. ', ' .. num .. ', ' ..  num .. ', ' .. num    
+            local antimatter, electromagnetic, kinetic, thermic = stringmatch(arguement, posPattern)
+            if thermic == nil or (antimatter + electromagnetic+ kinetic + thermic) > 0.6 then msgText="Improperly formatted or total exceeds 0.6" return end
+            if shield_1.setResistances(antimatter,electromagnetic,kinetic,thermic)==1 then msgText="Shield Resistances set" else msgText="Resistance setting failed." end
         elseif command == "/addlocation" or string.find(text, "::pos") ~= nil then
             local temp = false
             local savename = "0-Temp"
