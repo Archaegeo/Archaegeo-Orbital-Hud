@@ -4,7 +4,7 @@ local Nav = Navigator.new(system, core, unit)
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.412
+VERSION_NUMBER = 1.413
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -35,7 +35,6 @@ VERSION_NUMBER = 1.412
     SetWaypointOnExit = false --export:
     AlwaysVSpd = false --export:
     BarFuelDisplay = true --export:
-    showHelp = true --export:
     Cockpit = false --export:
     voices = true --export:
     alerts = true --export:
@@ -458,7 +457,7 @@ VERSION_NUMBER = 1.412
             local saveableVariablesBoolean = {"userControlScheme", "soundFolder", "freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
                 "InvertMouse", "autoRollPreference", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
-                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", "showHelp", "Cockpit",
+                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", "Cockpit",
                 "voices", "alerts", "CollisionSystem"}
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "ReEntryPitch","LockPitchTarget", "AutopilotSpaceDistance", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
@@ -3807,54 +3806,7 @@ VERSION_NUMBER = 1.412
                     return newContent
                 end
             end
-          
-
-            local function DisplayHelp(newContent)
-                local x = 30
-                local y = 275
-                local help = {"Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-3: Toggle Vanilla Widget view"}
-                local helpAtmo = { "", "------------------IN ATMO-----------------", "Alt-4: Autopilot in atmo to target", "Alt-4-4: Autopilot to LowOrbitHeight over atmosphere and orbit to target", 
-                                    "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", "Alt-Q/E: Hard Bankroll left/right till released", "Alt-S: 180 deg bank turn"}
-                local helpSpace = {"", "------------------NO ATMO-----------------", "Alt-4 (Alt < 100k): Autopilot to Orbit and land", "Alt-4 (Alt > 100k): Autopilot to target", "Alt-6: Orbit at current altitude",
-                                    "Alt-6-6: Orbit at LowOrbitHeight over atmosphere"}
-                local helpGeneral = {"", "------------------ALWAYS--------------------", "Alt-5: Lock Pitch at current pitch","Alt-7: Toggle Collision System on and offset", "Alt-8: Toggle ground stabilization (underwater flight)","Alt-9: Activate Gyroscope", 
-                                    "", "CTRL: Toggle Brakes on and off, cancels active AP", "LeftAlt: Tap to shift freelook on and off", "Shift: Hold while not in freelook to see Buttons",
-                                    "Type /commands or /help in lua chat to see text commands"}
-                if inAtmo then 
-                    addTable(help, helpAtmo)
-                    table.insert(help, "--------------CONDITIONAL-----------------")
-                    if VertTakeOff then
-                        table.insert(help,"Hit Alt-6 before exiting Atmosphere during VTO to hold in level flight")
-                    end
-                    if abvGndDet ~= -1 then
-                        if antigrav then
-                            if antigravOn then
-                                table.insert(help, "Alt-6: AGG is on, will takeoff to AGG Height")
-                            else
-                                table.insert(help,  "Turn on AGG to takeoff to AGG Height")
-                            end
-                        end
-                        if VertTakeOffEngine then 
-                            table.insert(help, "Alt-6: Begins Vertical Takeoff.")
-                        else
-                            table.insert(help, "Alt-4/Alt-6: Autotakeoff if below hoverheight")
-                        end
-                    else
-                        table.insert(help,"G: Begin BrakeLanding or Land")
-                    end
-                else
-                    addTable(help, helpSpace)
-                end
-                if AltitudeHold then 
-                    table.insert(help, "Alt-Spacebar/Alt-C will raise/lower target height")
-                end
-                addTable(help, helpGeneral)
-                for i = 1, #help do
-                    y=y+12
-                    newContent[#newContent + 1] = svgText( x, y, help[i], "pdim txttick txtstart")
-                end
-            end
-            
+        
             local function getPipeDistance(origCenter, destCenter)  -- Many thanks to Tiramon for the idea and functionality.
                 local pipeDistance
                 local pipe = (destCenter - origCenter):normalize()
@@ -4068,8 +4020,6 @@ VERSION_NUMBER = 1.412
         
             DrawWarnings(newContent)
             DisplayOrbitScreen(newContent)
-
-            if showHelp then DisplayHelp(newContent) end
 
             return newContent
         end
@@ -6729,7 +6679,7 @@ VERSION_NUMBER = 1.412
                 buttonWidth = 300
                 local x = 10
                 local y = resolutionHeight / 2 - 500
-                MakeButton("Show Help", "Hide Help", buttonWidth, buttonHeight, x, y, function() return showHelp end, function() showHelp = not showHelp end)
+                    --showhelp was here
                 y = y + buttonHeight + 20
                 MakeButton("View Settings", "View Settings", buttonWidth, buttonHeight, x, y, function() return true end, ToggleButtons)
                 local y = resolutionHeight / 2 - 300
@@ -7270,7 +7220,8 @@ VERSION_NUMBER = 1.412
 
             updateDistance()
             HUD.UpdatePipe()
-            
+            passengers = core.getPlayersOnBoard()
+            ships = core.getDockedConstructs()
             updateWeapons()
             -- Update odometer output string
             local newContent = {}
@@ -8249,11 +8200,26 @@ VERSION_NUMBER = 1.412
         elseif action == "groundaltitudedown" then
             groundAltStart(true)
         elseif action == "option1" then
+            toggleView = false
+            if AltIsOn and holdingCtrl then 
+                local onboard = ""
+                for i=1, #passengers do
+                    onboard = onboard.."| Name: "..system.getPlayerName(passengers[i]).." Mass: "..round(core.getBoardedPlayerMass(passengers[i])/1000,1).."t "
+                end
+                system.print("Onboard: "..onboard)
+                return
+            end
             ATLAS.adjustAutopilotTargetIndex()
-            toggleView = false
         elseif action == "option2" then
-            ATLAS.adjustAutopilotTargetIndex(1)
             toggleView = false
+            if AltIsOn and holdingCtrl then 
+                for i=1, #passengers do
+                    core.forceDeboard(passengers[i])
+                end
+                msgText = "Deboarded All Passengers"
+                return
+            end
+            ATLAS.adjustAutopilotTargetIndex(1)
         elseif action == "option3" then
             local function ToggleWidgets()
                 UnitHidden = not UnitHidden
@@ -8310,7 +8276,14 @@ VERSION_NUMBER = 1.412
                     if shield_1 ~= nil then shield_1.hide() end
                 end
             end
-
+            if AltIsOn and holdingCtrl then 
+                local onboard = ""
+                for i=1, #ships do
+                    onboard = onboard.."| ID: "..ships[i].." Mass: "..round(core.getDockedConstructMass(ships[i])/1000,1).."t "
+                end
+                system.print("Docked Ships: "..onboard)
+                return
+            end
             if hideHudOnToggleWidgets then
                 if showHud then
                     showHud = false
@@ -8321,14 +8294,26 @@ VERSION_NUMBER = 1.412
             ToggleWidgets()
             toggleView = false
         elseif action == "option4" then
+            toggleView = false      
+            if AltIsOn and holdingCtrl then 
+                for i=1, #ships do
+                    core.forceUndock(ships[i])
+                end
+                msgText = "Undocked all ships"
+                return
+            end
             ReversalIsOn = nil
             ToggleAutopilot()
-            toggleView = false            
         elseif action == "option5" then
-            if AltIsOn and holdingCtrl and shield_1 then 
-                shield_1.toggle() 
-                toggleView = false 
-                return 
+            toggleView = false 
+            if AltIsOn and holdingCtrl then 
+                if shield_1 then
+                    shield_1.toggle() 
+                    return 
+                else
+                    msgText = "No shield found"
+                    return
+                end
             end
             function ToggleLockPitch()
                 if LockPitch == nil then
@@ -8344,17 +8329,21 @@ VERSION_NUMBER = 1.412
                 end
             end
             ToggleLockPitch()
-            toggleView = false
+
         elseif action == "option6" then
-            if AltIsOn and holdingCtrl and shield_1 then 
-                toggleView = false 
-                local vcd = shield_1.getVentingCooldown()
-                if vcd > 0 then msgText="Cannot vent again for "..vcd.." seconds" return end
-                if shield_1.getShieldHitpoints()<shield_1.getMaxShieldHitpoints() then shield_1.startVenting() msgText="Shields Venting Enabled - NO SHIELDS WHILE VENTING" else msgText="Shields already at max hitpoints" end
-                return 
+            toggleView = false 
+            if AltIsOn and holdingCtrl then 
+                if shield_1 then 
+                    local vcd = shield_1.getVentingCooldown()
+                    if vcd > 0 then msgText="Cannot vent again for "..vcd.." seconds" return end
+                    if shield_1.getShieldHitpoints()<shield_1.getMaxShieldHitpoints() then shield_1.startVenting() msgText="Shields Venting Enabled - NO SHIELDS WHILE VENTING" else msgText="Shields already at max hitpoints" end
+                    return
+                else
+                    msgText = "No shield found"
+                    return
+                end
             end
             ToggleAltitudeHold()
-            toggleView = false
         elseif action == "option7" then
             CollisionSystem = not CollisionSystem
             if CollisionSystem then 

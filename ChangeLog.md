@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.413 - Reminder: Alt-T docks/undocks your ship, this is vanilla default.
+- Removed dynamic in hud help stuff to save script space.
+- Added LALT+LSHIFT+1 to see all passengers on board and their mass in lua chat.
+- Added LALT+LSHIFT+2 to Deboard all passengers on board (will not boot you from seat)
+- Added LALT+LSHIFT+3 to see all docked ships and their mass in lua chat.
+- Added LALT+LSHIFT+4 to undock all docked ships.
+
 Version 1.412 - NOTE-ARES patch causes a HARD Crash To Desktop with no crash detection if you Edit Lua Parameters on the seat/remote with ArchHUD installed
 - Fix shield hitpoint bar change for changes to shield variable call.
 - Added shield widget support when alt-3 widget mode is on
