@@ -200,7 +200,6 @@ VERSION_NUMBER = 1.413
 -- Variables that we declare local outside script because they will be treated as global but get local effectiveness
     local time = systime()
     local clearAllCheck = systime()
-    local coreOffset = 16
     local coreHalfDiag = 13
     local PrimaryR = SafeR
     local PrimaryB = SafeB
@@ -2777,7 +2776,7 @@ VERSION_NUMBER = 1.413
                 local cal = getLocalToWorldConverter()
                 local cWorldPos = core.getConstructWorldPos()
                 local pos = core.getElementPositionById(1)
-                local offsetPosition = {pos[1] - coreOffset, pos[2] - coreOffset, pos[3] - coreOffset}
+                local offsetPosition = {pos[1], pos[2], pos[3]}
                 local adj = cal(offsetPosition)
                 local adjPos = {cWorldPos[1] - adj[1], cWorldPos[2] - adj[2], cWorldPos[3] - adj[3]}
                 return adjPos
@@ -6252,13 +6251,10 @@ VERSION_NUMBER = 1.413
                     if (type == "Dynamic Core Unit") then
                         local hp = eleMaxHp(elementsID[k])
                         if hp > 10000 then
-                            coreOffset = 128
                             coreHalfDiag = 110
                         elseif hp > 1000 then
-                            coreOffset = 64
                             coreHalfDiag = 55
                         elseif hp > 150 then
-                            coreOffset = 32
                             coreHalfDiag = 27
                         end
                     end
@@ -7150,9 +7146,9 @@ VERSION_NUMBER = 1.413
                             -- Thanks to Jerico for the help and code starter for arrow markers!
                             if repairArrows and #markers == 0 then
                                 position = vec3(core.getElementPositionById(elementsID[k]))
-                                local x = position.x - coreOffset
-                                local y = position.y - coreOffset
-                                local z = position.z - coreOffset
+                                local x = position.x
+                                local y = position.y
+                                local z = position.z
                                 table.insert(markers, core.spawnArrowSticker(x, y, z + 1, "down"))
                                 table.insert(markers, core.spawnArrowSticker(x, y, z + 1, "down"))
                                 core.rotateSticker(markers[2], 0, 0, 90)
