@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.414 - Demeter update
+WARNING - Autopilot was tested on Alioth, and Alioth to Sanctuary and back.  
+Use unattended Autopilot at your own risk the first time going to any location.
+- Removed build helper.
+- Removed coreoffset (fixes repair arrows)
+- Fixed depreciated functions
+
 Version 1.413 - Reminder: Alt-T docks/undocks your ship, this is vanilla default.
 - Removed dynamic in hud help stuff to save script space.
 - Added LALT+LSHIFT+1 to see all passengers on board and their mass in lua chat.
