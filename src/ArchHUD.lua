@@ -5680,7 +5680,7 @@ VERSION_NUMBER = 1.500
                             }
                 end
                 
-                local altTable = { [1]=4480, [6]=4480, [7]=6270}
+                local altTable = { [1]=4480, [6]=4480, [7]=6270} -- Alternate altitudes for madis, sinnen, sicari
                 for galaxyId,galaxy in pairs(atlas) do
                     -- Create a copy of Space with the appropriate SystemId for each galaxy
                     atlas[galaxyId][0] = getSpaceEntry()
