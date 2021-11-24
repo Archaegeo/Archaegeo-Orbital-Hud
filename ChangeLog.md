@@ -1,6 +1,10 @@
 ## ChangeLog - Most recent changes at the top\
 
 Version 1.500 - New Atlas
+NOTE: Some existing save points might throw an error when you try to select them on existing databanks. 
+If it does, you can resave it (and live with the one that wont come up) or make a new databank.
+Any save location that shows will work fine.
+- Added version check capability to force updates that can be overriden.
 - Updated HUD to utilize the new atlas.lua provided by NQ
 
 Version 1.414 - Demeter update

@@ -50,7 +50,7 @@ VERSION_NUMBER = 1.500
     LockPitchTarget = 0 --export:
     AutopilotSpaceDistance = 5000 --export:
     TargetOrbitRadius = 1.4 --export:
-    LowOrbitHeight = 1000 --export:
+    LowOrbitHeight = 2000 --export:
     AtmoSpeedLimit = 1050 --export:
     SpaceSpeedLimit = 30000 --export:
     AutoTakeoffAltitude = 1000 --export:
@@ -158,6 +158,7 @@ VERSION_NUMBER = 1.500
     iphCondition = "All"
     stablized = true
     UseExtra = "Off"
+    LastVersionUpdate = 0.000
 
     -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
         local autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
@@ -604,7 +605,9 @@ VERSION_NUMBER = 1.500
         if (time - ahDoubleClick) < 1.5 then
             if planet.hasAtmosphere  then
                 if atmosDensity > 0 then
+
                     HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude
+                    p(planet.spaceEngineMinAltitude.." "..HoldAltitude)
                     play("11","EP")
                 else
                     if nearPlanet then
@@ -947,192 +950,6 @@ VERSION_NUMBER = 1.500
 
 
 -- Planet Info - https://gitlab.com/JayleBreak/dualuniverse/-/tree/master/DUflightfiles/autoconf/custom with modifications to support HUD, vanilla JayleBreak will not work anymore
-    local function Atlas()
-        return {
-            [0] = {
-                [0] = {
-                    id = 0,
-                    name = { "Space", "Space", "Space"},
-                    type = {},
-                    biosphere = {},
-                    classification = {},
-                    habitability = {},
-                    description = {},
-                    iconPath = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    isInSafeZone = true,
-                    systemId = 0,
-                    positionInSystem = 0,
-                    satellites = {},
-                    center = { 0, 0, 0 },
-                    gravity = 0,
-                    radius = 0,
-                    atmosphereThickness = 0,
-                    atmosphereRadius = 0,
-                    surfaceArea = 0,
-                    surfaceAverageAltitude = 0,
-                    surfaceMaxAltitude = 0,
-                    surfaceMinAltitude = 0,
-                    GM = 0,
-                    ores = {},
-                    territories = 0,
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [2] = {
-                    --name = "Alioth",
-                    noAtmosphericDensityAltitude = 6272,
-                    spaceEngineMinAltitude = 3410,
-                },
-                [21] = {
-                    --name = "Alioth Moon 1",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [22] = {
-                    --name = "Alioth Moon 4",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [5] = {
-                    --name = "Feli",
-                    noAtmosphericDensityAltitude = 78500,
-                    spaceEngineMinAltitude = 42800,
-                },
-                [50] = {
-                    --name = "Feli Moon 1",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [120] = {
-                    --name = "Ion",
-                    noAtmosphericDensityAltitude = 17700,
-                    spaceEngineMinAltitude = 6410,
-                },
-                [121] = {
-                    --name = "Ion Moon 1",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [122] = {
-                    --name = "Ion Moon 2",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [9] = {
-                    --name = "Jago",
-                    noAtmosphericDensityAltitude = 10900,
-                    spaceEngineMinAltitude = 5900,
-                },
-                [100] = {
-                    --name = "Lacobus",
-                    noAtmosphericDensityAltitude = 12510,
-                    spaceEngineMinAltitude = 6790,
-                },
-                [102] = {
-                    --name = "Lacobus Moon 1",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [103] = {
-                    --name = "Lacobus Moon 2",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [101] = {
-                    --name = "Lacobus Moon 3",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [1] = {
-                    --name = "Madis",
-                    noAtmosphericDensityAltitude = 8050,
-                    spaceEngineMinAltitude = 4480,
-                },
-                [10] = {
-                    --name = "Madis Moon 1",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [11] = {
-                    --name = "Madis Moon 2",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [12] = {
-                    --name = "Madis Moon 3",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [26] = {
-                    --name = "Sanctuary",
-                    noAtmosphericDensityAltitude = 7800,
-                    spaceEngineMinAltitude = 4230,
-                },
-                [6] = {
-                   --name = "Sicari",
-                    noAtmosphericDensityAltitude = 8770,
-                    spaceEngineMinAltitude = 4480,
-                },
-                [7] = {
-                    --name = "Sinnen",
-                    noAtmosphericDensityAltitude = 11620,
-                    spaceEngineMinAltitude = 6270,
-                },
-                [70] = {
-                    --name = "Sinnen Moon 1",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [110] = {
-                    --name = "Symeon",
-                    noAtmosphericDensityAltitude = 7800,
-                    spaceEngineMinAltitude = 4230,
-                },
-                [4] = {
-                    --name = "Talemai",
-                    noAtmosphericDensityAltitude = 10890,
-                    spaceEngineMinAltitude = 5890,
-                },
-                [42] = {
-                    --name = "Talemai Moon 1",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [40] = {
-                    --name = "Talemai Moon 2",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [41] = {
-                    --name = "Talemai Moon 3",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [8] = {
-                    --name = "Teoma",
-                    noAtmosphericDensityAltitude = 6280,
-                    spaceEngineMinAltitude = 3420,
-                },
-                [3] = {
-                    --name = "Thades",
-                    noAtmosphericDensityAltitude = 32800,
-                    spaceEngineMinAltitude = 21400,
-                },
-                [30] = {
-                    --name = "Thades Moon 1",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                },
-                [31] = {
-                    --name = "Thades Moon 2",
-                    noAtmosphericDensityAltitude = 0,
-                    spaceEngineMinAltitude = 0,
-                }
-            }
-        }
-    end
 
     local function PlanetRef()
         --[[                    START OF LOCAL IMPLEMENTATION DETAILS             ]]--
@@ -5230,6 +5047,13 @@ VERSION_NUMBER = 1.500
                     elseif not useTheseSettings then
                         msgText = "No Saved Variables Found - Exit HUD to save settings"
                     end
+                    if LastVersionUpdate < 1.500 then
+                        if LowOrbitHeight < 2000 then
+                            msgText = "Updating LowOrbitHeight to new minimum default of 2000."
+                            LowOrbitHeight = 2000
+                        end
+                    end
+                    LastVersionUpdate = VERSION_NUMBER
                 else
                     msgText = "No databank found. Attach one to control unit and rerun \nthe autoconfigure to save preferences and locations"
                 end
@@ -5823,19 +5647,58 @@ VERSION_NUMBER = 1.500
 
             local function atlasSetup()
                 local atlasCopy = {}
-                local oldAtlas = Atlas()
-                atlas[0][0] = oldAtlas[0][0]
-                atlasCopy[0] = {}
-                atlasCopy[0][0] = oldAtlas[0][0]
-                for planetId,planet in pairs(atlas[0]) do
-                    planet.gravity = planet.gravity/9.8
-                    planet.center = vec3(planet.center) -- Might not be necessary if we always cast to vec3
-                    planet.name = planet.name[1]
-                    planet.noAtmosphericDensityAltitude = oldAtlas[0][planetId].noAtmosphericDensityAltitude
-                    planet.spaceEngineMinAltitude = oldAtlas[0][planetId].spaceEngineMinAltitude 
-                    planet.planetarySystemId = 0
-                    planet.bodyId = planet.id
-                    atlasCopy[0][planetId] = planet
+                
+                local function getSpaceEntry()
+                    return {
+                                id = 0,
+                                name = { "Space", "Space", "Space"},
+                                type = {},
+                                biosphere = {},
+                                classification = {},
+                                habitability = {},
+                                description = {},
+                                iconPath = "",
+                                hasAtmosphere = false,
+                                isSanctuary = false,
+                                isInSafeZone = true,
+                                systemId = 0,
+                                positionInSystem = 0,
+                                satellites = {},
+                                center = { 0, 0, 0 },
+                                gravity = 0,
+                                radius = 0,
+                                atmosphereThickness = 0,
+                                atmosphereRadius = 0,
+                                surfaceArea = 0,
+                                surfaceAverageAltitude = 0,
+                                surfaceMaxAltitude = 0,
+                                surfaceMinAltitude = 0,
+                                GM = 0,
+                                ores = {},
+                                territories = 0,
+                                noAtmosphericDensityAltitude = 0,
+                                spaceEngineMinAltitude = 0,
+                            }
+                end
+                
+                
+                for galaxyId,galaxy in pairs(atlas) do
+                    -- Create a copy of Space with the appropriate SystemId for each galaxy
+                    atlas[galaxyId][0] = getSpaceEntry()
+                    atlas[galaxyId][0].systemId = galaxyId
+                    atlasCopy[galaxyId] = {} -- Prepare a copy galaxy
+                    for planetId,planet in pairs(atlas[galaxyId]) do
+                        planet.gravity = planet.gravity/9.8
+                        planet.center = vec3(planet.center)
+                        planet.name = planet.name[1]
+                
+                        planet.noAtmosphericDensityAltitude = planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
+                        planet.spaceEngineMinAltitude = 0.68377*(planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius))
+                                
+                        planet.planetarySystemId = galaxyId
+                        planet.bodyId = planet.id
+                        atlasCopy[galaxyId][planetId] = planet
+                    end
                 end
                 
                 PlanetaryReference = PlanetRef()
