@@ -607,7 +607,6 @@ VERSION_NUMBER = 1.500
                 if atmosDensity > 0 then
 
                     HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude
-                    p(planet.spaceEngineMinAltitude.." "..HoldAltitude)
                     play("11","EP")
                 else
                     if nearPlanet then
@@ -5681,19 +5680,20 @@ VERSION_NUMBER = 1.500
                             }
                 end
                 
-                
+                local altTable = { [1]=4480, [6]=4480, [7]=6270}
                 for galaxyId,galaxy in pairs(atlas) do
                     -- Create a copy of Space with the appropriate SystemId for each galaxy
                     atlas[galaxyId][0] = getSpaceEntry()
                     atlas[galaxyId][0].systemId = galaxyId
                     atlasCopy[galaxyId] = {} -- Prepare a copy galaxy
+
                     for planetId,planet in pairs(atlas[galaxyId]) do
                         planet.gravity = planet.gravity/9.8
                         planet.center = vec3(planet.center)
                         planet.name = planet.name[1]
                 
                         planet.noAtmosphericDensityAltitude = planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
-                        planet.spaceEngineMinAltitude = 0.68377*(planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius))
+                        planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius))
                                 
                         planet.planetarySystemId = galaxyId
                         planet.bodyId = planet.id
