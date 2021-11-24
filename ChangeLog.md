@@ -1,4 +1,7 @@
-## ChangeLog - Most recent changes at the top
+## ChangeLog - Most recent changes at the top\
+
+Version 1.500 - New Atlas
+- Updated HUD to utilize the new atlas.lua provided by NQ
 
 Version 1.414 - Demeter update
 WARNING - Autopilot was tested on Alioth, and Alioth to Sanctuary and back.  
