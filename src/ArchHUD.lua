@@ -3373,7 +3373,6 @@ VERSION_NUMBER = 1.500
                 end
                 local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
                 local autopilotEntry = atlas[0][atlasIndex]
-                p(atlasIndex)
 
                 if autopilotEntry.center then -- Is a real atlas entry
                     AutopilotTargetName = autopilotEntry.name
@@ -3400,12 +3399,9 @@ VERSION_NUMBER = 1.500
                     end
                     CustomTarget = nil
                 else
-                    p("HERE2.6")
                     CustomTarget = autopilotEntry
                     for _, v in pairs(galaxyReference[0]) do
-                        p("HERE2.7")
                         if v.name == CustomTarget.planetname then
-                            p("HERE2.8")
                             autopilotTargetPlanet = v
                             AutopilotTargetName = CustomTarget.name
                             break
