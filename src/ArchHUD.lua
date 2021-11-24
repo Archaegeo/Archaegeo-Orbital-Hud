@@ -1,10 +1,11 @@
 require 'src.slots'
 
 local Nav = Navigator.new(system, core, unit)
+local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.414
+VERSION_NUMBER = 1.500
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -49,7 +50,7 @@ VERSION_NUMBER = 1.414
     LockPitchTarget = 0 --export:
     AutopilotSpaceDistance = 5000 --export:
     TargetOrbitRadius = 1.4 --export:
-    LowOrbitHeight = 1000 --export:
+    LowOrbitHeight = 2000 --export:
     AtmoSpeedLimit = 1050 --export:
     SpaceSpeedLimit = 30000 --export:
     AutoTakeoffAltitude = 1000 --export:
@@ -157,6 +158,7 @@ VERSION_NUMBER = 1.414
     iphCondition = "All"
     stablized = true
     UseExtra = "Off"
+    LastVersionUpdate = 0.000
 
     -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
         local autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
@@ -220,7 +222,7 @@ VERSION_NUMBER = 1.414
     local yawInput = 0
     local brakeInput = 0
     local rollInput2 = 0
-    local followMode = false
+    local followMode = false 
     local holdingCtrl = false
     local msgText = "empty"
     local holdAltitudeButtonModifier = 5
@@ -269,7 +271,7 @@ VERSION_NUMBER = 1.414
     local eleTotalMaxHp = 0
     local repairArrows = false
 
-    local atlas = nil
+    --local atlas = nil
     local MapXRatio = nil
     local MapYRatio = nil
     local YouAreHere = nil
@@ -603,6 +605,7 @@ VERSION_NUMBER = 1.414
         if (time - ahDoubleClick) < 1.5 then
             if planet.hasAtmosphere  then
                 if atmosDensity > 0 then
+
                     HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude
                     play("11","EP")
                 else
@@ -946,1138 +949,7 @@ VERSION_NUMBER = 1.414
 
 
 -- Planet Info - https://gitlab.com/JayleBreak/dualuniverse/-/tree/master/DUflightfiles/autoconf/custom with modifications to support HUD, vanilla JayleBreak will not work anymore
-    local function Atlas()
-        return {
-            [0] = {
-                [0] = {
-                    GM = 0,
-                    bodyId = 0,
-                    center = {
-                        x = 0,
-                        y = 0,
-                        z = 0
-                    },
-                    name = 'Space',
-                    planetarySystemId = 0,
-                    radius = 0,
-                    hasAtmosphere = false,
-                    gravity = 0,
-                    noAtmosphericDensityAltitude = 0,
-                    surfaceMaxAltitude = 0
-                },
-                [2] = {
-                    name = "Alioth",
-                    description = "Alioth is the planet selected by the arkship for landfall; it is a typical goldilocks planet where humanity may rebuild in the coming decades. The arkship geological survey reports mountainous regions alongside deep seas and lush forests. This is where it all starts.",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0.9401,
-                    atmosphericEngineMaxAltitude = 5580,
-                    biosphere = "Forest",
-                    classification = "Mesoplanet",
-                    bodyId = 2,
-                    GM = 157470826617,
-                    gravity = 1.0082568597356114,
-                    fullAtmosphericDensityMaxAltitude = -10,
-                    habitability = "High",
-                    hasAtmosphere = true,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 6272,
-                    numSatellites = 2,
-                    positionFromSun = 2,
-                    center = {
-                        x = -8,
-                        y = -8,
-                        z = -126303
-                    },
-                    radius = 126067.8984375,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "M",
-                    spaceEngineMinAltitude = 3410,
-                    surfaceArea = 199718780928,
-                    surfaceAverageAltitude = 200,
-                    surfaceMaxAltitude = 1100,
-                    surfaceMinAltitude = -330,
-                    systemZone = "High",
-                    territories = 259472,
-                    type = "Planet",
-                    waterLevel = 0,
-                    planetarySystemId = 0
-                },
-                [21] = {
-                    name = "Alioth Moon 1",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 21,
-                    GM = 2118960000,
-                    gravity = 0.24006116402380084,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = 457933,
-                        y = -1509011,
-                        z = 115524
-                    },
-                    radius = 30000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "M",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 11309733888,
-                    surfaceAverageAltitude = 140,
-                    surfaceMaxAltitude = 200,
-                    surfaceMinAltitude = 10,
-                    systemZone = nil,
-                    territories = 14522,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [22] = {
-                    name = "Alioth Moon 4",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 22,
-                    GM = 2165833514,
-                    gravity = 0.2427018259886451,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = -1692694,
-                        y = 729681,
-                        z = -411464
-                    },
-                    radius = 30330,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "L",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 11559916544,
-                    surfaceAverageAltitude = -15,
-                    surfaceMaxAltitude = -5,
-                    surfaceMinAltitude = -50,
-                    systemZone = nil,
-                    territories = 14522,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [5] = {
-                    name = "Feli",
-                    description = "Feli is easily identified by its massive and deep crater. Outside of the crater, the arkship geological survey reports a fairly bland and uniform planet, it also cannot explain the existence of the crater. Feli is particular for having an extremely small atmosphere, allowing life to develop in the deeper areas of its crater but limiting it drastically on the actual surface.",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0.5488,
-                    atmosphericEngineMaxAltitude = 66725,
-                    biosphere = "Barren",
-                    classification = "Mesoplanet",
-                    bodyId = 5,
-                    GM = 16951680000,
-                    gravity = 0.4801223280476017,
-                    fullAtmosphericDensityMaxAltitude = 30,
-                    habitability = "Low",
-                    hasAtmosphere = true,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 78500,
-                    numSatellites = 1,
-                    positionFromSun = 5,
-                    center = {
-                        x = -43534464,
-                        y = 22565536,
-                        z = -48934464
-                    },
-                    radius = 41800,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "S",
-                    spaceEngineMinAltitude = 42800,
-                    surfaceArea = 21956466688,
-                    surfaceAverageAltitude = 18300,
-                    surfaceMaxAltitude = 18500,
-                    surfaceMinAltitude = 46,
-                    systemZone = "Low",
-                    territories = 27002,
-                    type = "Planet",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [50] = {
-                    name = "Feli Moon 1",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 50,
-                    GM = 499917600,
-                    gravity = 0.11202853997062348,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = -43902841.78,
-                        y = 22261034.7,
-                        z = -48862386
-                    },
-                    radius = 14000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "S",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 2463008768,
-                    surfaceAverageAltitude = 800,
-                    surfaceMaxAltitude = 900,
-                    surfaceMinAltitude = 0,
-                    systemZone = nil,
-                    territories = 3002,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [120] = {
-                    name = "Ion",
-                    description = "Ion is nothing more than an oversized ice cube frozen through and through. It is a largely inhospitable planet due to its extremely low temperatures. The arkship geological survey reports extremely rough mountainous terrain with little habitable land.",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0.9522,
-                    atmosphericEngineMaxAltitude = 10480,
-                    biosphere = "Ice",
-                    classification = "Hypopsychroplanet",
-                    bodyId = 120,
-                    GM = 7135606629,
-                    gravity = 0.36009174603570127,
-                    fullAtmosphericDensityMaxAltitude = -30,
-                    habitability = "Average",
-                    hasAtmosphere = true,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 17700,
-                    numSatellites = 2,
-                    positionFromSun = 12,
-                    center = {
-                        x = 2865536.7,
-                        y = -99034464,
-                        z = -934462.02
-                    },
-                    radius = 44950,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "XS",
-                    spaceEngineMinAltitude = 6410,
-                    surfaceArea = 25390383104,
-                    surfaceAverageAltitude = 500,
-                    surfaceMaxAltitude = 1300,
-                    surfaceMinAltitude = 250,
-                    systemZone = "Average",
-                    territories = 32672,
-                    type = "Planet",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [121] = {
-                    name = "Ion Moon 1",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 121,
-                    GM = 106830900,
-                    gravity = 0.08802242599860607,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = 2472916.8,
-                        y = -99133747,
-                        z = -1133582.8
-                    },
-                    radius = 11000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "XS",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 1520530944,
-                    surfaceAverageAltitude = 100,
-                    surfaceMaxAltitude = 200,
-                    surfaceMinAltitude = 3,
-                    systemZone = nil,
-                    territories = 1922,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [122] = {
-                    name = "Ion Moon 2",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 122,
-                    GM = 176580000,
-                    gravity = 0.12003058201190042,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = 2995424.5,
-                        y = -99275010,
-                        z = -1378480.7
-                    },
-                    radius = 15000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "XS",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 2827433472,
-                    surfaceAverageAltitude = -1900,
-                    surfaceMaxAltitude = -1400,
-                    surfaceMinAltitude = -2100,
-                    systemZone = nil,
-                    territories = 3632,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [9] = {
-                    name = "Jago",
-                    description = "Jago is a water planet. The large majority of the planet&apos;s surface is covered by large oceans dotted by small areas of landmass across the planet. The arkship geological survey reports deep seas across the majority of the planet with sub 15 percent coverage of solid ground.",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0.9835,
-                    atmosphericEngineMaxAltitude = 9695,
-                    biosphere = "Water",
-                    classification = "Mesoplanet",
-                    bodyId = 9,
-                    GM = 18606274330,
-                    gravity = 0.5041284298678057,
-                    fullAtmosphericDensityMaxAltitude = -90,
-                    habitability = "Very High",
-                    hasAtmosphere = true,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 10900,
-                    numSatellites = 0,
-                    positionFromSun = 9,
-                    center = {
-                        x = -94134462,
-                        y = 12765534,
-                        z = -3634464
-                    },
-                    radius = 61590,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "XL",
-                    spaceEngineMinAltitude = 5900,
-                    surfaceArea = 47668367360,
-                    surfaceAverageAltitude = 0,
-                    surfaceMaxAltitude = 1200,
-                    surfaceMinAltitude = -500,
-                    systemZone = "Very High",
-                    territories = 60752,
-                    type = "Planet",
-                    waterLevel = 0,
-                    planetarySystemId = 0
-                },
-                [100] = {
-                    name = "Lacobus",
-                    description = "Lacobus is an ice planet that also features large bodies of water. The arkship geological survey reports deep oceans alongside a frozen and rough mountainous environment. Lacobus seems to feature regional geothermal activity allowing for the presence of water on the surface.",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0.7571,
-                    atmosphericEngineMaxAltitude = 11120,
-                    biosphere = "Ice",
-                    classification = "Psychroplanet",
-                    bodyId = 100,
-                    GM = 13975172474,
-                    gravity = 0.45611622622739767,
-                    fullAtmosphericDensityMaxAltitude = -20,
-                    habitability = "Average",
-                    hasAtmosphere = true,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 12510,
-                    numSatellites = 3,
-                    positionFromSun = 10,
-                    center = {
-                        x = 98865536,
-                        y = -13534464,
-                        z = -934461.99
-                    },
-                    radius = 55650,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "M",
-                    spaceEngineMinAltitude = 6790,
-                    surfaceArea = 38917074944,
-                    surfaceAverageAltitude = 800,
-                    surfaceMaxAltitude = 1660,
-                    surfaceMinAltitude = 250,
-                    systemZone = "Average",
-                    territories = 50432,
-                    type = "Planet",
-                    waterLevel = 0,
-                    planetarySystemId = 0
-                },
-                [102] = {
-                    name = "Lacobus Moon 1",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 102,
-                    GM = 444981600,
-                    gravity = 0.14403669598391783,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = 99180968,
-                        y = -13783862,
-                        z = -926156.4
-                    },
-                    radius = 18000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "XL",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 4071504128,
-                    surfaceAverageAltitude = 150,
-                    surfaceMaxAltitude = 300,
-                    surfaceMinAltitude = 10,
-                    systemZone = nil,
-                    territories = 5072,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [103] = {
-                    name = "Lacobus Moon 2",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 103,
-                    GM = 211503600,
-                    gravity = 0.11202853997062348,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = 99250052,
-                        y = -13629215,
-                        z = -1059341.4
-                    },
-                    radius = 14000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "M",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 2463008768,
-                    surfaceAverageAltitude = -1380,
-                    surfaceMaxAltitude = -1280,
-                    surfaceMinAltitude = -1880,
-                    systemZone = nil,
-                    territories = 3002,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [101] = {
-                    name = "Lacobus Moon 3",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 101,
-                    GM = 264870000,
-                    gravity = 0.12003058201190042,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = 98905288.17,
-                        y = -13950921.1,
-                        z = -647589.53
-                    },
-                    radius = 15000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "L",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 2827433472,
-                    surfaceAverageAltitude = 500,
-                    surfaceMaxAltitude = 820,
-                    surfaceMinAltitude = 3,
-                    systemZone = nil,
-                    territories = 3632,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [1] = {
-                    name = "Madis",
-                    description = "Madis is a barren wasteland of a rock; it sits closest to the sun and temperatures reach extreme highs during the day. The arkship geological survey reports long rocky valleys intermittently separated by small ravines.",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0.8629,
-                    atmosphericEngineMaxAltitude = 7165,
-                    biosphere = "Barren",
-                    classification = "hyperthermoplanet",
-                    bodyId = 1,
-                    GM = 6930729684,
-                    gravity = 0.36009174603570127,
-                    fullAtmosphericDensityMaxAltitude = 220,
-                    habitability = "Low",
-                    hasAtmosphere = true,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 8050,
-                    numSatellites = 3,
-                    positionFromSun = 1,
-                    center = {
-                        x = 17465536,
-                        y = 22665536,
-                        z = -34464
-                    },
-                    radius = 44300,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "XS",
-                    spaceEngineMinAltitude = 4480,
-                    surfaceArea = 24661377024,
-                    surfaceAverageAltitude = 750,
-                    surfaceMaxAltitude = 850,
-                    surfaceMinAltitude = 670,
-                    systemZone = "Low",
-                    territories = 30722,
-                    type = "Planet",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [10] = {
-                    name = "Madis Moon 1",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 10,
-                    GM = 78480000,
-                    gravity = 0.08002039003323584,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = 17448118.224,
-                        y = 22966846.286,
-                        z = 143078.82
-                    },
-                    radius = 10000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "XL",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 1256637056,
-                    surfaceAverageAltitude = 210,
-                    surfaceMaxAltitude = 420,
-                    surfaceMinAltitude = 0,
-                    systemZone = nil,
-                    territories = 1472,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [11] = {
-                    name = "Madis Moon 2",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 11,
-                    GM = 237402000,
-                    gravity = 0.09602446196397631,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = 17194626,
-                        y = 22243633.88,
-                        z = -214962.81
-                    },
-                    radius = 12000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "S",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 1809557376,
-                    surfaceAverageAltitude = -700,
-                    surfaceMaxAltitude = 300,
-                    surfaceMinAltitude = -2900,
-                    systemZone = nil,
-                    territories = 1922,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [12] = {
-                    name = "Madis Moon 3",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 12,
-                    GM = 265046609,
-                    gravity = 0.12003058201190042,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = 17520614,
-                        y = 22184730,
-                        z = -309989.99
-                    },
-                    radius = 15000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "S",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 2827433472,
-                    surfaceAverageAltitude = 700,
-                    surfaceMaxAltitude = 1100,
-                    surfaceMinAltitude = 0,
-                    systemZone = nil,
-                    territories = 3632,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [26] = {
-                    name = "Sanctuary",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0.9666,
-                    atmosphericEngineMaxAltitude = 6935,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 26,
-                    GM = 68234043600,
-                    gravity = 1.0000000427743831,
-                    fullAtmosphericDensityMaxAltitude = -30,
-                    habitability = "",
-                    hasAtmosphere = true,
-                    isSanctuary = true,
-                    noAtmosphericDensityAltitude = 7800,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = -1404835,
-                        y = 562655,
-                        z = -285074
-                    },
-                    radius = 83400,
-                    safeAreaEdgeAltitude = 0,
-                    size = "L",
-                    spaceEngineMinAltitude = 4230,
-                    surfaceArea = 87406149632,
-                    surfaceAverageAltitude = 80,
-                    surfaceMaxAltitude = 500,
-                    surfaceMinAltitude = -60,
-                    systemZone = nil,
-                    territories = 111632,
-                    type = "",
-                    waterLevel = 0,
-                    planetarySystemId = 0
-                },
-                [6] = {
-                    name = "Sicari",
-                    description = "Sicari is a typical desert planet; it has survived for millenniums and will continue to endure. While not the most habitable of environments it remains a relatively untouched and livable planet of the Alioth sector. The arkship geological survey reports large flatlands alongside steep plateaus.",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0.897,
-                    atmosphericEngineMaxAltitude = 7725,
-                    biosphere = "Desert",
-                    classification = "Mesoplanet",
-                    bodyId = 6,
-                    GM = 10502547741,
-                    gravity = 0.4081039739797361,
-                    fullAtmosphericDensityMaxAltitude = -625,
-                    habitability = "Average",
-                    hasAtmosphere = true,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 8770,
-                    numSatellites = 0,
-                    positionFromSun = 6,
-                    center = {
-                        x = 52765536,
-                        y = 27165538,
-                        z = 52065535
-                    },
-                    radius = 51100,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "M",
-                    spaceEngineMinAltitude = 4480,
-                    surfaceArea = 32813432832,
-                    surfaceAverageAltitude = 130,
-                    surfaceMaxAltitude = 220,
-                    surfaceMinAltitude = 50,
-                    systemZone = "Average",
-                    territories = 41072,
-                    type = "Planet",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [7] = {
-                    name = "Sinnen",
-                    description = "Sinnen is a an empty and rocky hell. With no atmosphere to speak of it is one of the least hospitable planets in the sector. The arkship geological survey reports mostly flatlands alongside deep ravines which look to have once been riverbeds. This planet simply looks to have dried up and died, likely from solar winds.",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0.9226,
-                    atmosphericEngineMaxAltitude = 10335,
-                    biosphere = "Desert",
-                    classification = "Mesoplanet",
-                    bodyId = 7,
-                    GM = 13033380591,
-                    gravity = 0.4401121421448438,
-                    fullAtmosphericDensityMaxAltitude = -120,
-                    habitability = "Average",
-                    hasAtmosphere = true,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 11620,
-                    numSatellites = 1,
-                    positionFromSun = 7,
-                    center = {
-                        x = 58665538,
-                        y = 29665535,
-                        z = 58165535
-                    },
-                    radius = 54950,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "S",
-                    spaceEngineMinAltitude = 6270,
-                    surfaceArea = 37944188928,
-                    surfaceAverageAltitude = 317,
-                    surfaceMaxAltitude = 360,
-                    surfaceMinAltitude = 23,
-                    systemZone = "Average",
-                    territories = 48002,
-                    type = "Planet",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [70] = {
-                    name = "Sinnen Moon 1",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 70,
-                    GM = 396912600,
-                    gravity = 0.1360346539426409,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = 58969616,
-                        y = 29797945,
-                        z = 57969449
-                    },
-                    radius = 17000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "S",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 3631681280,
-                    surfaceAverageAltitude = -2050,
-                    surfaceMaxAltitude = -1950,
-                    surfaceMinAltitude = -2150,
-                    systemZone = nil,
-                    territories = 4322,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [110] = {
-                    name = "Symeon",
-                    description = "Symeon is an ice planet mysteriously split at the equator by a band of solid desert. Exactly how this phenomenon is possible is unclear but some sort of weather anomaly may be responsible. The arkship geological survey reports a fairly diverse mix of flat-lands alongside mountainous formations.",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0.9559,
-                    atmosphericEngineMaxAltitude = 6920,
-                    biosphere = "Ice, Desert",
-                    classification = "Hybrid",
-                    bodyId = 110,
-                    GM = 9204742375,
-                    gravity = 0.3920998898971822,
-                    fullAtmosphericDensityMaxAltitude = -30,
-                    habitability = "High",
-                    hasAtmosphere = true,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 7800,
-                    numSatellites = 0,
-                    positionFromSun = 11,
-                    center = {
-                        x = 14165536,
-                        y = -85634465,
-                        z = -934464.3
-                    },
-                    radius = 49050,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "S",
-                    spaceEngineMinAltitude = 4230,
-                    surfaceArea = 30233462784,
-                    surfaceAverageAltitude = 39,
-                    surfaceMaxAltitude = 450,
-                    surfaceMinAltitude = 126,
-                    systemZone = "High",
-                    territories = 38882,
-                    type = "Planet",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [4] = {
-                    name = "Talemai",
-                    description = "Talemai is a planet in the final stages of an Ice Age. It seems likely that the planet was thrown into tumult by a cataclysmic volcanic event which resulted in its current state. The arkship geological survey reports large mountainous regions across the entire planet.",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0.8776,
-                    atmosphericEngineMaxAltitude = 9685,
-                    biosphere = "Barren",
-                    classification = "Psychroplanet",
-                    bodyId = 4,
-                    GM = 14893847582,
-                    gravity = 0.4641182439650478,
-                    fullAtmosphericDensityMaxAltitude = -78,
-                    habitability = "Average",
-                    hasAtmosphere = true,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 10890,
-                    numSatellites = 3,
-                    positionFromSun = 4,
-                    center = {
-                        x = -13234464,
-                        y = 55765536,
-                        z = 465536
-                    },
-                    radius = 57500,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "M",
-                    spaceEngineMinAltitude = 5890,
-                    surfaceArea = 41547563008,
-                    surfaceAverageAltitude = 580,
-                    surfaceMaxAltitude = 610,
-                    surfaceMinAltitude = 520,
-                    systemZone = "Average",
-                    territories = 52922,
-                    type = "Planet",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [42] = {
-                    name = "Talemai Moon 1",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 42,
-                    GM = 264870000,
-                    gravity = 0.12003058201190042,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = -13058408,
-                        y = 55781856,
-                        z = 740177.76
-                    },
-                    radius = 15000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "M",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 2827433472,
-                    surfaceAverageAltitude = 720,
-                    surfaceMaxAltitude = 850,
-                    surfaceMinAltitude = 0,
-                    systemZone = nil,
-                    territories = 3632,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [40] = {
-                    name = "Talemai Moon 2",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 40,
-                    GM = 141264000,
-                    gravity = 0.09602446196397631,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = -13503090,
-                        y = 55594325,
-                        z = 769838.64
-                    },
-                    radius = 12000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "S",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 1809557376,
-                    surfaceAverageAltitude = 250,
-                    surfaceMaxAltitude = 450,
-                    surfaceMinAltitude = 0,
-                    systemZone = nil,
-                    territories = 1922,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [41] = {
-                    name = "Talemai Moon 3",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 41,
-                    GM = 106830900,
-                    gravity = 0.08802242599860607,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = -12800515,
-                        y = 55700259,
-                        z = 325207.84
-                    },
-                    radius = 11000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "XS",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 1520530944,
-                    surfaceAverageAltitude = 190,
-                    surfaceMaxAltitude = 400,
-                    surfaceMinAltitude = 0,
-                    systemZone = nil,
-                    territories = 1922,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [8] = {
-                    name = "Teoma",
-                    description = "[REDACTED] The arkship geological survey [REDACTED]. This planet should not be here.",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0.7834,
-                    atmosphericEngineMaxAltitude = 5580,
-                    biosphere = "Forest",
-                    classification = "Mesoplanet",
-                    bodyId = 8,
-                    GM = 18477723600,
-                    gravity = 0.48812434578525177,
-                    fullAtmosphericDensityMaxAltitude = 15,
-                    habitability = "High",
-                    hasAtmosphere = true,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 6280,
-                    numSatellites = 0,
-                    positionFromSun = 8,
-                    center = {
-                        x = 80865538,
-                        y = 54665536,
-                        z = -934463.94
-                    },
-                    radius = 62000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "L",
-                    spaceEngineMinAltitude = 3420,
-                    surfaceArea = 48305131520,
-                    surfaceAverageAltitude = 700,
-                    surfaceMaxAltitude = 1100,
-                    surfaceMinAltitude = -200,
-                    systemZone = "High",
-                    territories = 60752,
-                    type = "Planet",
-                    waterLevel = 0,
-                    planetarySystemId = 0
-                },
-                [3] = {
-                    name = "Thades",
-                    description = "Thades is a scorched desert planet. Perhaps it was once teaming with life but now all that remains is ash and dust. The arkship geological survey reports a rocky mountainous planet bisected by a massive unnatural ravine; something happened to this planet.",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0.03552,
-                    atmosphericEngineMaxAltitude = 32180,
-                    biosphere = "Desert",
-                    classification = "Thermoplanet",
-                    bodyId = 3,
-                    GM = 11776905000,
-                    gravity = 0.49612641213015557,
-                    fullAtmosphericDensityMaxAltitude = 150,
-                    habitability = "Low",
-                    hasAtmosphere = true,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 32800,
-                    numSatellites = 2,
-                    positionFromSun = 3,
-                    center = {
-                        x = 29165536,
-                        y = 10865536,
-                        z = 65536
-                    },
-                    radius = 49000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "M",
-                    spaceEngineMinAltitude = 21400,
-                    surfaceArea = 30171856896,
-                    surfaceAverageAltitude = 13640,
-                    surfaceMaxAltitude = 13690,
-                    surfaceMinAltitude = 370,
-                    systemZone = "Low",
-                    territories = 38882,
-                    type = "Planet",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [30] = {
-                    name = "Thades Moon 1",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 30,
-                    GM = 211564034,
-                    gravity = 0.11202853997062348,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = 29214402,
-                        y = 10907080.695,
-                        z = 433858.2
-                    },
-                    radius = 14000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "M",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 2463008768,
-                    surfaceAverageAltitude = 60,
-                    surfaceMaxAltitude = 300,
-                    surfaceMinAltitude = 0,
-                    systemZone = nil,
-                    territories = 3002,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                },
-                [31] = {
-                    name = "Thades Moon 2",
-                    description = "",
-                    antiGravMinAltitude = 1000,
-                    atmosphericDensityAboveSurface = 0,
-                    atmosphericEngineMaxAltitude = 0,
-                    biosphere = "",
-                    classification = "",
-                    bodyId = 31,
-                    GM = 264870000,
-                    gravity = 0.12003058201190042,
-                    fullAtmosphericDensityMaxAltitude = 0,
-                    habitability = "",
-                    hasAtmosphere = false,
-                    isSanctuary = false,
-                    noAtmosphericDensityAltitude = 0,
-                    numSatellites = 0,
-                    positionFromSun = 0,
-                    center = {
-                        x = 29404193,
-                        y = 10432768,
-                        z = 19554.131
-                    },
-                    radius = 15000,
-                    safeAreaEdgeAltitude = 500000,
-                    size = "M",
-                    spaceEngineMinAltitude = 0,
-                    surfaceArea = 2827433472,
-                    surfaceAverageAltitude = 70,
-                    surfaceMaxAltitude = 350,
-                    surfaceMinAltitude = 0,
-                    systemZone = nil,
-                    territories = 3632,
-                    type = "",
-                    waterLevel = nil,
-                    planetarySystemId = 0
-                }
-            }
-        }
-    end
+
     local function PlanetRef()
         --[[                    START OF LOCAL IMPLEMENTATION DETAILS             ]]--
         -- Type checks
@@ -2097,7 +969,7 @@ VERSION_NUMBER = 1.414
             return isTable(v) and isNumber(v.x and v.y and v.z)
         end
         local function isMapPosition(m)
-            return isTable(m) and isNumber(m.latitude and m.longitude and m.altitude and m.bodyId and m.systemId)
+            return isTable(m) and isNumber(m.latitude and m.longitude and m.altitude and m.id and m.systemId)
         end
         -- Constants
         local deg2rad = math.pi / 180
@@ -2163,22 +1035,22 @@ VERSION_NUMBER = 1.414
             return stringf('{%s}', table.concat(list, ','))
         end
         BodyParameters.__eq = function(lhs, rhs)
-            return lhs.planetarySystemId == rhs.planetarySystemId and lhs.bodyId == rhs.bodyId and
+            return lhs.systemId == rhs.systemId and lhs.id == rhs.id and
                     float_eq(lhs.radius, rhs.radius) and float_eq(lhs.center.x, rhs.center.x) and
                     float_eq(lhs.center.y, rhs.center.y) and float_eq(lhs.center.z, rhs.center.z) and
                     float_eq(lhs.GM, rhs.GM)
         end
-        local function mkBodyParameters(systemId, bodyId, radius, worldCoordinates, GM)
+        local function mkBodyParameters(systemId, id, radius, worldCoordinates, GM)
             -- 'worldCoordinates' can be either table or vec3
-            assert(isSNumber(systemId), 'Argument 1 (planetarySystemId) must be a number:' .. type(systemId))
-            assert(isSNumber(bodyId), 'Argument 2 (bodyId) must be a number:' .. type(bodyId))
+            assert(isSNumber(systemId), 'Argument 1 (systemId) must be a number:' .. type(systemId))
+            assert(isSNumber(id), 'Argument 2 (id) must be a number:' .. type(id))
             assert(isSNumber(radius), 'Argument 3 (radius) must be a number:' .. type(radius))
             assert(isTable(worldCoordinates),
                 'Argument 4 (worldCoordinates) must be a array or vec3.' .. type(worldCoordinates))
             assert(isSNumber(GM), 'Argument 5 (GM) must be a number:' .. type(GM))
             return setmetatable({
-                planetarySystemId = tonum(systemId),
-                bodyId = tonum(bodyId),
+                systemId = tonum(systemId),
+                id = tonum(id),
                 radius = tonum(radius),
                 center = vec3(worldCoordinates),
                 GM = tonum(GM)
@@ -2188,40 +1060,40 @@ VERSION_NUMBER = 1.414
         local MapPosition = {}
         MapPosition.__index = MapPosition
         MapPosition.__tostring = function(p)
-            return stringf('::pos{%d,%d,%s,%s,%s}', p.systemId, p.bodyId, formatNumber(p.latitude * rad2deg),
+            return stringf('::pos{%d,%d,%s,%s,%s}', p.systemId, p.id, formatNumber(p.latitude * rad2deg),
                     formatNumber(p.longitude * rad2deg), formatNumber(p.altitude))
         end
         MapPosition.__eq = function(lhs, rhs)
-            return lhs.bodyId == rhs.bodyId and lhs.systemId == rhs.systemId and
+            return lhs.id == rhs.id and lhs.systemId == rhs.systemId and
                     float_eq(lhs.latitude, rhs.latitude) and float_eq(lhs.altitude, rhs.altitude) and
                     (float_eq(lhs.longitude, rhs.longitude) or float_eq(lhs.latitude, math.pi / 2) or
                         float_eq(lhs.latitude, -math.pi / 2))
         end
         -- latitude and longitude are in degrees while altitude is in meters
-        local function mkMapPosition(overload, bodyId, latitude, longitude, altitude)
+        local function mkMapPosition(overload, id, latitude, longitude, altitude)
             local systemId = overload -- Id or '::pos{...}' string
             
-            if isString(overload) and not longitude and not altitude and not bodyId and not latitude then
-                systemId, bodyId, latitude, longitude, altitude = stringmatch(overload, posPattern)
+            if isString(overload) and not longitude and not altitude and not id and not latitude then
+                systemId, id, latitude, longitude, altitude = stringmatch(overload, posPattern)
                 assert(systemId, 'Argument 1 (position string) is malformed.')
             else
                 assert(isSNumber(systemId), 'Argument 1 (systemId) must be a number:' .. type(systemId))
-                assert(isSNumber(bodyId), 'Argument 2 (bodyId) must be a number:' .. type(bodyId))
+                assert(isSNumber(id), 'Argument 2 (id) must be a number:' .. type(id))
                 assert(isSNumber(latitude), 'Argument 3 (latitude) must be in degrees:' .. type(latitude))
                 assert(isSNumber(longitude), 'Argument 4 (longitude) must be in degrees:' .. type(longitude))
                 assert(isSNumber(altitude), 'Argument 5 (altitude) must be in meters:' .. type(altitude))
             end
             systemId = tonum(systemId)
-            bodyId = tonum(bodyId)
+            id = tonum(id)
             latitude = tonum(latitude)
             longitude = tonum(longitude)
             altitude = tonum(altitude)
-            if bodyId == 0 then -- this is a hack to represent points in space
+            if id == 0 then -- this is a hack to represent points in space
                 return setmetatable({
                     latitude = latitude,
                     longitude = longitude,
                     altitude = altitude,
-                    bodyId = bodyId,
+                    id = id,
                     systemId = systemId
                 }, MapPosition)
             end
@@ -2229,7 +1101,7 @@ VERSION_NUMBER = 1.414
                 latitude = deg2rad * uclamp(latitude, -90, 90),
                 longitude = deg2rad * (longitude % 360),
                 altitude = altitude,
-                bodyId = bodyId,
+                id = id,
                 systemId = systemId
             }, MapPosition)
         end
@@ -2258,6 +1130,7 @@ VERSION_NUMBER = 1.414
             end
             return stringf('{\n%s\n}', table.concat(bdylist, ',\n'))
         end
+
         local function mkPlanetarySystem(referenceTable)
             local atlas = {}
             local pid
@@ -2280,6 +1153,7 @@ VERSION_NUMBER = 1.414
             end
             return setmetatable(atlas, PlanetarySystem)
         end
+
         -- PlanetaryReference - map planetary system ID to PlanetarySystem
         PlanetaryReference = {}
         local function mkPlanetaryReference(referenceTable)
@@ -2312,11 +1186,11 @@ VERSION_NUMBER = 1.414
         PlanetaryReference.BodyParameters = mkBodyParameters
         PlanetaryReference.MapPosition = mkMapPosition
         PlanetaryReference.PlanetarySystem = mkPlanetarySystem
-        function PlanetaryReference.createBodyParameters(planetarySystemId, bodyId, surfaceArea, aPosition,
+        function PlanetaryReference.createBodyParameters(systemId, id, surfaceArea, aPosition,
             verticalAtPosition, altitudeAtPosition, gravityAtPosition)
-            assert(isSNumber(planetarySystemId),
-                'Argument 1 (planetarySystemId) must be a number:' .. type(planetarySystemId))
-            assert(isSNumber(bodyId), 'Argument 2 (bodyId) must be a number:' .. type(bodyId))
+            assert(isSNumber(systemId),
+                'Argument 1 (systemId) must be a number:' .. type(systemId))
+            assert(isSNumber(id), 'Argument 2 (id) must be a number:' .. type(id))
             assert(isSNumber(surfaceArea), 'Argument 3 (surfaceArea) must be a number:' .. type(surfaceArea))
             assert(isTable(aPosition), 'Argument 4 (aPosition) must be an array or vec3:' .. type(aPosition))
             assert(isTable(verticalAtPosition),
@@ -2329,7 +1203,7 @@ VERSION_NUMBER = 1.414
             local distance = radius + altitudeAtPosition
             local center = vec3(aPosition) + distance * vec3(verticalAtPosition)
             local GM = gravityAtPosition * distance * distance
-            return mkBodyParameters(planetarySystemId, bodyId, radius, center, GM)
+            return mkBodyParameters(systemId, id, radius, center, GM)
         end
 
         PlanetaryReference.isMapPosition = isMapPosition
@@ -2337,11 +1211,11 @@ VERSION_NUMBER = 1.414
             -- if galaxyAtlas then
             if i == nil then i = 0 end
             if nv == nil then nv = 0 end
-            local planetarySystemId = overload
+            local systemId = overload
             if isMapPosition(overload) then
-                planetarySystemId = overload.systemId
+                systemId = overload.systemId
             end
-            if type(planetarySystemId) == 'number' then
+            if type(systemId) == 'number' then
                 local system = self.galaxyAtlas[i]
                 if system then
                     if getmetatable(nv) ~= PlanetarySystem then
@@ -2415,40 +1289,40 @@ VERSION_NUMBER = 1.414
             if isString(overload) then
                 mapPosition = mkMapPosition(overload)
             end
-            if mapPosition.bodyId == 0 then
+            if mapPosition.id == 0 then
                 return 0, vec3(mapPosition.latitude, mapPosition.longitude, mapPosition.altitude)
             end
             local params = self:getBodyParameters(mapPosition)
             if params then
-                return mapPosition.bodyId, params:convertToWorldCoordinates(mapPosition)
+                return mapPosition.id, params:convertToWorldCoordinates(mapPosition)
             end
         end
 
         function PlanetarySystem:getBodyParameters(overload)
-            local bodyId = overload
+            local id = overload
             if isMapPosition(overload) then
-                bodyId = overload.bodyId
+                id = overload.id
             end
-            assert(isSNumber(bodyId), 'Argument 1 (bodyId) must be a number:' .. type(bodyId))
-            return self[bodyId]
+            assert(isSNumber(id), 'Argument 1 (id) must be a number:' .. type(id))
+            return self[id]
         end
 
         function PlanetarySystem:getPlanetarySystemId()
             local _, v = next(self)
-            return v and v.planetarySystemId
+            return v and v.systemId
         end
 
         function BodyParameters:convertToMapPosition(worldCoordinates)
             assert(isTable(worldCoordinates),
                 'Argument 1 (worldCoordinates) must be an array or vec3:' .. type(worldCoordinates))
             local worldVec = vec3(worldCoordinates)
-            if self.bodyId == 0 then
+            if self.id == 0 then
                 return setmetatable({
                     latitude = worldVec.x,
                     longitude = worldVec.y,
                     altitude = worldVec.z,
-                    bodyId = 0,
-                    systemId = self.planetarySystemId
+                    id = 0,
+                    systemId = self.systemId
                 }, MapPosition)
             end
             local coords = worldVec - self.center
@@ -2465,20 +1339,20 @@ VERSION_NUMBER = 1.414
                 latitude = latitude,
                 longitude = longitude,
                 altitude = altitude,
-                bodyId = self.bodyId,
-                systemId = self.planetarySystemId
+                id = self.id,
+                systemId = self.systemId
             }, MapPosition)
         end
 
         function BodyParameters:convertToWorldCoordinates(overload)
             local mapPosition = isString(overload) and mkMapPosition(overload) or overload
-            if mapPosition.bodyId == 0 then -- support deep space map position
+            if mapPosition.id == 0 then -- support deep space map position
                 return vec3(mapPosition.latitude, mapPosition.longitude, mapPosition.altitude)
             end
             assert(isMapPosition(mapPosition), 'Argument 1 (mapPosition) is not an instance of "MapPosition".')
-            assert(mapPosition.systemId == self.planetarySystemId,
+            assert(mapPosition.systemId == self.systemId,
                 'Argument 1 (mapPosition) has a different planetary system ID.')
-            assert(mapPosition.bodyId == self.bodyId, 'Argument 1 (mapPosition) has a different planetary body ID.')
+            assert(mapPosition.id == self.id, 'Argument 1 (mapPosition) has a different planetary body ID.')
             local xproj = math.cos(mapPosition.latitude)
             return self.center + (self.radius + mapPosition.altitude) *
                     vec3(xproj * math.cos(mapPosition.longitude), xproj * math.sin(mapPosition.longitude),
@@ -2709,7 +1583,7 @@ VERSION_NUMBER = 1.414
             }
         end
         local function new(bodyParameters)
-            local params = PlanetRef.BodyParameters(bodyParameters.planetarySystemId, bodyParameters.bodyId,
+            local params = PlanetRef.BodyParameters(bodyParameters.systemId, bodyParameters.id,
                             bodyParameters.radius, bodyParameters.center, bodyParameters.GM)
             return setmetatable({
                 body = params
@@ -4313,10 +3187,9 @@ VERSION_NUMBER = 1.414
                     CustomTarget = nil
                     return true
                 end
-    
                 local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
                 local autopilotEntry = atlas[0][atlasIndex]
-    
+
                 if autopilotEntry.center then -- Is a real atlas entry
                     AutopilotTargetName = autopilotEntry.name
                     autopilotTargetPlanet = galaxyReference[0][atlasIndex]
@@ -4445,15 +3318,12 @@ VERSION_NUMBER = 1.414
         
                     local p = getPlanet(position)
                     local gravity = p.gravity
-                    local atmo = p.atmosphericDensityAboveSurface
                     if safe then
-                        atmo = atmosDensity
                         gravity = unit.getClosestPlanetInfluence()
                     end
                     local newLocation = {
                         position = position,
                         name = name,
-                        atmosphere = atmo,
                         planetname = p.name,
                         gravity = gravity,
                         safe = safe, -- This indicates we can extreme land here, if this was a real positional waypoint
@@ -4505,7 +3375,6 @@ VERSION_NUMBER = 1.414
                     adjustAutopilotTargetIndex()
                 else
                     local location = SavedLocations[index]
-                    location.atmosphere = atmosDensity
                     location.gravity = unit.getClosestPlanetInfluence()
                     location.position = worldPos
                     location.safe = true
@@ -4626,13 +3495,13 @@ VERSION_NUMBER = 1.414
             local function showWaypoint(planet, coordinates, dontSet)
                 local function zeroConvertToMapPosition(targetplanet, worldCoordinates)
                     local worldVec = vec3(worldCoordinates)
-                    if targetplanet.bodyId == 0 then
+                    if targetplanet.id == 0 then
                         return setmetatable({
                             latitude = worldVec.x,
                             longitude = worldVec.y,
                             altitude = worldVec.z,
-                            bodyId = 0,
-                            systemId = targetplanet.planetarySystemId
+                            id = 0,
+                            systemId = targetplanet.systemId
                         }, MapPosition)
                     end
                     local coords = worldVec - targetplanet.center
@@ -4649,12 +3518,12 @@ VERSION_NUMBER = 1.414
                         latitude = math.deg(latitude),
                         longitude = math.deg(longitude),
                         altitude = altitude,
-                        bodyId = targetplanet.bodyId,
-                        systemId = targetplanet.planetarySystemId
+                        id = targetplanet.id,
+                        systemId = targetplanet.systemId
                     }, MapPosition)
                 end
                 local waypoint = zeroConvertToMapPosition(planet, coordinates)
-                waypoint = "::pos{"..waypoint.systemId..","..waypoint.bodyId..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
+                waypoint = "::pos{"..waypoint.systemId..","..waypoint.id..","..waypoint.latitude..","..waypoint.longitude..","..waypoint.altitude.."}"
                 if dontSet then 
                     return waypoint
                 else
@@ -6177,6 +5046,13 @@ VERSION_NUMBER = 1.414
                     elseif not useTheseSettings then
                         msgText = "No Saved Variables Found - Exit HUD to save settings"
                     end
+                    if LastVersionUpdate < 1.500 then
+                        if LowOrbitHeight < 2000 then
+                            msgText = "Updating LowOrbitHeight to new minimum default of 2000."
+                            LowOrbitHeight = 2000
+                        end
+                    end
+                    LastVersionUpdate = VERSION_NUMBER
                 else
                     msgText = "No databank found. Attach one to control unit and rerun \nthe autoconfigure to save preferences and locations"
                 end
@@ -6767,6 +5643,75 @@ VERSION_NUMBER = 1.414
                         msgText = "New Control Scheme: "..userControlScheme
                     end)
             end
+
+            local function atlasSetup()
+                local atlasCopy = {}
+                
+                local function getSpaceEntry()
+                    return {
+                                id = 0,
+                                name = { "Space", "Space", "Space"},
+                                type = {},
+                                biosphere = {},
+                                classification = {},
+                                habitability = {},
+                                description = {},
+                                iconPath = "",
+                                hasAtmosphere = false,
+                                isSanctuary = false,
+                                isInSafeZone = true,
+                                systemId = 0,
+                                positionInSystem = 0,
+                                satellites = {},
+                                center = { 0, 0, 0 },
+                                gravity = 0,
+                                radius = 0,
+                                atmosphereThickness = 0,
+                                atmosphereRadius = 0,
+                                surfaceArea = 0,
+                                surfaceAverageAltitude = 0,
+                                surfaceMaxAltitude = 0,
+                                surfaceMinAltitude = 0,
+                                GM = 0,
+                                ores = {},
+                                territories = 0,
+                                noAtmosphericDensityAltitude = 0,
+                                spaceEngineMinAltitude = 0,
+                            }
+                end
+                
+                local altTable = { [1]=4480, [6]=4480, [7]=6270} -- Alternate altitudes for madis, sinnen, sicari
+                for galaxyId,galaxy in pairs(atlas) do
+                    -- Create a copy of Space with the appropriate SystemId for each galaxy
+                    atlas[galaxyId][0] = getSpaceEntry()
+                    atlas[galaxyId][0].systemId = galaxyId
+                    atlasCopy[galaxyId] = {} -- Prepare a copy galaxy
+
+                    for planetId,planet in pairs(atlas[galaxyId]) do
+                        planet.gravity = planet.gravity/9.8
+                        planet.center = vec3(planet.center)
+                        planet.name = planet.name[1]
+                
+                        planet.noAtmosphericDensityAltitude = planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
+                        planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius))
+                                
+                        planet.planetarySystemId = galaxyId
+                        planet.bodyId = planet.id
+                        atlasCopy[galaxyId][planetId] = planet
+                    end
+                end
+                
+                PlanetaryReference = PlanetRef()
+                galaxyReference = PlanetaryReference(atlasCopy)
+                -- Setup Modular Classes
+                Kinematic = Kinematics()
+                Kep = Keplers()
+    
+                RADAR = RadarClass()
+                HUD = HudClass()
+    
+                ATLAS = AtlasClass()
+            end
         
         SetupComplete = false
 
@@ -6798,18 +5743,11 @@ VERSION_NUMBER = 1.414
             coroutine.yield() -- Just to make sure
 
             -- Set up Jaylebreak and atlas
-            atlas = Atlas() -- Actual planet info
-            PlanetaryReference = PlanetRef()
-            galaxyReference = PlanetaryReference(Atlas())
 
-            -- Setup Modular Classes
-            Kinematic = Kinematics()
-            Kep = Keplers()
+            atlasSetup()
 
-            RADAR = RadarClass()
-            HUD = HudClass()
 
-            ATLAS = AtlasClass()
+
 
             --AP = APClass()
 
@@ -8634,15 +7572,15 @@ VERSION_NUMBER = 1.414
                 local function zeroConvertToWorldCoordinates(pos) -- Many thanks to SilverZero for this.
                     local num  = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
                     local posPattern = '::pos{' .. num .. ',' .. num .. ',' ..  num .. ',' .. num ..  ',' .. num .. '}'    
-                    local systemId, bodyId, latitude, longitude, altitude = stringmatch(pos, posPattern)
-                    if (systemId == "0" and bodyId == "0") then
+                    local systemId, id, latitude, longitude, altitude = stringmatch(pos, posPattern)
+                    if (systemId == "0" and id == "0") then
                         return vec3(tonum(latitude),
                                     tonum(longitude),
                                     tonum(altitude))
                     end
                     longitude = math.rad(longitude)
                     latitude = math.rad(latitude)
-                    local planet = atlas[tonum(systemId)][tonum(bodyId)]  
+                    local planet = atlas[tonum(systemId)][tonum(id)]  
                     local xproj = math.cos(latitude);   
                     local planetxyz = vec3(xproj*math.cos(longitude),
                                         xproj*math.sin(longitude),
