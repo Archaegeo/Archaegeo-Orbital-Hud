@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.500
+VERSION_NUMBER = 1.501
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -7599,7 +7599,8 @@ VERSION_NUMBER = 1.500
                 "/::pos{0,0,13771471,7435803,-128971} - adds a temporary waypoint that is not saved to databank with name 0Temp\n"..
                 "/copydatabank - copies dbHud databank to a blank databank\n"..
                 "/iphWP - displays current IPH target's ::pos waypoint in lua chat\n"..
-                "/resist 0.15, 0.15, 0.15, 0.15 - Sets shield resistance distribution of the floating 60% extra available, usable once per minute"
+                "/resist 0.15, 0.15, 0.15, 0.15 - Sets shield resistance distribution of the floating 60% extra available, usable once per minute"..
+                "/deletewp - Deletes current selected custom wp"
         i = string.find(text, " ")
         command = text
         if i ~= nil then
@@ -7693,6 +7694,13 @@ VERSION_NUMBER = 1.500
                 end
             end
             msgText = "No such global variable: "..globalVariableName
+        
+        elseif command == "/deletewp" then
+            if autopilotTargetIndex > 0 and CustomTarget ~= nil then
+                ATLAS.ClearCurrentPosition()
+            else
+                msgText = "Select a custom wp to delete first in IPH"
+            end
         elseif command == "/copydatabank" then 
             if dbHud_2 then 
                 SaveDataBank(true) 

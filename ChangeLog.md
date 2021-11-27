@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top\
 
+Version 1.501
+- Added /deletewp command to delete current selected custom wp.
+
 Version 1.500 - Overhaul to use New Atlas
 NOTE: Possible that existing save points might throw an error when you try to select them on the IPH. 
 If it does, you can resave it (and live with the one that wont come up) or make a new databank.
