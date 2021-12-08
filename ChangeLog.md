@@ -2,6 +2,7 @@
 
 Version 1.501
 - Added /deletewp command to delete current selected custom wp.
+- Added planet data that was missing from official atlas.lua for Lacobus
 
 Version 1.500 - Overhaul to use New Atlas
 NOTE: Possible that existing save points might throw an error when you try to select them on the IPH. 

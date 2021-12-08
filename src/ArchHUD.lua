@@ -2152,11 +2152,11 @@ VERSION_NUMBER = 1.501
                 local rectH = 19
             
                 local gndHeight = abvGndDet
-            
+
                 if abvGndDet ~= -1 then
                     newContent[#newContent + 1] = svgText(rectX+rectW, rectY+rectH+20, stringf("AGL: %.1fm", abvGndDet), "pdim altsm txtend")
                 end
-            
+
                 if nearPlanet and ((altitude < 200000 and not inAtmo) or (altitude and inAtmo)) then
                     table.insert(newContent, stringf([[
                         <g class="pdim">                        
@@ -2165,16 +2165,18 @@ VERSION_NUMBER = 1.501
                             <g clip-path="url(#alt)">]], 
                             rectX - 1, rectY - 4, rectW + 2, rectH + 6,
                             rectX + 1, rectY - 1, rectW - 4, rectH))
-            
                     local index = 0
                     local divisor = 1
                     local forwardFract = 0
                     local isNegative = altitude < 0
+
                     local isLand = altitude < planet.surfaceMaxAltitude
+
                     local rolloverDigit = 9
                     if isNegative then
                         rolloverDigit = 0
                     end
+
                     local altitude = mabs(altitude)
                     while index < 6 do
                         local glyphW = 11
@@ -2208,7 +2210,7 @@ VERSION_NUMBER = 1.501
                                 fract = 1 - fract
                             end
                         end
-            
+
                         if isNegative and (index == 0 or forwardFract ~= 0) then
                             local temp = fracDigit
                             fracDigit = intDigit
@@ -2223,7 +2225,7 @@ VERSION_NUMBER = 1.501
                         
                         newContent[#newContent + 1] = svgText(x, y + topGlyphOffset,fracDigit, class)
                         newContent[#newContent + 1] = svgText(x, y + botGlyphOffset,intDigit , class)
-                        
+
                         index = index + 1
                         divisor = divisor * 10
                         if intDigit == rolloverDigit then
@@ -5691,6 +5693,7 @@ VERSION_NUMBER = 1.501
                         planet.gravity = planet.gravity/9.8
                         planet.center = vec3(planet.center)
                         planet.name = planet.name[1]
+                        if planet.name=="Lacobus" then planet.surfaceMaxAltitude = 1660 end
                 
                         planet.noAtmosphericDensityAltitude = planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
                         planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius))
