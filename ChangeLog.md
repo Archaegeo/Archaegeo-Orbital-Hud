@@ -1,4 +1,15 @@
-## ChangeLog - Most recent changes at the top\
+## ChangeLog - Most recent changes at the top
+
+Version 1.502
+- Added support for XS space fuel tank.
+- Added user variable `AutoShieldToggle` set to true.
+- Added autotoggle of shield if ship has shield, `AutoShieldToggle` is true, and ship crosses PvP line.  
+    Will toggle on when crossing into PvP, off when crossing out.
+- Added user variable `PreventPvP` set to true
+- If `PreventPvP` is on, Autopilot will disable and brake if you get within brakedistance + 10km of the pvp line.
+    This should help both new players and those going to asteroids but not knowing wp is across line.
+    Toggling PreventPvP off or going 10km beyond the PvP line into PvP space manually will let you restart AP.
+    This will NOT prevent you from manually crossing the PvP line, just from AP taking you into PvP unintentionally.
 
 Version 1.501
 - Added /deletewp command to delete current selected custom wp.

@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.501
+VERSION_NUMBER = 1.502
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -40,6 +40,8 @@ VERSION_NUMBER = 1.501
     voices = true --export:
     alerts = true --export:
     CollisionSystem = true --export:
+    AutoShieldToggle = true --export:
+    PreventPvP = true --export:
     
     -- Ship Handling variables
     YawStallAngle = 35 --export:
@@ -330,6 +332,7 @@ VERSION_NUMBER = 1.501
     local oldShowHud = showHud
     local AtlasOrdered = {}
     local notPvPZone = false
+    local pvpDist = 0
 
     local pipeMessage = ""
     local ReversalIsOn = nil
@@ -459,7 +462,7 @@ VERSION_NUMBER = 1.501
                 "InvertMouse", "autoRollPreference", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
                 "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", "Cockpit",
-                "voices", "alerts", "CollisionSystem"}
+                "voices", "alerts", "CollisionSystem", "AutoShieldToggle", "PreventPvP"}
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "ReEntryPitch","LockPitchTarget", "AutopilotSpaceDistance", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
@@ -1773,7 +1776,7 @@ VERSION_NUMBER = 1.501
         return Radar
     end 
     local function HudClass() -- Everything HUD display releated including tick
-        local pvpDist = 0
+
         local gravConstant = 9.80665
 
         --Local Huds Functions
@@ -2740,10 +2743,16 @@ VERSION_NUMBER = 1.501
                 PrimaryR = PvPR
                 PrimaryG = PvPG
                 PrimaryB = PvPB
+                if shield_1 and AutoShieldToggle and shield_1.getState() == 0 then
+                    shield_1.toggle()
+                end
             else
                 PrimaryR = SafeR
                 PrimaryG = SafeG
                 PrimaryB = SafeB
+                if shield_1 and AutoShieldToggle and shield_1.getState() == 1 then
+                    shield_1.toggle()
+                end
             end
             rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
             rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..   mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]    
@@ -4337,7 +4346,12 @@ VERSION_NUMBER = 1.501
                         apDist = apDist - AutopilotSpaceDistance
                     end
 
-                    if apDist <= brakeDistance then
+                    if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000) then
+                        if (PreventPvP and pvpDist <= brakeDistance+10000) then 
+                            ToggleAutopilot()
+                            msgText = "Autopilot cancelled to prevent crossing PvP Line" 
+                            BrakeIsOn=true
+                        end
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Braking" then
                             play("apBrk","AP")
@@ -4423,7 +4437,12 @@ VERSION_NUMBER = 1.501
                         apDist = apDist - AutopilotSpaceDistance
                     end
 
-                    if apDist <= brakeDistance then
+                    if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000) then
+                        if (PreventPvP and pvpDist <= brakeDistance+10000) then 
+                            ToggleAutopilot()
+                            msgText = "Autopilot cancelled to prevent crossing PvP Line" 
+                            BrakeIsOn=true
+                        end
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Braking" then
                             play("apBrk","AP")
@@ -5180,14 +5199,17 @@ VERSION_NUMBER = 1.501
                                                             vanillaMaxVolume, massEmpty, curMass, curTime}
                         end
                         if (type == "Space Fuel Tank") then
-                            local vanillaMaxVolume = 2400
-                            local massEmpty = 182.67
+                            local vanillaMaxVolume = 600
+                            local massEmpty = 35.03
                             if hp > 10000 then
                                 vanillaMaxVolume = 76800 -- volume in kg of L tank
                                 massEmpty = 5480
                             elseif hp > 1300 then
                                 vanillaMaxVolume = 9600 -- volume in kg of M
                                 massEmpty = 988.67
+                            elseif hp > 150 then
+                                vanillaMaxVolume = 2400 -- volume in kg of S
+                                massEmpty = 182.67                                
                             end
                             curMass = mass - massEmpty
                             if fuelTankHandlingSpace > 0 then
