@@ -161,6 +161,7 @@ VERSION_NUMBER = 1.502
     stablized = true
     UseExtra = "Off"
     LastVersionUpdate = 0.000
+    BrakeForceMultiplier = 1.0
 
     -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
         local autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
@@ -170,7 +171,7 @@ VERSION_NUMBER = 1.502
                     "AutopilotPlanetGravity", "PrevViewLock", "AutopilotTargetName", "AutopilotTargetCoords",
                     "AutopilotTargetIndex", "TotalDistanceTravelled",
                     "TotalFlightTime", "SavedLocations", "VectorToTarget", "LocationIndex", "LastMaxBrake", 
-                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "iphCondition", "stablized", "UseExtra"}
+                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "iphCondition", "stablized", "UseExtra", "BrakeForceMultiplier"}
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -1790,7 +1791,7 @@ VERSION_NUMBER = 1.502
                 distsz = vec3(WorldPos):dist(safeWorldPos)
                 if distsz < safeRadius then  
                     return true, mabs(distsz - safeRadius)
-                end
+                end 
                 distp = vec3(WorldPos):dist(vec3(planet.center))
                 if distp < szradius then szsafe = true else szsafe = false end
                 if mabs(distp - szradius) < mabs(distsz - safeRadius) then 
@@ -4042,33 +4043,21 @@ VERSION_NUMBER = 1.502
                                 cmdCruise(endSpeed*3.6+1)
                                 -- And set pitch to something that scales with vSpd
                                 -- Well, a pid is made for this stuff
+                                local altDiff = OrbitTargetOrbit - coreAltitude
+
                                 if (VSpdPID == nil) then
-                                    VSpdPID = pid.new(0.5, 0, 10 * 0.1) -- Has to stay low at base to avoid overshoot
+                                    VSpdPID = pid.new(0.1, 0, 1 * 0.1)
                                 end
-                                local speedToInject = vSpd
-                                local altdiff = coreAltitude - OrbitTargetOrbit
-                                local absAltdiff = mabs(altdiff)
-                                if vSpd < 10 and mabs(adjustedPitch) < 10 and absAltdiff < 100 then
-                                    speedToInject = vSpd*2 -- Force it to converge when it's close
-                                end
-                                if speedToInject < 10 and mabs(adjustedPitch) < 10 and absAltdiff < 100 then -- And do it again when it's even closer
-                                    speedToInject = speedToInject*2
-                                end
-                                -- I really hate this, but, it really needs it still/again... 
-                                if speedToInject < 5 and mabs(adjustedPitch) < 5 and absAltdiff < 100 then -- And do it again when it's even closer
-                                    speedToInject = speedToInject*4
-                                end
-                                -- TBH these might not be super necessary anymore after changes, might can remove at least one, but two tends to make everything smoother
-                                VSpdPID:inject(speedToInject)
-                                orbitPitch = uclamp(-VSpdPID:get(),-90,90)
-                                -- Also, add pitch to try to adjust us to our correct altitude
-                                -- Dammit, that's another PID I guess... I don't want another PID... 
-                                if (OrbitAltPID == nil) then
-                                    OrbitAltPID = pid.new(0.15, 0, 5 * 0.1)
-                                end
-                                OrbitAltPID:inject(altdiff) -- We clamp this to max 15 degrees so it doesn't screw us too hard
-                                -- And this will fight with the other PID to keep vspd reasonable
-                                orbitPitch = uclamp(orbitPitch - uclamp(OrbitAltPID:get(),-15,15),-90,90)
+                                -- Scale vspd up to cubed as altDiff approaches 0, starting at 2km
+                                -- 20's are kinda arbitrary but I've tested lots of others and these are consistent
+                                -- The 2000's also.  
+                                -- Also the smoothstep might not be entirely necessary alongside the cubing but, I'm sure it helps...
+                                -- Well many of the numbers changed, including the cubing but.  This looks amazing.  
+                                VSpdPID:inject(altDiff-vSpd*uclamp((utils.smoothstep(2000-altDiff,-2000,2000))^6*10,1,10)) 
+                                
+
+                                orbitPitch = uclamp(VSpdPID:get(),-60,60) -- Prevent it from pitching so much that cruise starts braking
+                                
                             end
                         end
                     else
@@ -4570,27 +4559,53 @@ VERSION_NUMBER = 1.502
                     curBrake = LastMaxBrake -- Assume space brakes
                 end
 
-
+                local hSpd = constructForward:project_on_plane(worldVertical):normalize():dot(constructVelocity)
                 local airFrictionVec = vec3(core.getWorldAirFrictionAcceleration())
-                local airFriction = msqrt(airFrictionVec:len() - airFrictionVec:project_on(up):len()) * coreMass
+                --local airFriction = msqrt(airFrictionVec:len() - airFrictionVec:project_on(up):len()) * coreMass
+                local airFriction = airFrictionVec:len()*coreMass -- Actually it probably increases over duration as we drop in atmo... 
                 -- Assume it will halve over our duration, if not sqrt.  We'll try sqrt because it's underestimating atm
                 -- First calculate stopping to 100 - that all happens with full brake power
-                if velMag > 100 then 
-                    brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(velMag, 100, coreMass, 0, 0,
-                                                    curBrake + airFriction)
+
+                -- So, hSpd.  We don't need to stop only hSpd.  But hSpd plus some percentage related to hSpd/velMag
+                -- Or rather, find out what percentage of our speed is hSpd
+                -- And figure out how much we need to bleed the overall speed to get hSpd to 0
+                -- Well that begs the question, how do brakes even work.  Do they apply their force separately in each axis?
+                -- I think so, in which case hSpd should just work on its own... 
+                -- And probably, like engines, the speed that determines effectiveness is along the axis as well
+
+                if hSpd > 100 then 
+                    brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(hSpd, 100, coreMass, 0, 0,
+                                                    curBrake) --  + airFriction
                     -- Then add in stopping from 100 to 0 at what averages to half brake power.  Assume no friction for this
-                    local lastDist, brakeTime2 = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, curBrake/2)
+                    -- But half isn't right, this is overestimating how much force we have.  And more time is spent in the slowest, worst speeds
+                    -- I will arbitrarily try 1/3, 1/4, etc to see if those help.  
+                    -- Kinda did but it's not the problem.  The problem is using velMag and not horizontal velocity
+                    -- Though some of it will have to go into velMag...?  Let's try just hSpd
+                    -- So, hSpd is very good.  But, it takes a long time to finish and lots of altitude gets lost
+                    -- Even at x1 instead of 1.1 or etc, it thinks it has less brakes than it really does.  
+                    -- Which must be this /2.  Let's try going without that once we're slowed down
+                    -- That went poorly, it has less than 1x curBrake.  Let's try *0.75
+                    -- Better but still not right.  0.66?
+                    -- Still too high.  0.55?  That works pretty damn well.  
+                    local lastDist, brakeTime2 = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, curBrake*0.55)
                     brakeDistance = brakeDistance + lastDist
                 else -- Just calculate it regularly assuming the value will be halved while we do it, assuming no friction
-                    brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, curBrake/2)
+                    brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(hSpd, 0, coreMass, 0, 0, curBrake*0.55)
                 end
                 -- HoldAltitude is the alt we want to hold at
 
                 -- Dampen this.
-                local altDiff = HoldAltitude - coreAltitude
+
+                -- Consider: 100m below target, but 30m/s vspeed.  We should pitch down.  
+                -- Or 100m above and -30m/s vspeed.  So (Hold-Core) - vspd
+                -- Scenario 1: Hold-core = -100.  Scen2: Hold-core = 100
+                -- 1: 100-30 = 70     2: -100--30 = -70
+
+                local altDiff = (HoldAltitude - coreAltitude) - vSpd -- Maybe a multiplier for vSpd here...
                 -- This may be better to smooth evenly regardless of HoldAltitude.  Let's say, 2km scaling?  Should be very smooth for atmo
                 -- Even better if we smooth based on their velocity
-                local minmax = 500 + velMag
+                local minmax = 200+velMag -- Previously 500+
+                if Reentry or spaceLand then minMax = 2000+velMag end -- Smoother reentries
                 -- Smooth the takeoffs with a velMag multiplier that scales up to 100m/s
                 local velMultiplier = 1
                 if AutoTakeoff then velMultiplier = uclamp(velMag/100,0.1,1) end
@@ -4598,7 +4613,8 @@ VERSION_NUMBER = 1.502
 
                             -- atmosDensity == 0 and
                 if not Reentry and not spaceLand and not VectorToTarget and constructForward:dot(constructVelocity:normalize()) < 0.99 then
-                    -- Widen it up and go much harder based on atmo level
+                    -- Widen it up and go much harder based on atmo level if we're exiting atmo and velocity is keeping up with the nose
+                    -- I.e. we have a lot of power and need to really get out of atmo with that power instead of feeding it to speed
                     -- Scaled in a way that no change up to 10% atmo, then from 10% to 0% scales to *20 and *2
                     targetPitch = (utils.smoothstep(altDiff, -minmax*uclamp(20 - 19*atmosDensity*10,1,20), minmax*uclamp(20 - 19*atmosDensity*10,1,20)) - 0.5) * 2 * MaxPitch * uclamp(2 - atmosDensity*10,1,2) * velMultiplier
                     --if coreAltitude > HoldAltitude and targetPitch == -85 then
@@ -4698,12 +4714,39 @@ VERSION_NUMBER = 1.502
                     local targetYaw = math.deg(signedRotationAngle(worldVertical:normalize(),constructVelocity,targetVec))*2
                     local rollRad = math.rad(mabs(adjustedRoll))
                     if velMag > minRollVelocity and atmosDensity > 0.01 then
-                        local maxRoll = uclamp(90-targetPitch*2,-90,90) -- No downwards roll allowed? :( 
+                        local rollminmax = 1000+velMag -- Roll should taper off within 1km instead of 100m because it's aggressive
+                        -- And should also very aggressively use vspd so it can counteract high rates of ascent/descent
+                        -- Otherwise this matches the formula to calculate targetPitch
+                        local rollAltitudeLimiter = (utils.smoothstep(altDiff-vSpd*10, -rollminmax, rollminmax) - 0.5) * 2 * MaxPitch
+                        local maxRoll = uclamp(90-rollAltitudeLimiter,0,180) -- Reverse roll to fix altitude seems good (max 180 instead of max 90)
                         targetRoll = uclamp(targetYaw*2, -maxRoll, maxRoll)
                         local origTargetYaw = targetYaw
                         -- 4x weight to pitch consideration because yaw is often very weak compared and the pid needs help?
                         targetYaw = uclamp(uclamp(targetYaw,-YawStallAngle*0.80,YawStallAngle*0.80)*math.cos(rollRad) + 4*(adjustedPitch-targetPitch)*math.sin(math.rad(adjustedRoll)),-YawStallAngle*0.80,YawStallAngle*0.80) -- We don't want any yaw if we're rolled
-                        targetPitch = uclamp(uclamp(targetPitch*math.cos(rollRad),-PitchStallAngle*0.80,PitchStallAngle*0.80) + mabs(uclamp(mabs(origTargetYaw)*math.sin(rollRad),-PitchStallAngle*0.80,PitchStallAngle*0.80)),-PitchStallAngle*0.80,PitchStallAngle*0.80) -- Always yaw positive 
+                        -- While this already should only pitch based on current roll, it still pitches early, resulting in altitude increase before the roll kicks in
+                        -- I should adjust the first part so that when rollRad is relatively far from targetRoll, it is lower
+                        local rollMatchMult = 1
+                        if targetRoll ~= 0 then
+                            rollMatchMult = mabs(rollRad/targetRoll) -- Should scale from 0 to 1... 
+                        -- Such that if target is 90 and roll is 0, we have 0%.  If it's 90 and roll is 80, we have 8/9 
+                        end
+                        -- But if we're going say from 90 to 0, that's bad.  
+                        -- We need to definitely subtract. 
+                        -- Then basically on a scale from 0 to 90 is fine enough, a little arbitrary
+                        rollMatchMult = (90-uclamp(mabs(targetRoll-adjustedRoll),0,90))/90
+                        -- So if we're 90 degrees apart, it does 0%, if we're 10 degrees apart it does 8/9
+                        -- We should really probably also apply that to altitude pitching... but I won't, not unless I see something needing it
+                        -- Also it could use some scaling otherwise tho, it doesn't pitch enough.  Taking off the min/max 0.8 to see if that helps... 
+                        -- Dont think it did.  Let's do a static scale
+                        -- Yeah that went pretty crazy in a bad way.  Which is weird.  It started bouncing between high and low pitch while rolled
+                        -- Like the rollRad or something is dependent on velocity vector.  It also immediately rolled upside down... 
+                        local rollPitch = targetPitch
+                        if mabs(adjustedRoll) > 90 then rollPitch = -rollPitch end
+                        targetPitch = rollMatchMult*uclamp(uclamp(rollPitch*math.cos(rollRad),-PitchStallAngle*0.8,PitchStallAngle*0.8) + mabs(uclamp(mabs(origTargetYaw)*math.sin(rollRad),-PitchStallAngle*0.80,PitchStallAngle*0.80)),-PitchStallAngle*0.80,PitchStallAngle*0.80) -- Always yaw positive 
+                        -- And also it seems pitch might be backwards when we roll upside down...
+
+                        -- But things were working great with just the rollMatchMult and vSpd*10
+                        
                     else
                         targetRoll = 0
                         targetYaw = uclamp(targetYaw,-YawStallAngle*0.80,YawStallAngle*0.80)
@@ -4749,19 +4792,25 @@ VERSION_NUMBER = 1.502
                         -- We just don't know the last leg
                         -- a2 + b2 = c2.  c2 - b2 = a2
                         local targetAltitude = planet:getAltitude(CustomTarget.position)
-                        local distanceToTarget = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
+                        --local olddistanceToTarget = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
+                        local distanceToTarget = targetVec:project_on_plane(worldVertical):len()
 
                         --local targetPosAtAltitude = CustomTarget.position + worldVertical*(coreAltitude - targetAltitude) - planet.center
                         --local worldPosPlanetary = worldPos - planet.center
                         --local distanceToTarget = (planet.radius+coreAltitude) * math.atan(worldPosPlanetary:cross(targetPosAtAltitude):len(), worldPosPlanetary:dot(targetPosAtAltitude))
 
-                        local hSpd = constructVelocity:len() - mabs(vSpd)
+                        --local oldhSpd = constructVelocity:len() - mabs(vSpd)
+                        -- New hSpd has been moved to above where brakeDistance happens
+                        --p(oldhSpd .. " old vs " .. hSpd .. " new.  Distance old: " .. olddistanceToTarget .. ", new: " .. distanceToTarget)
                     
                         --StrongBrakes = ((planet.gravity * 9.80665 * coreMass) < LastMaxBrakeInAtmo)
                         StrongBrakes = true -- We don't care about this or glide landing anymore and idk where all it gets used
                         
                         -- Fudge it with the distance we'll travel in a tick - or half that and the next tick accounts for the other? idk
-                        if (not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance + (velMag*deltaTick)/2 and 
+
+                        -- Just fudge it arbitrarily by 5% so that we get some feathering for better accuracy
+                        -- Make it think it will take longer to brake than it will
+                        if (not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance and -- + (velMag*deltaTick)/2
                                 (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99  or VectorStatus == "Finalizing Approach")) then 
                             VectorStatus = "Finalizing Approach" 
                             cmdThrottle(0) -- Kill throttle in case they weren't in cruise
@@ -6246,6 +6295,7 @@ VERSION_NUMBER = 1.502
             simulatedY = 0
             unit.stopTimer("animateTick")
         elseif timerId == "hudTick" then -- Timer for all hud updates not called elsewhere
+            if not planet then return end -- Avoid errors if APTick hasn't initialized before this is called
 
             -- Local Functions for hudTick
                 local function DrawCursorLine(newContent)
@@ -6885,7 +6935,7 @@ VERSION_NUMBER = 1.502
 
             -- Auto Navigation (Cruise Control)
             if (autoNavigationAcceleration:len() > constants.epsilon) then -- This means it's in cruise
-                if (brakeInput ~= 0 or autoNavigationUseBrake or mabs(constructVelocityDir:dot(constructForward)) < 0.8)
+                if (brakeInput ~= 0 or autoNavigationUseBrake or mabs(constructVelocityDir:dot(constructForward)) < 0.5)
                 then
                     autoNavigationEngineTags = autoNavigationEngineTags .. ', brake'
                 end
