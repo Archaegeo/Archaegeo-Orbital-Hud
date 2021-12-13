@@ -4015,80 +4015,67 @@ VERSION_NUMBER = 1.502
                             BeginReentry()
                         end
                     end
-                    if orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.eccentricity < 1 and coreAltitude > OrbitTargetOrbit*0.9 and coreAltitude < OrbitTargetOrbit*1.4 then
-                        if orbit.apoapsis ~= nil then
-                            if (orbit.periapsis.altitude >= OrbitTargetOrbit*0.99 and orbit.apoapsis.altitude >= OrbitTargetOrbit*0.99 and 
-                                orbit.periapsis.altitude < orbit.apoapsis.altitude and orbit.periapsis.altitude*1.05 >= orbit.apoapsis.altitude) or OrbitAchieved then -- This should get us a stable orbit within 10% with the way we do it
-                                if OrbitAchieved then
-                                    BrakeIsOn = false
-                                    cmdThrottle(0)
-                                    orbitPitch = 0
-                                    
-                                    if not orbitalParams.VectorToTarget then
-                                        msgText = "Orbit complete"
-                                        play("orCom", "OB")
-                                        ToggleIntoOrbit()
-                                    end
-                                else
-                                    OrbitTicks = OrbitTicks + 1 -- We want to see a good orbit for 2 consecutive ticks plz
-                                    if OrbitTicks >= 2 then
-                                        OrbitAchieved = true
-                                    end
-                                end
-                                
-                            else
-                                orbitMsg = "Adjusting Orbit - OrbitHeight: "..orbitHeightString
-                                orbitalRecover = true
-                                -- Just set cruise to endspeed...
-                                cmdCruise(endSpeed*3.6+1)
-                                -- And set pitch to something that scales with vSpd
-                                -- Well, a pid is made for this stuff
-                                local altDiff = OrbitTargetOrbit - coreAltitude
-
-                                if (VSpdPID == nil) then
-                                    VSpdPID = pid.new(0.1, 0, 1 * 0.1)
-                                end
-                                -- Scale vspd up to cubed as altDiff approaches 0, starting at 2km
-                                -- 20's are kinda arbitrary but I've tested lots of others and these are consistent
-                                -- The 2000's also.  
-                                -- Also the smoothstep might not be entirely necessary alongside the cubing but, I'm sure it helps...
-                                -- Well many of the numbers changed, including the cubing but.  This looks amazing.  
-                                VSpdPID:inject(altDiff-vSpd*uclamp((utils.smoothstep(2000-altDiff,-2000,2000))^6*10,1,10)) 
-                                
-
-                                orbitPitch = uclamp(VSpdPID:get(),-60,60) -- Prevent it from pitching so much that cruise starts braking
-                                
+                    if (orbit.apoapsis and orbit.periapsis.altitude >= OrbitTargetOrbit*0.99 and orbit.apoapsis.altitude >= OrbitTargetOrbit*0.99 and 
+                        orbit.periapsis.altitude < orbit.apoapsis.altitude and orbit.periapsis.altitude*1.05 >= orbit.apoapsis.altitude) or OrbitAchieved then -- This should get us a stable orbit within 10% with the way we do it
+                        if OrbitAchieved then
+                            BrakeIsOn = false
+                            cmdThrottle(0)
+                            orbitPitch = 0
+                            
+                            if not orbitalParams.VectorToTarget then
+                                msgText = "Orbit complete"
+                                play("orCom", "OB")
+                                ToggleIntoOrbit()
+                            end
+                        else
+                            OrbitTicks = OrbitTicks + 1 -- We want to see a good orbit for 2 consecutive ticks plz
+                            if OrbitTicks >= 2 then
+                                OrbitAchieved = true
                             end
                         end
+                        
                     else
-                        local orbitalMultiplier = 2.75
-                        local pcs = mabs(round(escapeVel*orbitalMultiplier))
-                        local mod = pcs%50
-                        if mod > 0 then pcs = (pcs - mod) + 50 end
-                        BrakeIsOn = false
-                        if coreAltitude < OrbitTargetOrbit*0.8 then
-                            orbitMsg = "Escaping planet gravity - OrbitHeight: "..orbitHeightString
-                            orbitPitch = utils.map(vSpd, 200, 0, -15, 80)
-                        elseif coreAltitude >= OrbitTargetOrbit*0.8 and coreAltitude < OrbitTargetOrbit*1.15 then
-                            orbitMsg = "Approaching orbital corridor - OrbitHeight: "..orbitHeightString
-                            pcs = pcs*0.75
-                            orbitPitch = utils.map(vSpd, 100, -100, -15, 65)
-                        elseif coreAltitude >= OrbitTargetOrbit*1.15 and coreAltitude < OrbitTargetOrbit*1.5 then
-                            orbitMsg = "Approaching orbital corridor - OrbitHeight: "..orbitHeightString
-                            pcs = pcs*0.75
-                            if vSpd < 0 or orbitalRecover then
-                                orbitPitch = utils.map(coreAltitude, OrbitTargetOrbit*1.5, OrbitTargetOrbit*1.01, -30, 0) -- Going down? pitch up.
-                                --orbitPitch = utils.map(vSpd, 100, -100, -15, 65)
-                            else
-                                orbitPitch = utils.map(coreAltitude, OrbitTargetOrbit*0.99, OrbitTargetOrbit*1.5, 0, 30) -- Going up? pitch down.
-                            end
-                        elseif coreAltitude > OrbitTargetOrbit*1.5 then
-                            orbitMsg = "Reentering orbital corridor - OrbitHeight: "..orbitHeightString
-                            orbitPitch = -65 --utils.map(vSpd, 25, -200, -65, -30)
-                            local pcsAdjust = utils.map(vSpd, -150, -400, 1, 0.55)
-                            pcs = pcs*pcsAdjust
+                        orbitMsg = "Adjusting Orbit - OrbitHeight: "..orbitHeightString
+                        orbitalRecover = true
+
+                        local altDiff = (OrbitTargetOrbit - coreAltitude)
+
+                        if (VSpdPID == nil) then
+                            VSpdPID = pid.new(1, 0, 10 * 0.1)
                         end
-                        cmdCruise(mfloor(pcs))
+
+                        -- If we're within 1km above, stop caring about altitude
+                        if altDiff < 0 and altDiff > -1000 then altDiff = 0 end
+
+                        local maxThrust = Nav:maxForceForward()
+                        local numGs = maxThrust / (coreMass * planet.gravity * 9.8) -- In G's
+                        --p(maxThrust .. " G's. Gravity: " .. planet.gravity)
+
+                        -- Note that we're not using brakes because except for very far approaches with high speeds,
+                        -- We avoid triggering brakes and use thrust to redirect instead of wasting velocity
+
+                        -- We should be able to safely do around 5-10m/s per G per km
+                        -- With a minimum of double that for the big burn
+
+                        -- Target VSpd of 50m/s for every 1km distance, with a minimum of 120m/s to keep things fast
+                        local targetVSpd = math.max(mabs(altDiff)/1000*10*numGs,20*numGs)*utils.sign(altDiff)
+
+                        -- When we're within the 1km above target, kill all vSpd
+                        if altDiff == 0 then targetVSpd = 0 end
+
+                        -- If the targetVSpd is > endSpeed, use that (this implies you're very far from the target alt)
+                        cmdCruise(math.max(endSpeed*3.6+1, mabs(targetVSpd)))
+
+                        VSpdPID:inject(targetVSpd - vSpd)
+
+                        local radianRoll = (adjustedRoll / 180) * math.pi -- These should really go at the start of apTick
+                        local corrX = math.cos(radianRoll)
+                        local corrY = math.sin(radianRoll)
+                        local velocityPitch = getPitch(worldVertical, constructVelocity:normalize(), (constructRight * corrX) + (constructUp * corrY)) 
+
+                        -- Prevent it from pitching so much that cruise starts braking
+                        -- And also prevent it from pitching excessively relative to planet
+                        orbitPitch = uclamp(uclamp(VSpdPID:get(),velocityPitch-60,velocityPitch+60),-60,60)
                     end
                 end
                 if orbitPitch ~= nil then
@@ -6484,6 +6471,17 @@ VERSION_NUMBER = 1.502
         end
     end
 
+    function getPitch(gravityDirection, forward, right)
+            
+        local horizontalForward = gravityDirection:cross(right):normalize_inplace() -- Cross forward?
+        local pitch = math.acos(uclamp(horizontalForward:dot(-forward), -1, 1)) * constants.rad2deg -- acos?
+        
+        if horizontalForward:cross(-forward):dot(right) < 0 then
+            pitch = -pitch
+        end -- Cross right dot forward?
+        return pitch
+    end
+
     function script.onFlush()
         -- Local functions for onFlush
             local function composeAxisAccelerationFromTargetSpeedV(commandAxis, targetSpeed)
@@ -6575,17 +6573,6 @@ VERSION_NUMBER = 1.502
                 --system.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
             
                 return finalAcceleration
-            end
-
-            local function getPitch(gravityDirection, forward, right)
-            
-                local horizontalForward = gravityDirection:cross(right):normalize_inplace() -- Cross forward?
-                local pitch = math.acos(uclamp(horizontalForward:dot(-forward), -1, 1)) * constants.rad2deg -- acos?
-                
-                if horizontalForward:cross(-forward):dot(right) < 0 then
-                    pitch = -pitch
-                end -- Cross right dot forward?
-                return pitch
             end
 
         if antigrav and not ExternalAGG then
