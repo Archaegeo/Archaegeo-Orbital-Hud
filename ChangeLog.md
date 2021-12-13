@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.503 - Dual radars same seat
+- Fixes to roll control and autopilot accuracy by Dimencia
+- Added support for autoswap between atmo/space radar on same seat/control unit.
+    To use: connect both radars to seat, rerun hud, look at seat and hit CTRL-L, you should see radar_1 and radar_2
+    Ship will use the appropriate radar based on in atmo or in space.
+- Removed `Cockpit` user variable and cockpit code and cockpitPB.json since cockpit works with the hud now.
+
 Version 1.502
 - Added support for XS space fuel tank.
 - Added user variable `AutoShieldToggle` set to true.

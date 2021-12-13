@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.502
+VERSION_NUMBER = 1.503
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -36,7 +36,6 @@ VERSION_NUMBER = 1.502
     SetWaypointOnExit = false --export:
     AlwaysVSpd = false --export:
     BarFuelDisplay = true --export:
-    Cockpit = false --export:
     voices = true --export:
     alerts = true --export:
     CollisionSystem = true --export:
@@ -161,7 +160,6 @@ VERSION_NUMBER = 1.502
     stablized = true
     UseExtra = "Off"
     LastVersionUpdate = 0.000
-    BrakeForceMultiplier = 1.0
 
     -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
         local autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
@@ -171,7 +169,7 @@ VERSION_NUMBER = 1.502
                     "AutopilotPlanetGravity", "PrevViewLock", "AutopilotTargetName", "AutopilotTargetCoords",
                     "AutopilotTargetIndex", "TotalDistanceTravelled",
                     "TotalFlightTime", "SavedLocations", "VectorToTarget", "LocationIndex", "LastMaxBrake", 
-                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "iphCondition", "stablized", "UseExtra", "BrakeForceMultiplier"}
+                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "iphCondition", "stablized", "UseExtra"}
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -341,6 +339,7 @@ VERSION_NUMBER = 1.502
     local nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
     local collisionAlertStatus = false
     local collisionTarget = nil
+    local radars = {}
 
 
 -- Function Definitions that are used in more than one areause 
@@ -462,7 +461,7 @@ VERSION_NUMBER = 1.502
             local saveableVariablesBoolean = {"userControlScheme", "soundFolder", "freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
                 "InvertMouse", "autoRollPreference", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
-                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", "Cockpit",
+                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", 
                 "voices", "alerts", "CollisionSystem", "AutoShieldToggle", "PreventPvP"}
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "ReEntryPitch","LockPitchTarget", "AutopilotSpaceDistance", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
@@ -1689,9 +1688,9 @@ VERSION_NUMBER = 1.502
                 end
             end
 
-            if (radar_1) then
-                radarContacts = #radar_1.getConstructIds()
-                local radarData = radar_1.getData()
+            if (radars[1]) then
+                radarContacts = #radars[1].getConstructIds()
+                local radarData = radars[1].getData()
                 local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
              
                 if radarContacts > 0 then
@@ -1702,15 +1701,15 @@ VERSION_NUMBER = 1.502
                         local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
                         local sz = sizeMap[size]
                         distance = tonum(distance)
-                        if radar_1.hasMatchingTransponder(id) == 1 then
+                        if radars[1].hasMatchingTransponder(id) == 1 then
                             table.insert(friendlies,id)
                         end
-                        local cType = radar_1.getConstructType(id)
+                        local cType = radars[1].getConstructType(id)
                         if CollisionSystem then
                             if sz > 27 or cType == "static" or cType == "space"
                             then
                                 static = static + 1
-                                local name = radar_1.getConstructName(id)
+                                local name = radars[1].getConstructName(id)
                                 local construct = contacts[id]
                                 if construct == nil then
                                     sz = sz+coreHalfDiag
@@ -1752,6 +1751,22 @@ VERSION_NUMBER = 1.502
                     target = radarData:find('identifiedConstructs":%[%]')
                 else
                     data = radarData:find('worksInEnvironment":false')
+                end
+            end
+        end
+
+        function Radar.assignRadar()
+            if radars[1]==radar_1 and radar_1.isOperational() ~= 1 then
+                if radar_2 and radar_2.isOperational() == 1 then 
+                    radars[1] = radar_2
+                else 
+                    radars[1]=nil
+                end
+            elseif radars[1]==radar_2 and radar_2.isOperational() ~= 1 then
+                if radar_1 and radar_1.isOperational() == 1 then 
+                    radars[1] = radar_1
+                else 
+                    radars[1]=nil
                 end
             end
         end
@@ -3068,15 +3083,13 @@ VERSION_NUMBER = 1.502
                     if peris == 1 then
                         sysDestWid(radarPanelID)
                         radarPanelID = nil
-                        _autoconf.displayCategoryPanel(radar, radar_size, L_TEXT("ui_lua_widget_periscope", "Periscope"),
+                        _autoconf.displayCategoryPanel(radars, 1, L_TEXT("ui_lua_widget_periscope", "Periscope"),
                             "periscope")
                         perisPanelID = _autoconf.panels[_autoconf.panels_size]
                     end
-                    placeRadar = true
-                    if radarPanelID == nil and placeRadar then
-                        _autoconf.displayCategoryPanel(radar, radar_size, L_TEXT("ui_lua_widget_radar", "Radar"), "radar")
+                    if radarPanelID == nil then
+                        _autoconf.displayCategoryPanel(radars, 1, L_TEXT("ui_lua_widget_radar", "Radar"), "radar")
                         radarPanelID = _autoconf.panels[_autoconf.panels_size]
-                        placeRadar = false
                     end
                     peris = 0
                 end
@@ -3094,9 +3107,10 @@ VERSION_NUMBER = 1.502
                     radarMessage = radarMessage..svgText( friendx, friendy, "Friendlies In Range", "pbright txtbig txtmid")
                     for k, v in pairs(friendlies) do
                         friendy = friendy + 20
-                        radarMessage = radarMessage..svgText(friendx, friendy, radar_1.getConstructName(v), "pdim txtmid")
+                        radarMessage = radarMessage..svgText(friendx, friendy, radars[1].getConstructName(v), "pdim txtmid")
                     end
                 end
+
                 if target == nil and perisPanelID == nil then
                     peris = 1
                     ToggleRadarPanel()
@@ -5421,9 +5435,6 @@ VERSION_NUMBER = 1.502
                     oldShowHud = _G[v]
                 elseif v == "BrakeToggleDefault" then 
                     BrakeToggleStatus = BrakeToggleDefault
-                elseif v == "Cockpit" then
-                    system.showScreen(0)
-                    dbHud_1.setStringValue("content", "")
                 end
             end
 
@@ -5467,10 +5478,10 @@ VERSION_NUMBER = 1.502
                     -- Add a new location to SavedLocations
                     local position = worldPos
                     local name = planet.name .. ". " .. #SavedLocations
-                    if radar_1 then -- Just match the first one
-                        local id,_ = radar_1.getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
+                    if radars[1] then -- Just match the first one
+                        local id,_ = radars[1].getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
                         if id ~= nil and id ~= "" then
-                            name = name .. " " .. radar_1.getConstructName(id)
+                            name = name .. " " .. radars[1].getConstructName(id)
                         end
                     end
                     
@@ -5842,6 +5853,15 @@ VERSION_NUMBER = 1.502
             unit.setTimer("oneSecond", 1)
             unit.setTimer("tenthSecond", 1/10)
             unit.setTimer("fiveSecond", 5) 
+            radars[1]=nil
+            if radar_1 or radar_2 then 
+                if radar_2 and radar_2.isOperational() == 1 then 
+                    radars[1] = radar_2
+                elseif radar_1 and radar_1.isOperational() == 1 then
+                    radars[1] = radar_1
+                end
+                RADAR.assignRadar()
+            end
             play("start","SU")
         end)
         coroutine.resume(beginSetup)
@@ -6403,7 +6423,8 @@ VERSION_NUMBER = 1.502
             if showSettings and settingsVariables ~= {} then 
                 HUD.DrawSettings(newContent) 
             end
-            if radar_1 then HUD.DrawRadarInfo() end
+            if radar_1 or radar_2 then RADAR.assignRadar() end
+            if radars[1] then HUD.DrawRadarInfo() end
             HUD.HUDEpilogue(newContent)
             newContent[#newContent + 1] = stringf(
                 [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
@@ -7008,11 +7029,7 @@ VERSION_NUMBER = 1.502
         if SetupComplete then
             Nav:update()
             if not Animating and content ~= LastContent then
-                if not Cockpit then 
-                    system.setScreen(content) 
-                else
-                    dbHud_1.setStringValue("content", content)
-                end
+                system.setScreen(content) 
             end
             LastContent = content
         end
@@ -7794,13 +7811,13 @@ VERSION_NUMBER = 1.502
     end
 
     function script.onEnter(id)
-        if radar_1 and not inAtmo and not notPvPZone then 
+        if radars[1] and not inAtmo and not notPvPZone then 
             unit.setTimer("contact",0.1) 
         end
     end
 
     function script.onLeave(id)
-        if radar_1 and CollisionSystem then 
+        if radars[1] and CollisionSystem then 
             if #contacts > 650 then 
                 id = tostring(id)
                 contacts[id] = nil 
