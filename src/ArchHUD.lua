@@ -4033,140 +4033,64 @@ VERSION_NUMBER = 1.503
                     local corrX = math.cos(radianRoll)
                     local corrY = math.sin(radianRoll)
                     local velocityPitch = getPitch(worldVertical, constructVelocity:normalize(), (constructRight * corrX) + (constructUp * corrY)) 
-                    --if orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.eccentricity < 1 and coreAltitude > OrbitTargetOrbit*0.9 and coreAltitude < OrbitTargetOrbit*1.4 then
-                        --if orbit.apoapsis ~= nil then
-                            if (orbit.apoapsis and orbit.periapsis.altitude >= OrbitTargetOrbit*0.99 and orbit.apoapsis.altitude >= OrbitTargetOrbit*0.99 and 
-                                orbit.periapsis.altitude < orbit.apoapsis.altitude and orbit.periapsis.altitude*1.05 >= orbit.apoapsis.altitude) or OrbitAchieved then -- This should get us a stable orbit within 10% with the way we do it
-                                if OrbitAchieved then
-                                    BrakeIsOn = false
-                                    cmdThrottle(0)
-                                    orbitPitch = 0
-                                    
-                                    if not orbitalParams.VectorToTarget then
-                                        msgText = "Orbit complete"
-                                        play("orCom", "OB")
-                                        ToggleIntoOrbit()
-                                    end
-                                else
-                                    OrbitTicks = OrbitTicks + 1 -- We want to see a good orbit for 2 consecutive ticks plz
-                                    if OrbitTicks >= 2 then
-                                        OrbitAchieved = true
-                                    end
-                                end
-                                
-                            else
-                                orbitMsg = "Adjusting Orbit - OrbitHeight: "..orbitHeightString
-                                orbitalRecover = true
 
-
-
-                                -- What if I try something completely different.
-                                -- Just aim at a tangential trajectory like I do with space AP and calculate braking to achieve it...
-                                -- No, not tangential.  But similar.  Don't use cruise, basically... 
-                                
-                                -- Try to calculate how long it will take to turn a trajectory
-                                -- Which is v hard.  I mean a 90 degree turn should take the same amount of energy as it took to get to the speed
-                                -- Though the ship would also drift while we turn, probably identical to as if we applied engine power to braking
-
-                                -- First get some velocity in the desired direction, probably at a good 45 degrees
-                                -- Point the ship at -90 or 90 pitch relative to velocity, depending on if rising or falling
-                                -- Wait until it will take the calculated amount of time to reach the destination... 
-                                -- Burn until we have an orbit.  
-
-                                -- That's so much work largely because it'd have to become state-based.  I'm calling it.  This is fine enough. 
-
-
-
-
-                                
-                                -- And set pitch to something that scales with vSpd
-                                -- Well, a pid is made for this stuff
-                                local altDiff = (OrbitTargetOrbit - coreAltitude)
-
-                                
-                                -- If we're more than 5km above the target, use a higher speed that scales with distance
-                                -- Or below.  Why not.  And 10km.  Why not. 
-                                
-                                
-                                if (VSpdPID == nil) then
-                                    VSpdPID = pid.new(1, 0, 10 * 0.1) -- Was 0.1,0,1*0.1 1... converges too slow at low values
-                                    -- At 10, would spend too long trying to stop overshoot and would end up with negative vspd... 
-                                end
-                                -- Scale vspd up to cubed as altDiff approaches 0, starting at 2km
-                                -- 20's are kinda arbitrary but I've tested lots of others and these are consistent
-                                -- The 2000's also.  
-                                -- Also the smoothstep might not be entirely necessary alongside the cubing but, I'm sure it helps...
-                                -- Well many of the numbers changed, including the cubing but.  This looks amazing.  
-                                -- I think best so far is 2k's, ^6, *10.  But let's try something else
-                                --VSpdPID:inject(altDiff-vSpd*uclamp((utils.smoothstep(3000-altDiff,-3000,3000))^6*20,1,20)) 
-                                
-                                --if not LastPitch then LastPitch = adjustedPitch end
-
-                                -- If we're above the target and within reasonable height, and vSpd is low, scale it up to finalize
-                                
-                                if altDiff < 0 and altDiff > -1000 then altDiff = 0 end
-                                --if altDiff > 0 then multiplier = multiplier/4 end -- Care less about controlling speed when ascending
-
-                                --+ (LastPitch-adjustedPitch)*1000
-                                -- The following works great... but doesn't make sense in the smoothstep
-                                --VSpdPID:inject(altDiff-vSpd*uclamp((utils.smoothstep(-altDiff,-4000,6000))*20,1,20)*multiplier)--+ (LastVSpd-vSpd)*500
-
-                                -- Let's try... 
-                                --local limiter = 120
-                                --if altDiff < 0 then limiter = 80 end -- Slower speed on descents
-                                local targetVSpd = math.max(mabs(altDiff)/1000*50,120)*utils.sign(altDiff)
-                                -- Anyone can bleed off 50m/s for every 1km they pass.  Min vspd 120m/s to keep it snappy
-                                -- When within the 1km area above the target, it will do its best to kill vspd entirely
-                                if altDiff == 0 then targetVSpd = 0 end
-
-                                cmdCruise(math.max(endSpeed*3.6+1, mabs(targetVSpd)))
-
-                                VSpdPID:inject(targetVSpd - vSpd)
-                                LastVSpd = vSpd
-                                --LastPitch = adjustedPitch
-                                --orbitPitch = uclamp(VSpdPID:get(),-60,60) -- Prevent it from pitching so much that cruise starts braking
-                                -- Which is actually way harder than it sounds.  This pitch is absolute vs planet gravity
-                                -- I need to find out what relative pitch it would correspond to somehow and keep it from going over/under 60
-
-                                -- Something like orbitPitch-relativePitch
-                                -- Or
-                                
-                                orbitPitch = uclamp(uclamp(VSpdPID:get(),velocityPitch-60,velocityPitch+60),-60,60)
-                                --orbitPitch = VSpdPID:get()
-                                --p("Vel pitch: " .. velocityPitch .. " vs orbit pitch: " .. orbitPitch)
-                                --orbitPitch = uclamp(VSpdPID:get(),velocityPitch-60,velocityPitch+60)
+                    if (orbit.apoapsis and orbit.periapsis.altitude >= OrbitTargetOrbit*0.99 and orbit.apoapsis.altitude >= OrbitTargetOrbit*0.99 and 
+                        orbit.periapsis.altitude < orbit.apoapsis.altitude and orbit.periapsis.altitude*1.05 >= orbit.apoapsis.altitude) or OrbitAchieved then -- This should get us a stable orbit within 10% with the way we do it
+                        if OrbitAchieved then
+                            BrakeIsOn = false
+                            cmdThrottle(0)
+                            orbitPitch = 0
+                            
+                            if not orbitalParams.VectorToTarget then
+                                msgText = "Orbit complete"
+                                play("orCom", "OB")
+                                ToggleIntoOrbit()
                             end
-                        --end
-                    --else
-                    --    local orbitalMultiplier = 2.75
-                    --    local pcs = mabs(round(escapeVel*orbitalMultiplier))
-                    --    local mod = pcs%50
-                    --    if mod > 0 then pcs = (pcs - mod) + 50 end
-                    --    BrakeIsOn = false
-                        --if coreAltitude < OrbitTargetOrbit*0.8 then
-                        --    orbitMsg = "Escaping planet gravity - OrbitHeight: "..orbitHeightString
-                        --    orbitPitch = utils.map(vSpd, 200, 0, -15, 80)
-                        --elseif coreAltitude >= OrbitTargetOrbit*0.8 and coreAltitude < OrbitTargetOrbit*1.15 then
-                        --    orbitMsg = "Approaching orbital corridor - OrbitHeight: "..orbitHeightString
-                        --    pcs = pcs*0.75
-                        --    orbitPitch = utils.map(vSpd, 100, -100, -15, 65)
-                        --elseif coreAltitude >= OrbitTargetOrbit*1.15 and coreAltitude < OrbitTargetOrbit*1.5 then
-                        --    orbitMsg = "Approaching orbital corridor - OrbitHeight: "..orbitHeightString
-                        --    pcs = pcs*0.75
-                        --    if vSpd < 0 or orbitalRecover then
-                        --        orbitPitch = utils.map(coreAltitude, OrbitTargetOrbit*1.5, OrbitTargetOrbit*1.01, -30, 0) -- Going down? pitch up.
-                                --orbitPitch = utils.map(vSpd, 100, -100, -15, 65)
-                        --    else
-                        --        orbitPitch = utils.map(coreAltitude, OrbitTargetOrbit*0.99, OrbitTargetOrbit*1.5, 0, 30) -- Going up? pitch down.
-                        --    end
-                        --elseif coreAltitude > OrbitTargetOrbit*2 then -- This was making low target orbits very dangerous
-                        --    orbitMsg = "Reentering orbital corridor - OrbitHeight: "..orbitHeightString
-                        --    orbitPitch = uclamp(-65,velocityPitch-60,velocityPitch+60) --utils.map(vSpd, 25, -200, -65, -30)
-                        --    local pcsAdjust = utils.map(vSpd, -150, -400, 1, 0.55)
-                        --    pcs = pcs*pcsAdjust
-                        --end
-                    --    cmdCruise(mfloor(pcs))
-                    --end
+                        else
+                            OrbitTicks = OrbitTicks + 1 -- We want to see a good orbit for 2 consecutive ticks plz
+                            if OrbitTicks >= 2 then
+                                OrbitAchieved = true
+                            end
+                        end
+                        
+                    else
+                        orbitMsg = "Adjusting Orbit - OrbitHeight: "..orbitHeightString
+                        orbitalRecover = true -- IDK what this is. 
+
+                        local altDiff = (OrbitTargetOrbit - coreAltitude)
+
+                        if (VSpdPID == nil) then
+                            VSpdPID = pid.new(1, 0, 10 * 0.1)
+                        end
+
+                        -- If we're within 1km above, stop caring about altitude
+                        if altDiff < 0 and altDiff > -1000 then altDiff = 0 end
+
+                        local maxThrust = Nav:maxForceForward()
+                        local numGs = maxThrust / (coreMass * planet.gravity * 9.8) -- In G's
+                        --p(maxThrust .. " G's. Gravity: " .. planet.gravity)
+
+                        -- Note that we're not using brakes because except for very far approaches with high speeds,
+                        -- We avoid triggering brakes and use thrust to redirect instead of wasting velocity
+
+                        -- We should be able to safely do around 5-10m/s per G per km
+                        -- With a minimum of double that for the big burn
+
+                        -- Target VSpd of 50m/s for every 1km distance, with a minimum of 120m/s to keep things fast
+                        local targetVSpd = math.max(mabs(altDiff)/1000*10*numGs,20*numGs)*utils.sign(altDiff)
+
+                        -- When we're within the 1km above target, kill all vSpd
+                        if altDiff == 0 then targetVSpd = 0 end
+
+                        -- If the targetVSpd is > endSpeed, use VSpd instead (this implies you're very far from the target alt)
+                        cmdCruise(math.max(endSpeed*3.6+1, mabs(targetVSpd)))
+
+                        VSpdPID:inject(targetVSpd - vSpd)
+
+                        -- Prevent it from pitching so much that cruise starts braking
+                        -- And also prevent it from pitching excessively relative to planet
+                        orbitPitch = uclamp(uclamp(VSpdPID:get(),velocityPitch-60,velocityPitch+60),-60,60)
+                    end
                 end
                 if orbitPitch ~= nil then
                     if (OrbitPitchPID == nil) then
