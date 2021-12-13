@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.503
+VERSION_NUMBER = 1.504
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:

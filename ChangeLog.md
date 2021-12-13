@@ -1,6 +1,6 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.503 - Dual radars same seat
+Version 1.504 - Dual radars support on same control unit
 - Fixes to roll control and autopilot accuracy by Dimencia
 - Added support for autoswap between atmo/space radar on same seat/control unit.
     To use: connect both radars to seat, rerun hud, look at seat and hit CTRL-L, you should see radar_1 and radar_2
