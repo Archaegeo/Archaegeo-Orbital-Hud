@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.504
+VERSION_NUMBER = 1.505
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -231,8 +231,10 @@ VERSION_NUMBER = 1.504
     local currentHoldAltModifier = holdAltitudeButtonModifier
     local currentAggModifier = antiGravButtonModifier
     local isBoosting = false -- Dodgin's Don't Die Rocket Govenor
-    local brakeDistance, brakeTime = 0
-    local maxBrakeDistance, maxBrakeTime = 0
+    local brakeDistance = 0
+    local brakeTime = 0
+    local maxBrakeDistance = 0
+    local maxBrakeTime = 0
     local autopilotTargetPlanet = nil
     local totalDistanceTrip = 0
     local flightTime = 0
@@ -340,6 +342,7 @@ VERSION_NUMBER = 1.504
     local collisionAlertStatus = false
     local collisionTarget = nil
     local radars = {}
+    local rType = "Atmo"
 
 
 -- Function Definitions that are used in more than one areause 
@@ -1756,19 +1759,30 @@ VERSION_NUMBER = 1.504
         end
 
         function Radar.assignRadar()
-            if radars[1]==radar_1 and radar_1.isOperational() ~= 1 then
+            local function pickType()
+                if radars[1] then
+                    rType = "Atmo"
+                    if radars[1].getData():find('worksInAtmosphere":false') then 
+                        rType = "Space" 
+                    end
+                end
+            end
+            if radar_1 and radars[1]==radar_1 and radar_1.isOperational() ~= 1 then
                 if radar_2 and radar_2.isOperational() == 1 then 
                     radars[1] = radar_2
                 else 
                     radars[1]=nil
                 end
-            elseif radars[1]==radar_2 and radar_2.isOperational() ~= 1 then
+                pickType()
+            elseif radar_2 and radars[1]==radar_2 and radar_2.isOperational() ~= 1 then
                 if radar_1 and radar_1.isOperational() == 1 then 
                     radars[1] = radar_1
                 else 
                     radars[1]=nil
                 end
+                pickType()
             end
+
         end
 
         function Radar.UpdateRadar()
@@ -3123,9 +3137,9 @@ VERSION_NUMBER = 1.504
                 end
             else
                 if data then
-                    radarMessage = svgText(radarX, radarY, "Radar: Jammed", "pbright txtbig txtmid")
+                    radarMessage = svgText(radarX, radarY, rType.." Radar: Jammed", "pbright txtbig txtmid")
                 else
-                    radarMessage = svgText(radarX, radarY, "Radar: No Contacts", "pbright txtbig txtmid")
+                    radarMessage = svgText(radarX, radarY, "Radar: No "..rType.." Contacts", "pbright txtbig txtmid")
                 end
                 if radarPanelID ~= nil then
                     peris = 0
@@ -5775,7 +5789,6 @@ VERSION_NUMBER = 1.504
                         planet.gravity = planet.gravity/9.8
                         planet.center = vec3(planet.center)
                         planet.name = planet.name[1]
-                        if planet.name=="Lacobus" then planet.surfaceMaxAltitude = 1660 end
                 
                         planet.noAtmosphericDensityAltitude = planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
                         planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius))
