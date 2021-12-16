@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.505
+- Added text indication of which radar is running when No Contacts shown.
+- Fixed errors of 1 radar ships
+- Removed 1.501 Lacobus change since data now in official atlas.lua
+
+
 Version 1.504 - Dual radars support on same control unit
 - Fixes to roll control and autopilot accuracy by Dimencia
 - Added support for autoswap between atmo/space radar on same seat/control unit.
