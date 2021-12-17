@@ -4375,10 +4375,11 @@ VERSION_NUMBER = 1.506
                     -- Also it doesn't account for velocity not being in the correct direction, this should
                     local timeUntilBrake = 99999 -- Default in case accel and velocity are both 0 
                     local accel = -(vec3(core.getWorldAcceleration()):dot(constructVelocity:normalize()))
-                    if constructVelocity:len() > 0 or accel > 0 then -- (otherwise divide by 0 errors)
-                        timeUntilBrake = Kinematic.computeTravelTime(constructVelocity:dot((targetCoords - worldPos):normalize()), accel, AutopilotDistance-brakeDistance)
+                    local velAlongTarget = uclamp(constructVelocity:dot((targetCoords - worldPos):normalize()),0,velMag)
+                    if velAlongTarget > 0 or accel > 0 then -- (otherwise divide by 0 errors)
+                        timeUntilBrake = Kinematic.computeTravelTime(velAlongTarget, accel, AutopilotDistance-brakeDistance)
                     end
-                    if (coreVelocity:len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet) or warmup/8 > timeUntilBrake) then
+                    if (coreVelocity:len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet) or warmup/4 > timeUntilBrake) then
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Cruising" then
                             play("apCru","AP")
