@@ -4188,11 +4188,23 @@ VERSION_NUMBER = 1.505
                     --AutopilotPlanetGravity = autopilotTargetPlanet.gravity*9.8 -- Since we're aiming straight at it, we have to assume gravity?
                     AutopilotPlanetGravity = 0
                 elseif CustomTarget ~= nil and CustomTarget.planetname == "Space" then
-                    AutopilotPlanetGravity = 0
-                    skipAlign = true
-                    TargetSet = true
-                    AutopilotRealigned = true
-                    targetCoords = CustomTarget.position + (worldPos - CustomTarget.position)*AutopilotTargetOrbit
+                    if not TargetSet then
+                        AutopilotPlanetGravity = 0
+                        skipAlign = true
+                        AutopilotRealigned = true
+                        TargetSet = true
+                        -- We forgot to normalize this... though that should have really fucked everything up... 
+                        -- Ah also we were using AutopilotTargetOrbit which gets set to 0 for space.  
+
+                        -- So we should ... do what, if they're inside that range?  I guess just let it pilot them to outside.  
+
+                        targetCoords = CustomTarget.position + (worldPos - CustomTarget.position):normalize()*AutopilotSpaceDistance
+                        AutopilotTargetCoords = targetCoords -- Make sure everything is pointing at this.  
+                        --if not TargetSet then
+                        --AP.showWayPoint(autopilotTargetPlanet, targetCoords)
+                        --end
+                        -- The waypoint may change as we fly around, and we can't redraw it constantly so, better to leave it in the center
+                    end
                 elseif CustomTarget == nil then -- and not autopilotTargetPlanet.name == planet.name then
                     AutopilotPlanetGravity = 0
 
@@ -4253,7 +4265,10 @@ VERSION_NUMBER = 1.505
                 end
 
                 --orbit.apoapsis == nil and 
-                if velMag > 300 and AutopilotAccelerating then
+
+                -- Brought this min velocity way down from 300 because the logic when velocity is low doesn't even point at the target or anything
+                -- I'll prob make it do that, too, though.  There was just no reason for this to wait for such high speeds
+                if velMag > 50 and AutopilotAccelerating then
                     -- Use signedRotationAngle to get the yaw and pitch angles with shipUp and shipRight as the normals, respectively
                     -- Then use a PID
                     local targetVec = (vec3(targetCoords) - worldPos)
@@ -4306,8 +4321,12 @@ VERSION_NUMBER = 1.505
                             play("apAcc","AP")
                         end
                     end
-                    
+                
+                elseif AutopilotAccelerating and velMag <= 50 then
+                    -- Point at target... 
+                    AlignToWorldVector((targetCoords - worldPos):normalize())
                 end
+            
 
                 if projectedAltitude < AutopilotTargetOrbit*1.5 then
                     -- Recalc end speeds for the projectedAltitude since it's reasonable... 
@@ -4320,7 +4339,7 @@ VERSION_NUMBER = 1.505
                 if Autopilot and not AutopilotAccelerating and not AutopilotCruising and not AutopilotBraking then
                     local intersectBody, atmoDistance = checkLOS( (AutopilotTargetCoords-worldPos):normalize())
                     if autopilotTargetPlanet.name ~= planet.name then 
-                        if intersectBody ~= nil and autopilotTargetPlanet.name ~= intersectBody.name then 
+                        if intersectBody ~= nil and autopilotTargetPlanet.name ~= intersectBody.name and atmoDistance < AutopilotDistance then 
                             msgText = "Collision with "..intersectBody.name.." in ".. getDistanceDisplayString(atmoDistance).."\nClear LOS to continue."
                             msgTimer = 5
                             AutopilotPaused = true
@@ -4359,9 +4378,9 @@ VERSION_NUMBER = 1.505
                     -- Check if accel needs to stop for braking
                     --if brakeForceRequired >= LastMaxBrake then
                     local apDist = AutopilotDistance
-                    if autopilotTargetPlanet.name == "Space" then
-                        apDist = apDist - AutopilotSpaceDistance
-                    end
+                    --if autopilotTargetPlanet.name == "Space" then
+                    --    apDist = apDist - AutopilotSpaceDistance
+                    --end
 
                     if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000) then
                         if (PreventPvP and pvpDist <= brakeDistance+10000) then 
@@ -4413,7 +4432,7 @@ VERSION_NUMBER = 1.505
                         --ProgradeIsOn = true  
                         spaceLand = true
                         AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
-                    elseif orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 or AutopilotStatus == "Circularizing" then
+                    elseif CustomTarget.planetname ~= "Space" and orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 or AutopilotStatus == "Circularizing" then
                         if AutopilotStatus ~= "Circularizing" then
                             play("apCir", "AP")
                             AutopilotStatus = "Circularizing"
@@ -4450,9 +4469,9 @@ VERSION_NUMBER = 1.505
                     --if brakeForceRequired >= LastMaxBrake then
                     --if brakeForceRequired >= LastMaxBrake then
                     local apDist = AutopilotDistance
-                    if autopilotTargetPlanet.name == "Space" then
-                        apDist = apDist - AutopilotSpaceDistance
-                    end
+                    --if autopilotTargetPlanet.name == "Space" then
+                    --    apDist = apDist - AutopilotSpaceDistance
+                    --end
 
                     if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000) then
                         if (PreventPvP and pvpDist <= brakeDistance+10000) then 
