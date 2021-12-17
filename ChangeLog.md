@@ -1,5 +1,17 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.506 - Thanks to Dimencia for AP enhancement/fixes.
+- Corrected space waypoint autopilot stop distance to work more accurately and reliably
+Example: With a space wp saved at 3.2 SU from Alioth, taking off from alioth to it stopped 5.7k from it with the
+default `AutopilotSpaceDistance` setting of 5000.  (The .7k is due to Alioth gravity pulling from behind) 
+Hitting Alt-4 again after first stop will take you to the `AutopilotSpaceDistance` setting.  You can consider
+lowering the setting, but bear in mind if approaching a savepoint in space near a planet the planet could pull
+you in closer.  Also bad brakes or being very overweight might cause an issue.
+- Fixed issue where you couldn't AP to destination if there was a planet behind it
+- Fixed issue where during low-speeds, autopilot would not turn to face the target
+- Allowed autopilot realignment to occur at much lower speeds (50m/s instead of 300m/s)
+- Fixed issue with radar being mislabled on No Contacts line in some startup cases. (Radar was working fine)
+
 Version 1.505
 - Added text indication of which radar is running when No Contacts shown.
 - Fixed errors of 1 radar ships

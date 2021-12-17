@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.505
+VERSION_NUMBER = 1.506
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -1757,16 +1757,20 @@ VERSION_NUMBER = 1.505
                 end
             end
         end
-
-        function Radar.assignRadar()
-            local function pickType()
-                if radars[1] then
-                    rType = "Atmo"
-                    if radars[1].getData():find('worksInAtmosphere":false') then 
-                        rType = "Space" 
-                    end
+        local function pickType()
+            if radars[1] then
+                rType = "Atmo"
+                if radars[1].getData():find('worksInAtmosphere":false') then 
+                    rType = "Space" 
                 end
             end
+        end
+
+        function Radar.pickType()
+            pickType()
+        end
+
+        function Radar.assignRadar()
             if radar_1 and radars[1]==radar_1 and radar_1.isOperational() ~= 1 then
                 if radar_2 and radar_2.isOperational() == 1 then 
                     radars[1] = radar_2
@@ -1782,7 +1786,6 @@ VERSION_NUMBER = 1.505
                 end
                 pickType()
             end
-
         end
 
         function Radar.UpdateRadar()
@@ -4188,11 +4191,23 @@ VERSION_NUMBER = 1.505
                     --AutopilotPlanetGravity = autopilotTargetPlanet.gravity*9.8 -- Since we're aiming straight at it, we have to assume gravity?
                     AutopilotPlanetGravity = 0
                 elseif CustomTarget ~= nil and CustomTarget.planetname == "Space" then
-                    AutopilotPlanetGravity = 0
-                    skipAlign = true
-                    TargetSet = true
-                    AutopilotRealigned = true
-                    targetCoords = CustomTarget.position + (worldPos - CustomTarget.position)*AutopilotTargetOrbit
+                    if not TargetSet then
+                        AutopilotPlanetGravity = 0
+                        skipAlign = true
+                        AutopilotRealigned = true
+                        TargetSet = true
+                        -- We forgot to normalize this... though that should have really fucked everything up... 
+                        -- Ah also we were using AutopilotTargetOrbit which gets set to 0 for space.  
+
+                        -- So we should ... do what, if they're inside that range?  I guess just let it pilot them to outside. 
+                        -- TODO: Later have some settable intervals like 10k, 5k, 1k, 500m and have it approach the nearest one that's below it
+                        -- With warnings about what it's doing 
+
+                        targetCoords = CustomTarget.position + (worldPos - CustomTarget.position):normalize()*AutopilotSpaceDistance
+                        AutopilotTargetCoords = targetCoords
+                        -- Unsure if we should update the waypoint to the new target or not.  
+                        --AP.showWayPoint(autopilotTargetPlanet, targetCoords)
+                    end
                 elseif CustomTarget == nil then -- and not autopilotTargetPlanet.name == planet.name then
                     AutopilotPlanetGravity = 0
 
@@ -4253,7 +4268,10 @@ VERSION_NUMBER = 1.505
                 end
 
                 --orbit.apoapsis == nil and 
-                if velMag > 300 and AutopilotAccelerating then
+
+                -- Brought this min velocity way down from 300 because the logic when velocity is low doesn't even point at the target or anything
+                -- I'll prob make it do that, too, though.  There was just no reason for this to wait for such high speeds
+                if velMag > 50 and AutopilotAccelerating then
                     -- Use signedRotationAngle to get the yaw and pitch angles with shipUp and shipRight as the normals, respectively
                     -- Then use a PID
                     local targetVec = (vec3(targetCoords) - worldPos)
@@ -4306,8 +4324,12 @@ VERSION_NUMBER = 1.505
                             play("apAcc","AP")
                         end
                     end
-                    
+                
+                elseif AutopilotAccelerating and velMag <= 50 then
+                    -- Point at target... 
+                    AlignToWorldVector((targetCoords - worldPos):normalize())
                 end
+            
 
                 if projectedAltitude < AutopilotTargetOrbit*1.5 then
                     -- Recalc end speeds for the projectedAltitude since it's reasonable... 
@@ -4320,7 +4342,7 @@ VERSION_NUMBER = 1.505
                 if Autopilot and not AutopilotAccelerating and not AutopilotCruising and not AutopilotBraking then
                     local intersectBody, atmoDistance = checkLOS( (AutopilotTargetCoords-worldPos):normalize())
                     if autopilotTargetPlanet.name ~= planet.name then 
-                        if intersectBody ~= nil and autopilotTargetPlanet.name ~= intersectBody.name then 
+                        if intersectBody ~= nil and autopilotTargetPlanet.name ~= intersectBody.name and atmoDistance < AutopilotDistance then 
                             msgText = "Collision with "..intersectBody.name.." in ".. getDistanceDisplayString(atmoDistance).."\nClear LOS to continue."
                             msgTimer = 5
                             AutopilotPaused = true
@@ -4346,7 +4368,18 @@ VERSION_NUMBER = 1.505
                     end
                     local throttle = unit.getThrottle()
                     if AtmoSpeedAssist then throttle = PlayerThrottle end
-                    if (coreVelocity:len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet)) then
+                    -- If we're within warmup/8 seconds of needing to brake, cut throttle to handle warmdowns
+                    -- Note that warmup/8 is kindof an arbitrary guess.  But it shouldn't matter that much.  
+
+                    -- We need the travel time, the one we compute elsewhere includes estimates on acceleration
+                    -- Also it doesn't account for velocity not being in the correct direction, this should
+                    local timeUntilBrake = 99999 -- Default in case accel and velocity are both 0 
+                    local accel = -(vec3(core.getWorldAcceleration()):dot(constructVelocity:normalize()))
+                    local velAlongTarget = uclamp(constructVelocity:dot((targetCoords - worldPos):normalize()),0,velMag)
+                    if velAlongTarget > 0 or accel > 0 then -- (otherwise divide by 0 errors)
+                        timeUntilBrake = Kinematic.computeTravelTime(velAlongTarget, accel, AutopilotDistance-brakeDistance)
+                    end
+                    if (coreVelocity:len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet) or warmup/4 > timeUntilBrake) then
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Cruising" then
                             play("apCru","AP")
@@ -4359,9 +4392,9 @@ VERSION_NUMBER = 1.505
                     -- Check if accel needs to stop for braking
                     --if brakeForceRequired >= LastMaxBrake then
                     local apDist = AutopilotDistance
-                    if autopilotTargetPlanet.name == "Space" then
-                        apDist = apDist - AutopilotSpaceDistance
-                    end
+                    --if autopilotTargetPlanet.name == "Space" then
+                    --    apDist = apDist - AutopilotSpaceDistance
+                    --end
 
                     if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000) then
                         if (PreventPvP and pvpDist <= brakeDistance+10000) then 
@@ -4413,7 +4446,7 @@ VERSION_NUMBER = 1.505
                         --ProgradeIsOn = true  
                         spaceLand = true
                         AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
-                    elseif orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 or AutopilotStatus == "Circularizing" then
+                    elseif CustomTarget.planetname ~= "Space" and orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 or AutopilotStatus == "Circularizing" then
                         if AutopilotStatus ~= "Circularizing" then
                             play("apCir", "AP")
                             AutopilotStatus = "Circularizing"
@@ -4450,9 +4483,9 @@ VERSION_NUMBER = 1.505
                     --if brakeForceRequired >= LastMaxBrake then
                     --if brakeForceRequired >= LastMaxBrake then
                     local apDist = AutopilotDistance
-                    if autopilotTargetPlanet.name == "Space" then
-                        apDist = apDist - AutopilotSpaceDistance
-                    end
+                    --if autopilotTargetPlanet.name == "Space" then
+                    --    apDist = apDist - AutopilotSpaceDistance
+                    --end
 
                     if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000) then
                         if (PreventPvP and pvpDist <= brakeDistance+10000) then 
@@ -5873,7 +5906,7 @@ VERSION_NUMBER = 1.505
                 elseif radar_1 and radar_1.isOperational() == 1 then
                     radars[1] = radar_1
                 end
-                RADAR.assignRadar()
+                RADAR.pickType()
             end
             play("start","SU")
         end)
