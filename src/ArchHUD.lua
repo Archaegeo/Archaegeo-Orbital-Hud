@@ -1757,16 +1757,20 @@ VERSION_NUMBER = 1.506
                 end
             end
         end
-
-        function Radar.assignRadar()
-            local function pickType()
-                if radars[1] then
-                    rType = "Atmo"
-                    if radars[1].getData():find('worksInAtmosphere":false') then 
-                        rType = "Space" 
-                    end
+        local function pickType()
+            if radars[1] then
+                rType = "Atmo"
+                if radars[1].getData():find('worksInAtmosphere":false') then 
+                    rType = "Space" 
                 end
             end
+        end
+
+        function Radar.pickType()
+            pickType()
+        end
+
+        function Radar.assignRadar()
             if radar_1 and radars[1]==radar_1 and radar_1.isOperational() ~= 1 then
                 if radar_2 and radar_2.isOperational() == 1 then 
                     radars[1] = radar_2
@@ -1782,7 +1786,6 @@ VERSION_NUMBER = 1.506
                 end
                 pickType()
             end
-
         end
 
         function Radar.UpdateRadar()
@@ -5902,7 +5905,7 @@ VERSION_NUMBER = 1.506
                 elseif radar_1 and radar_1.isOperational() == 1 then
                     radars[1] = radar_1
                 end
-                RADAR.assignRadar()
+                RADAR.pickType()
             end
             play("start","SU")
         end)
