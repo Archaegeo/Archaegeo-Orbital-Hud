@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.505
+VERSION_NUMBER = 1.506
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -4196,14 +4196,14 @@ VERSION_NUMBER = 1.505
                         -- We forgot to normalize this... though that should have really fucked everything up... 
                         -- Ah also we were using AutopilotTargetOrbit which gets set to 0 for space.  
 
-                        -- So we should ... do what, if they're inside that range?  I guess just let it pilot them to outside.  
+                        -- So we should ... do what, if they're inside that range?  I guess just let it pilot them to outside. 
+                        -- TODO: Later have some settable intervals like 10k, 5k, 1k, 500m and have it approach the nearest one that's below it
+                        -- With warnings about what it's doing 
 
                         targetCoords = CustomTarget.position + (worldPos - CustomTarget.position):normalize()*AutopilotSpaceDistance
-                        AutopilotTargetCoords = targetCoords -- Make sure everything is pointing at this.  
-                        --if not TargetSet then
+                        AutopilotTargetCoords = targetCoords
+                        -- Unsure if we should update the waypoint to the new target or not.  
                         --AP.showWayPoint(autopilotTargetPlanet, targetCoords)
-                        --end
-                        -- The waypoint may change as we fly around, and we can't redraw it constantly so, better to leave it in the center
                     end
                 elseif CustomTarget == nil then -- and not autopilotTargetPlanet.name == planet.name then
                     AutopilotPlanetGravity = 0
@@ -4365,7 +4365,17 @@ VERSION_NUMBER = 1.505
                     end
                     local throttle = unit.getThrottle()
                     if AtmoSpeedAssist then throttle = PlayerThrottle end
-                    if (coreVelocity:len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet)) then
+                    -- If we're within warmup/8 seconds of needing to brake, cut throttle to handle warmdowns
+                    -- Note that warmup/8 is kindof an arbitrary guess.  But it shouldn't matter that much.  
+
+                    -- We need the travel time, the one we compute elsewhere includes estimates on acceleration
+                    -- Also it doesn't account for velocity not being in the correct direction, this should
+                    local timeUntilBrake = 99999 -- Default in case accel and velocity are both 0 
+                    local accel = -(vec3(core.getWorldAcceleration()):dot(constructVelocity:normalize()))
+                    if constructVelocity:len() > 0 or accel > 0 then -- (otherwise divide by 0 errors)
+                        timeUntilBrake = Kinematic.computeTravelTime(constructVelocity:dot((targetCoords - worldPos):normalize()), accel, AutopilotDistance-brakeDistance)
+                    end
+                    if (coreVelocity:len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet) or warmup/8 > timeUntilBrake) then
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Cruising" then
                             play("apCru","AP")
