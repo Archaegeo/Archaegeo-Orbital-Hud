@@ -4044,6 +4044,7 @@ VERSION_NUMBER = 1.506
                             orbitalParams.VectorToTarget, orbitalParams.AutopilotAlign = false, false -- Let it disable orbit
                             ToggleIntoOrbit()
                             BeginReentry()
+                            return
                         end
                     end
                     if orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.eccentricity < 1 and coreAltitude > OrbitTargetOrbit*0.9 and coreAltitude < OrbitTargetOrbit*1.4 then
@@ -4396,7 +4397,7 @@ VERSION_NUMBER = 1.506
                     --    apDist = apDist - AutopilotSpaceDistance
                     --end
 
-                    if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000) then
+                    if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000 and not notPvPZone) then
                         if (PreventPvP and pvpDist <= brakeDistance+10000) then 
                             ToggleAutopilot()
                             msgText = "Autopilot cancelled to prevent crossing PvP Line" 
