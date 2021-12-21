@@ -1,7 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.507
-- Fixed: `PreventPvP` if true will no longer stop you LEAVING PvP space
+- Fixed: `PreventPvP` if true will no longer stop you LEAVING PvP space, only from entering.
 - Fixed: Burning up components on re-entry due to being stuck in cruise control at higher than throttle limit speed in low gravity planets (Lacobus)
 
 Version 1.506 - Thanks to Dimencia for AP enhancement/fixes.
