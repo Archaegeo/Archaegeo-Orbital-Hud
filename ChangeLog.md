@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.511 - Fix issue on new installs
+- Fixed issue with new installs not showing hud if no target selected in IPH.  (Alt-1/2 will fix 1.510)
+
 Version 1.510 - AP Fix and InHud Dynamic Help
 - Change/Fix: Changed autopilot activation to use quicker normal autopilot vs slower orbit re-entry if greater than 2 times 
 Target Orbit shown on IPH to save time and prevent strange behavior at some planets.  This means that hitting alt-4 after 
