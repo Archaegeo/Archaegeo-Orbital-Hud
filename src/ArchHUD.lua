@@ -333,7 +333,7 @@ VERSION_NUMBER = 1.506
     local oldShowHud = showHud
     local AtlasOrdered = {}
     local notPvPZone = false
-    local pvpDist = 0
+    local pvpDist = 50000
 
     local pipeMessage = ""
     local ReversalIsOn = nil
@@ -3477,6 +3477,8 @@ VERSION_NUMBER = 1.506
                         warmup, LastMaxBrake - (AutopilotPlanetGravity * coreMass))
             end
         local speedLimitBreaking = false
+        local lastPvPDist = 0
+
         function ap.GetAutopilotBrakeDistanceAndTime(speed)
             return GetAutopilotBrakeDistanceAndTime(speed)
         end
@@ -4044,6 +4046,7 @@ VERSION_NUMBER = 1.506
                             orbitalParams.VectorToTarget, orbitalParams.AutopilotAlign = false, false -- Let it disable orbit
                             ToggleIntoOrbit()
                             BeginReentry()
+                            return
                         end
                     end
                     if orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.eccentricity < 1 and coreAltitude > OrbitTargetOrbit*0.9 and coreAltitude < OrbitTargetOrbit*1.4 then
@@ -4396,11 +4399,17 @@ VERSION_NUMBER = 1.506
                     --    apDist = apDist - AutopilotSpaceDistance
                     --end
 
-                    if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000) then
-                        if (PreventPvP and pvpDist <= brakeDistance+10000) then 
-                            ToggleAutopilot()
-                            msgText = "Autopilot cancelled to prevent crossing PvP Line" 
-                            BrakeIsOn=true
+                    if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
+                        if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
+                                if pvpDist < lastPvPDist and pvpDist > 2000 then
+                                    ToggleAutopilot()
+                                    msgText = "Autopilot cancelled to prevent crossing PvP Line" 
+                                    BrakeIsOn=true
+                                    lastPvPDist = pvpDist
+                                else
+                                    lastPvPDist = pvpDist
+                                    return
+                                end
                         end
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Braking" then
@@ -4487,11 +4496,18 @@ VERSION_NUMBER = 1.506
                     --    apDist = apDist - AutopilotSpaceDistance
                     --end
 
-                    if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000) then
-                        if (PreventPvP and pvpDist <= brakeDistance+10000) then 
-                            ToggleAutopilot()
-                            msgText = "Autopilot cancelled to prevent crossing PvP Line" 
-                            BrakeIsOn=true
+                    if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
+                        if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
+                            p("HERE2: "..pvpDist.." "..lastPvPDist)
+                            if pvpDist < lastPvPDist and pvpDist > 2000 then 
+                                ToggleAutopilot()
+                                msgText = "Autopilot cancelled to prevent crossing PvP Line" 
+                                BrakeIsOn=true
+                                lastPvPDist = pvpDist
+                            else
+                                lastPvPDist = pvpDist
+                                return
+                            end
                         end
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Braking" then
