@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.507
+VERSION_NUMBER = 1.510
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -36,6 +36,7 @@ VERSION_NUMBER = 1.507
     SetWaypointOnExit = false --export:
     AlwaysVSpd = false --export:
     BarFuelDisplay = true --export:
+    showHelp = true --export:
     voices = true --export:
     alerts = true --export:
     CollisionSystem = true --export:
@@ -50,7 +51,7 @@ VERSION_NUMBER = 1.507
     ReEntryPitch = -30 --export:
     LockPitchTarget = 0 --export:
     AutopilotSpaceDistance = 5000 --export:
-    TargetOrbitRadius = 1.4 --export:
+    TargetOrbitRadius = 1.2 --export:
     LowOrbitHeight = 2000 --export:
     AtmoSpeedLimit = 1050 --export:
     SpaceSpeedLimit = 30000 --export:
@@ -464,7 +465,7 @@ VERSION_NUMBER = 1.507
             local saveableVariablesBoolean = {"userControlScheme", "soundFolder", "freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
                 "InvertMouse", "autoRollPreference", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
                 "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
-                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", 
+                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", "showHelp",
                 "voices", "alerts", "CollisionSystem", "AutoShieldToggle", "PreventPvP"}
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "ReEntryPitch","LockPitchTarget", "AutopilotSpaceDistance", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
@@ -750,7 +751,7 @@ VERSION_NUMBER = 1.507
                         end
                     else
                         play("apOn", "AP")
-                        if not (autopilotTargetPlanet.name == planet.name and nearPlanet) then
+                        if not (autopilotTargetPlanet.name == planet.name and coreAltitude < (AutopilotTargetOrbit*2) ) then
                             OrbitAchieved = false
                             Autopilot = true
                         elseif not inAtmo then
@@ -2717,6 +2718,79 @@ VERSION_NUMBER = 1.507
                 end
             end
         
+            local function DisplayHelp(newContent)
+                local x = 30
+                local y = 275
+                local help = {}
+                local helpAtmoGround = {"Alt-4: AutoTakeoff to Target"}
+                local helpAtmoAir = { "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", 
+                                    "Alt-Q/E: Hard Bankroll left/right till released", "Alt-S: 180 deg bank turn"}
+                local helpSpace = {"Alt-6: Orbit at current altitude", "Alt-6-6: Orbit at LowOrbitHeight over atmosphere"}
+                local helpGeneral = {"", "------------------ALWAYS--------------------", "Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-3: Toggle Vanilla Widget view", 
+                                    "Alt-4: Autopilot to IPH target", "Alt-5: Lock Pitch at current pitch","Alt-7: Toggle Collision System on and off", "Alt-8: Toggle ground stabilization (underwater flight)",
+                                    "CTRL: Toggle Brakes on and off. Cancels active AP", "LAlt: Tap to shift freelook on and off", 
+                                    "Shift: Hold while not in freelook to see Buttons", "Type /commands or /help in lua chat to see text commands"}
+                table.insert(help, "--------------DYNAMIC-----------------")
+                if inAtmo then 
+                    if abvGndDet ~= -1 then
+                        addTable(help, helpAtmoGround)
+                        if autopilotTargetPlanet.name == planet.name then
+                            table.insert(help,"Alt-4-4: Low Orbit Autopilot to Target")
+                        end
+                        if antigrav or VertTakeOffEngine then 
+                            if antigrav then
+                                if antigravOn then
+                                    table.insert(help, "Alt-6: AGG is on, will takeoff to AGG Height")
+                                else
+                                    table.insert(help,  "Turn on AGG to takeoff to AGG Height")
+                                end
+                            end
+                            if VertTakeOffEngine then 
+                                table.insert(help, "Alt-6: Begins Vertical AutoTakeoff.")
+                            end
+                        else
+                            table.insert(help, "Alt-6: Autotakeoff to AutoTakeoffAltitude")
+                            table.insert(help, "Alt-6-6: Autotakeoff to 11% atmosphere")
+                        end
+                        if GearExtended then
+                            table.insert(help,"G: Takeoff to hover height, raise gear")
+                        else
+                            table.insert(help,"G: Lowergear and Land")
+                        end
+                    else
+                        addTable(help,helpAtmoAir)
+                        table.insert(help,"G: Begin BrakeLanding or Land")
+                    end
+                    if VertTakeOff then
+                        table.insert(help,"Hit Alt-6 before exiting Atmosphere during VTO to hold in level flight")
+                    end
+                else
+                    addTable(help, helpSpace)
+                    if shield_1 then
+                        table.insert(help,"Alt-Shift-5: Toggle shield off and on")
+                        table.insert(help,"Alt-Shift-6: Vent shields")
+                    end
+                end
+                if gyro then
+                    table.insert(help,"Alt-9: Activate Gyroscope")
+                end
+                if ExtraLateralTags ~= "none" or ExtraLongitudeTags ~= "none" or ExtraVerticalTags ~= "none" then
+                    table.insert(help, "Alt-Shift-9: Cycles engines with Extra tags")
+                end
+                if AltitudeHold then 
+                    table.insert(help, "Alt-Spacebar/C will raise/lower target height")
+                    table.insert(help, "Alt+Shift+Spacebar/C will raise/lower target to preset values")
+                end
+                if AtmoSpeedAssist or not inAtmo then
+                    table.insert(help,"LALT+Mousewheel will lower/raise speed limit")
+                end
+                addTable(help, helpGeneral)
+                for i = 1, #help do
+                    y=y+12
+                    newContent[#newContent + 1] = svgText( x, y, help[i], "pdim txttick txtstart")
+                end
+            end
+
             local function getPipeDistance(origCenter, destCenter)  -- Many thanks to Tiramon for the idea and functionality.
                 local pipeDistance
                 local pipe = (destCenter - origCenter):normalize()
@@ -2935,6 +3009,8 @@ VERSION_NUMBER = 1.507
         
             DrawWarnings(newContent)
             DisplayOrbitScreen(newContent)
+
+            if showHelp then DisplayHelp(newContent) end
 
             return newContent
         end
@@ -4498,7 +4574,6 @@ VERSION_NUMBER = 1.507
 
                     if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                         if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
-                            p("HERE2: "..pvpDist.." "..lastPvPDist)
                             if pvpDist < lastPvPDist and pvpDist > 2000 then 
                                 ToggleAutopilot()
                                 msgText = "Autopilot cancelled to prevent crossing PvP Line" 
@@ -5693,7 +5768,7 @@ VERSION_NUMBER = 1.507
                 buttonWidth = 300
                 local x = 10
                 local y = resolutionHeight / 2 - 500
-                    --showhelp was here
+                MakeButton("Show Help", "Hide Help", buttonWidth, buttonHeight, x, y, function() return showHelp end, function() showHelp = not showHelp end)
                 y = y + buttonHeight + 20
                 MakeButton("View Settings", "View Settings", buttonWidth, buttonHeight, x, y, function() return true end, ToggleButtons)
                 local y = resolutionHeight / 2 - 300
