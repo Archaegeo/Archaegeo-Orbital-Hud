@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.510
+VERSION_NUMBER = 1.511
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -2734,7 +2734,7 @@ VERSION_NUMBER = 1.510
                 if inAtmo then 
                     if abvGndDet ~= -1 then
                         addTable(help, helpAtmoGround)
-                        if autopilotTargetPlanet.name == planet.name then
+                        if autopilotTargetPlanet and planet and autopilotTargetPlanet.name == planet.name then
                             table.insert(help,"Alt-4-4: Low Orbit Autopilot to Target")
                         end
                         if antigrav or VertTakeOffEngine then 
