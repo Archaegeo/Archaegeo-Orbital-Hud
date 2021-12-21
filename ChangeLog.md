@@ -1,5 +1,16 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.510 - AP Fix and InHud Dynamic Help
+- Change/Fix: Changed autopilot activation to use quicker normal autopilot vs slower orbit re-entry if greater than 2 times 
+Target Orbit shown on IPH to save time and prevent strange behavior at some planets.  This means that hitting alt-4 after 
+warp arrival will do a normal AP approach versus starting trying to slow orbital entry from 100k out at Talemai warp arrival 
+for instance.
+- Default `TargetOrbitRadius` changed to 1.2 from 1.4. Can be reduced more base on your ships performance.
+REMINDER: A default `TargetOrbitRadius` of 1.4 is a target orbit of 55k over alioth, where 1.1 is 17.6k.  1.25 is safe for most 
+ships.  You can lower it based on your ships ability to stop.
+- Restored and enhanced in hud dynamic help system.  Can be turned off with button in upper left of control button panel or setting
+`showHelp` to false. Let me know if i missed any you feel need to be there.
+
 Version 1.507
 - Fixed: `PreventPvP` if true will no longer stop you LEAVING PvP space, only from entering.
 - Fixed: Burning up components on re-entry due to being stuck in cruise control at higher than throttle limit speed in low gravity planets (Lacobus)
