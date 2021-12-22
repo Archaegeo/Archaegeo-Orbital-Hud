@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.511
+VERSION_NUMBER = 1.512
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -1775,17 +1775,13 @@ VERSION_NUMBER = 1.511
             if radar_1 and radars[1]==radar_1 and radar_1.isOperational() ~= 1 then
                 if radar_2 and radar_2.isOperational() == 1 then 
                     radars[1] = radar_2
-                else 
-                    radars[1]=nil
                 end
-                pickType()
+                if radars[1] == radar_2 then pickType() end
             elseif radar_2 and radars[1]==radar_2 and radar_2.isOperational() ~= 1 then
                 if radar_1 and radar_1.isOperational() == 1 then 
                     radars[1] = radar_1
-                else 
-                    radars[1]=nil
                 end
-                pickType()
+                if radars[1] == radar_1 then pickType() end
             end
         end
 
@@ -5991,12 +5987,8 @@ VERSION_NUMBER = 1.511
             unit.setTimer("tenthSecond", 1/10)
             unit.setTimer("fiveSecond", 5) 
             radars[1]=nil
-            if radar_1 or radar_2 then 
-                if radar_2 and radar_2.isOperational() == 1 then 
-                    radars[1] = radar_2
-                elseif radar_1 and radar_1.isOperational() == 1 then
-                    radars[1] = radar_1
-                end
+            if radar_1 then
+                radars[1] = radar_1
                 RADAR.pickType()
             end
             play("start","SU")
