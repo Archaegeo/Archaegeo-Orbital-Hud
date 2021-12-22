@@ -1,6 +1,6 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.512 - Fix 1 radar not showing jammed
+Version 1.512 - Fix single radar not showing jammed
 - Fix issue when only 1 radar installed not indicating jammed
 
 Version 1.511 - Fix issue on new installs
