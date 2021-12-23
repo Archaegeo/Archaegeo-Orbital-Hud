@@ -1,8 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.512 Handbrake and Fixes
-- Feature: Handbrakes - For those who like vanilla brake mode but sometimes want to lock brakes on, alt-ctrl will toggle brakes on till you hit ctrl again if 
-`BrakeToggleDefault` is set to false (normal vanilla braking)
+- Feature: Handbrake - For those who like vanilla brake mode but sometimes want to lock brakes on, if 
+`BrakeToggleDefault` is set to false (vanilla braking) alt-ctrl will toggle brakes on till you hit ctrl again
 - FIX: Fix issue when only 1 radar installed not indicating jammed
 - FIX: Issue where Index of IPH was out of bounds causing HUD not to show (but still function)
 - FIX: Hitting ALt-4 to stop Autopilot will cancel everything that tapping brakes on does.
