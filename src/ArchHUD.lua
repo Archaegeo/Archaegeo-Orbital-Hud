@@ -344,7 +344,8 @@ VERSION_NUMBER = 1.512
     local collisionTarget = nil
     local radars = {}
     local rType = "Atmo"
-
+    local apButtonsHovered = false
+    local apScrollIndex = 0
 
 -- Function Definitions that are used in more than one areause 
     --[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
@@ -429,6 +430,39 @@ VERSION_NUMBER = 1.512
         system.print(time..": "..msg)
     end
     --]]
+
+    local function changeSpd(down)
+        local mult=1
+        if down then mult = -1 end
+        if not holdingCtrl then
+            if AtmoSpeedAssist and not AltIsOn and mousePause then
+                local currentPlayerThrot = PlayerThrottle
+                PlayerThrottle = round(uclamp(PlayerThrottle + mult*speedChangeLarge/100, -1, 1),2)
+                if PlayerThrottle >= 0 and currentPlayerThrot < 0 then 
+                    PlayerThrottle = 0 
+                    mousePause = false
+                end
+            elseif AltIsOn then
+                if atmosDensity > 0 or Reentry then
+                    adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
+                elseif Autopilot then
+                    MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 8333.00)
+                end
+            else
+                navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge)
+            end
+        else
+            if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
+                apScrollIndex = apScrollIndex+1*mult*-1
+                if apScrollIndex > #AtlasOrdered then apScrollIndex = 1 end
+                if apScrollIndex < 1 then apScrollIndex = #AtlasOrdered end
+            else
+                if not down then mult = 1 else mult = nil end
+                ATLAS.adjustAutopilotTargetIndex(mult)
+            end
+        end
+    end
+
     local function checkLOS(vector)
         local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, vector,
             function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
@@ -3298,6 +3332,7 @@ VERSION_NUMBER = 1.512
             end
 
             local function UpdateAutopilotTarget()
+                apScrollIndex = AutopilotTargetIndex
                 -- So the indices are weird.  I think we need to do a pairs
                 if AutopilotTargetIndex == 0 then
                     AutopilotTargetName = "None"
@@ -5651,30 +5686,29 @@ VERSION_NUMBER = 1.512
                     -- So AutopilotTargetIndex is special and not a real index.  We have to do this by hand.
                         ATLAS.ClearCurrentPosition()
                 end
-                
-                local function getAPEnableName()
-                    local name = AutopilotTargetName
-                    if name == nil then
-                        local displayText = getDistanceDisplayString((worldPos - CustomTarget.position):len())
-                        name = CustomTarget.name .. " " .. displayText
-                                
-                    end
-                    if name == nil then
-                        name = "None"
-                    end
-                    return "Engage Autopilot: " .. name
-                end
 
-                local function getAPDisableName()
+                local function getAPName(index)
                     local name = AutopilotTargetName
+                    if index ~= nil and type(index) == "number" then 
+                        if index == 0 then return "None" end
+                        name = AtlasOrdered[index].name
+                    end
                     if name == nil then
                         name = CustomTarget.name
                     end
                     if name == nil then
                         name = "None"
                     end
-                    return "Disable Autopilot: " .. name
-                end        
+                    return name
+                end
+                
+                local function getAPEnableName(index)
+                    return "Engage Autopilot: " .. getAPName(index)
+                end
+
+                local function getAPDisableName(index)
+                    return "Disable Autopilot: " .. getAPName(index)
+                end   
 
                 local function ToggleFollowMode() -- Toggle Follow Mode on and off
                     if isRemote() == 1 then
@@ -5737,10 +5771,56 @@ VERSION_NUMBER = 1.512
                     end, gradeToggle, function()
                         return atmosDensity == 0
                     end) -- Hope this works
-                local apbutton = MakeButton(getAPEnableName, getAPDisableName, 600, 60, resolutionWidth / 2 - 600 / 2,
+                apbutton = MakeButton(getAPEnableName, getAPDisableName, 600, 60, resolutionWidth / 2 - 600 / 2,
                                         resolutionHeight / 2 - 60 / 2 - 400, function()
-                        return Autopilot
-                    end, ToggleAutopilot)
+                        return Autopilot or VectorToTarget or spaceLaunch or IntoOrbit
+                    end, function() end) -- No toggle function because we draw over this with things that do toggle
+                -- Make 9 more buttons that only show when moused over the AP button
+                local i
+                local function getAtlasIndexFromAddition(add)
+                    local index = apScrollIndex + add
+                    if index > #AtlasOrdered then
+                        index = index-#AtlasOrdered-1
+                    end
+                    if index < 0 then
+                        index = #AtlasOrdered+index
+                    end
+                    
+                    return index
+                end
+                apExtraButtons = {}
+                for i=0,10 do
+                    local button = MakeButton(function(b)
+                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
+                        if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
+                            return "Redirect: " .. getAPName(index)
+                        end
+                        return getAPEnableName(index)
+                    end, function(b)
+                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
+                        return getAPDisableName(index)
+                    end, 600, 60, resolutionWidth/2 - 600/2, 
+                    resolutionHeight/2 - 60/2 - 400 + 60*i, function(b)
+                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
+                        return index == AutopilotTargetIndex and (Autopilot or VectorToTarget or spaceLaunch or IntoOrbit)
+                    end, function(b)
+                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
+                        local disable = AutopilotTargetIndex == index
+                        AutopilotTargetIndex = index
+                        ATLAS.UpdateAutopilotTarget()
+                        ToggleAutopilot()
+                        -- Let buttons redirect AP, they're hard to do by accident
+                        if not disable and not (Autopilot or VectorToTarget or spaceLaunch or IntoOrbit) then
+                            ToggleAutopilot()
+                        end
+                    end, function()
+                        return apButtonsHovered
+                    end)
+                    button.apExtraIndex = i
+                    apExtraButtons[i] = button
+                end
+
+
                 MakeButton("Save Position", "Save Position", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y,
                     function()
                         return false
@@ -6454,8 +6534,8 @@ VERSION_NUMBER = 1.512
                 local function CheckButtons()
                     for _, v in pairs(Buttons) do
                         if v.hovered then
-                            if not v.drawCondition or v.drawCondition() then
-                                v.toggleFunction()
+                            if not v.drawCondition or v.drawCondition(v) then
+                                v.toggleFunction(v)
                             end
                             v.hovered = false
                         end
@@ -6464,7 +6544,7 @@ VERSION_NUMBER = 1.512
                 local function SetButtonContains()
 
                     local function Contains(mousex, mousey, x, y, width, height)
-                        if mousex > x and mousex < (x + width) and mousey > y and mousey < (y + height) then
+                        if mousex >= x and mousex <= (x + width) and mousey >= y and mousey <= (y + height) then
                             return true
                         else
                             return false
@@ -6476,15 +6556,30 @@ VERSION_NUMBER = 1.512
                         -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
                         v.hovered = Contains(x, y, v.x, v.y, v.width, v.height)
                     end
+
+                    if apButtonsHovered then -- Keep it hovered if any buttons are hovered
+                        local hovered = false
+                        for _,b in ipairs(apExtraButtons) do
+                            if b.hovered then hovered = true break end
+                        end
+                        if apbutton.hovered then hovered = true end
+                        apButtonsHovered = hovered
+                    else
+                        apButtonsHovered = apbutton.hovered
+                        if not apButtonsHovered then
+                            apScrollIndex = AutopilotTargetIndex -- Reset when no longer hovering
+                        end
+                    end
+                    
                 end
                 local function DrawButtons(newContent)
 
-                    local function DrawButton(newContent, toggle, hover, x, y, w, h, activeColor, inactiveColor, activeText, inactiveText)
+                    local function DrawButton(newContent, toggle, hover, x, y, w, h, activeColor, inactiveColor, activeText, inactiveText, button)
                         if type(activeText) == "function" then
-                            activeText = activeText()
+                            activeText = activeText(button)
                         end
                         if type(inactiveText) == "function" then
-                            inactiveText = inactiveText()
+                            inactiveText = inactiveText(button)
                         end
                         newContent[#newContent + 1] = stringf("<rect x='%f' y='%f' width='%f' height='%f' fill='", x, y, w, h)
                         if toggle then
@@ -6493,11 +6588,11 @@ VERSION_NUMBER = 1.512
                             newContent[#newContent + 1] = inactiveColor
                         end
                         if hover then
-                            newContent[#newContent + 1] = " style='stroke:white; stroke-width:2'"
+                            newContent[#newContent + 1] = stringf(" style='stroke:rgb(%d,%d,%d); stroke-width:2'",SafeR, SafeG, SafeB)
                         else
-                            newContent[#newContent + 1] = " style='stroke:black; stroke-width:1'"
+                            newContent[#newContent + 1] = stringf(" style='stroke:rgb(%d,%d,%d); stroke-width:1'",round(SafeR*0.5,0),round(SafeG*0.5,0),round(SafeB*0.5,0))
                         end
-                        newContent[#newContent + 1] = "></rect>"
+                        newContent[#newContent + 1] = " rx='5'></rect>"
                         newContent[#newContent + 1] = stringf("<text x='%f' y='%f' font-size='24' fill='", x + w / 2,
                                                         y + (h / 2) + 5)
                         if toggle then
@@ -6505,30 +6600,29 @@ VERSION_NUMBER = 1.512
                         else
                             newContent[#newContent + 1] = "white"
                         end
-                        newContent[#newContent + 1] = "' text-anchor='middle' font-family='Montserrat'>"
+                        newContent[#newContent + 1] = "' text-anchor='middle' font-family='Play'>"
                         if toggle then
                             newContent[#newContent + 1] = stringf("%s</text>", activeText)
                         else
                             newContent[#newContent + 1] = stringf("%s</text>", inactiveText)
                         end
                     end    
-                
-                    local defaultColor = "rgb(50,50,50)'"
-                    local onColor = "rgb(210,200,200)"
+                    local defaultColor = stringf("rgb(%d,%d,%d)'",round(SafeR*0.1,0),round(SafeG*0.1,0),round(SafeB*0.1,0))
+                    local onColor = stringf("rgb(%d,%d,%d)",round(SafeR*0.8,0),round(SafeG*0.8,0),round(SafeB*0.8,0))
                     local draw = DrawButton
                     for _, v in pairs(Buttons) do
                         -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
                         local disableName = v.disableName
                         local enableName = v.enableName
                         if type(disableName) == "function" then
-                            disableName = disableName()
+                            disableName = disableName(v)
                         end
                         if type(enableName) == "function" then
-                            enableName = enableName()
+                            enableName = enableName(v)
                         end
-                        if not v.drawCondition or v.drawCondition() then -- If they gave us a nil condition
-                            draw(newContent, v.toggleVar(), v.hovered, v.x, v.y, v.width, v.height, onColor, defaultColor,
-                                disableName, enableName)
+                        if not v.drawCondition or v.drawCondition(v) then -- If they gave us a nil condition
+                            draw(newContent, v.toggleVar(v), v.hovered, v.x, v.y, v.width, v.height, onColor, defaultColor,
+                                disableName, enableName, v)
                         end
                     end
                 end
@@ -6825,37 +6919,12 @@ VERSION_NUMBER = 1.512
         local keepCollinearity = 1 -- for easier reading
         local dontKeepCollinearity = 0 -- for easier reading
         local tolerancePercentToSkipOtherPriorities = 1 -- if we are within this tolerance (in%), we don't go to the next priorities
+        local wheel = system.getMouseWheel()
 
-        if system.getMouseWheel() > 0 then
-            if AltIsOn then
-                if atmosDensity > 0 or Reentry then
-                    adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + speedChangeLarge,0,AtmoSpeedLimit)
-                elseif Autopilot then
-                    MaxGameVelocity = uclamp(MaxGameVelocity + speedChangeLarge/3.6*100,0, 8333.00)
-                end
-            elseif mousePause then
-                local currentPlayerThrot = PlayerThrottle
-                PlayerThrottle = round(uclamp(PlayerThrottle + speedChangeLarge/100, -1, 1),2)
-                if PlayerThrottle >= 0 and currentPlayerThrot < 0 then 
-                    PlayerThrottle = 0 
-                    mousePause = false
-                end
-            end
-        elseif system.getMouseWheel() < 0 then
-            if AltIsOn then
-                if atmosDensity > 0 or Reentry then
-                    adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit - speedChangeLarge,0,AtmoSpeedLimit)
-                elseif Autopilot then
-                    MaxGameVelocity = uclamp(MaxGameVelocity - speedChangeLarge/3.6*100,0, 8333.00)
-                end
-            elseif mousePause then 
-                local currentPlayerThrot = PlayerThrottle
-                PlayerThrottle = round(uclamp(PlayerThrottle - speedChangeLarge/100, -1, 1),2)
-                if PlayerThrottle <= 0 and currentPlayerThrot > 0 then 
-                    PlayerThrottle = 0 
-                    mousePause = false
-                end
-            end
+        if wheel > 0 then
+            changeSpd()
+        elseif wheel < 0 then
+            changeSpd(true)
         else
             mousePause = true
         end
@@ -7214,20 +7283,6 @@ VERSION_NUMBER = 1.512
                     navCom:updateTargetGroundAltitudeFromActionStart(mult*1.0)
                 end
             end
-            local function changeSpd(down)
-                local mult=1
-                if down then mult = -1 end
-                if not holdingCtrl then
-                    if AtmoSpeedAssist and not AltIsOn then
-                        PlayerThrottle = uclamp(PlayerThrottle + mult*speedChangeLarge/100, -1, 1)
-                    else
-                        navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge)
-                    end
-                else
-                    if down then mult = 1 else mult = nil end
-                    ATLAS.adjustAutopilotTargetIndex(mult)
-                end
-            end
             local function assistedFlight(vectorType)
                 if not inAtmo then
                     msgText = "Flight Assist in Atmo only"
@@ -7524,6 +7579,7 @@ VERSION_NUMBER = 1.512
             end
             toggleView = false
         elseif action == "lshift" then
+            apButtonsHovered = false
             if AltIsOn then holdingCtrl = true end
             if sysIsVwLock() == 1 then
                 holdingCtrl = true
