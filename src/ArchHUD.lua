@@ -508,6 +508,7 @@ VERSION_NUMBER = 1.512
         end
         navCom:setThrottleCommand(axisCommandId.longitudinal, value)
         PlayerThrottle = uclamp(round(value*100,0)/100, -1, 1)
+        setCruiseSpeed = nil
     end
 
     local function cmdCruise(value, dontSwitch) -- sets the cruise target speed to value, also switches to cruise mode (vice throttle) unless dontSwitch passed
@@ -690,6 +691,39 @@ VERSION_NUMBER = 1.512
         end
     end
 
+    local function ResetAutopilots(ap)
+        if ap then 
+            spaceLaunch = false
+            Autopilot = false
+            AutopilotRealigned = false
+            apThrottleSet = false
+            HoldAltitude = coreAltitude
+            TargetSet = false
+        end
+        VectorToTarget = false
+        AutoTakeoff = false
+        Reentry = false
+        -- We won't abort interplanetary because that would fuck everyone.
+        ProgradeIsOn = false -- No reason to brake while facing prograde, but retrograde yes.
+        BrakeLanding = false
+        AutoLanding = false
+        ReversalIsOn = nil
+        if not antigravOn then
+            AltitudeHold = false -- And stop alt hold
+            LockPitch = nil
+        end
+        if VertTakeOff then
+            ToggleVerticalTakeoff()
+        end
+        if IntoOrbit then
+            ToggleIntoOrbit()
+        end
+        autoRoll = autoRollPreference
+        spaceLand = false
+        finalLand = false
+        upAmount = 0
+    end
+
     local function ToggleAutopilot() -- Toggle autopilot mode on and off
 
         local function ToggleVectorToTarget(SpaceTarget)
@@ -751,7 +785,7 @@ VERSION_NUMBER = 1.512
                         end
                     else
                         play("apOn", "AP")
-                        if not (autopilotTargetPlanet.name == planet.name and coreAltitude < (AutopilotTargetOrbit*2) ) then
+                        if not (autopilotTargetPlanet.name == planet.name and coreAltitude < (AutopilotTargetOrbit*1.5) ) then
                             OrbitAchieved = false
                             Autopilot = true
                         elseif not inAtmo then
@@ -803,17 +837,7 @@ VERSION_NUMBER = 1.512
             end
         else
             play("apOff", "AP")
-            spaceLaunch = false
-            Autopilot = false
-            AutopilotRealigned = false
-            VectorToTarget = false
-            apThrottleSet = false
-            AutoTakeoff = false
-            AltitudeHold = false
-            HoldAltitude = coreAltitude
-            TargetSet = false
-            Reentry = false
-            if IntoOrbit then ToggleIntoOrbit() end
+            ResetAutopilots(1)
         end
     end
 
@@ -827,28 +851,7 @@ VERSION_NUMBER = 1.512
         if BrakeIsOn then
             play("bkOn","B",1)
             -- If they turn on brakes, disable a few things
-            VectorToTarget = false
-            AutoTakeoff = false
-            Reentry = false
-            -- We won't abort interplanetary because that would fuck everyone.
-            ProgradeIsOn = false -- No reason to brake while facing prograde, but retrograde yes.
-            BrakeLanding = false
-            AutoLanding = false
-            ReversalIsOn = nil
-            if not antigravOn then
-                AltitudeHold = false -- And stop alt hold
-                LockPitch = nil
-            end
-            if VertTakeOff then
-                ToggleVerticalTakeoff()
-            end
-            if IntoOrbit then
-                ToggleIntoOrbit()
-            end
-            autoRoll = autoRollPreference
-            spaceLand = false
-            finalLand = false
-            upAmount = 0
+            ResetAutopilots()
         else
             play("bkOff","B",1)
         end
@@ -3515,7 +3518,7 @@ VERSION_NUMBER = 1.512
         end
 
         UpdateAtlasLocationsList()
-        AutopilotTargetIndex=0
+        if AutopilotTargetIndex > #AtlasOrdered then AutopilotTargetIndex=0 end
         Atlas.UpdateAutopilotTarget()
         return Atlas
     end
@@ -5317,7 +5320,6 @@ VERSION_NUMBER = 1.512
                     if stringmatch(type, '^.*Atmospheric Engine$') then
                         if stringmatch(tostring(core.getElementTagsById(elementsID[k])), '^.*vertical.*$') and core.getElementForwardById(elementsID[k])[3]>0 then
                             UpVertAtmoEngine = true
-                            p("UpEngine")
                         end
                     end
 
@@ -6174,8 +6176,8 @@ VERSION_NUMBER = 1.512
                 end
             RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
             if setCruiseSpeed ~= nil then
-                if navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
-                    cmdCruise(setCruiseSpeed, TRUE)
+                if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
+                    cmdCruise(setCruiseSpeed)
                 else
                     setCruiseSpeed = nil
                 end
