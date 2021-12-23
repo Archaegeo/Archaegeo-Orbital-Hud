@@ -7956,6 +7956,7 @@ VERSION_NUMBER = 1.512
                     local varType = type(_G[v])
                     if varType == "number" then
                         newGlobalValue = tonum(newGlobalValue)
+                        if v=="AtmoSpeedLimit" then adjustedAtmoSpeedLimit = newGlobalValue end
                     elseif varType == "boolean" then
                         if string.lower(newGlobalValue) == "true" then
                             newGlobalValue = true
