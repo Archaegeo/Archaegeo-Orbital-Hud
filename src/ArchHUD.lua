@@ -3304,7 +3304,6 @@ VERSION_NUMBER = 1.512
                 end
                 local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
                 local autopilotEntry = atlas[0][atlasIndex]
-
                 if autopilotEntry.center then -- Is a real atlas entry
                     AutopilotTargetName = autopilotEntry.name
                     autopilotTargetPlanet = galaxyReference[0][atlasIndex]
@@ -3516,9 +3515,8 @@ VERSION_NUMBER = 1.512
         end
 
         UpdateAtlasLocationsList()
-
+        AutopilotTargetIndex=0
         Atlas.UpdateAutopilotTarget()
-
         return Atlas
     end
     local function APClass() -- Autopiloting functions including tick
@@ -5897,7 +5895,7 @@ VERSION_NUMBER = 1.512
                                 spaceEngineMinAltitude = 0,
                             }
                 end
-                
+
                 local altTable = { [1]=4480, [6]=4480, [7]=6270} -- Alternate altitudes for madis, sinnen, sicari
                 for galaxyId,galaxy in pairs(atlas) do
                     -- Create a copy of Space with the appropriate SystemId for each galaxy
@@ -5918,16 +5916,13 @@ VERSION_NUMBER = 1.512
                         atlasCopy[galaxyId][planetId] = planet
                     end
                 end
-                
                 PlanetaryReference = PlanetRef()
                 galaxyReference = PlanetaryReference(atlasCopy)
                 -- Setup Modular Classes
                 Kinematic = Kinematics()
                 Kep = Keplers()
-    
                 RADAR = RadarClass()
                 HUD = HudClass()
-    
                 ATLAS = AtlasClass()
             end
         
@@ -7538,7 +7533,7 @@ VERSION_NUMBER = 1.512
                 Animating = false
             end
         elseif action == "brake" then
-            if BrakeToggleStatus then
+            if BrakeToggleStatus or AltIsOn then
                 BrakeToggle()
             elseif not BrakeIsOn then
                 BrakeToggle() -- Trigger the cancellations
@@ -7696,7 +7691,7 @@ VERSION_NUMBER = 1.512
             end
             holdingCtrl = false
         elseif action == "brake" then
-            if not BrakeToggleStatus then
+            if not BrakeToggleStatus and not AltIsOn then
                 if BrakeIsOn then
                     BrakeToggle()
                 else
