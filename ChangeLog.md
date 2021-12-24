@@ -1,5 +1,24 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.512 Handbrake, Scrolling AP, Databank Security
+- New user variable: `WipeDamage` default of 0
+- Feature: If `CheckDamage` is true, and ships percent damage gets < `WipeDamage` then the ship will wipe the databank 
+to protect against pirated waypoints.  Set `WipeDamage` to the %damage below which you want the databank to wipe.
+- Feature: You can now see 10 IPH targets at a time and mouse over to start/change AP destination while not in freelook.
+To Use: Hold shift and mouse over the "Engage Autopilot: Target" button top center.  This will present a list of 10 targets
+from the IPH.  While holding shift you can scroll by mousewheel in first person, or R/T in third person.  Release shift to
+start Autopilot to the target under the dot cursor.
+- Feature: Handbrake - For those who like vanilla brake mode but sometimes want to lock brakes on, if 
+`BrakeToggleDefault` is set to false (vanilla braking) alt-ctrl will toggle brakes on till you hit ctrl again
+- HUD Enhancement: Gradiant fog in the Odometer section up top and slight outligning of text to make it stand out better.
+- FIX: Fix issue when only 1 radar installed not indicating jammed
+- FIX: Issue where Index of IPH was out of bounds causing HUD not to show (but still function)
+- FIX: Hitting ALt-4 to stop Autopilot will cancel everything that tapping brakes on does.
+- FIX: Fixed rare speed control issue
+- FIX: If you change `AtmoSpeedLimit` with /G the new value will become the current limit (no need to alt-mousewheel up/down to change it)
+- CHANGE: AP close to planet will use normal AP if > 1.5 time TargetOrbit shown on IPH.  This should not cause any issue
+unless you lower your TargetOrbitRadius < 1.2 and are heavy or have a poorly braked ship. 
+
 Version 1.511 - Fix issue on new installs
 - Fixed issue with new installs not showing hud if no target selected in IPH.  (Alt-1/2 will fix 1.510)
 

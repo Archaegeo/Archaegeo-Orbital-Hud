@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.511
+VERSION_NUMBER = 1.512
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -67,6 +67,7 @@ VERSION_NUMBER = 1.511
     fuelTankHandlingRocket = 0 --export:
     ContainerOptimization = 0 --export:
     FuelTankOptimization = 0 --export:
+    WipeDamage = 0 --export:
 
     -- HUD Postioning variables
     ResolutionX = 1920 --export:
@@ -344,7 +345,8 @@ VERSION_NUMBER = 1.511
     local collisionTarget = nil
     local radars = {}
     local rType = "Atmo"
-
+    local apButtonsHovered = false
+    local apScrollIndex = 0
 
 -- Function Definitions that are used in more than one areause 
     --[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
@@ -429,6 +431,39 @@ VERSION_NUMBER = 1.511
         system.print(time..": "..msg)
     end
     --]]
+
+    local function changeSpd(down)
+        local mult=1
+        if down then mult = -1 end
+        if not holdingCtrl then
+            if AtmoSpeedAssist and not AltIsOn and mousePause then
+                local currentPlayerThrot = PlayerThrottle
+                PlayerThrottle = round(uclamp(PlayerThrottle + mult*speedChangeLarge/100, -1, 1),2)
+                if PlayerThrottle >= 0 and currentPlayerThrot < 0 then 
+                    PlayerThrottle = 0 
+                    mousePause = false
+                end
+            elseif AltIsOn then
+                if atmosDensity > 0 or Reentry then
+                    adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
+                elseif Autopilot then
+                    MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 8333.00)
+                end
+            else
+                navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge)
+            end
+        else
+            if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
+                apScrollIndex = apScrollIndex+1*mult*-1
+                if apScrollIndex > #AtlasOrdered then apScrollIndex = 1 end
+                if apScrollIndex < 1 then apScrollIndex = #AtlasOrdered end
+            else
+                if not down then mult = 1 else mult = nil end
+                ATLAS.adjustAutopilotTargetIndex(mult)
+            end
+        end
+    end
+
     local function checkLOS(vector)
         local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, vector,
             function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
@@ -470,7 +505,7 @@ VERSION_NUMBER = 1.511
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "ReEntryPitch","LockPitchTarget", "AutopilotSpaceDistance", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
-                "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization"}
+                "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization", "WipeDamage"}
             local savableVariablesHud = {"ResolutionX","ResolutionY","circleRad","SafeR", "SafeG", "SafeB", 
                 "PvPR", "PvPG", "PvPB","centerX", "centerY", "throtPosX", "throtPosY",
                 "vSpdMeterX", "vSpdMeterY","altMeterX", "altMeterY","fuelX", "fuelY", "shieldX", "shieldY", "DeadZone",
@@ -508,6 +543,7 @@ VERSION_NUMBER = 1.511
         end
         navCom:setThrottleCommand(axisCommandId.longitudinal, value)
         PlayerThrottle = uclamp(round(value*100,0)/100, -1, 1)
+        setCruiseSpeed = nil
     end
 
     local function cmdCruise(value, dontSwitch) -- sets the cruise target speed to value, also switches to cruise mode (vice throttle) unless dontSwitch passed
@@ -690,6 +726,39 @@ VERSION_NUMBER = 1.511
         end
     end
 
+    local function ResetAutopilots(ap)
+        if ap then 
+            spaceLaunch = false
+            Autopilot = false
+            AutopilotRealigned = false
+            apThrottleSet = false
+            HoldAltitude = coreAltitude
+            TargetSet = false
+        end
+        VectorToTarget = false
+        AutoTakeoff = false
+        Reentry = false
+        -- We won't abort interplanetary because that would fuck everyone.
+        ProgradeIsOn = false -- No reason to brake while facing prograde, but retrograde yes.
+        BrakeLanding = false
+        AutoLanding = false
+        ReversalIsOn = nil
+        if not antigravOn then
+            AltitudeHold = false -- And stop alt hold
+            LockPitch = nil
+        end
+        if VertTakeOff then
+            ToggleVerticalTakeoff()
+        end
+        if IntoOrbit then
+            ToggleIntoOrbit()
+        end
+        autoRoll = autoRollPreference
+        spaceLand = false
+        finalLand = false
+        upAmount = 0
+    end
+
     local function ToggleAutopilot() -- Toggle autopilot mode on and off
 
         local function ToggleVectorToTarget(SpaceTarget)
@@ -751,7 +820,7 @@ VERSION_NUMBER = 1.511
                         end
                     else
                         play("apOn", "AP")
-                        if not (autopilotTargetPlanet.name == planet.name and coreAltitude < (AutopilotTargetOrbit*2) ) then
+                        if not (autopilotTargetPlanet.name == planet.name and coreAltitude < (AutopilotTargetOrbit*1.5) ) then
                             OrbitAchieved = false
                             Autopilot = true
                         elseif not inAtmo then
@@ -803,17 +872,7 @@ VERSION_NUMBER = 1.511
             end
         else
             play("apOff", "AP")
-            spaceLaunch = false
-            Autopilot = false
-            AutopilotRealigned = false
-            VectorToTarget = false
-            apThrottleSet = false
-            AutoTakeoff = false
-            AltitudeHold = false
-            HoldAltitude = coreAltitude
-            TargetSet = false
-            Reentry = false
-            if IntoOrbit then ToggleIntoOrbit() end
+            ResetAutopilots(1)
         end
     end
 
@@ -827,28 +886,7 @@ VERSION_NUMBER = 1.511
         if BrakeIsOn then
             play("bkOn","B",1)
             -- If they turn on brakes, disable a few things
-            VectorToTarget = false
-            AutoTakeoff = false
-            Reentry = false
-            -- We won't abort interplanetary because that would fuck everyone.
-            ProgradeIsOn = false -- No reason to brake while facing prograde, but retrograde yes.
-            BrakeLanding = false
-            AutoLanding = false
-            ReversalIsOn = nil
-            if not antigravOn then
-                AltitudeHold = false -- And stop alt hold
-                LockPitch = nil
-            end
-            if VertTakeOff then
-                ToggleVerticalTakeoff()
-            end
-            if IntoOrbit then
-                ToggleIntoOrbit()
-            end
-            autoRoll = autoRollPreference
-            spaceLand = false
-            finalLand = false
-            upAmount = 0
+            ResetAutopilots()
         else
             play("bkOff","B",1)
         end
@@ -1775,17 +1813,13 @@ VERSION_NUMBER = 1.511
             if radar_1 and radars[1]==radar_1 and radar_1.isOperational() ~= 1 then
                 if radar_2 and radar_2.isOperational() == 1 then 
                     radars[1] = radar_2
-                else 
-                    radars[1]=nil
                 end
-                pickType()
+                if radars[1] == radar_2 then pickType() end
             elseif radar_2 and radars[1]==radar_2 and radar_2.isOperational() ~= 1 then
                 if radar_1 and radar_1.isOperational() == 1 then 
                     radars[1] = radar_1
-                else 
-                    radars[1]=nil
                 end
-                pickType()
+                if radars[1] == radar_1 then pickType() end
             end
         end
 
@@ -1968,7 +2002,7 @@ VERSION_NUMBER = 1.511
                                     <rect fill=grey class="bar" x="%d" y="%d" width="100" height="13"></rect></g>
                                     <g class="bar txtstart">
                                     <rect fill=%s width="%d" height="13" x="%d" y="%d"></rect>
-                                    <text fill=black x="%d" y="%d">%s%% %s</text>
+                                    <text fill=black x="%d" y="%d" style="stroke-width:0px;paint-order:normal;">%s%% %s</text>
                                     </g>]], x, y2, color, fuelPercentTable[i], x, y2, x+2, y2+10, fuelPercentTable[i], fuelTimeDisplay
                                 )
                                 tankMessage = tankMessage..svgText(x, y1, name, class.."txtstart pdim txtfuel") 
@@ -2118,8 +2152,8 @@ VERSION_NUMBER = 1.511
                         if len == 30 then
                             tickerPath = stringf([[%s M %d %f h %d]], tickerPath, centerX-pitchX-len, y, len)
                             if inAtmo then
-                                newContent[#newContent + 1] = stringf([[<g path transform="rotate(%f,%d,%d)" class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]],(-1 * originalRoll), centerX, centerY, centerX-pitchX+10, y, i)
-                                newContent[#newContent + 1] = stringf([[<g path transform="rotate(%f,%d,%d)" class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]],(-1 * originalRoll), centerX, centerY, centerX+pitchX-10, y, i)
+                                newContent[#newContent + 1] = stringf([[<g path transform="rotate(%f,%d,%d)" class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]],(-1 * originalRoll), centerX, centerY, centerX-pitchX+10, y+4, i)
+                                newContent[#newContent + 1] = stringf([[<g path transform="rotate(%f,%d,%d)" class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]],(-1 * originalRoll), centerX, centerY, centerX+pitchX-10, y+4, i)
                                 if i == 0 or i == 180 or i == -180 then 
                                     newContent[#newContent + 1] = stringf([[<path transform="rotate(%f,%d,%d)" d="m %d,%f %d,0" stroke-width="1" style="fill:none;stroke:#F5B800;" />]],
                                         (-1 * originalRoll), centerX, centerY, centerX-pitchX+20, y, pitchX*2-40)
@@ -2889,15 +2923,21 @@ VERSION_NUMBER = 1.511
                         .altbig {font-size:21px;font-weight:normal;}
                         .line {stroke-width:2px;fill:none}
                         .linethick {stroke-width:3px;fill:none}
-                        .warnings {font-size:26px;fill:red;text-anchor:middle;font-family:Bank}
-                        .warn {fill:orange;font-size:24px}
+                        .warnings {font-size:26px;fill:red;text-anchor:middle;font-family:Bank;}
+                        .warn {fill:orange; font-size:24px}
                         .crit {fill:darkred;font-size:28px}
                         .bright {fill:%s;stroke:%s}
+                        text.bright {stroke:black; stroke-width:10px;paint-order:stroke;}
                         .pbright {fill:%s;stroke:%s}
+                        text.pbright {stroke:black; stroke-width:10px;paint-order:stroke;}
                         .dim {fill:%s;stroke:%s}
+                        text.dim {stroke:black; stroke-width:10px;paint-order:stroke;}
                         .pdim {fill:%s;stroke:%s}
+                        text.pdim {stroke:black; stroke-width:10px;paint-order:stroke;}
                         .red {fill:red;stroke:red}
+                        text.red {stroke:black; stroke-width:10px;paint-order:stroke;}
                         .orange {fill:orange;stroke:orange}
+                        text.orange {stroke:black; stroke-width:10px;paint-order:stroke;}
                         .redout {fill:none;stroke:red}
                         .op30 {opacity:0.3}
                         .op10 {opacity:0.1}
@@ -2912,11 +2952,18 @@ VERSION_NUMBER = 1.511
                         .hudver {font-size:10px;font-weight:bold;fill:red;text-anchor:end;font-family:Bank}
                         .msg {font-size:40px;fill:red;text-anchor:middle;font-weight:normal}
                         .cursor {stroke:white}
+                        text { stroke:black; stroke-width:10px;paint-order:stroke;}
                     </style>
                 </head>
                 <body>
                     <svg height="100%%" width="100%%" viewBox="0 0 %d %d">
-                    ]], bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig, resolutionWidth, resolutionHeight)
+                    <defs>
+                        <radialGradient id="RadialGradient1" cx="0.5" cy="0" r="1">
+                            <stop offset="0%%" stop-color="black" stop-opacity="1"/>
+                            <stop offset="100%%" stop-color="%s" stop-opacity="0.4"/>
+                        </radialGradient>
+                    </defs>
+                    ]], bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig, resolutionWidth, resolutionHeight, dimOrig)
             return newContent
         end
 
@@ -3073,7 +3120,7 @@ VERSION_NUMBER = 1.511
             maxThrust = round((maxThrust / (coreMass * gravConstant)),2).." g"
             newContent[#newContent + 1] = stringf([[
                 <g class="pbright txt">
-                <path class="linethick" d="M %d 0 L %d %d Q %d %d %d %d L %d 0"/>]],
+                <path class="linethick" style="fill:url(#RadialGradient1);" d="M %d 0 L %d %d Q %d %d %d %d L %d 0"/>]],
                 ConvertResolutionX(660), ConvertResolutionX(700), ConvertResolutionY(35), ConvertResolutionX(960), ConvertResolutionY(55),
                 ConvertResolutionX(1240), ConvertResolutionY(35), ConvertResolutionX(1280))
             if isRemote() == 0 or RemoteHud then 
@@ -3299,6 +3346,7 @@ VERSION_NUMBER = 1.511
             end
 
             local function UpdateAutopilotTarget()
+                apScrollIndex = AutopilotTargetIndex
                 -- So the indices are weird.  I think we need to do a pairs
                 if AutopilotTargetIndex == 0 then
                     AutopilotTargetName = "None"
@@ -3308,7 +3356,6 @@ VERSION_NUMBER = 1.511
                 end
                 local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
                 local autopilotEntry = atlas[0][atlasIndex]
-
                 if autopilotEntry.center then -- Is a real atlas entry
                     AutopilotTargetName = autopilotEntry.name
                     autopilotTargetPlanet = galaxyReference[0][atlasIndex]
@@ -3520,9 +3567,8 @@ VERSION_NUMBER = 1.511
         end
 
         UpdateAtlasLocationsList()
-
+        if AutopilotTargetIndex > #AtlasOrdered then AutopilotTargetIndex=0 end
         Atlas.UpdateAutopilotTarget()
-
         return Atlas
     end
     local function APClass() -- Autopiloting functions including tick
@@ -5323,7 +5369,6 @@ VERSION_NUMBER = 1.511
                     if stringmatch(type, '^.*Atmospheric Engine$') then
                         if stringmatch(tostring(core.getElementTagsById(elementsID[k])), '^.*vertical.*$') and core.getElementForwardById(elementsID[k])[3]>0 then
                             UpVertAtmoEngine = true
-                            p("UpEngine")
                         end
                     end
 
@@ -5655,30 +5700,29 @@ VERSION_NUMBER = 1.511
                     -- So AutopilotTargetIndex is special and not a real index.  We have to do this by hand.
                         ATLAS.ClearCurrentPosition()
                 end
-                
-                local function getAPEnableName()
-                    local name = AutopilotTargetName
-                    if name == nil then
-                        local displayText = getDistanceDisplayString((worldPos - CustomTarget.position):len())
-                        name = CustomTarget.name .. " " .. displayText
-                                
-                    end
-                    if name == nil then
-                        name = "None"
-                    end
-                    return "Engage Autopilot: " .. name
-                end
 
-                local function getAPDisableName()
+                local function getAPName(index)
                     local name = AutopilotTargetName
+                    if index ~= nil and type(index) == "number" then 
+                        if index == 0 then return "None" end
+                        name = AtlasOrdered[index].name
+                    end
                     if name == nil then
                         name = CustomTarget.name
                     end
                     if name == nil then
                         name = "None"
                     end
-                    return "Disable Autopilot: " .. name
-                end        
+                    return name
+                end
+                
+                local function getAPEnableName(index)
+                    return "Engage Autopilot: " .. getAPName(index)
+                end
+
+                local function getAPDisableName(index)
+                    return "Disable Autopilot: " .. getAPName(index)
+                end   
 
                 local function ToggleFollowMode() -- Toggle Follow Mode on and off
                     if isRemote() == 1 then
@@ -5741,10 +5785,56 @@ VERSION_NUMBER = 1.511
                     end, gradeToggle, function()
                         return atmosDensity == 0
                     end) -- Hope this works
-                local apbutton = MakeButton(getAPEnableName, getAPDisableName, 600, 60, resolutionWidth / 2 - 600 / 2,
+                apbutton = MakeButton(getAPEnableName, getAPDisableName, 600, 60, resolutionWidth / 2 - 600 / 2,
                                         resolutionHeight / 2 - 60 / 2 - 400, function()
-                        return Autopilot
-                    end, ToggleAutopilot)
+                        return Autopilot or VectorToTarget or spaceLaunch or IntoOrbit
+                    end, function() end) -- No toggle function because we draw over this with things that do toggle
+                -- Make 9 more buttons that only show when moused over the AP button
+                local i
+                local function getAtlasIndexFromAddition(add)
+                    local index = apScrollIndex + add
+                    if index > #AtlasOrdered then
+                        index = index-#AtlasOrdered-1
+                    end
+                    if index < 0 then
+                        index = #AtlasOrdered+index
+                    end
+                    
+                    return index
+                end
+                apExtraButtons = {}
+                for i=0,10 do
+                    local button = MakeButton(function(b)
+                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
+                        if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
+                            return "Redirect: " .. getAPName(index)
+                        end
+                        return getAPEnableName(index)
+                    end, function(b)
+                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
+                        return getAPDisableName(index)
+                    end, 600, 60, resolutionWidth/2 - 600/2, 
+                    resolutionHeight/2 - 60/2 - 400 + 60*i, function(b)
+                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
+                        return index == AutopilotTargetIndex and (Autopilot or VectorToTarget or spaceLaunch or IntoOrbit)
+                    end, function(b)
+                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
+                        local disable = AutopilotTargetIndex == index
+                        AutopilotTargetIndex = index
+                        ATLAS.UpdateAutopilotTarget()
+                        ToggleAutopilot()
+                        -- Let buttons redirect AP, they're hard to do by accident
+                        if not disable and not (Autopilot or VectorToTarget or spaceLaunch or IntoOrbit) then
+                            ToggleAutopilot()
+                        end
+                    end, function()
+                        return apButtonsHovered
+                    end)
+                    button.apExtraIndex = i
+                    apExtraButtons[i] = button
+                end
+
+
                 MakeButton("Save Position", "Save Position", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y,
                     function()
                         return false
@@ -5901,7 +5991,7 @@ VERSION_NUMBER = 1.511
                                 spaceEngineMinAltitude = 0,
                             }
                 end
-                
+
                 local altTable = { [1]=4480, [6]=4480, [7]=6270} -- Alternate altitudes for madis, sinnen, sicari
                 for galaxyId,galaxy in pairs(atlas) do
                     -- Create a copy of Space with the appropriate SystemId for each galaxy
@@ -5922,16 +6012,13 @@ VERSION_NUMBER = 1.511
                         atlasCopy[galaxyId][planetId] = planet
                     end
                 end
-                
                 PlanetaryReference = PlanetRef()
                 galaxyReference = PlanetaryReference(atlasCopy)
                 -- Setup Modular Classes
                 Kinematic = Kinematics()
                 Kep = Keplers()
-    
                 RADAR = RadarClass()
                 HUD = HudClass()
-    
                 ATLAS = AtlasClass()
             end
         
@@ -5967,13 +6054,8 @@ VERSION_NUMBER = 1.511
             -- Set up Jaylebreak and atlas
 
             atlasSetup()
-
-
-
-
             --AP = APClass()
-
-         
+        
             coroutine.yield()
  
             unit.hide()
@@ -5991,12 +6073,8 @@ VERSION_NUMBER = 1.511
             unit.setTimer("tenthSecond", 1/10)
             unit.setTimer("fiveSecond", 5) 
             radars[1]=nil
-            if radar_1 or radar_2 then 
-                if radar_2 and radar_2.isOperational() == 1 then 
-                    radars[1] = radar_2
-                elseif radar_1 and radar_1.isOperational() == 1 then
-                    radars[1] = radar_1
-                end
+            if radar_1 then
+                radars[1] = radar_1
                 RADAR.pickType()
             end
             play("start","SU")
@@ -6187,8 +6265,8 @@ VERSION_NUMBER = 1.511
                 end
             RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
             if setCruiseSpeed ~= nil then
-                if navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
-                    cmdCruise(setCruiseSpeed, TRUE)
+                if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
+                    cmdCruise(setCruiseSpeed)
                 else
                     setCruiseSpeed = nil
                 end
@@ -6286,6 +6364,18 @@ VERSION_NUMBER = 1.511
             -- Local Functions for oneSecond
 
                 local function CheckDamage(newContent)
+                    
+                    local function wipeSaveVariables()
+                        for k, v in pairs(saveableVariables()) do
+                            dbHud_1.setStringValue(v, jencode(nil))
+                        end
+                        for k, v in pairs(autoVariables) do
+                            dbHud_1.setStringValue(v, jencode(nil))
+                        end
+                        msgText = "Databank wiped"
+                        msgTimer = 5
+                    end
+
                     local percentDam = 0
                     damageMessage = ""
                     local maxShipHP = eleTotalMaxHp
@@ -6340,6 +6430,7 @@ VERSION_NUMBER = 1.511
                     end
                     percentDam = mfloor((curShipHP / maxShipHP)*100)
                     if percentDam < 100 then
+                        if percentDam > 0 and percentDam < WipeDamage then wipeSaveVariables() end
                         newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
                         colorMod = mfloor(percentDam * 2.55)
                         color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
@@ -6465,8 +6556,8 @@ VERSION_NUMBER = 1.511
                 local function CheckButtons()
                     for _, v in pairs(Buttons) do
                         if v.hovered then
-                            if not v.drawCondition or v.drawCondition() then
-                                v.toggleFunction()
+                            if not v.drawCondition or v.drawCondition(v) then
+                                v.toggleFunction(v)
                             end
                             v.hovered = false
                         end
@@ -6475,7 +6566,7 @@ VERSION_NUMBER = 1.511
                 local function SetButtonContains()
 
                     local function Contains(mousex, mousey, x, y, width, height)
-                        if mousex > x and mousex < (x + width) and mousey > y and mousey < (y + height) then
+                        if mousex >= x and mousex <= (x + width) and mousey >= y and mousey <= (y + height) then
                             return true
                         else
                             return false
@@ -6487,15 +6578,30 @@ VERSION_NUMBER = 1.511
                         -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
                         v.hovered = Contains(x, y, v.x, v.y, v.width, v.height)
                     end
+
+                    if apButtonsHovered then -- Keep it hovered if any buttons are hovered
+                        local hovered = false
+                        for _,b in ipairs(apExtraButtons) do
+                            if b.hovered then hovered = true break end
+                        end
+                        if apbutton.hovered then hovered = true end
+                        apButtonsHovered = hovered
+                    else
+                        apButtonsHovered = apbutton.hovered
+                        if not apButtonsHovered then
+                            apScrollIndex = AutopilotTargetIndex -- Reset when no longer hovering
+                        end
+                    end
+                    
                 end
                 local function DrawButtons(newContent)
 
-                    local function DrawButton(newContent, toggle, hover, x, y, w, h, activeColor, inactiveColor, activeText, inactiveText)
+                    local function DrawButton(newContent, toggle, hover, x, y, w, h, activeColor, inactiveColor, activeText, inactiveText, button)
                         if type(activeText) == "function" then
-                            activeText = activeText()
+                            activeText = activeText(button)
                         end
                         if type(inactiveText) == "function" then
-                            inactiveText = inactiveText()
+                            inactiveText = inactiveText(button)
                         end
                         newContent[#newContent + 1] = stringf("<rect x='%f' y='%f' width='%f' height='%f' fill='", x, y, w, h)
                         if toggle then
@@ -6504,11 +6610,11 @@ VERSION_NUMBER = 1.511
                             newContent[#newContent + 1] = inactiveColor
                         end
                         if hover then
-                            newContent[#newContent + 1] = " style='stroke:white; stroke-width:2'"
+                            newContent[#newContent + 1] = stringf(" style='stroke:rgb(%d,%d,%d); stroke-width:2'",SafeR, SafeG, SafeB)
                         else
-                            newContent[#newContent + 1] = " style='stroke:black; stroke-width:1'"
+                            newContent[#newContent + 1] = stringf(" style='stroke:rgb(%d,%d,%d); stroke-width:1'",round(SafeR*0.5,0),round(SafeG*0.5,0),round(SafeB*0.5,0))
                         end
-                        newContent[#newContent + 1] = "></rect>"
+                        newContent[#newContent + 1] = " rx='5'></rect>"
                         newContent[#newContent + 1] = stringf("<text x='%f' y='%f' font-size='24' fill='", x + w / 2,
                                                         y + (h / 2) + 5)
                         if toggle then
@@ -6516,30 +6622,29 @@ VERSION_NUMBER = 1.511
                         else
                             newContent[#newContent + 1] = "white"
                         end
-                        newContent[#newContent + 1] = "' text-anchor='middle' font-family='Montserrat'>"
+                        newContent[#newContent + 1] = "' text-anchor='middle' font-family='Play' style='stroke-width:0px;'>"
                         if toggle then
                             newContent[#newContent + 1] = stringf("%s</text>", activeText)
                         else
                             newContent[#newContent + 1] = stringf("%s</text>", inactiveText)
                         end
                     end    
-                
-                    local defaultColor = "rgb(50,50,50)'"
-                    local onColor = "rgb(210,200,200)"
+                    local defaultColor = stringf("rgb(%d,%d,%d)'",round(SafeR*0.1,0),round(SafeG*0.1,0),round(SafeB*0.1,0))
+                    local onColor = stringf("rgb(%d,%d,%d)",round(SafeR*0.8,0),round(SafeG*0.8,0),round(SafeB*0.8,0))
                     local draw = DrawButton
                     for _, v in pairs(Buttons) do
                         -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
                         local disableName = v.disableName
                         local enableName = v.enableName
                         if type(disableName) == "function" then
-                            disableName = disableName()
+                            disableName = disableName(v)
                         end
                         if type(enableName) == "function" then
-                            enableName = enableName()
+                            enableName = enableName(v)
                         end
-                        if not v.drawCondition or v.drawCondition() then -- If they gave us a nil condition
-                            draw(newContent, v.toggleVar(), v.hovered, v.x, v.y, v.width, v.height, onColor, defaultColor,
-                                disableName, enableName)
+                        if not v.drawCondition or v.drawCondition(v) then -- If they gave us a nil condition
+                            draw(newContent, v.toggleVar(v), v.hovered, v.x, v.y, v.width, v.height, onColor, defaultColor,
+                                disableName, enableName, v)
                         end
                     end
                 end
@@ -6836,37 +6941,12 @@ VERSION_NUMBER = 1.511
         local keepCollinearity = 1 -- for easier reading
         local dontKeepCollinearity = 0 -- for easier reading
         local tolerancePercentToSkipOtherPriorities = 1 -- if we are within this tolerance (in%), we don't go to the next priorities
+        local wheel = system.getMouseWheel()
 
-        if system.getMouseWheel() > 0 then
-            if AltIsOn then
-                if atmosDensity > 0 or Reentry then
-                    adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + speedChangeLarge,0,AtmoSpeedLimit)
-                elseif Autopilot then
-                    MaxGameVelocity = uclamp(MaxGameVelocity + speedChangeLarge/3.6*100,0, 8333.00)
-                end
-            elseif mousePause then
-                local currentPlayerThrot = PlayerThrottle
-                PlayerThrottle = round(uclamp(PlayerThrottle + speedChangeLarge/100, -1, 1),2)
-                if PlayerThrottle >= 0 and currentPlayerThrot < 0 then 
-                    PlayerThrottle = 0 
-                    mousePause = false
-                end
-            end
-        elseif system.getMouseWheel() < 0 then
-            if AltIsOn then
-                if atmosDensity > 0 or Reentry then
-                    adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit - speedChangeLarge,0,AtmoSpeedLimit)
-                elseif Autopilot then
-                    MaxGameVelocity = uclamp(MaxGameVelocity - speedChangeLarge/3.6*100,0, 8333.00)
-                end
-            elseif mousePause then 
-                local currentPlayerThrot = PlayerThrottle
-                PlayerThrottle = round(uclamp(PlayerThrottle - speedChangeLarge/100, -1, 1),2)
-                if PlayerThrottle <= 0 and currentPlayerThrot > 0 then 
-                    PlayerThrottle = 0 
-                    mousePause = false
-                end
-            end
+        if wheel > 0 then
+            changeSpd()
+        elseif wheel < 0 then
+            changeSpd(true)
         else
             mousePause = true
         end
@@ -7225,20 +7305,6 @@ VERSION_NUMBER = 1.511
                     navCom:updateTargetGroundAltitudeFromActionStart(mult*1.0)
                 end
             end
-            local function changeSpd(down)
-                local mult=1
-                if down then mult = -1 end
-                if not holdingCtrl then
-                    if AtmoSpeedAssist and not AltIsOn then
-                        PlayerThrottle = uclamp(PlayerThrottle + mult*speedChangeLarge/100, -1, 1)
-                    else
-                        navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge)
-                    end
-                else
-                    if down then mult = 1 else mult = nil end
-                    ATLAS.adjustAutopilotTargetIndex(mult)
-                end
-            end
             local function assistedFlight(vectorType)
                 if not inAtmo then
                     msgText = "Flight Assist in Atmo only"
@@ -7535,6 +7601,7 @@ VERSION_NUMBER = 1.511
             end
             toggleView = false
         elseif action == "lshift" then
+            apButtonsHovered = false
             if AltIsOn then holdingCtrl = true end
             if sysIsVwLock() == 1 then
                 holdingCtrl = true
@@ -7546,7 +7613,7 @@ VERSION_NUMBER = 1.511
                 Animating = false
             end
         elseif action == "brake" then
-            if BrakeToggleStatus then
+            if BrakeToggleStatus or AltIsOn then
                 BrakeToggle()
             elseif not BrakeIsOn then
                 BrakeToggle() -- Trigger the cancellations
@@ -7704,7 +7771,7 @@ VERSION_NUMBER = 1.511
             end
             holdingCtrl = false
         elseif action == "brake" then
-            if not BrakeToggleStatus then
+            if not BrakeToggleStatus and not AltIsOn then
                 if BrakeIsOn then
                     BrakeToggle()
                 else
@@ -7784,18 +7851,6 @@ VERSION_NUMBER = 1.511
 
     function script.onInputText(text)
         -- Local functions for onInputText
-            local function wipeSaveVariables()
-                for k, v in pairs(saveableVariables()) do
-                    dbHud_1.setStringValue(v, jencode(nil))
-                end
-                for k, v in pairs(autoVariables) do
-                    if v ~= "SavedLocations" then dbHud_1.setStringValue(v, jencode(nil)) end
-                end
-                msgText =
-                    "Databank wiped except Save Locations. New variables will save after re-enter seat and exit"
-                msgTimer = 5
-            end
-
             local function AddNewLocationByWaypoint(savename, pos, temp)
 
                 local function zeroConvertToWorldCoordinates(pos) -- Many thanks to SilverZero for this.
@@ -7911,6 +7966,7 @@ VERSION_NUMBER = 1.511
                     local varType = type(_G[v])
                     if varType == "number" then
                         newGlobalValue = tonum(newGlobalValue)
+                        if v=="AtmoSpeedLimit" then adjustedAtmoSpeedLimit = newGlobalValue end
                     elseif varType == "boolean" then
                         if string.lower(newGlobalValue) == "true" then
                             newGlobalValue = true
