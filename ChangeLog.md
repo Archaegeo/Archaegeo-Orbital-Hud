@@ -10,6 +10,7 @@ from the IPH.  While holding shift you can scroll by mousewheel in first person,
 start Autopilot to the target under the dot cursor.
 - Feature: Handbrake - For those who like vanilla brake mode but sometimes want to lock brakes on, if 
 `BrakeToggleDefault` is set to false (vanilla braking) alt-ctrl will toggle brakes on till you hit ctrl again
+- HUD Enhancement: Gradiant fog in the Odometer section up top and slight outligning of text to make it stand out better.
 - FIX: Fix issue when only 1 radar installed not indicating jammed
 - FIX: Issue where Index of IPH was out of bounds causing HUD not to show (but still function)
 - FIX: Hitting ALt-4 to stop Autopilot will cancel everything that tapping brakes on does.
