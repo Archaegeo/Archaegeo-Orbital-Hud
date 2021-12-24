@@ -1,6 +1,13 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.512 Handbrake and Fixes
+Version 1.512 Handbrake, Scrolling AP, Databank Security
+- New user variable: `WipeDamage` default of 0
+- Feature: If `CheckDamage` is true, and ships percent damage gets < `WipeDamage` then the ship will wipe the databank 
+to protect against pirated waypoints.  Set `WipeDamage` to the %damage below which you want the databank to wipe.
+- Feature: You can now see 10 IPH targets at a time and mouse over to start/change AP destination while not in freelook.
+To Use: Hold shift and mouse over the "Engage Autopilot: Target" button top center.  This will present a list of 10 targets
+from the IPH.  While holding shift you can scroll by mousewheel in first person, or R/T in third person.  Release shift to
+start Autopilot to the target under the dot cursor.
 - Feature: Handbrake - For those who like vanilla brake mode but sometimes want to lock brakes on, if 
 `BrakeToggleDefault` is set to false (vanilla braking) alt-ctrl will toggle brakes on till you hit ctrl again
 - FIX: Fix issue when only 1 radar installed not indicating jammed

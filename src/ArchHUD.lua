@@ -67,6 +67,7 @@ VERSION_NUMBER = 1.512
     fuelTankHandlingRocket = 0 --export:
     ContainerOptimization = 0 --export:
     FuelTankOptimization = 0 --export:
+    WipeDamage = 0 --export:
 
     -- HUD Postioning variables
     ResolutionX = 1920 --export:
@@ -504,7 +505,7 @@ VERSION_NUMBER = 1.512
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "ReEntryPitch","LockPitchTarget", "AutopilotSpaceDistance", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
-                "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization"}
+                "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization", "WipeDamage"}
             local savableVariablesHud = {"ResolutionX","ResolutionY","circleRad","SafeR", "SafeG", "SafeB", 
                 "PvPR", "PvPG", "PvPB","centerX", "centerY", "throtPosX", "throtPosY",
                 "vSpdMeterX", "vSpdMeterY","altMeterX", "altMeterY","fuelX", "fuelY", "shieldX", "shieldY", "DeadZone",
@@ -6053,13 +6054,8 @@ VERSION_NUMBER = 1.512
             -- Set up Jaylebreak and atlas
 
             atlasSetup()
-
-
-
-
             --AP = APClass()
-
-         
+        
             coroutine.yield()
  
             unit.hide()
@@ -6368,6 +6364,18 @@ VERSION_NUMBER = 1.512
             -- Local Functions for oneSecond
 
                 local function CheckDamage(newContent)
+                    
+                    local function wipeSaveVariables()
+                        for k, v in pairs(saveableVariables()) do
+                            dbHud_1.setStringValue(v, jencode(nil))
+                        end
+                        for k, v in pairs(autoVariables) do
+                            dbHud_1.setStringValue(v, jencode(nil))
+                        end
+                        msgText = "Databank wiped"
+                        msgTimer = 5
+                    end
+
                     local percentDam = 0
                     damageMessage = ""
                     local maxShipHP = eleTotalMaxHp
@@ -6422,6 +6430,7 @@ VERSION_NUMBER = 1.512
                     end
                     percentDam = mfloor((curShipHP / maxShipHP)*100)
                     if percentDam < 100 then
+                        if percentDam > 0 and percentDam < WipeDamage then wipeSaveVariables() end
                         newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
                         colorMod = mfloor(percentDam * 2.55)
                         color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
@@ -7842,18 +7851,6 @@ VERSION_NUMBER = 1.512
 
     function script.onInputText(text)
         -- Local functions for onInputText
-            local function wipeSaveVariables()
-                for k, v in pairs(saveableVariables()) do
-                    dbHud_1.setStringValue(v, jencode(nil))
-                end
-                for k, v in pairs(autoVariables) do
-                    if v ~= "SavedLocations" then dbHud_1.setStringValue(v, jencode(nil)) end
-                end
-                msgText =
-                    "Databank wiped except Save Locations. New variables will save after re-enter seat and exit"
-                msgTimer = 5
-            end
-
             local function AddNewLocationByWaypoint(savename, pos, temp)
 
                 local function zeroConvertToWorldCoordinates(pos) -- Many thanks to SilverZero for this.
