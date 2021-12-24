@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.513
+- FIX: AP to non Custom Waypoints works again (was throwing errors when braking and circulizing orbit was supposed to begin if non custom waypoint)
+- CHANGE/FIX: If WipeDamage is reached, HUD will delete all saved locations and then update databank (all other settings remain).
+
 Version 1.512 Handbrake, Scrolling AP, Databank Security
 - New user variable: `WipeDamage` default of 0
 - Feature: If `CheckDamage` is true, and ships percent damage gets < `WipeDamage` then the ship will wipe the databank 
