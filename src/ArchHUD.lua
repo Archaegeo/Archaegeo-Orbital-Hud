@@ -2001,7 +2001,7 @@ VERSION_NUMBER = 1.512
                                     <rect fill=grey class="bar" x="%d" y="%d" width="100" height="13"></rect></g>
                                     <g class="bar txtstart">
                                     <rect fill=%s width="%d" height="13" x="%d" y="%d"></rect>
-                                    <text fill=black x="%d" y="%d">%s%% %s</text>
+                                    <text fill=black x="%d" y="%d" style="stroke-width:0px;paint-order:normal;">%s%% %s</text>
                                     </g>]], x, y2, color, fuelPercentTable[i], x, y2, x+2, y2+10, fuelPercentTable[i], fuelTimeDisplay
                                 )
                                 tankMessage = tankMessage..svgText(x, y1, name, class.."txtstart pdim txtfuel") 
@@ -2151,8 +2151,8 @@ VERSION_NUMBER = 1.512
                         if len == 30 then
                             tickerPath = stringf([[%s M %d %f h %d]], tickerPath, centerX-pitchX-len, y, len)
                             if inAtmo then
-                                newContent[#newContent + 1] = stringf([[<g path transform="rotate(%f,%d,%d)" class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]],(-1 * originalRoll), centerX, centerY, centerX-pitchX+10, y, i)
-                                newContent[#newContent + 1] = stringf([[<g path transform="rotate(%f,%d,%d)" class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]],(-1 * originalRoll), centerX, centerY, centerX+pitchX-10, y, i)
+                                newContent[#newContent + 1] = stringf([[<g path transform="rotate(%f,%d,%d)" class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]],(-1 * originalRoll), centerX, centerY, centerX-pitchX+10, y+4, i)
+                                newContent[#newContent + 1] = stringf([[<g path transform="rotate(%f,%d,%d)" class="pdim txt txtmid"><text x="%d" y="%f">%d</text></g>]],(-1 * originalRoll), centerX, centerY, centerX+pitchX-10, y+4, i)
                                 if i == 0 or i == 180 or i == -180 then 
                                     newContent[#newContent + 1] = stringf([[<path transform="rotate(%f,%d,%d)" d="m %d,%f %d,0" stroke-width="1" style="fill:none;stroke:#F5B800;" />]],
                                         (-1 * originalRoll), centerX, centerY, centerX-pitchX+20, y, pitchX*2-40)
@@ -2922,15 +2922,21 @@ VERSION_NUMBER = 1.512
                         .altbig {font-size:21px;font-weight:normal;}
                         .line {stroke-width:2px;fill:none}
                         .linethick {stroke-width:3px;fill:none}
-                        .warnings {font-size:26px;fill:red;text-anchor:middle;font-family:Bank}
-                        .warn {fill:orange;font-size:24px}
+                        .warnings {font-size:26px;fill:red;text-anchor:middle;font-family:Bank;}
+                        .warn {fill:orange; font-size:24px}
                         .crit {fill:darkred;font-size:28px}
                         .bright {fill:%s;stroke:%s}
+                        text.bright {stroke:black; stroke-width:10px;paint-order:stroke;}
                         .pbright {fill:%s;stroke:%s}
+                        text.pbright {stroke:black; stroke-width:10px;paint-order:stroke;}
                         .dim {fill:%s;stroke:%s}
+                        text.dim {stroke:black; stroke-width:10px;paint-order:stroke;}
                         .pdim {fill:%s;stroke:%s}
+                        text.pdim {stroke:black; stroke-width:10px;paint-order:stroke;}
                         .red {fill:red;stroke:red}
+                        text.red {stroke:black; stroke-width:10px;paint-order:stroke;}
                         .orange {fill:orange;stroke:orange}
+                        text.orange {stroke:black; stroke-width:10px;paint-order:stroke;}
                         .redout {fill:none;stroke:red}
                         .op30 {opacity:0.3}
                         .op10 {opacity:0.1}
@@ -2945,11 +2951,18 @@ VERSION_NUMBER = 1.512
                         .hudver {font-size:10px;font-weight:bold;fill:red;text-anchor:end;font-family:Bank}
                         .msg {font-size:40px;fill:red;text-anchor:middle;font-weight:normal}
                         .cursor {stroke:white}
+                        text { stroke:black; stroke-width:10px;paint-order:stroke;}
                     </style>
                 </head>
                 <body>
                     <svg height="100%%" width="100%%" viewBox="0 0 %d %d">
-                    ]], bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig, resolutionWidth, resolutionHeight)
+                    <defs>
+                        <radialGradient id="RadialGradient1" cx="0.5" cy="0" r="1">
+                            <stop offset="0%%" stop-color="black" stop-opacity="1"/>
+                            <stop offset="100%%" stop-color="%s" stop-opacity="0.4"/>
+                        </radialGradient>
+                    </defs>
+                    ]], bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig, resolutionWidth, resolutionHeight, dimOrig)
             return newContent
         end
 
@@ -3106,7 +3119,7 @@ VERSION_NUMBER = 1.512
             maxThrust = round((maxThrust / (coreMass * gravConstant)),2).." g"
             newContent[#newContent + 1] = stringf([[
                 <g class="pbright txt">
-                <path class="linethick" d="M %d 0 L %d %d Q %d %d %d %d L %d 0"/>]],
+                <path class="linethick" style="fill:url(#RadialGradient1);" d="M %d 0 L %d %d Q %d %d %d %d L %d 0"/>]],
                 ConvertResolutionX(660), ConvertResolutionX(700), ConvertResolutionY(35), ConvertResolutionX(960), ConvertResolutionY(55),
                 ConvertResolutionX(1240), ConvertResolutionY(35), ConvertResolutionX(1280))
             if isRemote() == 0 or RemoteHud then 
@@ -6600,7 +6613,7 @@ VERSION_NUMBER = 1.512
                         else
                             newContent[#newContent + 1] = "white"
                         end
-                        newContent[#newContent + 1] = "' text-anchor='middle' font-family='Play'>"
+                        newContent[#newContent + 1] = "' text-anchor='middle' font-family='Play' style='stroke-width:0px;'>"
                         if toggle then
                             newContent[#newContent + 1] = stringf("%s</text>", activeText)
                         else
