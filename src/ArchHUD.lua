@@ -203,7 +203,6 @@ VERSION_NUMBER = 1.512
         return mfloor(num * mult + 0.5) / mult
     end
 -- Variables that we declare local outside script because they will be treated as global but get local effectiveness
-    Variables = {}
     local time = systime()
     local clearAllCheck = systime()
     local coreHalfDiag = 13
