@@ -2715,8 +2715,8 @@ VERSION_NUMBER = 1.512
                 --rocketClass, rocketFill, rocketStroke, 
                 --aggClass, aggFill, aggStroke, 
                 --stallClass, stallFill, stallStroke)
-                
-                -- TODO: stringf this to fill them as appropriate
+                local crx = ConvertResolutionX
+                local cry = ConvertResolutionY
 
                 local defaultClass = "topButton"
                 local activeClass = "topButtonActive"
@@ -2747,35 +2747,35 @@ VERSION_NUMBER = 1.512
 
                 newContent[#newContent + 1] = stringf([[ 
                     <g class="%s">
-                    <path d="M 960 54 L 960 1 l -120 0 l 25 50 Z"/>
+                    <path d="M %f %f l 0 -53 l -120 0 l 25 50 Z"/>
                     <text class="pdim txt txtmid" x=910 y=30>AUTOPILOT</text>
                     </g>
 
                     <g class="%s">
-                    <path d="M 865 51 L 840 1 l -110 0 l 25 46 Z"/>
+                    <path d="M %f %f l -15 -50 l -110 0 l 25 46 Z"/>
                     <text class="pdim txt txtmid" x=800 y=30>PROGRADE</text>
                     </g>
 
                     <g class="%s">
-                    <path d="M 755 47 L 730 1 l -98 0 l 44 44 Z"/>
+                    <path d="M %f %f l -25 -46 l -98 0 l 44 44 Z"/>
                     <text class="pdim txt txtmid" x=700 y=30>LAND</text>
                     </g>
 
                     <g class="%s">
-                    <path d="M 960 54 L 960 1 l 120 0 l -25 50 Z"/>
+                    <path d="M %f %f l 0 -53 l 120 0 l -25 50 Z"/>
                     <text class="pdim txt txtmid" x=1010 y=30>ALT HOLD</text>
                     </g>
 
                     <g class="%s">
-                    <path d="M 1055 51 L 1080 1 l 110 0 l -25 46 Z"/>
+                    <path d="M %f %f l 25 -50 l 110 0 l -25 46 Z"/>
                     <text class="pdim txt txtmid" x=1122 y=30>RETROGRADE</text>
                     </g>
 
                     <g class="%s">
-                    <path d="M 1165 47 L 1190 1 l 98 0 l -44 44 Z"/>
+                    <path d="M %f %f l 25 -46 l 98 0 l -44 44 Z"/>
                     <text class="pdim txt txtmid" x=1220 y=30>ORBIT</text>
                     </g>
-                ]],apClass, progradeClass, landClass, altHoldClass, retroClass, orbitClass)
+                ]],apClass, crx(960), cry(54), progradeClass,crx(865), cry(51), landClass,crx(755), cry(47), altHoldClass,crx(960), cry(54), retroClass,crx(1055), cry(51), orbitClass, crx(1165), cry(47))
             
                 newContent[#newContent + 1] = "</g>"
                 return newContent
@@ -3265,6 +3265,8 @@ VERSION_NUMBER = 1.512
             local yg1 = ConvertResolutionY(55)
             local yg2 = yg1+10
             local gravity 
+            local crx = ConvertResolutionX
+            local cry = ConvertResolutionY
 
             local brakeValue = 0
             local flightStyle = GetFlightStyle()
@@ -3283,17 +3285,17 @@ VERSION_NUMBER = 1.512
                 yg2 = yg1+10
             elseif inAtmo then -- We only show atmo when not remote
                 local atX = ConvertResolutionX(770)
-                newContent[#newContent + 1] = svgText(895, 99, "ATMO", "dim txt txtend size14")
+                newContent[#newContent + 1] = svgText(crx(895), cry(99), "ATMO", "dim txt txtend size14")
                 newContent[#newContent + 1] = [[<path class="linethin dimstroke"  d="M 895 85 l -80 0"/>]]
-                newContent[#newContent + 1] = svgText(815, 80, stringf("%.1f%%", atmosDensity*100), "dim txt txtstart size20","")
+                newContent[#newContent + 1] = svgText(crx(815), cry(80), stringf("%.1f%%", atmosDensity*100), "dim txt txtstart size20","")
             end
-            newContent[#newContent + 1] = svgText(1025, 99, "GRAVITY", "dim txt txtstart size14")
+            newContent[#newContent + 1] = svgText(crx(1025), cry(99), "GRAVITY", "dim txt txtstart size14")
             newContent[#newContent + 1] = [[<path class="linethin dimstroke" d="M 1025 85 l 80 0"/>]]
-            newContent[#newContent + 1] = svgText(1105, 80, stringf("%.2fg", (gravity / 9.80665)), "dim txt txtend size20")
+            newContent[#newContent + 1] = svgText(crx(1105), cry(80), stringf("%.2fg", (gravity / 9.80665)), "dim txt txtend size20")
 
-            newContent[#newContent + 1] = svgText(1125, 99, "ACCEL", "dim txt txtstart size14")
+            newContent[#newContent + 1] = svgText(crx(1125), cry(99), "ACCEL", "dim txt txtstart size14")
             newContent[#newContent + 1] = [[<path class="linethin dimstroke" d="M 1125 85 l 80 0"/>]]
-            newContent[#newContent + 1] = svgText(1205, 80, stringf("%.2fg", accel), "dim txt txtend size20") 
+            newContent[#newContent + 1] = svgText(crx(1205), cry(80), stringf("%.2fg", accel), "dim txt txtend size20") 
 
             newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(175), flightStyle, "txtbig txtmid size20")
         end
@@ -3303,6 +3305,8 @@ VERSION_NUMBER = 1.512
             local maxMass = 0
             local reqThrust = 0
             local brakeValue = 0
+            local crx = ConvertResolutionX
+            local cry = ConvertResolutionY
             local mass = coreMass > 1000000 and round(coreMass / 1000000,2).."kT" or round(coreMass / 1000, 2).."T"
             if inAtmo then brakeValue = LastMaxBrakeInAtmo else brakeValue = LastMaxBrake end
             local brkDist, brkTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, brakeValue)
@@ -3323,31 +3327,31 @@ VERSION_NUMBER = 1.512
             --    ConvertResolutionX(660), ConvertResolutionX(700), ConvertResolutionY(35), ConvertResolutionX(960), ConvertResolutionY(55),
             --    ConvertResolutionX(1240), ConvertResolutionY(35), ConvertResolutionX(1280))
             if isRemote() == 0 or RemoteHud then 
-                newContent[#newContent + 1] = svgText(695, 99, "BRAKE", "dim txt txtend size14")
+                newContent[#newContent + 1] = svgText(crx(695), cry(99), "BRAKE", "dim txt txtend size14")
                 newContent[#newContent + 1] = [[<path class="linethin dimstroke" d="M 695 85 l -80 0"/>]]
-                newContent[#newContent + 1] = svgText(615, 80, stringf("%s", FormatTimeString(brkTime)), "dim txt txtstart size20") 
+                newContent[#newContent + 1] = svgText(crx(615), cry(80), stringf("%s", FormatTimeString(brkTime)), "dim txt txtstart size20") 
                 --newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(10), stringf("BrkTime: %s", FormatTimeString(brkTime)), "txtstart")
-                newContent[#newContent + 1] = svgText(635, 45, "TRIP", "dim txt txtend size14")
+                newContent[#newContent + 1] = svgText(crx(635), cry(45), "TRIP", "dim txt txtend size14")
                 newContent[#newContent + 1] = [[<path class="linethin dimstroke" d="M 635 31 l -90 0"/>]]
                 if travelTime then
-                    newContent[#newContent + 1] = svgText(532, 23, stringf("%s", FormatTimeString(travelTime)), "dim txt txtstart size20") 
+                    newContent[#newContent + 1] = svgText(crx(532), cry(23), stringf("%s", FormatTimeString(travelTime)), "dim txt txtstart size20") 
                 end
                 --newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(20), stringf("Trip: %.2f km", totalDistanceTrip), "txtstart") 
                 --TODO: newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(30), stringf("Lifetime: %.2f kSU", (TotalDistanceTravelled / 200000)), "txtstart") 
-                newContent[#newContent + 1] = svgText(795, 99, "BRAKE", "dim txt txtend size14")
+                newContent[#newContent + 1] = svgText(crx(795), cry(99), "BRAKE", "dim txt txtend size14")
                 newContent[#newContent + 1] = [[<path class="linethin dimstroke" d="M 795 85 l -80 0"/>]]
-                newContent[#newContent + 1] = svgText(715, 80, stringf("%s", getDistanceDisplayString(brkDist)), "dim txt txtstart size20") 
+                newContent[#newContent + 1] = svgText(crx(715), cry(80), stringf("%s", getDistanceDisplayString(brkDist)), "dim txt txtstart size20") 
                 --newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(10), stringf("BrkDist: %s", getDistanceDisplayString(brkDist)) , "txtstart")
                 --newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(20), "Trip Time: "..FormatTimeString(flightTime), "txtstart") 
                 --newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(30), "Total Time: "..FormatTimeString(TotalFlightTime), "txtstart") 
-                newContent[#newContent + 1] = svgText(1285, 45, "MASS", "dim txt txtstart size14")
+                newContent[#newContent + 1] = svgText(crx(1285), cry(45), "MASS", "dim txt txtstart size14")
                 newContent[#newContent + 1] = [[<path class="linethin dimstroke" d="M 1285 31 l 90 0"/>]]
-                newContent[#newContent + 1] = svgText(1388, 23, stringf("%s", mass), "dim txt txtend size20") 
+                newContent[#newContent + 1] = svgText(crx(1388), cry(23), stringf("%s", mass), "dim txt txtend size20") 
                 --newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(20), stringf("Mass: %s", mass), "txtstart") 
                 --newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(10), stringf("Max Brake: %s",  brakeValue), "txtend") 
-                newContent[#newContent + 1] = svgText(1220, 99, "THRUST", "dim txt txtstart size14")
+                newContent[#newContent + 1] = svgText(crx(1220), cry(99), "THRUST", "dim txt txtstart size14")
                 newContent[#newContent + 1] = [[<path class="linethin dimstroke" d="M 1220 85 l 80 0"/>]]
-                newContent[#newContent + 1] = svgText(1300, 80, stringf("%s", maxThrust), "dim txt txtend size20") 
+                newContent[#newContent + 1] = svgText(crx(1300), cry(80), stringf("%s", maxThrust), "dim txt txtend size20") 
                 --newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(30), stringf("Max Thrust: %s", maxThrust), "txtend") 
                 --if gravity > 0.1 then
                 --    newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(30), stringf("Max Thrust Mass: %s", (maxMass)), "txtstart")
