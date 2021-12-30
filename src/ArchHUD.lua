@@ -203,6 +203,7 @@ VERSION_NUMBER = 1.512
         return mfloor(num * mult + 0.5) / mult
     end
 -- Variables that we declare local outside script because they will be treated as global but get local effectiveness
+    Variables = {}
     local time = systime()
     local clearAllCheck = systime()
     local coreHalfDiag = 13
@@ -2113,7 +2114,7 @@ VERSION_NUMBER = 1.512
                         elseif num < 0 then
                             num = num + 360
                         end
-                        newContent[#newContent + 1] = svgText(x,yawy+15, num, "txtmid" )
+                        newContent[#newContent + 1] = svgText(x,yawy+15, num, "txtmid bright" )
                     elseif (i % 5 == 0) then
                         yawlen = 5
                     end
@@ -2124,7 +2125,7 @@ VERSION_NUMBER = 1.512
                     end
                 end
                 newContent[#newContent + 1] = tickerPath .. [["/>]]
-                newContent[#newContent + 1] = stringf([[<<polygon points="%d,%d %d,%d %d,%d"/>]],
+                newContent[#newContent + 1] = stringf([[<<polygon class="bright" points="%d,%d %d,%d %d,%d"/>]],
                     yawx-5, yawy-20, yawx+5, yawy-20, yawx, yawy-10)
                 if nearPlanet then bottomText = "HDG" end
                 newContent[#newContent + 1] = svgText(960 , 100, yawC.."°" , "dim txt txtmid size14", "")
@@ -2536,7 +2537,7 @@ VERSION_NUMBER = 1.512
                 local brakeStroke = defaultStroke
                 local brakeClass = defaultClass
                 if BrakeIsOn then
-                    --newContent[#newContent + 1] = svgText(warningX, brakeY, "Brake Engaged", "warnings")
+                    newContent[#newContent + 1] = svgText(warningX, brakeY, "Brake Engaged", "warnings")
                     brakeFill = "#440000"
                     brakeStroke = onFill
                     brakeClass = fillClass
@@ -2548,7 +2549,7 @@ VERSION_NUMBER = 1.512
                 local stallClass = defaultClass
                 if inAtmo and stalling and abvGndDet == -1 then
                     if not Autopilot and not VectorToTarget and not BrakeLanding and not antigravOn and not VertTakeOff and not AutoTakeoff then
-                        --newContent[#newContent + 1] = svgText(warningX, apY+50, "** STALL WARNING **", "warnings")
+                        newContent[#newContent + 1] = svgText(warningX, apY+50, "** STALL WARNING **", "warnings")
                         stallFill = "#ff0000"
                         stallStroke = onFill
                         stallClass = fillClass
@@ -2569,11 +2570,11 @@ VERSION_NUMBER = 1.512
                     gearFill = "#775500"
                     gearStroke = onFill
                     gearClass = fillClass
-                    --if hasGear then
-                    --    newContent[#newContent + 1] = svgText(warningX, gearY, "Gear Extended", "warn")
-                    --else
-                    --    newContent[#newContent + 1] = svgText(warningX, gearY, "Landed (G: Takeoff)", "warnings")
-                    --end
+                    if hasGear then
+                        newContent[#newContent + 1] = svgText(warningX, gearY, "Gear Extended", "warn")
+                    else
+                        newContent[#newContent + 1] = svgText(warningX, gearY, "Landed (G: Takeoff)", "warnings")
+                    end
                     local displayText = getDistanceDisplayString(Nav:getTargetGroundAltitude())
                     newContent[#newContent + 1] = svgText(warningX, hoverY,"Hover Height: ".. displayText,"warn")
                 end
@@ -2584,7 +2585,7 @@ VERSION_NUMBER = 1.512
                     rocketFill = "#0000DD"
                     rocketStroke = onFill
                     rocketClass = fillClass
-                    --newContent[#newContent + 1] = svgText(warningX, ewarpY+20, "ROCKET BOOST ENABLED", "warn")
+                    newContent[#newContent + 1] = svgText(warningX, ewarpY+20, "ROCKET BOOST ENABLED", "warn")
                 end           
                 local aggFill = "#001100"
                 local aggStroke = defaultStroke      
@@ -2689,31 +2690,93 @@ VERSION_NUMBER = 1.512
                     boardersClass = fillClass
                 end
 
-                newContent[#newContent + 1] = stringf([[
-                    <path class="linethick %s" style="fill:%s" d="M 730 940 l 100 0 l 50 50 l -200 0 l 50 -50 Z"/>
-                    <text class="txtmid size20" x=780 y=975 style="fill:%s">BOARDERS</text>
-                    <path class="linethick %s" style="fill:%s" d="M 1190 940 l -100 0 l -50 50 l 200 0 l -50 -50 Z"/>
-                    <text class="txtmid size20" x=1140 y=975 style="fill:%s">COLLISION</text>
+                -- Removed because nobody liked these 'lights' at the bottom
+                --newContent[#newContent + 1] = stringf([[
+                --    <path class="linethick %s" style="fill:%s" d="M 730 940 l 100 0 l 50 50 l -200 0 l 50 -50 Z"/>
+                --    <text class="txtmid size20" x=780 y=975 style="fill:%s">BOARDERS</text>
+                --    <path class="linethick %s" style="fill:%s" d="M 1190 940 l -100 0 l -50 50 l 200 0 l -50 -50 Z"/>
+                --    <text class="txtmid size20" x=1140 y=975 style="fill:%s">COLLISION</text>
 
-                    <path class="linethick %s" style="fill:%s" d="M 675 1000 l 100 0 l 50 50 l -200 0 l 50 -50 Z"/>
-                    <text class="txtmid size20" x=725 y=1030 style="fill:%s">BRAKE</text>
-                    <path class="linethick %s" style="fill:%s" d="M 790 1000 l 95 0 l 50 50 l -95 0 l -50 -50 Z"/>
-                    <text class="txtmid size20" x=860 y=1030 style="fill:%s">GEAR</text>
+                --    <path class="linethick %s" style="fill:%s" d="M 675 1000 l 100 0 l 50 50 l -200 0 l 50 -50 Z"/>
+                --    <text class="txtmid size20" x=725 y=1030 style="fill:%s">BRAKE</text>
+                --    <path class="linethick %s" style="fill:%s" d="M 790 1000 l 95 0 l 50 50 l -95 0 l -50 -50 Z"/>
+                --    <text class="txtmid size20" x=860 y=1030 style="fill:%s">GEAR</text>
 
-                    <path class="linethick %s" style="fill:%s" d="M 1245 1000 l -100 0 l -50 50 l 200 0 l -50 -50 Z"/>
-                    <text class="txtmid size20" x=1195 y=1030 style="fill:%s">ROCKETS</text>
-                    <path class="linethick %s" style="fill:%s" d="M 1130 1000 l -95 0 l -50 50 l 95 0 l 50 -50 Z"/>
-                    <text class="txtmid size20" x=1055 y=1030 style="fill:%s">AGG</text>
+                --    <path class="linethick %s" style="fill:%s" d="M 1245 1000 l -100 0 l -50 50 l 200 0 l -50 -50 Z"/>
+                --    <text class="txtmid size20" x=1195 y=1030 style="fill:%s">ROCKETS</text>
+                --    <path class="linethick %s" style="fill:%s" d="M 1130 1000 l -95 0 l -50 50 l 95 0 l 50 -50 Z"/>
+                --    <text class="txtmid size20" x=1055 y=1030 style="fill:%s">AGG</text>
 
-                    <path class="linethick %s" style="fill:%s" d="M 850 940 l 220 0 l -110 110 l -110 -110 Z"/>
-                    <text class="txtmid" x=960 y=980 style="font-size:32px;fill:%s">STALL</text>
-                ]], boardersClass, boardersFill, boardersStroke, 
-                collisionClass, collisionFill, collisionStroke, 
-                brakeClass, brakeFill, brakeStroke, 
-                gearClass, gearFill, gearStroke, 
-                rocketClass, rocketFill, rocketStroke, 
-                aggClass, aggFill, aggStroke, 
-                stallClass, stallFill, stallStroke)
+                --    <path class="linethick %s" style="fill:%s" d="M 850 940 l 220 0 l -110 110 l -110 -110 Z"/>
+                --    <text class="txtmid" x=960 y=980 style="font-size:32px;fill:%s">STALL</text>
+                --]], boardersClass, boardersFill, boardersStroke, 
+                --collisionClass, collisionFill, collisionStroke, 
+                --brakeClass, brakeFill, brakeStroke, 
+                --gearClass, gearFill, gearStroke, 
+                --rocketClass, rocketFill, rocketStroke, 
+                --aggClass, aggFill, aggStroke, 
+                --stallClass, stallFill, stallStroke)
+                
+                -- TODO: stringf this to fill them as appropriate
+
+                local defaultClass = "topButton"
+                local activeClass = "topButtonActive"
+                local apClass = defaultClass
+                if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
+                    apClass = activeClass
+                end
+                local progradeClass = defaultClass
+                if ProgradeIsOn then
+                    progradeClass = activeClass
+                end
+                local landClass = defaultClass
+                if BrakeLanding or GearExtended then
+                    landClass = activeClass
+                end
+                local altHoldClass = defaultClass
+                if AltitudeHold or VectorToTarget then
+                    altHoldClass = activeClass
+                end
+                local retroClass = defaultClass
+                if RetrogradeIsOn then
+                    retroClass = activeClass
+                end
+                local orbitClass = defaultClass
+                if IntoOrbit or (OrbitAchieved and Autopilot) then
+                    orbitClass = activeClass
+                end
+
+                newContent[#newContent + 1] = stringf([[ 
+                    <g class="%s">
+                    <path d="M 960 54 L 960 1 l -120 0 l 25 50 Z"/>
+                    <text class="pdim txt txtmid" x=910 y=30>AUTOPILOT</text>
+                    </g>
+
+                    <g class="%s">
+                    <path d="M 865 51 L 840 1 l -110 0 l 25 46 Z"/>
+                    <text class="pdim txt txtmid" x=800 y=30>PROGRADE</text>
+                    </g>
+
+                    <g class="%s">
+                    <path d="M 755 47 L 730 1 l -98 0 l 44 44 Z"/>
+                    <text class="pdim txt txtmid" x=700 y=30>LAND</text>
+                    </g>
+
+                    <g class="%s">
+                    <path d="M 960 54 L 960 1 l 120 0 l -25 50 Z"/>
+                    <text class="pdim txt txtmid" x=1010 y=30>ALT HOLD</text>
+                    </g>
+
+                    <g class="%s">
+                    <path d="M 1055 51 L 1080 1 l 110 0 l -25 46 Z"/>
+                    <text class="pdim txt txtmid" x=1122 y=30>RETROGRADE</text>
+                    </g>
+
+                    <g class="%s">
+                    <path d="M 1165 47 L 1190 1 l 98 0 l -44 44 Z"/>
+                    <text class="pdim txt txtmid" x=1220 y=30>ORBIT</text>
+                    </g>
+                ]],apClass, progradeClass, landClass, altHoldClass, retroClass, orbitClass)
             
                 newContent[#newContent + 1] = "</g>"
                 return newContent
@@ -3002,9 +3065,9 @@ VERSION_NUMBER = 1.512
                         .txtbig {font-size:14px;font-weight:bold;}
                         .altsm {font-size:16px;font-weight:normal;}
                         .altbig {font-size:21px;font-weight:normal;}
-                        .line {stroke-width:2px;fill:none}
+                        .line {stroke-width:2px;fill:none;stroke:%s}
                         .linethick {stroke-width:3px;fill:none}
-                        .linethin {stroke-width:1px;fille:none}
+                        .linethin {stroke-width:1px;fill:none}
                         .warnings {font-size:26px;fill:red;text-anchor:middle;font-family:Bank;}
                         .warn {fill:orange; font-size:24px}
                         .crit {fill:darkred;font-size:28px}
@@ -3040,8 +3103,10 @@ VERSION_NUMBER = 1.512
                         .indicatorText {font-size:20px;fill:white}
                         .size14 {font-size:14px}
                         .size20 {font-size:20px}
-                        .topButton {fill:%s;opacity:0.3;stroke-width:2}
-                        .topButtonText {font-size:13px; fill: %s}
+                        .topButton {fill:%s;opacity:0.5;stroke-width:2;stroke:%s}
+                        .topButtonActive {fill:%s;opacity:0.8;stroke-width:2;stroke:%s}
+                        .topButton text {font-size:13px; fill: %s; opacity:1; stroke-width:20px}
+                        .topButtonActive text {font-size:13px;fill:%s; stroke-width:0px; opacity:1}
                         .indicatorFont {font-size:20px;font-family:Bank}
                         .dimmer {stroke: %s;}
                     </style>
@@ -3076,17 +3141,16 @@ VERSION_NUMBER = 1.512
                             </radialGradient>
                         </defs>
                         <g class="pdim txt txtend">
-                        <path class="linethick" style="fill:url(#RadialGradientCenterTop);" d="M 630 0 L 675 45 L 960 55 1245 45 L 1290 0"/>
+                        <path class="linethick brightstroke" style="fill:url(#RadialGradientCenterTop);" d="M 630 0 L 675 45 L 960 55 1245 45 L 1290 0"/>
                         <path class="linethick brightstroke" style="fill:url(#RadialGradientRightTop);" d="M 1000 105 L 1040 59 L 1250 51 L 1300 0 L 1920 0 L 1920 20 L 1400 20 L 1300 105 Z"/>
                         
                         <path class="linethick brightstroke" style="fill:url(#RadialGradientLeftTop);" d="M 920 105 L 880 59 L 670 51 L 620 0 L 0 0 L 0 20 L 520 20 L 620 105 Z"/>
                         
-                        <path class="linethick brightstroke" style="fill:url(#RadialGradientCenter);" d="M 600 1080 L 600 1060 L 720 930 L 1200 930 L 1320 1060 L 1320 1080 Z"/>
                         <clipPath id="headingClip">
                             <path class="linethick dimstroke" style="fill:black;fill-opacity:0.4;" d="M 890 59 L 960 62 L 1030 59 L 985 112 L 1150 112 L 1100 152 L 820 152 L 780 112 L 935 112 Z"/>
                         </clipPath>
                         <path class="linethick dimstroke" style="fill:black;fill-opacity:0.4;" d="M 890 59 L 960 62 L 1030 59 L 985 112 L 1150 112 L 1100 152 L 820 152 L 780 112 L 935 112 Z"/>
-                    ]], bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig,dim,bright,dimmer,brightOrig,dimmer, resolutionWidth, resolutionHeight, dim,dim,dim,dim,dim,dimmer,dimmer,dim)
+                    ]], bright, bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig,dim,bright,dimmer,dimOrig,bright,dimOrig,bright,dimmer,dimmer, resolutionWidth, resolutionHeight, dim,dim,dim,dim,dim,dimmer,dimmer,dim)
             -- <path class="linethick dimstroke" style="fill:url(#ThinRightTopGradient);" d="M 1920 28 L 1920 800 L 1800 800 L 1750 750 L 1750 420 L 1700 370 L 1510 370 L 1460 320 L 1460 155 L 1410 105 L 1315 105 L 1403 28 Z"/>
             -- <path class="linethick dimstroke" style="fill:url(#ThinLeftTopGradient);" d="M 0 28 L 0 800 L 120 800 L 170 750 L 170 420 L 220 370 L 410 370 L 460 320 L 460 155 L 510 105 L 605 105 L 517 28 Z"/>
             return newContent
@@ -3159,7 +3223,12 @@ VERSION_NUMBER = 1.512
         
         
             if isRemote() == 0 or RemoteHud then
-                -- Don't even draw this in freelook
+                -- Draw this in freelook now that it's less intrusive
+                if nearPlanet then -- use real pitch, roll, and heading
+                    DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
+                else -- use Relative Pitch and Relative Yaw
+                    DrawRollLines (newContent, centerX, centerY, roll, bottomText, nearPlanet)
+                end
                 if not IsInFreeLook() or brightHud then
                     if nearPlanet then -- use real pitch, roll, and heading
                         DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
@@ -3288,25 +3357,7 @@ VERSION_NUMBER = 1.512
                 --    newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(30), "Max Mass: n/a", "txtstart") 
                 --    newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(20), "Req Thrust: n/a", "txtend") 
                 --end
-                newContent[#newContent + 1] = [[ 
-                    <path class="topButton" d="M 960 54 L 960 1 l -120 0 l 25 50 Z"/>
-                    <text class="pdim txt txtmid topButtonText" x=910 y=30>AUTOPILOT</text>
-
-                    <path class="topButton" d="M 865 51 L 840 1 l -110 0 l 25 46 Z"/>
-                    <text class="pdim txt txtmid topButtonText" x=800 y=30>PROGRADE</text>
-
-                    <path class="topButton" d="M 755 47 L 730 1 l -98 0 l 45 45 Z"/>
-                    <text class="pdim txt txtmid topButtonText" x=700 y=30>LAND</text>
-
-                    <path class="topButton" d="M 960 54 L 960 1 l 120 0 l -25 50 Z"/>
-                    <text class="pdim txt txtmid topButtonText" x=1010 y=30>ALT HOLD</text>
-
-                    <path class="topButton" d="M 1055 51 L 1080 1 l 110 0 l -25 46 Z"/>
-                    <text class="pdim txt txtmid topButtonText" x=1122 y=30>RETROGRADE</text>
-
-                    <path class="topButton" d="M 1165 47 L 1190 1 l 98 0 l -45 45 Z"/>
-                    <text class="pdim txt txtmid topButtonText" x=1220 y=30>ORBIT</text>
-                ]]
+                
             end
             newContent[#newContent + 1] = "</g>"
             return newContent
