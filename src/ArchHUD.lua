@@ -29,14 +29,11 @@ VERSION_NUMBER = 1.515
     ForceAlignment = false --export:
     DisplayDeadZone = true --export:
     showHud = true --export: 
-    ShowOdometer = true --export:
     hideHudOnToggleWidgets = true --export:
     ShiftShowsRemoteButtons = true --export:
-    DisplayOrbit = true --export: 
     SetWaypointOnExit = false --export:
     AlwaysVSpd = false --export:
     BarFuelDisplay = true --export:
-    showHelp = true --export:
     voices = true --export:
     alerts = true --export:
     CollisionSystem = true --export:
@@ -500,8 +497,8 @@ VERSION_NUMBER = 1.515
             -- Complete list of user variables above, must be in saveableVariables to be stored on databank
             local saveableVariablesBoolean = {"userControlScheme", "soundFolder", "freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
                 "InvertMouse", "autoRollPreference", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
-                "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "ShowOdometer", "hideHudOnToggleWidgets", 
-                "ShiftShowsRemoteButtons", "DisplayOrbit", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", "showHelp",
+                "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "hideHudOnToggleWidgets", 
+                "ShiftShowsRemoteButtons", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", 
                 "voices", "alerts", "CollisionSystem", "AutoShieldToggle", "PreventPvP"}
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "ReEntryPitch","LockPitchTarget", "AutopilotSpaceDistance", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
@@ -3293,8 +3290,6 @@ VERSION_NUMBER = 1.515
         
             DrawWarnings(newContent)
             DisplayOrbitScreen(newContent)
-
-            --if showHelp then DisplayHelp(newContent) end
 
             return newContent
         end
@@ -6164,8 +6159,6 @@ VERSION_NUMBER = 1.515
                 buttonWidth = 300
                 local x = 0
                 local y = resolutionHeight / 2 - 150
-                --MakeButton("Show Help", "Hide Help", buttonWidth, buttonHeight, x, y, function() return showHelp end, function() showHelp = not showHelp end)
-                --y = y + buttonHeight + 20
                 MakeButton("View Settings", "View Settings", buttonWidth, buttonHeight, x, y, function() return true end, ToggleButtons)
                 y = y + buttonHeight + 20
                 MakeButton("Enable Turn and Burn", "Disable Turn and Burn", buttonWidth, buttonHeight, x, y, function()
@@ -6184,17 +6177,7 @@ VERSION_NUMBER = 1.515
                         end
                     end, function() return UpVertAtmoEngine end)
                 y = y + buttonHeight + 20
-                --MakeButton("Show Orbit Display", "Hide Orbit Display", buttonWidth, buttonHeight, x, y,
-                --    function()
-                --        return DisplayOrbit
-                --    end, function()
-                --        DisplayOrbit = not DisplayOrbit
-                --        if (DisplayOrbit) then
-                --            msgText = "Orbit Display Enabled"
-                --        else
-                --            msgText = "Orbit Display Disabled"
-                --        end
-                --    end)
+
                 -- prevent this button from being an option until you're in atmosphere
                 MakeButton("Engage Orbiting", "Cancel Orbiting", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
                         function()
@@ -6912,7 +6895,7 @@ VERSION_NUMBER = 1.515
                 end
                 local function DrawTabButtons(newContent)
                     if not SelectedTab or SelectedTab == "" then
-                        SelectedTab = "INFO"
+                        SelectedTab = "HELP"
                     end
                     for k,v in pairs(TabButtons) do
                         local class = "dim brightstroke"

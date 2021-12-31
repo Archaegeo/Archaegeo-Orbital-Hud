@@ -2,6 +2,7 @@
 
 Version 1.515 - MAJOR Update to HUD appears (Thanks Dimencia!!)
 - Major: Change to appearance of HUD
+- Removed depreciated user settings of `showHelp`, `ShowOdometer`, and `DisplayOrbit`
 - Fix: Moved Toggle shield from `LALT-LSHIFT-5` to `LALT-LSHIFT-7` - This lets `LALT-LSHIFT-5` work again to set locked pitch to 
         user value of `LockPitchTarget`.  Normal `LALT-5` still does lock pitch to current pitch.
 - Fix: Buttons do not pop up when doing `LALT-LSHIFT-#` only when holding `LSHIFT` and not in freelook.
