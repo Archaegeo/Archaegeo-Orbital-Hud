@@ -3119,7 +3119,7 @@ VERSION_NUMBER = 1.512
                         .size14 {font-size:14px}
                         .size20 {font-size:20px}
                         .topButton {fill:%s;opacity:0.5;stroke-width:2;stroke:%s}
-                        .topButtonActive {fill:%s;opacity:0.8;stroke-width:2;stroke:%s}
+                        .topButtonActive {fill:url(#RadialGradientCenter);opacity:0.8;stroke-width:2;stroke:%s}
                         .topButton text {font-size:13px; fill: %s; opacity:1; stroke-width:20px}
                         .topButtonActive text {font-size:13px;fill:%s; stroke-width:0px; opacity:1}
                         .indicatorFont {font-size:20px;font-family:Bank}
@@ -3149,15 +3149,14 @@ VERSION_NUMBER = 1.512
                                 <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/>
                                 <stop offset="200%%" stop-color="black" stop-opacity="0"/>
                             </radialGradient>
-                            <radialGradient id="RadialGradientCenter" cx="0.5" cy="0.8" r="1">
+                            <radialGradient id="RadialGradientCenter" cx="0.5" cy="0.5" r="1">
                                 <stop offset="0%%" stop-color="%s" stop-opacity="0.8"/>
-                                <stop offset="30%%" stop-color="%s" stop-opacity="0.5"/>
-                                <stop offset="100%%" stop-color="%s" stop-opacity="0.2"/>
+                                <stop offset="100%%" stop-color="%s" stop-opacity="0.5"/>
                             </radialGradient>
                         </defs>
                         <g class="pdim txt txtend">
                         
-                    ]], bright, bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig,dim,bright,dimmer,dimOrig,bright,dimOrig,bright,dimmer,dimmer, resolutionWidth, resolutionHeight, dim,dim,dim,dim,dim,dimmer,dimmer,dim)
+                    ]], bright, bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig,dim,bright,dimmer,dimOrig,bright,bright,dimmer,dimmer, resolutionWidth, resolutionHeight, dim,dim,dim,dim,dim,brightOrig,dim)
             -- <path class="linethick dimstroke" style="fill:url(#ThinRightTopGradient);" d="M 1920 28 L 1920 800 L 1800 800 L 1750 750 L 1750 420 L 1700 370 L 1510 370 L 1460 320 L 1460 155 L 1410 105 L 1315 105 L 1403 28 Z"/>
             -- <path class="linethick dimstroke" style="fill:url(#ThinLeftTopGradient);" d="M 0 28 L 0 800 L 120 800 L 170 750 L 170 420 L 220 370 L 410 370 L 460 320 L 460 155 L 510 105 L 605 105 L 517 28 Z"/>
             
