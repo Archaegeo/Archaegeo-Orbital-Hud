@@ -1,164 +1,12 @@
 require 'src.slots'
+require("autoconf/custom/archhud/globals")
 
 local Nav = Navigator.new(system, core, unit)
 local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.515
-
--- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
-    useTheseSettings = false --export:
-    userControlScheme = "virtual joystick" --export:
-    soundFolder = "archHUD" --export:
-    
-    -- True/False variables
-    freeLookToggle = true --export:
-    BrakeToggleDefault = true --export:
-    RemoteFreeze = false --export:
-    RemoteHud = true --export:
-    brightHud = false --export:
-    VanillaRockets = false --export:
-    InvertMouse = false --export:
-    autoRollPreference = false --export:
-    ExternalAGG = false --export:
-    UseSatNav = false --export:
-    ShouldCheckDamage = true --export:
-    CalculateBrakeLandingSpeed = false --export:
-    AtmoSpeedAssist = true --export:
-    ForceAlignment = false --export:
-    DisplayDeadZone = true --export:
-    showHud = true --export: 
-    hideHudOnToggleWidgets = true --export:
-    ShiftShowsRemoteButtons = true --export:
-    SetWaypointOnExit = false --export:
-    AlwaysVSpd = false --export:
-    BarFuelDisplay = true --export:
-    voices = true --export:
-    alerts = true --export:
-    CollisionSystem = true --export:
-    AutoShieldToggle = true --export:
-    PreventPvP = true --export:
-    
-    -- Ship Handling variables
-    YawStallAngle = 35 --export:
-    PitchStallAngle = 35 --export:
-    brakeLandingRate = 30 --export:
-    MaxPitch = 30 --export:
-    ReEntryPitch = -30 --export:
-    LockPitchTarget = 0 --export:
-    AutopilotSpaceDistance = 5000 --export:
-    TargetOrbitRadius = 1.2 --export:
-    LowOrbitHeight = 2000 --export:
-    AtmoSpeedLimit = 1050 --export:
-    SpaceSpeedLimit = 30000 --export:
-    AutoTakeoffAltitude = 1000 --export:
-    TargetHoverHeight = 50 --export:
-    LandingGearGroundHeight = 0 --export:
-    ReEntryHeight = 100000 -- export:
-    MaxGameVelocity = 8333.00 --export:
-    AutopilotInterplanetaryThrottle = 1.0 --export:
-    warmup = 32 --export:
-    fuelTankHandlingAtmo = 0 --export:
-    fuelTankHandlingSpace = 0 --export:
-    fuelTankHandlingRocket = 0 --export:
-    ContainerOptimization = 0 --export:
-    FuelTankOptimization = 0 --export:
-    WipeDamage = 0 --export:
-
-    -- HUD Postioning variables
-    ResolutionX = 1920 --export:
-    ResolutionY = 1080 --export:
-    circleRad = 400 --export:
-    SafeR = 130 --export:
-    SafeG = 224 --export:
-    SafeB = 255 --export:
-    PvPR = 255 --export:
-    PvPG = 0 --export:
-    PvPB = 0 --export:
-    centerX = 960 --export:
-    centerY = 540 --export:
-    throtPosX = 1300 --export:
-    throtPosY = 540 --export:
-    vSpdMeterX = 1525  --export:
-    vSpdMeterY = 325 --export:
-    altMeterX = 550  --export:
-    altMeterY = 540 --export:
-    fuelX = 30 --export:
-    fuelY = 700 --export:
-    shieldX = 1750 --export:
-    shieldY = 250 --export:
-    DeadZone = 50 --export:
-    OrbitMapSize = 250 --export:
-    OrbitMapX = 0 --export:
-    OrbitMapY = 25 --export:
-    soundVolume = 100 --export:
-
-    --Ship flight physics variables 
-    speedChangeLarge = 5 --export:
-    speedChangeSmall = 1 --export:
-    MouseXSensitivity = 0.003 --export:
-    MouseYSensitivity = 0.003 --export:
-    autoRollFactor = 2 --export:
-    rollSpeedFactor = 1.5 --export:
-    autoRollRollThreshold = 180 --export:
-    minRollVelocity = 150 --export:
-    TrajectoryAlignmentStrength = 0.002 --export:
-    torqueFactor = 2 --export:
-    pitchSpeedFactor = 0.8 --export:
-    yawSpeedFactor = 1 --export:
-    brakeSpeedFactor = 3 --export:
-    brakeFlatFactor = 1 --export:
-    DampingMultiplier = 40 --export:
-    apTickRate = 0.0166667 --export:
-    hudTickRate = 0.0666667 --export:
-    ExtraLongitudeTags = "none" --export:
-    ExtraLateralTags = "none" --export:
-    ExtraVerticalTags = "none" --export:
-
--- Auto Variable declarations that store status of ship. Must be global because they get saved/read to Databank due to using _G assignment
-    BrakeToggleStatus = BrakeToggleDefault
-    VertTakeOffEngine = false 
-    BrakeIsOn = false
-    RetrogradeIsOn = false
-    ProgradeIsOn = false
-    Autopilot = false
-    TurnBurn = false
-    AltitudeHold = false
-    BrakeLanding = false
-    AutoTakeoff = false
-    Reentry = false
-    VertTakeOff = false
-    HoldAltitude = 1000 -- In case something goes wrong, give this a decent start value
-    AutopilotAccelerating = false
-    AutopilotRealigned = false
-    AutopilotBraking = false
-    AutopilotCruising = false
-    AutopilotEndSpeed = 0
-    AutopilotStatus = "Aligning"
-    AutopilotPlanetGravity = 0
-    PrevViewLock = 1
-    AutopilotTargetName = "None"
-    AutopilotTargetCoords = nil
-    AutopilotTargetIndex = 0
-    GearExtended = nil
-    TotalDistanceTravelled = 0.0
-    TotalFlightTime = 0
-    SavedLocations = {}
-    VectorToTarget = false    
-    LocationIndex = 0
-    LastMaxBrake = 0
-    LockPitch = nil
-    LastMaxBrakeInAtmo = 0
-    AntigravTargetAltitude = 1000
-    LastStartTime = 0
-    SpaceTarget = false
-    LeftAmount = 0
-    IntoOrbit = false
-    iphCondition = "All"
-    stablized = true
-    UseExtra = "Off"
-    LastVersionUpdate = 0.000
+VERSION_NUMBER = 1.595
 
     -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
         local autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
@@ -2870,7 +2718,7 @@ VERSION_NUMBER = 1.515
                 addTable(help, helpGeneral)
                 for i = 1, #help do
                     y=y+12
-                    newContent[#newContent + 1] = svgText( x, y, help[i], "pdim txttick txtstart")
+                    newContent[#newContent + 1] = svgText( x, y, help[i], "pdim txtbig txtstart")
                 end
             end
             
