@@ -2870,7 +2870,7 @@ VERSION_NUMBER = 1.515
                 addTable(help, helpGeneral)
                 for i = 1, #help do
                     y=y+12
-                    newContent[#newContent + 1] = svgText( x, y, help[i], "pdim txttick txtstart")
+                    newContent[#newContent + 1] = svgText( x, y, help[i], "pdim txtbig txtstart")
                 end
             end
             
