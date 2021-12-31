@@ -2000,14 +2000,15 @@ VERSION_NUMBER = 1.512
                             if ((fuelTimeDisplay ~= "" and fuelTimeLeftTable[i] < 120) or fuelPercentTable[i] < 5) then
                                 class = "red "
                             end
+                            local backColor = stringf("rgb(%d,%d,%d)", uclamp(mfloor((255-colorMod)/2.55),50,100), uclamp(mfloor(colorMod/2.55),0,50), 50)
                             if BarFuelDisplay then
                                 tankMessage = tankMessage..stringf([[
                                     <g class="pdim">                        
-                                    <rect fill=#222222 class="bar" x="%d" y="%d" width="170" height="20"></rect></g>
+                                    <rect fill=%s class="bar" x="%d" y="%d" width="170" height="20"></rect></g>
                                     <g class="bar txtstart">
                                     <rect fill=%s width="%d" height="20" x="%d" y="%d"></rect>
                                     <text class="txtstart" fill="white" x="%d" y="%d" style="font-family:Play;font-size:14px">%s %s%% %s</text>
-                                    </g>]], x, y2, color, mfloor(fuelPercentTable[i]*1.7+0.5), x, y2, x+5, y2+14,name, fuelPercentTable[i], fuelTimeDisplay
+                                    </g>]], backColor, x, y2, color, mfloor(fuelPercentTable[i]*1.7+0.5), x, y2, x+5, y2+14,name, fuelPercentTable[i], fuelTimeDisplay
                                 )
                                 --tankMessage = tankMessage..svgText(x, y1, name, class.."txtstart pdim txtfuel") 
                                 y1 = y1 - 22
