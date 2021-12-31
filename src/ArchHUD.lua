@@ -3352,23 +3352,23 @@ VERSION_NUMBER = 1.512
             elseif inAtmo then -- We only show atmo when not remote
                 local atX = ConvertResolutionX(770)
                 newContent[#newContent + 1] = svgText(crx(895), labelY1, "ATMO", "")
-                newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke"  d="M %f %f l -80 0"/>]],crx(895),lineY)
+                newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke"  d="M %f %f l %f 0"/>]],crx(895),lineY,crx(-80))
                 newContent[#newContent + 1] = svgText(crx(815), labelY2, stringf("%.1f%%", atmosDensity*100), "txtstart size20")
             end
             newContent[#newContent + 1] = svgText(crx(1025), labelY1, "GRAVITY", "txtstart")
-            newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l 80 0"/>]],crx(1025), lineY)
+            newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1025), lineY, crx(80))
             newContent[#newContent + 1] = svgText(crx(1105), labelY2, stringf("%.2fg", (gravity / 9.80665)), "size20")
 
             newContent[#newContent + 1] = svgText(crx(1125), labelY1, "ACCEL", "txtstart")
-            newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l 80 0"/>]],crx(1125), lineY)
+            newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1125), lineY, crx(80))
             newContent[#newContent + 1] = svgText(crx(1205), labelY2, stringf("%.2fg", accel), "size20") 
 
             newContent[#newContent + 1] = svgText(crx(695), labelY1, "BRAKE", "")
-            newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l -80 0"/>]],crx(695),lineY)
+            newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(695),lineY, crx(-80))
             newContent[#newContent + 1] = svgText(crx(615), labelY2, stringf("%s", FormatTimeString(brkTime)), "txtstart size20") 
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(10), stringf("BrkTime: %s", FormatTimeString(brkTime)), "txtstart")
             newContent[#newContent + 1] = svgText(crx(635), cry(45), "TRIP", "")
-            newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l -90 0"/>]],crx(635),cry(31))
+            newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(635),cry(31),crx(-90))
             if travelTime then
                 newContent[#newContent + 1] = svgText(crx(532), cry(23), stringf("%s", FormatTimeString(travelTime)), "txtstart size20") 
             end
