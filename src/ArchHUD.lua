@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.513
+VERSION_NUMBER = 1.515
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -226,7 +226,7 @@ VERSION_NUMBER = 1.513
     local brakeInput = 0
     local rollInput2 = 0
     local followMode = false 
-    local holdingCtrl = false
+    local holdingShift = false
     local msgText = "empty"
     local holdAltitudeButtonModifier = 5
     local antiGravButtonModifier = 5
@@ -435,7 +435,7 @@ VERSION_NUMBER = 1.513
     local function changeSpd(down)
         local mult=1
         if down then mult = -1 end
-        if not holdingCtrl then
+        if not holdingShift then
             if AtmoSpeedAssist and not AltIsOn and mousePause then
                 local currentPlayerThrot = PlayerThrottle
                 PlayerThrottle = round(uclamp(PlayerThrottle + mult*speedChangeLarge/100, -1, 1),2)
@@ -4084,7 +4084,7 @@ VERSION_NUMBER = 1.513
             local deltaX = system.getMouseDeltaX()
             local deltaY = system.getMouseDeltaY()
 
-            if InvertMouse and not holdingCtrl then deltaY = -deltaY end
+            if InvertMouse and not holdingShift then deltaY = -deltaY end
             yawInput2 = 0
             rollInput2 = 0
             pitchInput2 = 0
@@ -4102,7 +4102,7 @@ VERSION_NUMBER = 1.513
             maxKinematicUp = core.getMaxKinematicsParametersAlongAxis("ground", core.getConstructOrientationUp())[1]
 
             if sysIsVwLock() == 0 then
-                if isRemote() == 1 and holdingCtrl then
+                if isRemote() == 1 and holdingShift then
                     if not Animating then
                         simulatedX = simulatedX + deltaX
                         simulatedY = simulatedY + deltaY
@@ -4116,7 +4116,7 @@ VERSION_NUMBER = 1.513
                 simulatedX = simulatedX + deltaX
                 simulatedY = simulatedY + deltaY
                 distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
-                if not holdingCtrl and isRemote() == 0 then -- Draw deadzone circle if it's navigating
+                if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                     if userControlScheme == "virtual joystick" then -- Virtual Joystick
                         -- Do navigation things
 
@@ -6909,7 +6909,7 @@ VERSION_NUMBER = 1.513
             end
 
             if sysIsVwLock() == 0 then
-                if isRemote() == 1 and holdingCtrl then
+                if isRemote() == 1 and holdingShift then
                     if not AltIsOn then
                         SetButtonContains()
                         DrawButtons(newContent)
@@ -6944,13 +6944,13 @@ VERSION_NUMBER = 1.513
                     CheckButtons()
                 end
             else
-                if not holdingCtrl and isRemote() == 0 then -- Draw deadzone circle if it's navigating
+                if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                     CheckButtons()
                     if distance > DeadZone then -- Draw a line to the cursor from the screen center
                         -- Note that because SVG lines fucking suck, we have to do a translate and they can't use calc in their params
                         if DisplayDeadZone then DrawCursorLine(newContent) end
                     end
-                elseif not AltIsOn or (AltIsOn and holdingCtrl) then
+                elseif not AltIsOn and holdingShift then
                     SetButtonContains()
                     DrawButtons(newContent)
                 end
@@ -7505,7 +7505,7 @@ VERSION_NUMBER = 1.513
 
                 if down then mult = -1 end
                 if not ExternalAGG and antigravOn then
-                    if holdingCtrl and down then
+                    if holdingShift and down then
                         AntigravTargetAltitude = 1000
                     elseif AntigravTargetAltitude ~= nil  then
                         AntigravTargetAltitude = AntigravTargetAltitude + mult*antiGravButtonModifier
@@ -7518,14 +7518,14 @@ VERSION_NUMBER = 1.513
                     end
                 elseif AltitudeHold or VertTakeOff or IntoOrbit then
                     if IntoOrbit then
-                        if holdingCtrl then
+                        if holdingShift then
                             OrbitTargetOrbit = nextTargetHeight(OrbitTargetOrbit, down) 
                         else                          
                             OrbitTargetOrbit = OrbitTargetOrbit + mult*holdAltitudeButtonModifier
                         end
                         if OrbitTargetOrbit < planet.noAtmosphericDensityAltitude then OrbitTargetOrbit = planet.noAtmosphericDensityAltitude end
                     else
-                        if holdingCtrl and inAtmo then
+                        if holdingShift and inAtmo then
                             HoldAltitude = nextTargetHeight(HoldAltitude, down)
                         else
                             HoldAltitude = HoldAltitude + mult*holdAltitudeButtonModifier
@@ -7653,7 +7653,7 @@ VERSION_NUMBER = 1.513
             groundAltStart(true)
         elseif action == "option1" then
             toggleView = false
-            if AltIsOn and holdingCtrl then 
+            if AltIsOn and holdingShift then 
                 local onboard = ""
                 for i=1, #passengers do
                     onboard = onboard.."| Name: "..system.getPlayerName(passengers[i]).." Mass: "..round(core.getBoardedPlayerMass(passengers[i])/1000,1).."t "
@@ -7664,7 +7664,7 @@ VERSION_NUMBER = 1.513
             ATLAS.adjustAutopilotTargetIndex()
         elseif action == "option2" then
             toggleView = false
-            if AltIsOn and holdingCtrl then 
+            if AltIsOn and holdingShift then 
                 for i=1, #passengers do
                     core.forceDeboard(passengers[i])
                 end
@@ -7728,7 +7728,7 @@ VERSION_NUMBER = 1.513
                     if shield_1 ~= nil then shield_1.hide() end
                 end
             end
-            if AltIsOn and holdingCtrl then 
+            if AltIsOn and holdingShift then 
                 local onboard = ""
                 for i=1, #ships do
                     onboard = onboard.."| ID: "..ships[i].." Mass: "..round(core.getDockedConstructMass(ships[i])/1000,1).."t "
@@ -7747,7 +7747,7 @@ VERSION_NUMBER = 1.513
             toggleView = false
         elseif action == "option4" then
             toggleView = false      
-            if AltIsOn and holdingCtrl then 
+            if AltIsOn and holdingShift then 
                 for i=1, #ships do
                     core.forceUndock(ships[i])
                 end
@@ -7758,19 +7758,10 @@ VERSION_NUMBER = 1.513
             ToggleAutopilot()
         elseif action == "option5" then
             toggleView = false 
-            if AltIsOn and holdingCtrl then 
-                if shield_1 then
-                    shield_1.toggle() 
-                    return 
-                else
-                    msgText = "No shield found"
-                    return
-                end
-            end
             function ToggleLockPitch()
                 if LockPitch == nil then
                     play("lkPOn","LP")
-                    if not holdingCtrl then LockPitch = adjustedPitch
+                    if not holdingShift then LockPitch = adjustedPitch
                     else LockPitch = LockPitchTarget end
                     AutoTakeoff = false
                     AltitudeHold = false
@@ -7781,10 +7772,9 @@ VERSION_NUMBER = 1.513
                 end
             end
             ToggleLockPitch()
-
         elseif action == "option6" then
             toggleView = false 
-            if AltIsOn and holdingCtrl then 
+            if AltIsOn and holdingShift then 
                 if shield_1 then 
                     local vcd = shield_1.getVentingCooldown()
                     if vcd > 0 then msgText="Cannot vent again for "..vcd.." seconds" return end
@@ -7797,13 +7787,22 @@ VERSION_NUMBER = 1.513
             end
             ToggleAltitudeHold()
         elseif action == "option7" then
+            toggleView = false
+            if AltIsOn and holdingShift then 
+                if shield_1 then
+                    shield_1.toggle() 
+                    return 
+                else
+                    msgText = "No shield found"
+                    return
+                end
+            end
             CollisionSystem = not CollisionSystem
             if CollisionSystem then 
                 msgText = "Collision System Enabled"
             else 
                 msgText = "Collision System Secured"
             end
-            toggleView = false
         elseif action == "option8" then
             stablized = not stablized
             if not stablized then
@@ -7818,7 +7817,7 @@ VERSION_NUMBER = 1.513
             end
             toggleView = false
         elseif action == "option9" then
-            if AltIsOn and holdingCtrl then 
+            if AltIsOn and holdingShift then 
                 navCom:resetCommand(axisCommandId.longitudinal)
                 navCom:resetCommand(axisCommandId.lateral)
                 navCom:resetCommand(axisCommandId.vertical)
@@ -7832,13 +7831,13 @@ VERSION_NUMBER = 1.513
             toggleView = false
         elseif action == "lshift" then
             apButtonsHovered = false
-            if AltIsOn then holdingCtrl = true end
+            if AltIsOn then holdingShift = true end
             if sysIsVwLock() == 1 then
-                holdingCtrl = true
+                holdingShift = true
                 PrevViewLock = sysIsVwLock()
                 sysLockVw(1)
             elseif isRemote() == 1 and ShiftShowsRemoteButtons then
-                holdingCtrl = true
+                holdingShift = true
                 Animated = false
                 Animating = false
             end
@@ -7999,7 +7998,7 @@ VERSION_NUMBER = 1.513
                 Animated = false
                 Animating = false
             end
-            holdingCtrl = false
+            holdingShift = false
         elseif action == "brake" then
             if not BrakeToggleStatus and not AltIsOn then
                 if BrakeIsOn then
@@ -8060,7 +8059,7 @@ VERSION_NUMBER = 1.513
             local function spdLoop(down)
                 local mult = 1
                 if down then mult = -1 end
-                if not holdingCtrl then
+                if not holdingShift then
                     if AtmoSpeedAssist and not AltIsOn then
                         PlayerThrottle = uclamp(PlayerThrottle + mult*speedChangeSmall/100, -1, 1)
                     else
@@ -8069,9 +8068,9 @@ VERSION_NUMBER = 1.513
                 end
             end
         if action == "groundaltitudeup" then
-            if not holdingCtrl then groundLoop() end
+            if not holdingShift then groundLoop() end
         elseif action == "groundaltitudedown" then
-            if not holdingCtrl then groundLoop(true) end
+            if not holdingShift then groundLoop(true) end
         elseif action == "speedup" then
             spdLoop()
         elseif action == "speeddown" then
