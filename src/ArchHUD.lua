@@ -93,8 +93,8 @@ VERSION_NUMBER = 1.515
     shieldY = 250 --export:
     DeadZone = 50 --export:
     OrbitMapSize = 250 --export:
-    OrbitMapX = 75 --export:
-    OrbitMapY = 0 --export:
+    OrbitMapX = 0 --export:
+    OrbitMapY = 25 --export:
     soundVolume = 100 --export:
 
     --Ship flight physics variables 
@@ -6162,7 +6162,7 @@ VERSION_NUMBER = 1.515
                 -- The rest are sort of standardized
                 buttonHeight = 60
                 buttonWidth = 300
-                local x = resolutionWidth-buttonWidth-10
+                local x = 0
                 local y = resolutionHeight / 2 - 150
                 --MakeButton("Show Help", "Hide Help", buttonWidth, buttonHeight, x, y, function() return showHelp end, function() showHelp = not showHelp end)
                 --y = y + buttonHeight + 20
