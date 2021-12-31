@@ -3363,7 +3363,7 @@ VERSION_NUMBER = 1.515
             newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1125), lineY, crx(80))
             newContent[#newContent + 1] = svgText(crx(1205), labelY2, stringf("%.2fg", accel), "size20") 
 
-            newContent[#newContent + 1] = svgText(crx(695), labelY1, "BRAKE", "")
+            newContent[#newContent + 1] = svgText(crx(695), labelY1, "BRK TIME", "")
             newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(695),lineY, crx(-80))
             newContent[#newContent + 1] = svgText(crx(615), labelY2, stringf("%s", FormatTimeString(brkTime)), "txtstart size20") 
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(10), stringf("BrkTime: %s", FormatTimeString(brkTime)), "txtstart")
@@ -3374,7 +3374,7 @@ VERSION_NUMBER = 1.515
             end
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(20), stringf("Trip: %.2f km", totalDistanceTrip), "txtstart") 
             --TODO: newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(30), stringf("Lifetime: %.2f kSU", (TotalDistanceTravelled / 200000)), "txtstart") 
-            newContent[#newContent + 1] = svgText(crx(795), labelY1, "BRAKE", "")
+            newContent[#newContent + 1] = svgText(crx(795), labelY1, "BRK DIST", "")
             newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(795),lineY, crx(-80))
             newContent[#newContent + 1] = svgText(crx(715), labelY2, stringf("%s", getDistanceDisplayString(brkDist)), "txtstart size20") 
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(10), stringf("BrkDist: %s", getDistanceDisplayString(brkDist)) , "txtstart")
@@ -3415,7 +3415,7 @@ VERSION_NUMBER = 1.515
             if isRemote() == 0 or RemoteHud then 
                 local startX = ConvertResolutionX(OrbitMapX+10)
                 local startY = ConvertResolutionY(OrbitMapY+20)
-                local midX = ConvertResolutionX(OrbitMapX+10+OrbitMapSize)
+                local midX = ConvertResolutionX(OrbitMapX+10+OrbitMapSize/1.25)
                 local height = 25
                 newContent[#newContent + 1] = "<g class='txtstart size14 bright'>"
                 newContent[#newContent + 1] = svgText(startX, startY, stringf("BrkTime: %s", FormatTimeString(brkTime)))
