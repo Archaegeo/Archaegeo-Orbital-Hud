@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.512
+VERSION_NUMBER = 1.515
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -226,7 +226,7 @@ VERSION_NUMBER = 1.512
     local brakeInput = 0
     local rollInput2 = 0
     local followMode = false 
-    local holdingCtrl = false
+    local holdingShift = false
     local msgText = "empty"
     local holdAltitudeButtonModifier = 5
     local antiGravButtonModifier = 5
@@ -436,7 +436,7 @@ VERSION_NUMBER = 1.512
     local function changeSpd(down)
         local mult=1
         if down then mult = -1 end
-        if not holdingCtrl then
+        if not holdingShift then
             if AtmoSpeedAssist and not AltIsOn and mousePause then
                 local currentPlayerThrot = PlayerThrottle
                 PlayerThrottle = round(uclamp(PlayerThrottle + mult*speedChangeLarge/100, -1, 1),2)
@@ -4142,7 +4142,7 @@ VERSION_NUMBER = 1.512
             local deltaX = system.getMouseDeltaX()
             local deltaY = system.getMouseDeltaY()
 
-            if InvertMouse and not holdingCtrl then deltaY = -deltaY end
+            if InvertMouse and not holdingShift then deltaY = -deltaY end
             yawInput2 = 0
             rollInput2 = 0
             pitchInput2 = 0
@@ -4160,7 +4160,7 @@ VERSION_NUMBER = 1.512
             maxKinematicUp = core.getMaxKinematicsParametersAlongAxis("ground", core.getConstructOrientationUp())[1]
 
             if sysIsVwLock() == 0 then
-                if isRemote() == 1 and holdingCtrl then
+                if isRemote() == 1 and holdingShift then
                     if not Animating then
                         simulatedX = simulatedX + deltaX
                         simulatedY = simulatedY + deltaY
@@ -4174,7 +4174,7 @@ VERSION_NUMBER = 1.512
                 simulatedX = simulatedX + deltaX
                 simulatedY = simulatedY + deltaY
                 distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
-                if not holdingCtrl and isRemote() == 0 then -- Draw deadzone circle if it's navigating
+                if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                     if userControlScheme == "virtual joystick" then -- Virtual Joystick
                         -- Do navigation things
 
@@ -4243,7 +4243,7 @@ VERSION_NUMBER = 1.512
                 if spaceLand then 
                     BrakeIsOn = false -- wtf how does this keep turning on, and why does it matter if we're in cruise?
                     local aligned = false
-                    if CustomTarget ~= nil and spaceLand ~= 1 then
+                    if CustomTarget and spaceLand ~= 1 then
                         aligned = AlignToWorldVector(CustomTarget.position-worldPos,0.1) 
                     else
                         aligned = AlignToWorldVector(vec3(constructVelocity),0.01) 
@@ -4290,7 +4290,7 @@ VERSION_NUMBER = 1.512
                 end
             end
 
-            if finalLand and CustomTarget ~= nil and (coreAltitude < (HoldAltitude + 250) and coreAltitude > (HoldAltitude - 250)) and ((velMag*3.6) > (adjustedAtmoSpeedLimit-250)) and mabs(vSpd) < 25 and atmosDensity >= 0.1
+            if finalLand and CustomTarget and (coreAltitude < (HoldAltitude + 250) and coreAltitude > (HoldAltitude - 250)) and ((velMag*3.6) > (adjustedAtmoSpeedLimit-250)) and mabs(vSpd) < 25 and atmosDensity >= 0.1
                 and (CustomTarget.position-worldPos):len() > 2000 + coreAltitude then -- Only engage if far enough away to be able to turn back for it
                     ToggleAutopilot()
                 finalLand = false
@@ -4397,7 +4397,7 @@ VERSION_NUMBER = 1.512
                     OrbitTargetSet = true
                 end     
 
-                if orbitalParams.VectorToTarget then
+                if orbitalParams.VectorToTarget and CustomTarget then
                     targetVec = CustomTarget.position - worldPos
                 end
                 local escapeVel, endSpeed = Kep(OrbitTargetPlanet):escapeAndOrbitalSpeed((worldPos -OrbitTargetPlanet.center):len()-OrbitTargetPlanet.radius)
@@ -4443,7 +4443,7 @@ VERSION_NUMBER = 1.512
                         AlignToWorldVector(constructVelocity)
                     end
                     pitchInput2 = 0
-                    if orbitalParams.VectorToTarget then
+                    if orbitalParams.VectorToTarget and CustomTarget then
                         -- Orbit to target...
 
                         local brakeDistance, _ =  Kinematic.computeDistanceAndTime(velMag, adjustedAtmoSpeedLimit/3.6, coreMass, 0, 0, LastMaxBrake)
@@ -4584,7 +4584,7 @@ VERSION_NUMBER = 1.512
                 local targetCoords, skipAlign = AutopilotTargetCoords, false
                 -- This isn't right.  Maybe, just take the smallest distance vector between the normal one, and the wrongSide calculated one
                 --local wrongSide = (CustomTarget.position-worldPos):len() > (autopilotTargetPlanet.center-worldPos):len()
-                if CustomTarget ~= nil and CustomTarget.planetname ~= "Space" then
+                if CustomTarget and CustomTarget.planetname ~= "Space" then
                     AutopilotRealigned = true -- Don't realign, point straight at the target.  Or rather, at AutopilotTargetOrbit above it
                     if not TargetSet then
                         -- It's on the wrong side of the planet. 
@@ -4610,7 +4610,7 @@ VERSION_NUMBER = 1.512
                     end
                     --AutopilotPlanetGravity = autopilotTargetPlanet.gravity*9.8 -- Since we're aiming straight at it, we have to assume gravity?
                     AutopilotPlanetGravity = 0
-                elseif CustomTarget ~= nil and CustomTarget.planetname == "Space" then
+                elseif CustomTarget and CustomTarget.planetname == "Space" then
                     if not TargetSet then
                         AutopilotPlanetGravity = 0
                         skipAlign = true
@@ -4753,7 +4753,7 @@ VERSION_NUMBER = 1.512
 
                 if projectedAltitude < AutopilotTargetOrbit*1.5 then
                     -- Recalc end speeds for the projectedAltitude since it's reasonable... 
-                    if CustomTarget ~= nil and CustomTarget.planetname == "Space" then 
+                    if CustomTarget and CustomTarget.planetname == "Space" then 
                         AutopilotEndSpeed = 0
                     elseif CustomTarget == nil then
                         _, AutopilotEndSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed(projectedAltitude)
@@ -4846,24 +4846,23 @@ VERSION_NUMBER = 1.512
                         cmdThrottle(1,true) -- This stays 100 to not mess up our calculations
                     end
                     -- Check if an orbit has been established and cut brakes and disable autopilot if so
-
                     -- We'll try <0.9 instead of <1 so that we don't end up in a barely-orbit where touching the controls will make it an escape orbit
                     -- Though we could probably keep going until it starts getting more eccentric, so we'd maybe have a circular orbit
                     local _, endSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed((worldPos-planet.center):len()-planet.radius)
                     
 
                     local targetVec--, targetAltitude, --horizontalDistance
-                    if CustomTarget ~= nil then
+                    if CustomTarget then
                         targetVec = CustomTarget.position - worldPos
                         --targetAltitude = planet:getAltitude(CustomTarget.position)
                         --horizontalDistance = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
                     end
-                    if (CustomTarget ~=nil and CustomTarget.planetname == "Space" and velMag < 50) then
+                    if (CustomTarget and CustomTarget.planetname == "Space" and velMag < 50) then
                         finishAutopilot("Autopilot complete, arrived at space location")
                         BrakeIsOn = true
                         brakeInput = 1
                         -- We only aim for endSpeed even if going straight in, because it gives us a smoother transition to alignment
-                    elseif (CustomTarget ~= nil and CustomTarget.planetname ~= "Space") and velMag <= endSpeed and (orbit.apoapsis == nil or orbit.periapsis == nil or orbit.apoapsis.altitude <= 0 or orbit.periapsis.altitude <= 0) then
+                    elseif (CustomTarget and CustomTarget.planetname ~= "Space") and velMag <= endSpeed and (orbit.apoapsis == nil or orbit.periapsis == nil or orbit.apoapsis.altitude <= 0 or orbit.periapsis.altitude <= 0) then
                         -- They aren't in orbit, that's a problem if we wanted to do anything other than reenter.  Reenter regardless.                  
                         finishAutopilot("Autopilot complete, commencing reentry")
                         --BrakeIsOn = true
@@ -4872,13 +4871,13 @@ VERSION_NUMBER = 1.512
                         --ProgradeIsOn = true  
                         spaceLand = true
                         AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
-                    elseif CustomTarget.planetname ~= "Space" and orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 or AutopilotStatus == "Circularizing" then
+                    elseif ((CustomTarget and CustomTarget.planetname ~= "Space") or CustomTarget == nil) and orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 or AutopilotStatus == "Circularizing" then
                         if AutopilotStatus ~= "Circularizing" then
                             play("apCir", "AP")
                             AutopilotStatus = "Circularizing"
                         end
                         if velMag <= endSpeed then 
-                            if CustomTarget ~= nil then
+                            if CustomTarget then
                                 if constructVelocity:normalize():dot(targetVec:normalize()) > 0.4 then -- Triggers when we get close to passing it
                                     if AutopilotStatus ~= "Orbiting to Target" then
                                         play("apOrb","OB")
@@ -4946,7 +4945,7 @@ VERSION_NUMBER = 1.512
                     -- It's engaged but hasn't started accelerating yet.
                     if aligned then
                         -- Re-align to 200km from our aligned right                    
-                        if not AutopilotRealigned and CustomTarget == nil or (not AutopilotRealigned and CustomTarget ~= nil and CustomTarget.planetname ~= "Space") then
+                        if not AutopilotRealigned and CustomTarget == nil or (not AutopilotRealigned and CustomTarget and CustomTarget.planetname ~= "Space") then
                             if not spaceLand then
                                 AutopilotTargetCoords = vec3(autopilotTargetPlanet.center) +
                                                             ((AutopilotTargetOrbit + autopilotTargetPlanet.radius) *
@@ -6681,17 +6680,6 @@ VERSION_NUMBER = 1.512
             -- Local Functions for oneSecond
 
                 local function CheckDamage(newContent)
-                    
-                    local function wipeSaveVariables()
-                        for k, v in pairs(saveableVariables()) do
-                            dbHud_1.setStringValue(v, jencode(nil))
-                        end
-                        for k, v in pairs(autoVariables) do
-                            dbHud_1.setStringValue(v, jencode(nil))
-                        end
-                        msgText = "Databank wiped"
-                        msgTimer = 5
-                    end
 
                     local percentDam = 0
                     damageMessage = ""
@@ -6747,7 +6735,12 @@ VERSION_NUMBER = 1.512
                     end
                     percentDam = mfloor((curShipHP / maxShipHP)*100)
                     if percentDam < 100 then
-                        if percentDam > 0 and percentDam < WipeDamage then wipeSaveVariables() end
+                        if percentDam > 0 and percentDam < WipeDamage then 
+                            SavedLocations={}
+                            ATLAS.UpdateAtlasLocationsList()
+                            ATLAS.UpdateAutopilotTarget()
+                            SaveDataBank()
+                        end
                         newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
                         colorMod = mfloor(percentDam * 2.55)
                         color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
@@ -7025,7 +7018,7 @@ VERSION_NUMBER = 1.512
 
             DrawTabButtons(newContent)
             if sysIsVwLock() == 0 then
-                if isRemote() == 1 and holdingCtrl then
+                if isRemote() == 1 and holdingShift then
                     if not AltIsOn then
                         SetButtonContains()
                         DrawButtons(newContent)
@@ -7060,13 +7053,13 @@ VERSION_NUMBER = 1.512
                     CheckButtons()
                 end
             else
-                if not holdingCtrl and isRemote() == 0 then -- Draw deadzone circle if it's navigating
+                if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                     CheckButtons()
                     if distance > DeadZone then -- Draw a line to the cursor from the screen center
                         -- Note that because SVG lines fucking suck, we have to do a translate and they can't use calc in their params
                         if DisplayDeadZone then DrawCursorLine(newContent) end
                     end
-                elseif not AltIsOn or (AltIsOn and holdingCtrl) then
+                elseif not AltIsOn and holdingShift then
                     SetButtonContains()
                     DrawButtons(newContent)
                 end
@@ -7621,7 +7614,7 @@ VERSION_NUMBER = 1.512
 
                 if down then mult = -1 end
                 if not ExternalAGG and antigravOn then
-                    if holdingCtrl and down then
+                    if holdingShift and down then
                         AntigravTargetAltitude = 1000
                     elseif AntigravTargetAltitude ~= nil  then
                         AntigravTargetAltitude = AntigravTargetAltitude + mult*antiGravButtonModifier
@@ -7634,14 +7627,14 @@ VERSION_NUMBER = 1.512
                     end
                 elseif AltitudeHold or VertTakeOff or IntoOrbit then
                     if IntoOrbit then
-                        if holdingCtrl then
+                        if holdingShift then
                             OrbitTargetOrbit = nextTargetHeight(OrbitTargetOrbit, down) 
                         else                          
                             OrbitTargetOrbit = OrbitTargetOrbit + mult*holdAltitudeButtonModifier
                         end
                         if OrbitTargetOrbit < planet.noAtmosphericDensityAltitude then OrbitTargetOrbit = planet.noAtmosphericDensityAltitude end
                     else
-                        if holdingCtrl and inAtmo then
+                        if holdingShift and inAtmo then
                             HoldAltitude = nextTargetHeight(HoldAltitude, down)
                         else
                             HoldAltitude = HoldAltitude + mult*holdAltitudeButtonModifier
@@ -7769,7 +7762,7 @@ VERSION_NUMBER = 1.512
             groundAltStart(true)
         elseif action == "option1" then
             toggleView = false
-            if AltIsOn and holdingCtrl then 
+            if AltIsOn and holdingShift then 
                 local onboard = ""
                 for i=1, #passengers do
                     onboard = onboard.."| Name: "..system.getPlayerName(passengers[i]).." Mass: "..round(core.getBoardedPlayerMass(passengers[i])/1000,1).."t "
@@ -7780,7 +7773,7 @@ VERSION_NUMBER = 1.512
             ATLAS.adjustAutopilotTargetIndex()
         elseif action == "option2" then
             toggleView = false
-            if AltIsOn and holdingCtrl then 
+            if AltIsOn and holdingShift then 
                 for i=1, #passengers do
                     core.forceDeboard(passengers[i])
                 end
@@ -7844,7 +7837,7 @@ VERSION_NUMBER = 1.512
                     if shield_1 ~= nil then shield_1.hide() end
                 end
             end
-            if AltIsOn and holdingCtrl then 
+            if AltIsOn and holdingShift then 
                 local onboard = ""
                 for i=1, #ships do
                     onboard = onboard.."| ID: "..ships[i].." Mass: "..round(core.getDockedConstructMass(ships[i])/1000,1).."t "
@@ -7863,7 +7856,7 @@ VERSION_NUMBER = 1.512
             toggleView = false
         elseif action == "option4" then
             toggleView = false      
-            if AltIsOn and holdingCtrl then 
+            if AltIsOn and holdingShift then 
                 for i=1, #ships do
                     core.forceUndock(ships[i])
                 end
@@ -7874,19 +7867,10 @@ VERSION_NUMBER = 1.512
             ToggleAutopilot()
         elseif action == "option5" then
             toggleView = false 
-            if AltIsOn and holdingCtrl then 
-                if shield_1 then
-                    shield_1.toggle() 
-                    return 
-                else
-                    msgText = "No shield found"
-                    return
-                end
-            end
             function ToggleLockPitch()
                 if LockPitch == nil then
                     play("lkPOn","LP")
-                    if not holdingCtrl then LockPitch = adjustedPitch
+                    if not holdingShift then LockPitch = adjustedPitch
                     else LockPitch = LockPitchTarget end
                     AutoTakeoff = false
                     AltitudeHold = false
@@ -7897,10 +7881,9 @@ VERSION_NUMBER = 1.512
                 end
             end
             ToggleLockPitch()
-
         elseif action == "option6" then
             toggleView = false 
-            if AltIsOn and holdingCtrl then 
+            if AltIsOn and holdingShift then 
                 if shield_1 then 
                     local vcd = shield_1.getVentingCooldown()
                     if vcd > 0 then msgText="Cannot vent again for "..vcd.." seconds" return end
@@ -7913,13 +7896,22 @@ VERSION_NUMBER = 1.512
             end
             ToggleAltitudeHold()
         elseif action == "option7" then
+            toggleView = false
+            if AltIsOn and holdingShift then 
+                if shield_1 then
+                    shield_1.toggle() 
+                    return 
+                else
+                    msgText = "No shield found"
+                    return
+                end
+            end
             CollisionSystem = not CollisionSystem
             if CollisionSystem then 
                 msgText = "Collision System Enabled"
             else 
                 msgText = "Collision System Secured"
             end
-            toggleView = false
         elseif action == "option8" then
             stablized = not stablized
             if not stablized then
@@ -7934,7 +7926,7 @@ VERSION_NUMBER = 1.512
             end
             toggleView = false
         elseif action == "option9" then
-            if AltIsOn and holdingCtrl then 
+            if AltIsOn and holdingShift then 
                 navCom:resetCommand(axisCommandId.longitudinal)
                 navCom:resetCommand(axisCommandId.lateral)
                 navCom:resetCommand(axisCommandId.vertical)
@@ -7948,13 +7940,13 @@ VERSION_NUMBER = 1.512
             toggleView = false
         elseif action == "lshift" then
             apButtonsHovered = false
-            if AltIsOn then holdingCtrl = true end
+            if AltIsOn then holdingShift = true end
             if sysIsVwLock() == 1 then
-                holdingCtrl = true
+                holdingShift = true
                 PrevViewLock = sysIsVwLock()
                 sysLockVw(1)
             elseif isRemote() == 1 and ShiftShowsRemoteButtons then
-                holdingCtrl = true
+                holdingShift = true
                 Animated = false
                 Animating = false
             end
@@ -8115,7 +8107,7 @@ VERSION_NUMBER = 1.512
                 Animated = false
                 Animating = false
             end
-            holdingCtrl = false
+            holdingShift = false
         elseif action == "brake" then
             if not BrakeToggleStatus and not AltIsOn then
                 if BrakeIsOn then
@@ -8176,7 +8168,7 @@ VERSION_NUMBER = 1.512
             local function spdLoop(down)
                 local mult = 1
                 if down then mult = -1 end
-                if not holdingCtrl then
+                if not holdingShift then
                     if AtmoSpeedAssist and not AltIsOn then
                         PlayerThrottle = uclamp(PlayerThrottle + mult*speedChangeSmall/100, -1, 1)
                     else
@@ -8185,9 +8177,9 @@ VERSION_NUMBER = 1.512
                 end
             end
         if action == "groundaltitudeup" then
-            if not holdingCtrl then groundLoop() end
+            if not holdingShift then groundLoop() end
         elseif action == "groundaltitudedown" then
-            if not holdingCtrl then groundLoop(true) end
+            if not holdingShift then groundLoop(true) end
         elseif action == "speedup" then
             spdLoop()
         elseif action == "speeddown" then
