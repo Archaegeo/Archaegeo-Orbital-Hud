@@ -1067,9 +1067,7 @@ function HudClass()
                     speed = orbit.apoapsis.speed
                     line = -35
                 end
-                newContent[#newContent + 1] = stringf(
-                    [[<line class="pdim op30 linethick" x1="%f" y1="%f" x2="%f" y2="%f"/>]],
-                    x + line, y - 5, orbitMapX + orbitMapSize / 2 - rx + xOffset, y - 5)
+
                 newContent[#newContent + 1] = svgText(x, y, type)
                 y = y + orbitInfoYOffset
                 local displayText = getDistanceDisplayString(alt)
@@ -1124,12 +1122,15 @@ function HudClass()
                                                     orbitMapY + orbitMapSize*1.5 / 2 + pad, planet.radius / scale)
                 end
         
+                y = orbitMapY + orbitMapSize*1.5 / 2 + 5 + pad
+                x = orbitMapX + orbitMapSize * 1.5 + pad
+
                 if orbit.apoapsis ~= nil and orbit.apoapsis.speed < MaxGameVelocity and orbit.apoapsis.speed > 1 then
                     orbitInfo("Apoapsis")
                 end
         
                 y = orbitMapY + orbitMapSize*1.5 / 2 + 5 + pad
-                x = orbitMapX - orbitMapX + 10 + pad
+                x = orbitMapX + orbitMapSize / 2 + pad
         
                 if orbit.periapsis ~= nil and orbit.periapsis.speed < MaxGameVelocity and orbit.periapsis.speed > 1 then
                     orbitInfo("Periapsis")
