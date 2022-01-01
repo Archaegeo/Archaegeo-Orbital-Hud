@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.515 - MAJOR Update to HUD appears (Thanks Dimencia!!)
+NOTE NOTE NOTE - This is the version that works on GeForce Now.  Single file install on seat.
 - Major: Change to appearance of HUD
 - Removed depreciated user settings of `showHelp`, `ShowOdometer`, and `DisplayOrbit`
 - Fix: Moved Toggle shield from `LALT-LSHIFT-5` to `LALT-LSHIFT-7` - This lets `LALT-LSHIFT-5` work again to set locked pitch to 
