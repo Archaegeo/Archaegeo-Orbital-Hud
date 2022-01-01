@@ -21,7 +21,7 @@ require("autoconf/custom/archhud/hudclass")
 require("autoconf/custom/archhud/apclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.595
+VERSION_NUMBER = 1.600
 
 -- function localizations for improved performance when used frequently or in loops.
     mabs = math.abs
