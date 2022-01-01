@@ -14,6 +14,8 @@ The following "require" files have been created:
     * globals.lua - Has all user settings in it for easy modification and contain different position settings for 1920x1080 and 2560x1440.
     * apclass.lua - This is the file that has all of the Autopilot handling
     * hudclass.lua - This contains all of the material dealing with the appearance of the hud and buttons
+    * hudclassOrig.lua - This is the previous look to the hud. Just rename it to hudclass.lua to have it be in effect.
+    * globals2560x1440.lua - This is an example globals set up for 2560x1440 resolution.  Just rename it to globals.lua to have it be in effect.
 To USE:  Download the ArchHUD.zip on the Release page and extract it in your %ProgramData%\Dual Universe\Game\data\lua\autoconf\custom directory.
 This should create an `ArchHUD.conf` like normal, and a subfolder named `archhud` that has the 3 require files in it.
 NOTE: When extracting ZIP file, be sure to check option to keep directory structure if available.

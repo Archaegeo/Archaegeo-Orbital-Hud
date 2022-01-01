@@ -1,5 +1,6 @@
-function HudClass()
-    -- REQUIRED DEFINES FROM HERE TILL NEXT REMARK - DO NOT REMOVE/CHANGE IF YOU DONT KNOW WHY
+function HudClass() -- Everything HUD display releated including tick
+
+-- REQUIRED DEFINES FROM HERE TILL NEXT REMARK - DO NOT REMOVE/CHANGE IF YOU DONT KNOW WHY
     local Nav = navGlobal
     local core = coreGlobal
     local unit = unitGlobal
@@ -13,9 +14,11 @@ function HudClass()
     
 -- END OF REQUIRED DEFINES
 
+-- Modify beyond here as you will
     local gravConstant = 9.80665
     local ControlButtons = {}
     local SettingButtons = {}
+
 
     --Local Huds Functions
         -- safezone() variables
@@ -91,8 +94,8 @@ function HudClass()
         local function DrawTank(x, nameSearchPrefix, nameReplacePrefix, tankTable, fuelTimeLeftTable,
             fuelPercentTable)
             
-            local y1 = tankY
-            local y2 = tankY+5
+            local y1 = fuelY
+            local y2 = fuelY+5
             if not BarFuelDisplay then y2=y2+5 end
             if isRemote() == 1 and not RemoteHud then
                 y1 = y1 - 50
@@ -166,19 +169,18 @@ function HudClass()
                         if ((fuelTimeDisplay ~= "" and fuelTimeLeftTable[i] < 120) or fuelPercentTable[i] < 5) then
                             class = "red "
                         end
-                        local backColor = stringf("rgb(%d,%d,%d)", uclamp(mfloor((255-colorMod)/2.55),50,100), uclamp(mfloor(colorMod/2.55),0,50), 50)
                         if BarFuelDisplay then
                             tankMessage = tankMessage..stringf([[
                                 <g class="pdim">                        
-                                <rect fill=%s class="bar" x="%d" y="%d" width="170" height="20"></rect></g>
+                                <rect fill=grey class="bar" x="%d" y="%d" width="100" height="13"></rect></g>
                                 <g class="bar txtstart">
-                                <rect fill=%s width="%d" height="20" x="%d" y="%d"></rect>
-                                <text class="txtstart" fill="white" x="%d" y="%d" style="font-family:Play;font-size:14px">%s %s%% %s</text>
-                                </g>]], backColor, x, y2, color, mfloor(fuelPercentTable[i]*1.7+0.5), x, y2, x+5, y2+14,name, fuelPercentTable[i], fuelTimeDisplay
+                                <rect fill=%s width="%d" height="13" x="%d" y="%d"></rect>
+                                <text fill=black x="%d" y="%d" style="stroke-width:0px;paint-order:normal;">%s%% %s</text>
+                                </g>]], x, y2, color, fuelPercentTable[i], x, y2, x+2, y2+10, fuelPercentTable[i], fuelTimeDisplay
                             )
-                            --tankMessage = tankMessage..svgText(x, y1, name, class.."txtstart pdim txtfuel") 
-                            y1 = y1 - 22
-                            y2 = y2 - 22
+                            tankMessage = tankMessage..svgText(x, y1, name, class.."txtstart pdim txtfuel") 
+                            y1 = y1 - 30
+                            y2 = y2 - 30
                         else
                             tankMessage = tankMessage..svgText(x, y1, name, class.."pdim txtfuel") 
                             tankMessage = tankMessage..svgText( x, y2, stringf("%d%% %s", fuelPercentTable[i], fuelTimeDisplay), "pdim txtfuel","fill:"..color)
@@ -188,7 +190,6 @@ function HudClass()
                     end
                 end
             end
-            tankY = y1
         end
 
         local function DrawVerticalSpeed(newContent, altitude) -- Draw vertical speed indicator - Code by lisa-lionheart
@@ -258,7 +259,6 @@ function HudClass()
                     centerX-5, centerY+horizonRadius+OFFSET-20, centerX+5, centerY+horizonRadius+OFFSET-20, centerX, centerY+horizonRadius+OFFSET-15)
                 newContent[#newContent +1] = "</g>"
             end
-            newContent[#newContent + 1] = [[<g style="clip-path: url(#headingClip);">]]
             local yaw = rollC
             if nearPlanet then yaw = getHeading(constructForward) end
             local range = 20
@@ -272,7 +272,7 @@ function HudClass()
             end
             local tickerPath = [[<path class="txttick line" d="]]
             local degRange = mfloor(yawC - (range+10) - yawC % 5 + 0.5)
-            for i = degRange+70, degRange, -5 do
+            for i = degRange+60, degRange, -5 do
                 local x = yawx - (-i * 5 + yaw * 5)
                 if (i % 10 == 0) then
                     yawlen = 10
@@ -284,7 +284,7 @@ function HudClass()
                     elseif num < 0 then
                         num = num + 360
                     end
-                    newContent[#newContent + 1] = svgText(x,yawy+15, num, "txtmid bright" )
+                    newContent[#newContent + 1] = svgText(x+5,yawy-12, num )
                 elseif (i % 5 == 0) then
                     yawlen = 5
                 end
@@ -295,12 +295,11 @@ function HudClass()
                 end
             end
             newContent[#newContent + 1] = tickerPath .. [["/>]]
-            newContent[#newContent + 1] = stringf([[<<polygon class="bright" points="%d,%d %d,%d %d,%d"/>]],
-                yawx-5, yawy-20, yawx+5, yawy-20, yawx, yawy-10)
+            newContent[#newContent + 1] = stringf([[<<polygon points="%d,%d %d,%d %d,%d"/>]],
+                yawx-5, yawy+10, yawx+5, yawy+10, yawx, yawy+5)
             if nearPlanet then bottomText = "HDG" end
-            newContent[#newContent + 1] = svgText(ConvertResolutionX(960) , ConvertResolutionY(100), yawC.."°" , "dim txt txtmid size14", "")
-            newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(85), bottomText, "dim txt txtmid size20","")
-            newContent[#newContent + 1] = [[</g>]]
+            newContent[#newContent + 1] = svgText(yawx, yawy+25, yawC.."deg" , "pdim txt txtmid", "")
+            newContent[#newContent + 1] = svgText( yawx, yawy+35, bottomText, "pdim txt txtmid","")
         end
 
         local function DrawArtificialHorizon(newContent, originalPitch, originalRoll, centerX, centerY, nearPlanet, atmoYaw, speed)
@@ -698,31 +697,15 @@ function HudClass()
                 apY = ConvertResolutionY(115)
                 turnBurnY = ConvertResolutionY(95)
             end
-            local defaultStroke = "#222222"
-            local onFill = "white"
-            local defaultClass = "dimmer"
-            local fillClass = "pbright"
-
-            local brakeFill = "#110000"
-            local brakeStroke = defaultStroke
-            local brakeClass = defaultClass
             if BrakeIsOn then
                 newContent[#newContent + 1] = svgText(warningX, brakeY, "Brake Engaged", "warnings")
-                brakeFill = "#440000"
-                brakeStroke = onFill
-                brakeClass = fillClass
+
             elseif brakeInput2 > 0 then
                 newContent[#newContent + 1] = svgText(warningX, brakeY, "Auto-Brake Engaged", "warnings", "opacity:"..brakeInput2)
             end
-            local stallFill = "#110000"
-            local stallStroke = defaultStroke
-            local stallClass = defaultClass
             if inAtmo and stalling and abvGndDet == -1 then
                 if not Autopilot and not VectorToTarget and not BrakeLanding and not antigravOn and not VertTakeOff and not AutoTakeoff then
                     newContent[#newContent + 1] = svgText(warningX, apY+50, "** STALL WARNING **", "warnings")
-                    stallFill = "#ff0000"
-                    stallStroke = onFill
-                    stallClass = fillClass
                     play("stall","SW",2)
                 end
             end
@@ -733,13 +716,7 @@ function HudClass()
             if gyroIsOn then
                 newContent[#newContent + 1] = svgText(warningX, gyroY, "Gyro Enabled", "warnings")
             end
-            local gearFill = "#111100"
-            local gearStroke = defaultStroke
-            local gearClass = defaultClass
             if GearExtended then
-                gearFill = "#775500"
-                gearStroke = onFill
-                gearClass = fillClass
                 if hasGear then
                     newContent[#newContent + 1] = svgText(warningX, gearY, "Gear Extended", "warn")
                 else
@@ -748,26 +725,14 @@ function HudClass()
                 local displayText = getDistanceDisplayString(Nav:getTargetGroundAltitude())
                 newContent[#newContent + 1] = svgText(warningX, hoverY,"Hover Height: ".. displayText,"warn")
             end
-            local rocketFill = "#000011"
-            local rocketStroke = defaultStroke
-            local rocketClass = defaultClass
             if isBoosting then
-                rocketFill = "#0000DD"
-                rocketStroke = onFill
-                rocketClass = fillClass
                 newContent[#newContent + 1] = svgText(warningX, ewarpY+20, "ROCKET BOOST ENABLED", "warn")
-            end           
-            local aggFill = "#001100"
-            local aggStroke = defaultStroke      
-            local aggClass = defaultClass
+            end                  
             if antigrav and not ExternalAGG and antigravOn and AntigravTargetAltitude ~= nil then
-                aggFill = "#00DD00"
-                aggStroke = onFill
-                aggClass = fillClass
                 if mabs(coreAltitude - antigrav.getBaseAltitude()) < 501 then
-                    newContent[#newContent + 1] = svgText(warningX, apY+15, stringf("Target Altitude: %d Singularity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), "warn")
+                    newContent[#newContent + 1] = svgText(warningX, apY+15, stringf("AGG On - Target Altitude: %d Singularity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), "warn")
                 else
-                    newContent[#newContent + 1] = svgText( warningX, apY+15, stringf("Target Altitude: %d Singluarity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), "warnings")
+                    newContent[#newContent + 1] = svgText( warningX, apY+15, stringf("AGG On - Target Altitude: %d Singluarity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), "warnings")
                 end
             elseif Autopilot and AutopilotTargetName ~= "None" then
                 newContent[#newContent + 1] = svgText(warningX, apY+20,  "Autopilot "..AutopilotStatus, "warn")
@@ -825,22 +790,13 @@ function HudClass()
             if RetrogradeIsOn then
                 newContent[#newContent + 1] = svgText(warningX, apY, "Retrograde Alignment", "crit")
             end
-            local collisionFill = "#110000"
-            local collisionStroke = defaultStroke
-            local collisionClass = defaultClass
             if collisionAlertStatus then
-                collisionFill = "#FF0000"
-                collisionStroke = onFill
-                collisionClass = fillClass
                 local type
                 if string.find(collisionAlertStatus, "COLLISION") then type = "warnings" else type = "crit" end
                 newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, collisionAlertStatus, type)
             elseif atmosDensity == 0 then
                 local intersectBody, atmoDistance = checkLOS((constructVelocity):normalize())
                 if atmoDistance ~= nil then
-                    collisionClass = fillClass
-                    collisionFill = "#FF0000"
-                    collisionStroke = onFill
                     local displayText = getDistanceDisplayString(atmoDistance)
                     local travelTime = Kinematic.computeTravelTime(velMag, 0, atmoDistance)
                     local displayCollisionType = "Collision"
@@ -851,116 +807,6 @@ function HudClass()
             if VectorToTarget and not IntoOrbit then
                 newContent[#newContent + 1] = svgText(warningX, apY+35, VectorStatus, "warn")
             end
-            local boardersFill = "#111100"
-            local boardersStroke = defaultStroke
-            local boardersClass = defaultClass
-            if passengers and #passengers > 1 then
-                boardersFill = "#DDDD00"
-                boardersStroke = onFill
-                boardersClass = fillClass
-            end
-
-            -- Removed because nobody liked these 'lights' at the bottom
-            --newContent[#newContent + 1] = stringf([[
-            --    <path class="linethick %s" style="fill:%s" d="M 730 940 l 100 0 l 50 50 l -200 0 l 50 -50 Z"/>
-            --    <text class="txtmid size20" x=780 y=975 style="fill:%s">BOARDERS</text>
-            --    <path class="linethick %s" style="fill:%s" d="M 1190 940 l -100 0 l -50 50 l 200 0 l -50 -50 Z"/>
-            --    <text class="txtmid size20" x=1140 y=975 style="fill:%s">COLLISION</text>
-
-            --    <path class="linethick %s" style="fill:%s" d="M 675 1000 l 100 0 l 50 50 l -200 0 l 50 -50 Z"/>
-            --    <text class="txtmid size20" x=725 y=1030 style="fill:%s">BRAKE</text>
-            --    <path class="linethick %s" style="fill:%s" d="M 790 1000 l 95 0 l 50 50 l -95 0 l -50 -50 Z"/>
-            --    <text class="txtmid size20" x=860 y=1030 style="fill:%s">GEAR</text>
-
-            --    <path class="linethick %s" style="fill:%s" d="M 1245 1000 l -100 0 l -50 50 l 200 0 l -50 -50 Z"/>
-            --    <text class="txtmid size20" x=1195 y=1030 style="fill:%s">ROCKETS</text>
-            --    <path class="linethick %s" style="fill:%s" d="M 1130 1000 l -95 0 l -50 50 l 95 0 l 50 -50 Z"/>
-            --    <text class="txtmid size20" x=1055 y=1030 style="fill:%s">AGG</text>
-
-            --    <path class="linethick %s" style="fill:%s" d="M 850 940 l 220 0 l -110 110 l -110 -110 Z"/>
-            --    <text class="txtmid" x=960 y=980 style="font-size:32px;fill:%s">STALL</text>
-            --]], boardersClass, boardersFill, boardersStroke, 
-            --collisionClass, collisionFill, collisionStroke, 
-            --brakeClass, brakeFill, brakeStroke, 
-            --gearClass, gearFill, gearStroke, 
-            --rocketClass, rocketFill, rocketStroke, 
-            --aggClass, aggFill, aggStroke, 
-            --stallClass, stallFill, stallStroke)
-            local crx = ConvertResolutionX
-            local cry = ConvertResolutionY
-
-            local defaultClass = "topButton"
-            local activeClass = "topButtonActive"
-            local apClass = defaultClass
-            if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
-                apClass = activeClass
-            end
-            local progradeClass = defaultClass
-            if ProgradeIsOn then
-                progradeClass = activeClass
-            end
-            local landClass = defaultClass
-            if BrakeLanding or GearExtended then
-                landClass = activeClass
-            end
-            local altHoldClass = defaultClass
-            if AltitudeHold or VectorToTarget then
-                altHoldClass = activeClass
-            end
-            local retroClass = defaultClass
-            if RetrogradeIsOn then
-                retroClass = activeClass
-            end
-            local orbitClass = defaultClass
-            if IntoOrbit or (OrbitAchieved and Autopilot) then
-                orbitClass = activeClass
-            end
-
-            local texty = cry(30)
-            newContent[#newContent + 1] = stringf([[ 
-                <g class="pdim txt txtmid">
-                    <g class="%s">
-                    <path d="M %f %f l 0 %f l %f 0 l %f %f Z"/>
-                    ]], apClass, crx(960), cry(54), cry(-53), crx(-120), crx(25), cry(50))
-            newContent[#newContent + 1] = svgText(crx(910),texty, "AUTOPILOT")
-            newContent[#newContent + 1] = stringf([[
-                    </g>
-
-                    <g class="%s">
-                    <path d="M %f %f l %f %f l %f 0 l %f %f Z"/>
-                    ]], progradeClass, crx(865), cry(51), crx(-25), cry(-50), crx(-110), crx(25), cry(46))
-            newContent[#newContent + 1] = svgText(crx(800), texty, "PROGRADE")
-            newContent[#newContent + 1] = stringf([[
-                    </g>
-
-                    <g class="%s">
-                    <path d="M %f %f l %f %f l %f 0 l %f %f Z"/>
-                    ]], landClass, crx(755), cry(47), crx(-25), cry(-46), crx(-98), crx(44), cry(44))
-            newContent[#newContent + 1] = svgText(crx(700), texty, "LAND")
-            newContent[#newContent + 1] = stringf([[
-                    </g>
-
-                    <g class="%s">
-                    <path d="M %f %f l 0 %f l %f 0 l %f %f Z"/>
-                    ]], altHoldClass, crx(960), cry(54), cry(-53), crx(120), crx(-25), cry(50))
-            newContent[#newContent + 1] = svgText(crx(1010), texty, "ALT HOLD")
-            newContent[#newContent + 1] = stringf([[
-                    </g>
-
-                    <g class="%s">
-                    <path d="M %f %f l %f %f l %f 0 l %f %f Z"/>
-                    ]], retroClass, crx(1055), cry(51), crx(25), cry(-50), crx(110), crx(-25), cry(46))
-            newContent[#newContent + 1] = svgText(crx(1122), texty, "RETROGRADE")
-            newContent[#newContent + 1] = stringf([[
-                    </g>
-
-                    <g class="%s">
-                    <path d="M %f %f l %f %f l %f 0 l %f %f Z"/>
-                    ]], orbitClass, crx(1165), cry(47), crx(25), cry(-46), crx(98), crx(-44), cry(44))
-            newContent[#newContent + 1] = svgText(crx(1220), texty, "ORBIT")
-            newContent[#newContent + 1] = [[
-                    </g>
-                </g>]]
         
             newContent[#newContent + 1] = "</g>"
             return newContent
@@ -969,10 +815,119 @@ function HudClass()
         local function getSpeedDisplayString(speed) -- TODO: Allow options, for now just do kph
             return mfloor(round(speed * 3.6, 0) + 0.5) .. " km/h" -- And generally it's not accurate enough to not twitch unless we round 0
         end
+        
+        local function DisplayOrbitScreen(newContent)
+            local orbitMapX = OrbitMapX
+            local orbitMapY = OrbitMapY
+            local orbitMapSize = OrbitMapSize -- Always square
+            local pad = 4
 
+            local orbitInfoYOffset = 15
+            local x = 0
+            local y = 0
+            local rx, ry, scale, xOffset
+
+            local function orbitInfo(type)
+                local alt, time, speed, line
+                if type == "Periapsis" then
+                    alt = orbit.periapsis.altitude
+                    time = orbit.timeToPeriapsis
+                    speed = orbit.periapsis.speed
+                    line = 35
+                else
+                    alt = orbit.apoapsis.altitude
+                    time = orbit.timeToApoapsis
+                    speed = orbit.apoapsis.speed
+                    line = -35
+                end
+                newContent[#newContent + 1] = stringf(
+                    [[<line class="pdim op30 linethick" x1="%f" y1="%f" x2="%f" y2="%f"/>]],
+                    x + line, y - 5, orbitMapX + orbitMapSize / 2 - rx + xOffset, y - 5)
+                newContent[#newContent + 1] = svgText(x, y, type)
+                y = y + orbitInfoYOffset
+                local displayText = getDistanceDisplayString(alt)
+                newContent[#newContent + 1] = svgText(x, y, displayText)
+                y = y + orbitInfoYOffset
+                newContent[#newContent + 1] = svgText(x, y, FormatTimeString(time))
+                y = y + orbitInfoYOffset
+                newContent[#newContent + 1] = svgText(x, y, getSpeedDisplayString(speed))
+            end
+
+            if orbit ~= nil and atmosDensity < 0.2 and planet ~= nil and orbit.apoapsis ~= nil and
+                orbit.periapsis ~= nil and orbit.period ~= nil and orbit.apoapsis.speed > 5 and DisplayOrbit then
+                -- If orbits are up, let's try drawing a mockup
+                
+                orbitMapY = orbitMapY + pad
+                x = orbitMapX + orbitMapSize + orbitMapX / 2 + pad
+                y = orbitMapY + orbitMapSize / 2 + 5 + pad
+                rx = orbitMapSize / 4
+                xOffset = 0
+        
+                newContent[#newContent + 1] = [[<g class="pbright txtorb txtmid">]]
+                -- Draw a darkened box around it to keep it visible
+                newContent[#newContent + 1] = stringf(
+                                                '<rect width="%f" height="%d" rx="10" ry="10" x="%d" y="%d" style="fill:rgb(0,0,100);stroke-width:4;stroke:white;fill-opacity:0.3;" />',
+                                                orbitMapSize + orbitMapX * 2, orbitMapSize + orbitMapY, pad, pad)
+        
+                if orbit.periapsis ~= nil and orbit.apoapsis ~= nil then
+                    scale = (orbit.apoapsis.altitude + orbit.periapsis.altitude + planet.radius * 2) / (rx * 2)
+                    ry = (planet.radius + orbit.periapsis.altitude +
+                            (orbit.apoapsis.altitude - orbit.periapsis.altitude) / 2) / scale *
+                            (1 - orbit.eccentricity)
+                    xOffset = rx - orbit.periapsis.altitude / scale - planet.radius / scale
+        
+                    local ellipseColor = ""
+                    if orbit.periapsis.altitude <= 0 then
+                        ellipseColor = 'redout'
+                    end
+                    newContent[#newContent + 1] = stringf(
+                                                    [[<ellipse class="%s line" cx="%f" cy="%f" rx="%f" ry="%f"/>]],
+                                                    ellipseColor, orbitMapX + orbitMapSize / 2 + xOffset + pad,
+                                                    orbitMapY + orbitMapSize / 2 + pad, rx, ry)
+                    newContent[#newContent + 1] = stringf(
+                                                    '<circle cx="%f" cy="%f" r="%f" stroke="white" stroke-width="3" fill="blue" />',
+                                                    orbitMapX + orbitMapSize / 2 + pad,
+                                                    orbitMapY + orbitMapSize / 2 + pad, planet.radius / scale)
+                end
+        
+                if orbit.apoapsis ~= nil and orbit.apoapsis.speed < MaxGameVelocity and orbit.apoapsis.speed > 1 then
+                    orbitInfo("Apoapsis")
+                end
+        
+                y = orbitMapY + orbitMapSize / 2 + 5 + pad
+                x = orbitMapX - orbitMapX / 2 + 10 + pad
+        
+                if orbit.periapsis ~= nil and orbit.periapsis.speed < MaxGameVelocity and orbit.periapsis.speed > 1 then
+                    orbitInfo("Periapsis")
+                end
+        
+                -- Add a label for the planet
+                newContent[#newContent + 1] = svgText(orbitMapX + orbitMapSize / 2 + pad, planet.name, 20 + pad, "txtorbbig")
+        
+                if orbit.period ~= nil and orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.apoapsis.speed > 1 then
+                    local apsisRatio = (orbit.timeToApoapsis / orbit.period) * 2 * math.pi
+                    -- x = xr * cos(t)
+                    -- y = yr * sin(t)
+                    local shipX = rx * math.cos(apsisRatio)
+                    local shipY = ry * math.sin(apsisRatio)
+        
+                    newContent[#newContent + 1] = stringf(
+                                                    '<circle cx="%f" cy="%f" r="5" stroke="white" stroke-width="3" fill="white" />',
+                                                    orbitMapX + orbitMapSize / 2 + shipX + xOffset + pad,
+                                                    orbitMapY + orbitMapSize / 2 + shipY + pad)
+                end
+        
+                newContent[#newContent + 1] = [[</g>]]
+                -- Once we have all that, we should probably rotate the entire thing so that the ship is always at the bottom so you can see AP and PE move?
+                return newContent
+            else
+                return newContent
+            end
+        end
+    
         local function DisplayHelp(newContent)
-            local x = OrbitMapX+10
-            local y = OrbitMapY+20
+            local x = 30
+            local y = 275
             local help = {}
             local helpAtmoGround = {"Alt-4: AutoTakeoff to Target"}
             local helpAtmoAir = { "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", 
@@ -1039,127 +994,7 @@ function HudClass()
             addTable(help, helpGeneral)
             for i = 1, #help do
                 y=y+12
-                newContent[#newContent + 1] = svgText( x, y, help[i], "pdim txtbig txtstart")
-            end
-        end
-        
-        local function DisplayOrbitScreen(newContent)
-            local orbitMapX = ConvertResolutionX(OrbitMapX)
-            local orbitMapY = ConvertResolutionY(OrbitMapY)
-            local orbitMapSize = OrbitMapSize -- Always square
-            local pad = 4
-
-            local orbitInfoYOffset = 15
-            local x = 0
-            local y = 0
-            local rx, ry, scale, xOffset
-
-            local function orbitInfo(type)
-                local alt, time, speed, line
-                if type == "Periapsis" then
-                    alt = orbit.periapsis.altitude
-                    time = orbit.timeToPeriapsis
-                    speed = orbit.periapsis.speed
-                    line = 35
-                else
-                    alt = orbit.apoapsis.altitude
-                    time = orbit.timeToApoapsis
-                    speed = orbit.apoapsis.speed
-                    line = -35
-                end
-                newContent[#newContent + 1] = stringf(
-                    [[<line class="pdim op30 linethick" x1="%f" y1="%f" x2="%f" y2="%f"/>]],
-                    x + line, y - 5, orbitMapX + orbitMapSize / 2 - rx + xOffset, y - 5)
-                newContent[#newContent + 1] = svgText(x, y, type)
-                y = y + orbitInfoYOffset
-                local displayText = getDistanceDisplayString(alt)
-                newContent[#newContent + 1] = svgText(x, y, displayText)
-                y = y + orbitInfoYOffset
-                newContent[#newContent + 1] = svgText(x, y, FormatTimeString(time))
-                y = y + orbitInfoYOffset
-                newContent[#newContent + 1] = svgText(x, y, getSpeedDisplayString(speed))
-            end
-
-            local targetHeight = orbitMapSize*1.5
-            if SelectedTab == "INFO" then
-                targetHeight = 25*8
-            end
-
-            if SelectedTab ~= "HIDE" then
-            newContent[#newContent + 1] = [[<g class="pbright txtorb txtmid">]]
-            -- Draw a darkened box around it to keep it visible
-            newContent[#newContent + 1] = stringf(
-                                            '<rect width="%f" height="%d" rx="10" ry="10" x="%d" y="%d" class="dimfill brightstroke" style="stroke-width:3;fill-opacity:0.3;" />',
-                                            orbitMapSize*2, targetHeight, orbitMapX, orbitMapY)
-            end
-
-
-            if SelectedTab == "ORBIT" then
-                -- If orbits are up, let's try drawing a mockup
-                
-                orbitMapY = orbitMapY + pad
-                x = orbitMapX + orbitMapSize + pad
-                y = orbitMapY + orbitMapSize*1.5 / 2 + 5 + pad
-                rx = orbitMapSize / 4
-                xOffset = 0
-        
-                if orbit.periapsis ~= nil and orbit.apoapsis ~= nil then
-                    scale = (orbit.apoapsis.altitude + orbit.periapsis.altitude + planet.radius * 2) / (rx * 2)
-                    ry = (planet.radius + orbit.periapsis.altitude +
-                            (orbit.apoapsis.altitude - orbit.periapsis.altitude) / 2) / scale *
-                            (1 - orbit.eccentricity)
-                    xOffset = rx - orbit.periapsis.altitude / scale - planet.radius / scale
-        
-                    local ellipseColor = ""
-                    if orbit.periapsis.altitude <= 0 then
-                        ellipseColor = 'redout'
-                    end
-                    newContent[#newContent + 1] = stringf(
-                                                    [[<ellipse class="%s line" cx="%f" cy="%f" rx="%f" ry="%f"/>]],
-                                                    ellipseColor, orbitMapX + orbitMapSize + xOffset + pad,
-                                                    orbitMapY + orbitMapSize*1.5 / 2 + pad, rx, ry)
-                    newContent[#newContent + 1] = stringf(
-                                                    '<circle cx="%f" cy="%f" r="%f" stroke="white" stroke-width="3" fill="blue" />',
-                                                    orbitMapX + orbitMapSize + pad,
-                                                    orbitMapY + orbitMapSize*1.5 / 2 + pad, planet.radius / scale)
-                end
-        
-                if orbit.apoapsis ~= nil and orbit.apoapsis.speed < MaxGameVelocity and orbit.apoapsis.speed > 1 then
-                    orbitInfo("Apoapsis")
-                end
-        
-                y = orbitMapY + orbitMapSize*1.5 / 2 + 5 + pad
-                x = orbitMapX - orbitMapX + 10 + pad
-        
-                if orbit.periapsis ~= nil and orbit.periapsis.speed < MaxGameVelocity and orbit.periapsis.speed > 1 then
-                    orbitInfo("Periapsis")
-                end
-        
-                -- Add a label for the planet
-                newContent[#newContent + 1] = svgText(orbitMapX + orbitMapSize + pad, orbitMapY+20 + pad,planet.name, "txtorbbig")
-        
-                if orbit.period ~= nil and orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.apoapsis.speed > 1 then
-                    local apsisRatio = (orbit.timeToApoapsis / orbit.period) * 2 * math.pi
-                    -- x = xr * cos(t)
-                    -- y = yr * sin(t)
-                    local shipX = rx * math.cos(apsisRatio)
-                    local shipY = ry * math.sin(apsisRatio)
-        
-                    newContent[#newContent + 1] = stringf(
-                                                    '<circle cx="%f" cy="%f" r="5" stroke="white" stroke-width="3" fill="white" />',
-                                                    orbitMapX + orbitMapSize + shipX + xOffset + pad,
-                                                    orbitMapY + orbitMapSize*1.5 / 2 + shipY + pad)
-                end
-        
-                newContent[#newContent + 1] = [[</g>]]
-                -- Once we have all that, we should probably rotate the entire thing so that the ship is always at the bottom so you can see AP and PE move?
-                return newContent
-            elseif SelectedTab == "INFO" then
-                newContent = HUD.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
-            elseif SelectedTab == "HELP" then
-                newContent = DisplayHelp(newContent)
-            else
-                return newContent
+                newContent[#newContent + 1] = svgText( x, y, help[i], "pdim txttick txtstart")
             end
         end
 
@@ -1211,18 +1046,6 @@ function HudClass()
                 pipeDistance = getDistanceDisplayString(nearestDistance,2)
                 pipeMessage = svgText(pipeX, pipeY, "Pipe ("..pipeOriginPlanet.name.."--"..nearestPipePlanet.name.."): "..pipeDistance, txtadd.."pbright txtmid") 
             end
-        end
-
-        local function MakeTabButton(x, y, width, height, label)
-            local newButton = {
-                x = x, 
-                y = y,
-                width = width,
-                height = height,
-                label = label
-            }
-            TabButtons[label] = newButton
-            return newButton
         end
 
         local function MakeButton(enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition, buttonList)
@@ -1469,7 +1292,7 @@ function HudClass()
                     return atmosDensity == 0
                 end) -- Hope this works
             apbutton = MakeButton(getAPEnableName, getAPDisableName, 600, 60, resolutionWidth / 2 - 600 / 2,
-                                    resolutionHeight / 2 - 60 / 2 - 330, function()
+                                    resolutionHeight / 2 - 60 / 2 - 400, function()
                     return Autopilot or VectorToTarget or spaceLaunch or IntoOrbit
                 end, function() end) -- No toggle function because we draw over this with things that do toggle
             -- Make 9 more buttons that only show when moused over the AP button
@@ -1497,7 +1320,7 @@ function HudClass()
                     local index = getAtlasIndexFromAddition(b.apExtraIndex)
                     return getAPDisableName(index)
                 end, 600, 60, resolutionWidth/2 - 600/2, 
-                resolutionHeight/2 - 60/2 - 330 + 60*i, function(b)
+                resolutionHeight/2 - 60/2 - 400 + 60*i, function(b)
                     local index = getAtlasIndexFromAddition(b.apExtraIndex)
                     return index == AutopilotTargetIndex and (Autopilot or VectorToTarget or spaceLaunch or IntoOrbit)
                 end, function(b)
@@ -1539,15 +1362,15 @@ function HudClass()
             -- The rest are sort of standardized
             buttonHeight = 60
             buttonWidth = 300
-            local x = 0
-            local y = resolutionHeight / 2 - 150
-            MakeButton("View Settings", "View Settings", buttonWidth, buttonHeight, x, y, function() return true end, ToggleButtons)
+            local x = 10
+            local y = resolutionHeight / 2 - 500
+            MakeButton("Show Help", "Hide Help", buttonWidth, buttonHeight, x, y, function() return showHelp end, function() showHelp = not showHelp end)
             y = y + buttonHeight + 20
+            MakeButton("View Settings", "View Settings", buttonWidth, buttonHeight, x, y, function() return true end, ToggleButtons)
+            local y = resolutionHeight / 2 - 300
             MakeButton("Enable Turn and Burn", "Disable Turn and Burn", buttonWidth, buttonHeight, x, y, function()
                 return TurnBurn
             end, ToggleTurnBurn)
-            x = 10
-            y = resolutionHeight / 2 - 300
             MakeButton("Horizontal Takeoff Mode", "Vertical Takeoff Mode", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
                 function() return VertTakeOffEngine end, 
                 function () 
@@ -1559,7 +1382,17 @@ function HudClass()
                     end
                 end, function() return UpVertAtmoEngine end)
             y = y + buttonHeight + 20
-
+            MakeButton("Show Orbit Display", "Hide Orbit Display", buttonWidth, buttonHeight, x, y,
+                function()
+                    return DisplayOrbit
+                end, function()
+                    DisplayOrbit = not DisplayOrbit
+                    if (DisplayOrbit) then
+                        msgText = "Orbit Display Enabled"
+                    else
+                        msgText = "Orbit Display Disabled"
+                    end
+                end)
             -- prevent this button from being an option until you're in atmosphere
             MakeButton("Engage Orbiting", "Cancel Orbiting", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
                     function()
@@ -1627,20 +1460,9 @@ function HudClass()
                     end
                     msgText = "New Control Scheme: "..userControlScheme
                 end)
-
-
-            -- Make tab buttons
-            local tabHeight = ConvertResolutionY(20)
-            local button = MakeTabButton(0, 0, ConvertResolutionX(70), tabHeight, "INFO")
-            button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(80),tabHeight, "ORBIT")
-            button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"HELP")
-            MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"HIDE")
         end
 
-
     local Hud = {}
-    local StaticPaths = nil
-
 
     function Hud.HUDPrologue(newContent)
         notPvPZone, pvpDist = safeZone(worldPos)
@@ -1660,23 +1482,21 @@ function HudClass()
             end
         end
         rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
-        rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.8 + 0.5) .. "," .. mfloor(PrimaryG * 0.8 + 0.5) .. "," ..   mfloor(PrimaryB * 0.8 + 0.5) .. [[)]]    
+        rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..   mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]    
         local bright = rgb
         local dim = rgbdim
-        local dimmer = [[rgb(]] .. mfloor(PrimaryR * 0.3 + 0.5) .. "," .. mfloor(PrimaryG * 0.3 + 0.5) .. "," ..   mfloor(PrimaryB * 0.3 + 0.5) .. [[)]]   
         local brightOrig = rgb
         local dimOrig = rgbdim
         if IsInFreeLook() and not brightHud then
-            bright = [[rgb(]] .. mfloor(PrimaryR * 0.5 + 0.5) .. "," .. mfloor(PrimaryG * 0.5 + 0.5) .. "," ..
-                        mfloor(PrimaryB * 0.5 + 0.5) .. [[)]]
+            bright = [[rgb(]] .. mfloor(PrimaryR * 0.4 + 0.5) .. "," .. mfloor(PrimaryG * 0.4 + 0.5) .. "," ..
+                        mfloor(PrimaryB * 0.3 + 0.5) .. [[)]]
             dim = [[rgb(]] .. mfloor(PrimaryR * 0.3 + 0.5) .. "," .. mfloor(PrimaryG * 0.3 + 0.5) .. "," ..
                     mfloor(PrimaryB * 0.2 + 0.5) .. [[)]]
         end
-
+    
         -- When applying styles, apply color first, then type (e.g. "bright line")
         -- so that "fill:none" gets applied
-        local crx = ConvertResolutionX
-        local cry = ConvertResolutionY
+    
         newContent[#newContent + 1] = stringf([[
             <head>
                 <style>
@@ -1687,9 +1507,8 @@ function HudClass()
                     .txtbig {font-size:14px;font-weight:bold;}
                     .altsm {font-size:16px;font-weight:normal;}
                     .altbig {font-size:21px;font-weight:normal;}
-                    .line {stroke-width:2px;fill:none;stroke:%s}
+                    .line {stroke-width:2px;fill:none}
                     .linethick {stroke-width:3px;fill:none}
-                    .linethin {stroke-width:1px;fill:none}
                     .warnings {font-size:26px;fill:red;text-anchor:middle;font-family:Bank;}
                     .warn {fill:orange; font-size:24px}
                     .crit {fill:darkred;font-size:28px}
@@ -1720,79 +1539,24 @@ function HudClass()
                     .msg {font-size:40px;fill:red;text-anchor:middle;font-weight:normal}
                     .cursor {stroke:white}
                     text { stroke:black; stroke-width:10px;paint-order:stroke;}
-                    .dimstroke {stroke:%s}
-                    .brightstroke {stroke:%s}
-                    .indicatorText {font-size:20px;fill:white}
-                    .size14 {font-size:14px}
-                    .size20 {font-size:20px}
-                    .topButton {fill:%s;opacity:0.5;stroke-width:2;stroke:%s}
-                    .topButtonActive {fill:url(#RadialGradientCenter);opacity:0.8;stroke-width:2;stroke:%s}
-                    .topButton text {font-size:13px; fill: %s; opacity:1; stroke-width:20px}
-                    .topButtonActive text {font-size:13px;fill:%s; stroke-width:0px; opacity:1}
-                    .indicatorFont {font-size:20px;font-family:Bank}
-                    .dimmer {stroke: %s;}
-                    .dimfill {fill: %s;}
                 </style>
             </head>
             <body>
                 <svg height="100%%" width="100%%" viewBox="0 0 %d %d">
-                    <defs>
-                        <radialGradient id="RadialGradientCenterTop" cx="0.5" cy="0" r="1">
-                            <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/>
-                            <stop offset="100%%" stop-color="black" stop-opacity="0"/>
-                        </radialGradient>
-                        <radialGradient id="RadialGradientRightTop" cx="1" cy="0" r="1">
-                            <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/>
-                            <stop offset="200%%" stop-color="black" stop-opacity="0"/>
-                        </radialGradient>
-                        <radialGradient id="ThinRightTopGradient" cx="1" cy="0" r="1">
-                            <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/>
-                            <stop offset="200%%" stop-color="black" stop-opacity="0"/>
-                        </radialGradient>
-                        <radialGradient id="RadialGradientLeftTop" cx="0" cy="0" r="1">
-                            <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/>
-                            <stop offset="200%%" stop-color="black" stop-opacity="0"/>
-                        </radialGradient>
-                        <radialGradient id="ThinLeftTopGradient" cx="0" cy="0" r="1">
-                            <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/>
-                            <stop offset="200%%" stop-color="black" stop-opacity="0"/>
-                        </radialGradient>
-                        <radialGradient id="RadialGradientCenter" cx="0.5" cy="0.5" r="1">
-                            <stop offset="0%%" stop-color="%s" stop-opacity="0.8"/>
-                            <stop offset="100%%" stop-color="%s" stop-opacity="0.5"/>
-                        </radialGradient>
-                    </defs>
-                    <g class="pdim txt txtend">
-                    
-                ]], bright, bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig,dim,bright,dimmer,dimOrig,bright,bright,dimmer,dimmer,dimmer, resolutionWidth, resolutionHeight, dim,dim,dim,dim,dim,brightOrig,dim)
-        -- <path class="linethick dimstroke" style="fill:url(#ThinRightTopGradient);" d="M 1920 28 L 1920 800 L 1800 800 L 1750 750 L 1750 420 L 1700 370 L 1510 370 L 1460 320 L 1460 155 L 1410 105 L 1315 105 L 1403 28 Z"/>
-        -- <path class="linethick dimstroke" style="fill:url(#ThinLeftTopGradient);" d="M 0 28 L 0 800 L 120 800 L 170 750 L 170 420 L 220 370 L 410 370 L 460 320 L 460 155 L 510 105 L 605 105 L 517 28 Z"/>
-        
-        -- These never change, set and store it on startup because that's a lot of calculations that we don't want to do every frame
-        if not StaticPaths then
-            StaticPaths = stringf([[<path class="linethick brightstroke" style="fill:url(#RadialGradientCenterTop);" d="M %f %f L %f %f L %f %f %f %f L %f %f"/>
-            <path class="linethick brightstroke" style="fill:url(#RadialGradientRightTop);" d="M %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f Z"/>
-            
-            <path class="linethick brightstroke" style="fill:url(#RadialGradientLeftTop);" d="M %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f Z"/>
-            
-            <clipPath id="headingClip">
-                <path class="linethick dimstroke" style="fill:black;fill-opacity:0.4;" d="M %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f Z"/>
-            </clipPath>
-            <path class="linethick dimstroke" style="fill:black;fill-opacity:0.4;" d="M %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f Z"/>]],
-            crx(630), cry(0), crx(675), cry(45), crx(960), cry(55), crx(1245), cry(45), crx(1290), cry(0),
-            crx(1000), cry(105), crx(1040), cry(59), crx(1250), cry(51), crx(1300), cry(0), crx(1920), cry(0), crx(1920), cry(20), crx(1400), cry(20), crx(1300), cry(105),
-            crx(920), cry(105), crx(880), cry(59), crx(670), cry(51), crx(620), cry(0), crx(0), cry(0), crx(0), cry(20), crx(520), cry(20), crx(620), cry(105),
-            crx(890), cry(59), crx(960), cry(62), crx(1030), cry(59), crx(985), cry (112), crx(1150), cry(112), crx(1100), cry(152), crx(820), cry(152), crx(780), cry(112), crx(935), cry(112),
-            crx(890), cry(59), crx(960), cry(62), crx(1030), cry(59), crx(985), cry (112), crx(1150), cry(112), crx(1100), cry(152), crx(820), cry(152), crx(780), cry(112), crx(935), cry(112)
-            )
-        end
-        newContent[#newContent+1] = StaticPaths
+                <defs>
+                    <radialGradient id="RadialGradient1" cx="0.5" cy="0" r="1">
+                        <stop offset="0%%" stop-color="black" stop-opacity="1"/>
+                        <stop offset="100%%" stop-color="%s" stop-opacity="0.4"/>
+                    </radialGradient>
+                </defs>
+                ]], bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig, resolutionWidth, resolutionHeight, dimOrig)
         return newContent
     end
 
     function Hud.DrawVerticalSpeed(newContent, altitude)
         DrawVerticalSpeed(newContent, altitude)
     end
+
 
     function Hud.UpdateHud(newContent)
         local pitch = adjustedPitch
@@ -1808,12 +1572,12 @@ function HudClass()
             flightValue = PlayerThrottle
             throt = PlayerThrottle*100
         end
-
+    
         local flightStyle = GetFlightStyle()
         local bottomText = "ROLL"
         
         if throt == nil then throt = 0 end
-
+    
         if (not nearPlanet) then
             if (velMag > 5) then
                 pitch = getRelativePitch(coreVelocity)
@@ -1832,36 +1596,31 @@ function HudClass()
         end
 
         -- CRUISE/ODOMETER
-
+    
         newContent[#newContent + 1] = lastOdometerOutput
-
+    
         -- DAMAGE
-
+    
         newContent[#newContent + 1] = damageMessage
-
+    
         -- RADAR
-
+    
         newContent[#newContent + 1] = radarMessage
 
         -- Pipe distance
 
         if pipeMessage ~= "" then newContent[#newContent +1] = pipeMessage end
-
+    
 
         if tankMessage ~= "" then newContent[#newContent + 1] = tankMessage end
         if shieldMessage ~= "" then newContent[#newContent +1] = shieldMessage end
         -- PRIMARY FLIGHT INSTRUMENTS
-
+    
         DrawVerticalSpeed(newContent, coreAltitude) -- Weird this is draw during remote control...?
-
-
+    
+    
         if isRemote() == 0 or RemoteHud then
-            -- Draw this in freelook now that it's less intrusive
-            if nearPlanet then -- use real pitch, roll, and heading
-                DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
-            else -- use Relative Pitch and Relative Yaw
-                DrawRollLines (newContent, centerX, centerY, roll, bottomText, nearPlanet)
-            end
+            -- Don't even draw this in freelook
             if not IsInFreeLook() or brightHud then
                 if nearPlanet then -- use real pitch, roll, and heading
                     DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
@@ -1876,13 +1635,15 @@ function HudClass()
         end
 
         DrawThrottle(newContent, flightStyle, throt, flightValue)
-
+    
         -- PRIMARY DATA DISPLAYS
-
+    
         DrawSpeed(newContent, spd)
-
+    
         DrawWarnings(newContent)
         DisplayOrbitScreen(newContent)
+
+        if showHelp then DisplayHelp(newContent) end
 
         return newContent
     end
@@ -1897,92 +1658,35 @@ function HudClass()
         local yg1 = ConvertResolutionY(55)
         local yg2 = yg1+10
         local gravity 
-        local crx = ConvertResolutionX
-        local cry = ConvertResolutionY
 
         local brakeValue = 0
         local flightStyle = GetFlightStyle()
-        --if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
-        --if CollisionSystem and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
-        --if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
-        --if TurnBurn then flightStyle = "TB-"..flightStyle end
-        --if not stablized then flightStyle = flightStyle.."-DeCoupled" end
-
-        local labelY1 = crx(99)
-        local labelY2 = crx(80)
-        local lineY = cry(85)
-        local lineY2 = cry(31)
-        local maxMass = 0
-        local reqThrust = 0
-
-        local mass = coreMass > 1000000 and round(coreMass / 1000000,2).."kT" or round(coreMass / 1000, 2).."T"
-        if inAtmo then brakeValue = LastMaxBrakeInAtmo else brakeValue = LastMaxBrake end
-        local brkDist, brkTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, brakeValue)
-        if brkDist < 0 then brkDist = 0 end
-        brakeValue = round((brakeValue / (coreMass * gravConstant)),2).."g"
-        local maxThrust = Nav:maxForceForward()
-        gravity = core.g()
-        if gravity > 0.1 then
-            reqThrust = coreMass * gravity
-            reqThrust = round((reqThrust / (coreMass * gravConstant)),2).."g"
-            maxMass = 0.5 * maxThrust / gravity
-            maxMass = maxMass > 1000000 and round(maxMass / 1000000,2).."kT" or round(maxMass / 1000, 2).."T"
-        end
-        maxThrust = round((maxThrust / (coreMass * gravConstant)),2).."g"
+        if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
+        if CollisionSystem and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
+        if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
+        if TurnBurn then flightStyle = "TB-"..flightStyle end
+        if not stablized then flightStyle = flightStyle.."-DeCoupled" end
 
         local accel = (vec3(core.getWorldAcceleration()):len() / 9.80665)
         gravity =  core.g()
-        newContent[#newContent + 1] = [[<g class="dim txt txtend size14">]]
+        newContent[#newContent + 1] = [[<g class="pdim txt txtend">]]
         if isRemote() == 1 and not RemoteHud then
             xg = ConvertResolutionX(1120)
             yg1 = ConvertResolutionY(55)
             yg2 = yg1+10
         elseif inAtmo then -- We only show atmo when not remote
             local atX = ConvertResolutionX(770)
-            newContent[#newContent + 1] = svgText(crx(895), labelY1, "ATMO", "")
-            newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke"  d="M %f %f l %f 0"/>]],crx(895),lineY,crx(-80))
-            newContent[#newContent + 1] = svgText(crx(815), labelY2, stringf("%.1f%%", atmosDensity*100), "txtstart size20")
+            newContent[#newContent + 1] = svgText(atX, yg1, "ATMOSPHERE", "pdim txt txtend")
+            newContent[#newContent + 1] = svgText( atX, yg2, stringf("%.2f", atmosDensity), "pdim txt txtend","")
         end
-        newContent[#newContent + 1] = svgText(crx(1025), labelY1, "GRAVITY", "txtstart")
-        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1025), lineY, crx(80))
-        newContent[#newContent + 1] = svgText(crx(1105), labelY2, stringf("%.2fg", (gravity / 9.80665)), "size20")
-
-        newContent[#newContent + 1] = svgText(crx(1125), labelY1, "ACCEL", "txtstart")
-        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1125), lineY, crx(80))
-        newContent[#newContent + 1] = svgText(crx(1205), labelY2, stringf("%.2fg", accel), "size20") 
-
-        newContent[#newContent + 1] = svgText(crx(695), labelY1, "BRK TIME", "")
-        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(695),lineY, crx(-80))
-        newContent[#newContent + 1] = svgText(crx(615), labelY2, stringf("%s", FormatTimeString(brkTime)), "txtstart size20") 
-        --newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(10), stringf("BrkTime: %s", FormatTimeString(brkTime)), "txtstart")
-        newContent[#newContent + 1] = svgText(crx(635), cry(45), "TRIP", "")
-        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(635),cry(31),crx(-90))
-        if travelTime then
-            newContent[#newContent + 1] = svgText(crx(532), cry(23), stringf("%s", FormatTimeString(travelTime)), "txtstart size20") 
-        end
-        --newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(20), stringf("Trip: %.2f km", totalDistanceTrip), "txtstart") 
-        --TODO: newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(30), stringf("Lifetime: %.2f kSU", (TotalDistanceTravelled / 200000)), "txtstart") 
-        newContent[#newContent + 1] = svgText(crx(795), labelY1, "BRK DIST", "")
-        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(795),lineY, crx(-80))
-        newContent[#newContent + 1] = svgText(crx(715), labelY2, stringf("%s", getDistanceDisplayString(brkDist)), "txtstart size20") 
-        --newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(10), stringf("BrkDist: %s", getDistanceDisplayString(brkDist)) , "txtstart")
-        --newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(20), "Trip Time: "..FormatTimeString(flightTime), "txtstart") 
-        --newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(30), "Total Time: "..FormatTimeString(TotalFlightTime), "txtstart") 
-        newContent[#newContent + 1] = svgText(crx(1285), cry(45), "MASS", "txtstart")
-        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1285), cry(31), crx(90))
-        newContent[#newContent + 1] = svgText(crx(1388), cry(23), stringf("%s", mass), "size20") 
-        --newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(20), stringf("Mass: %s", mass), "txtstart") 
-        --newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(10), stringf("Max Brake: %s",  brakeValue), "txtend") 
-        newContent[#newContent + 1] = svgText(crx(1220), labelY1, "THRUST", "txtstart")
-        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]], crx(1220), lineY, crx(80))
-        newContent[#newContent + 1] = svgText(crx(1300), labelY2, stringf("%s", maxThrust), "size20") 
-
-        newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(175), flightStyle, "pbright txtbig txtmid size20")
-        newContent[#newContent + 1] = "</g>"
+        newContent[#newContent + 1] = svgText(xg, yg1, "GRAVITY", "pdim txt txtend")
+        newContent[#newContent + 1] = svgText(xg, yg2, stringf("%.2f", (gravity / 9.80665)), "pdim txt txtend")
+        newContent[#newContent + 1] = svgText(xg, yg1 + 20, "ACCEL", "pdim txt txtend")
+        newContent[#newContent + 1] = svgText(xg, yg2 + 20, stringf("%.2f", accel), "pdim txt txtend") 
+        newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(180), flightStyle, "txtbig txtmid")
     end
 
     function Hud.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
-        if SelectedTab ~= "INFO" then return newContent end
         local gravity 
         local maxMass = 0
         local reqThrust = 0
@@ -2000,30 +1704,30 @@ function HudClass()
             maxMass = maxMass > 1000000 and round(maxMass / 1000000,2).." kTons" or round(maxMass / 1000, 2).." Tons"
         end
         maxThrust = round((maxThrust / (coreMass * gravConstant)),2).." g"
+        newContent[#newContent + 1] = stringf([[
+            <g class="pbright txt">
+            <path class="linethick" style="fill:url(#RadialGradient1);" d="M %d 0 L %d %d Q %d %d %d %d L %d 0"/>]],
+            ConvertResolutionX(660), ConvertResolutionX(700), ConvertResolutionY(35), ConvertResolutionX(960), ConvertResolutionY(55),
+            ConvertResolutionX(1240), ConvertResolutionY(35), ConvertResolutionX(1280))
         if isRemote() == 0 or RemoteHud then 
-            local startX = ConvertResolutionX(OrbitMapX+10)
-            local startY = ConvertResolutionY(OrbitMapY+20)
-            local midX = ConvertResolutionX(OrbitMapX+10+OrbitMapSize/1.25)
-            local height = 25
-            newContent[#newContent + 1] = "<g class='txtstart size14 bright'>"
-            newContent[#newContent + 1] = svgText(startX, startY, stringf("BrkTime: %s", FormatTimeString(brkTime)))
-            newContent[#newContent + 1] = svgText(midX, startY, stringf("Trip: %.2f km", totalDistanceTrip)) 
-            newContent[#newContent + 1] = svgText(startX, startY+height, stringf("Lifetime: %.2f kSU", (TotalDistanceTravelled / 200000))) 
-            newContent[#newContent + 1] = svgText(midX, startY+ height, stringf("BrkDist: %s", getDistanceDisplayString(brkDist)))
-            newContent[#newContent + 1] = svgText(startX, startY+height*2, "Trip Time: "..FormatTimeString(flightTime)) 
-            newContent[#newContent + 1] = svgText(midX, startY+height*2, "Total Time: "..FormatTimeString(TotalFlightTime)) 
-            newContent[#newContent + 1] = svgText(startX, startY+height*3, stringf("Mass: %s", mass)) 
-            newContent[#newContent + 1] = svgText(midX, startY+height*3, stringf("Max Brake: %s",  brakeValue)) 
-            newContent[#newContent + 1] = svgText(startX, startY+height*4, stringf("Max Thrust: %s", maxThrust)) 
+            newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(10), stringf("BrkTime: %s", FormatTimeString(brkTime)), "txtstart")
+            newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(20), stringf("Trip: %.2f km", totalDistanceTrip), "txtstart") 
+            newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(30), stringf("Lifetime: %.2f kSU", (TotalDistanceTravelled / 200000)), "txtstart") 
+            newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(10), stringf("BrkDist: %s", getDistanceDisplayString(brkDist)) , "txtstart")
+            newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(20), "Trip Time: "..FormatTimeString(flightTime), "txtstart") 
+            newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(30), "Total Time: "..FormatTimeString(TotalFlightTime), "txtstart") 
+            newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(20), stringf("Mass: %s", mass), "txtstart") 
+            newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(10), stringf("Max Brake: %s",  brakeValue), "txtend") 
+            newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(30), stringf("Max Thrust: %s", maxThrust), "txtend") 
             if gravity > 0.1 then
-                newContent[#newContent + 1] = svgText(midX, startY+height*4, stringf("Max Thrust Mass: %s", (maxMass)))
-                newContent[#newContent + 1] = svgText(startX, startY+height*5, stringf("Req Thrust: %s", reqThrust )) 
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(30), stringf("Max Thrust Mass: %s", (maxMass)), "txtstart")
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(20), stringf("Req Thrust: %s", reqThrust ), "txtend") 
             else
-                newContent[#newContent + 1] = svgText(midX, startY+height*5, "Max Mass: n/a") 
-                newContent[#newContent + 1] = svgText(startX, startY+height*6, "Req Thrust: n/a") 
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(30), "Max Mass: n/a", "txtstart") 
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(20), "Req Thrust: n/a", "txtend") 
             end
         end
-        newContent[#newContent + 1] = "</g></g>"
+        newContent[#newContent + 1] = "</g>"
         return newContent
     end
 
@@ -2062,7 +1766,7 @@ function HudClass()
         end
         getClosestPipe()           
     end
-
+    
     function Hud.DrawSettings(newContent)
         if #settingsVariables > 0  then
             local x = ConvertResolutionX(640)
@@ -2105,7 +1809,7 @@ function HudClass()
                 if peris == 1 then
                     sysDestWid(radarPanelID)
                     radarPanelID = nil
-                    _autoconf.displayCategoryPanel(radars, 1, "Periscope",
+                    _autoconf.displayCategoryPanel(radars, 1,  "Periscope",
                         "periscope")
                     perisPanelID = _autoconf.panels[_autoconf.panels_size]
                 end
@@ -2160,10 +1864,9 @@ function HudClass()
         -- FUEL TANKS
         if (fuelX ~= 0 and fuelY ~= 0) then
             tankMessage = svgText(fuelX, fuelY, "", "txtstart pdim txtfuel")
-            tankY = fuelY
             DrawTank( fuelX, "Atmospheric ", "ATMO", atmoTanks, fuelTimeLeft, fuelPercent)
-            DrawTank( fuelX, "Space Fuel T", "SPACE", spaceTanks, fuelTimeLeftS, fuelPercentS)
-            DrawTank( fuelX, "Rocket Fuel ", "ROCKET", rocketTanks, fuelTimeLeftR, fuelPercentR)
+            DrawTank( fuelX+120, "Space fuel t", "SPACE", spaceTanks, fuelTimeLeftS, fuelPercentS)
+            DrawTank( fuelX+240, "Rocket fuel ", "ROCKET", rocketTanks, fuelTimeLeftR, fuelPercentR)
         end
 
     end
@@ -2195,8 +1898,6 @@ function HudClass()
     end
 
     function Hud.hudtick()
-        if not planet then return end -- Avoid errors if APTick hasn't initialized before this is called
-
         -- Local Functions for hudTick
             local function DrawCursorLine(newContent)
                 local strokeColor = mfloor(uclamp((distance / (resolutionWidth / 4)) * 255, 0, 255))
@@ -2211,12 +1912,6 @@ function HudClass()
                         if not v.drawCondition or v.drawCondition(v) then
                             v.toggleFunction(v)
                         end
-                        v.hovered = false
-                    end
-                end
-                for _, v in pairs(TabButtons) do
-                    if v.hovered then
-                        SelectedTab = v.label
                         v.hovered = false
                     end
                 end
@@ -2236,10 +1931,7 @@ function HudClass()
                     -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
                     v.hovered = Contains(x, y, v.x, v.y, v.width, v.height)
                 end
-                for _, v in pairs(TabButtons) do
-                    -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
-                    v.hovered = Contains(x, y, v.x, v.y, v.width, v.height)
-                end
+
                 if apButtonsHovered then -- Keep it hovered if any buttons are hovered
                     local hovered = false
                     for _,b in ipairs(apExtraButtons) do
@@ -2254,28 +1946,6 @@ function HudClass()
                     end
                 end
                 
-            end
-            local function DrawTabButtons(newContent)
-                if not SelectedTab or SelectedTab == "" then
-                    SelectedTab = "HELP"
-                end
-                for k,v in pairs(TabButtons) do
-                    local class = "dim brightstroke"
-                    local opacity = 0.2
-                    if SelectedTab == k then
-                        class = "pbright dimstroke"
-                        opacity = 0.6
-                    end
-                    local extraStyle = ""
-                    if v.hovered then
-                        opacity = 0.8
-                        extraStyle = ";stroke:white"
-                    end
-                    newContent[#newContent + 1] = stringf(
-                                                        [[<rect width="%f" height="%d" x="%d" y="%d" clip-path="url(#round-corner)" class="%s" style="stroke-width:1;fill-opacity:%f;%s" />]],
-                                                        v.width, v.height, v.x,v.y, class, opacity, extraStyle)
-                    newContent[#newContent + 1] = svgText(v.x+v.width/2, v.y + v.height/2 + 5, v.label, "txt txtmid pdim")
-                end
             end
             local function DrawButtons(newContent)
 
@@ -2331,8 +2001,8 @@ function HudClass()
                     end
                 end
             end
-            local halfResolutionX = round(ResolutionX / 2,0)
-            local halfResolutionY = round(ResolutionY / 2,0)
+        local halfResolutionX = round(ResolutionX / 2,0)
+        local halfResolutionY = round(ResolutionY / 2,0)
         local newContent = {}
         --local t0 = system.getTime()
         HUD.HUDPrologue(newContent)
@@ -2361,7 +2031,6 @@ function HudClass()
             if DisplayDeadZone then HUD.DrawDeadZone(newContent) end
         end
 
-        DrawTabButtons(newContent)
         if sysIsVwLock() == 0 then
             if isRemote() == 1 and holdingShift then
                 if not AltIsOn then
@@ -2404,7 +2073,7 @@ function HudClass()
                     -- Note that because SVG lines fucking suck, we have to do a translate and they can't use calc in their params
                     if DisplayDeadZone then DrawCursorLine(newContent) end
                 end
-            elseif not AltIsOn and holdingShift then
+            elseif not AltIsOn or holdingShift then
                 SetButtonContains()
                 DrawButtons(newContent)
             end
@@ -2413,6 +2082,7 @@ function HudClass()
                                             [[<g transform="translate(%d %d)"><circle class="cursor" cx="%fpx" cy="%fpx" r="5"/></g>]],
                                             halfResolutionX, halfResolutionY, simulatedX, simulatedY)
         end
+        newContent = HUD.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime) 
         newContent[#newContent + 1] = [[</svg></body>]]
         content = table.concat(newContent, "")
     end
@@ -2450,4 +2120,4 @@ function HudClass()
     end
 
     return Hud
-end
+end 

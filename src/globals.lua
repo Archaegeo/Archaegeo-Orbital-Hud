@@ -1,8 +1,16 @@
+-- These values are a default set for 1920x1080 ResolutionX and Y settings.
+
 -- User variables, visable via Edit Lua Parameters. Must be global to wor kwith databank system as set up due to using _G assignment
     useTheseSettings = false --export:  Change this to true to override databank saved settings
     userControlScheme = "virtual joystick" --export: (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard". This can be set by holding SHIFT and clicking the button in lower left of main Control buttons view.
     soundFolder = "archHUD" --export: (Default: "archHUD") Set to the name of the folder with sound files in it. Must be changed from archHUD to prevent other scripts making your PC play sounds.
     -- True/False variables
+        -- NOTE: saveableVariablesBoolean below must contain any True/False variables that needs to be saved/loaded from databank.
+        saveableVariablesBoolean = {"userControlScheme", "soundFolder", "freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
+        "InvertMouse", "autoRollPreference", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
+        "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "hideHudOnToggleWidgets", 
+        "ShiftShowsRemoteButtons", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", 
+        "voices", "alerts", "CollisionSystem", "AutoShieldToggle", "PreventPvP"}
         freeLookToggle = true --export: (Default: true) Set to false for vanilla DU free look behavior.
         BrakeToggleDefault = true --export: (Default: true) Whether your brake toggle is on/off by default. Can be adjusted in the button menu. False is vanilla DU brakes.
         RemoteFreeze = false --export: (Default: false) Whether or not to freeze your character in place when using a remote controller.
@@ -31,6 +39,11 @@
         PreventPvP = true --export: (Default: true) If true, system will stop you before crossing from safe to pvp space while in autopilot.
 
     -- Ship Handling variables
+        -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank.
+        savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "ReEntryPitch","LockPitchTarget", "AutopilotSpaceDistance", "TargetOrbitRadius", "LowOrbitHeight",
+        "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
+        "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
+        "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization", "WipeDamage"}
         YawStallAngle = 35 --export: (Default: 35) Angle at which the ship stalls when yawing, determine by experimentation. Higher allows faster AP Bank turns.
         PitchStallAngle = 35 --export: (Default: 35) Angle at which the ship stalls when pitching, determine by experimentation.
         brakeLandingRate = 30 --export: (Default: 30) Max loss of altitude speed in m/s when doing a brake landing. 30 is safe for almost all ships.  Overriden if CalculateBrakeLandingSpeed is true.
@@ -57,7 +70,12 @@
         WipeDamage = 0 --export: (Default: 0) % damage above which hud will wipe saved locations on databank.  Requires ShouldCheckDamage to be true.
 
     -- HUD Postioning variables
-        -- These values are a default set for 1920x1080 ResolutionX and Y settings.  Put [[ after -- at start of line to comment out.
+        -- NOTE: savableVariablesHud below must contain any HUD Postioning variables that needs to be saved/loaded from databank.
+        savableVariablesHud = {"ResolutionX","ResolutionY","circleRad","SafeR", "SafeG", "SafeB", 
+        "PvPR", "PvPG", "PvPB","centerX", "centerY", "throtPosX", "throtPosY",
+        "vSpdMeterX", "vSpdMeterY","altMeterX", "altMeterY","fuelX", "fuelY", "shieldX", "shieldY", "DeadZone",
+        "OrbitMapSize", "OrbitMapX", "OrbitMapY", "soundVolume"}
+ 
         ResolutionX = 1920 --export: (Default: 1920) Does not need to be set to same as game resolution. You can set 1920 on a 2560 to get larger resolution
         ResolutionY = 1080 --export: (Default: 1080) Does not need to be set to same as game resolution. You can set 1080 on a 1440 to get larger resolution
         circleRad = 400 --export: (Default: 400) The size of the artifical horizon circle, recommended minimum 100, maximum 400. Looks different > 200. Set to 0 to remove.
@@ -84,38 +102,13 @@
         OrbitMapX = 75 --export: (Default: 75) X postion of Orbit Display 
         OrbitMapY = 0 --export: (Default: 0) Y position of Orbit Display
         soundVolume = 100 --export: (Default: 100) Set to value (0-100 recommended) to control volume of voice and alerts. Alerts will automatically lower other hud sounds 50% if needed.
-        --]]
-
-        --[[ These values are a default set for 2560x1440 ResolutionX and Y settings.  Remove [[ at start of line to uncomment
-        ResolutionX = 2560 --export: (Default: 2560) Does not need to be set to same as game resolution. You can set 1920 on a 2560 to get larger resolution
-        ResolutionY = 1440 --export: (Default: 1440) Does not need to be set to same as game resolution. You can set 1080 on a 1440 to get larger resolution
-        circleRad = 400 --export: (Default: 400) The size of the artifical horizon circle, recommended minimum 100, maximum 400. Looks different > 200. Set to 0 to remove.
-        SafeR = 130 --export: (Default: 130) Primary HUD color
-        SafeG = 224 --export: (Default: 224) Primary HUD color
-        SafeB = 255 --export: (Default: 255) Primary HUD color
-        PvPR = 255 --export: (Default: 255) PvP HUD color
-        PvPG = 0 --export: (Default: 0) PvP HUD color
-        PvPB = 0 --export: (Default: 0) PvP HUD color
-        centerX = 1280 --export: (Default: 1280) X postion of Artifical Horizon (KSP Navball), Default 960. Use centerX=700 and centerY=880 for lower left placement.
-        centerY = 720 --export: (Default: 720) Y postion of Artifical Horizon (KSP Navball), Default 540. Use centerX=700 and centerY=880 for lower left placement.
-        throtPosX = 1400 --export: (Default: 1400) X position of Throttle Indicator, default 1300 to put it to right of default AH centerX parameter.
-        throtPosY = 720 --export: (Default: 720) Y position of Throttle indicator, default is 540 to place it centered on default AH centerY parameter
-        vSpdMeterX = 2150  --export: (Default: 2150) X postion of Vertical Speed Meter. Default 1525
-        vSpdMeterY = 380 --export: (Default: 380) Y postion of Vertical Speed Meter. Default 325
-        altMeterX = 1090  --export: (Default: 1090) X postion of Altimeter. Default 550
-        altMeterY = 710 --export: (Default: 710) Y postion of Altimeter. Default 500
-        fuelX = 40 --export: (Default: 40) X position of fuel tanks, set to 100 for non-bar style fuel display, set both fuelX and fuelY to 0 to hide fuel display
-        fuelY = 940 --export: (Default: 940) Y position of fuel tanks, set to 300 for non-bar style fuel display, set both fuelX and fuelY to 0 to hide fuel display
-        shieldX = 2330 --export: (Default: 2330) X position of shield indicator
-        shieldY = 380 --export: (Default: 380) Y position of shield indicator
-        DeadZone = 50 --export: (Default: 50) Number of pixels of deadzone at the center of the screen
-        OrbitMapSize = 250 --export: (Default: 250) Size of the orbit map, make sure it is divisible by 4
-        OrbitMapX = 0 --export: (Default: 0) X postion of Orbit Display 
-        OrbitMapY = 25 --export: (Default: 25) Y position of Orbit Display
-        soundVolume = 100 --export: (Default: 100) Set to value (0-100 recommended) to control volume of voice and alerts. Alerts will automatically lower other hud sounds 50% if needed.
-        --]]
 
     -- Ship flight physics variables - Change with care, can have large effects on ships performance.
+        -- NOTE: savableVariablesPhysics below must contain any Ship flight physics variables that needs to be saved/loaded from databank.
+        savableVariablesPhysics = {"speedChangeLarge", "speedChangeSmall", "MouseXSensitivity", "MouseYSensitivity", "autoRollFactor",
+        "rollSpeedFactor", "autoRollRollThreshold", "minRollVelocity", "TrajectoryAlignmentStrength",
+        "torqueFactor", "pitchSpeedFactor", "yawSpeedFactor", "brakeSpeedFactor", "brakeFlatFactor", "DampingMultiplier", 
+        "apTickRate",  "hudTickRate", "ExtraLongitudeTags", "ExtraLateralTags", "ExtraVerticalTags"}
         speedChangeLarge = 5 --export: (Default: 5) The speed change that occurs when you tap speed up/down, default is 5 (25% throttle change).
         speedChangeSmall = 1 --export: (Default: 1) the speed change that occurs while you hold speed up/down, default is 1 (5% throttle change).
         MouseXSensitivity = 0.003 --export: (Default: 0.003) For virtual joystick only
@@ -137,7 +130,16 @@
         ExtraLateralTags = "none" --export: (Default: "none") Enter any extra lateral tags you use inside '' seperated by space, i.e. "left right" These will be added to the engines that are control by lateral.
         ExtraVerticalTags = "none" --export: (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "up down" These will be added to the engines that are control by vertical.
 
-    -- Auto Variable declarations that store status of ship. Do not edit directly here unless you know what you are doing, these change as ship flies.
+    -- Auto Variable declarations that store status of ship on databank. Do not edit directly here unless you know what you are doing, these change as ship flies.
+    -- NOTE: autoVariables below must contain any variable that needs to be saved/loaded from databank.
+        autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
+                    "Autopilot", "TurnBurn", "AltitudeHold", "BrakeLanding",
+                    "Reentry", "AutoTakeoff", "HoldAltitude", "AutopilotAccelerating", "AutopilotBraking",
+                    "AutopilotCruising", "AutopilotRealigned", "AutopilotEndSpeed", "AutopilotStatus",
+                    "AutopilotPlanetGravity", "PrevViewLock", "AutopilotTargetName", "AutopilotTargetCoords",
+                    "AutopilotTargetIndex", "TotalDistanceTravelled",
+                    "TotalFlightTime", "SavedLocations", "VectorToTarget", "LocationIndex", "LastMaxBrake", 
+                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "iphCondition", "stablized", "UseExtra", "SelectedTab"}
         BrakeToggleStatus = BrakeToggleDefault
         VertTakeOffEngine = false 
         BrakeIsOn = false

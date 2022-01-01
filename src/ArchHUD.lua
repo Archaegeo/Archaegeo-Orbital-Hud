@@ -23,16 +23,6 @@ script = {}  -- wrappable container for all the code. Different than normal DU L
 
 VERSION_NUMBER = 1.595
 
-    -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
-        local autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
-                    "Autopilot", "TurnBurn", "AltitudeHold", "BrakeLanding",
-                    "Reentry", "AutoTakeoff", "HoldAltitude", "AutopilotAccelerating", "AutopilotBraking",
-                    "AutopilotCruising", "AutopilotRealigned", "AutopilotEndSpeed", "AutopilotStatus",
-                    "AutopilotPlanetGravity", "PrevViewLock", "AutopilotTargetName", "AutopilotTargetCoords",
-                    "AutopilotTargetIndex", "TotalDistanceTravelled",
-                    "TotalFlightTime", "SavedLocations", "VectorToTarget", "LocationIndex", "LastMaxBrake", 
-                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "iphCondition", "stablized", "UseExtra", "SelectedTab"}
-
 -- function localizations for improved performance when used frequently or in loops.
     mabs = math.abs
     mfloor = math.floor
@@ -357,23 +347,7 @@ VERSION_NUMBER = 1.595
     function saveableVariables(subset) -- returns saveable variables by catagory
         local returnSet = {}
             -- Complete list of user variables above, must be in saveableVariables to be stored on databank
-            local saveableVariablesBoolean = {"userControlScheme", "soundFolder", "freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
-                "InvertMouse", "autoRollPreference", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
-                "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "hideHudOnToggleWidgets", 
-                "ShiftShowsRemoteButtons", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", 
-                "voices", "alerts", "CollisionSystem", "AutoShieldToggle", "PreventPvP"}
-            local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "ReEntryPitch","LockPitchTarget", "AutopilotSpaceDistance", "TargetOrbitRadius", "LowOrbitHeight",
-                "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
-                "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
-                "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization", "WipeDamage"}
-            local savableVariablesHud = {"ResolutionX","ResolutionY","circleRad","SafeR", "SafeG", "SafeB", 
-                "PvPR", "PvPG", "PvPB","centerX", "centerY", "throtPosX", "throtPosY",
-                "vSpdMeterX", "vSpdMeterY","altMeterX", "altMeterY","fuelX", "fuelY", "shieldX", "shieldY", "DeadZone",
-                "OrbitMapSize", "OrbitMapX", "OrbitMapY", "soundVolume"}
-            local savableVariablesPhysics = {"speedChangeLarge", "speedChangeSmall", "MouseXSensitivity", "MouseYSensitivity", "autoRollFactor",
-                "rollSpeedFactor", "autoRollRollThreshold", "minRollVelocity", "TrajectoryAlignmentStrength",
-                "torqueFactor", "pitchSpeedFactor", "yawSpeedFactor", "brakeSpeedFactor", "brakeFlatFactor", "DampingMultiplier", 
-                "apTickRate",  "hudTickRate", "ExtraLongitudeTags", "ExtraLateralTags", "ExtraVerticalTags"}
+
         if not subset then
             addTable(returnSet, saveableVariablesBoolean)
             addTable(returnSet, savableVariablesHandling)
@@ -2649,8 +2623,8 @@ VERSION_NUMBER = 1.595
                     showWarpWidget = false
                 end
             end
-            HUD.DrawTanks()
-            if shield_1 then HUD.DrawShield() end
+            HUD.TenthTick()
+
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
             -- Local Functions for oneSecond
 
@@ -2756,13 +2730,14 @@ VERSION_NUMBER = 1.595
                 end
 
             updateDistance()
-            HUD.UpdatePipe()
+
             passengers = core.getPlayersOnBoard()
             ships = core.getDockedConstructs()
             updateWeapons()
             -- Update odometer output string
             local newContent = {}
-            HUD.ExtraData(newContent)
+            HUD.OneSecond(newContent)
+
             if ShouldCheckDamage then
                 CheckDamage(newContent)
             end
