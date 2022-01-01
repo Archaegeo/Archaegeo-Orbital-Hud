@@ -7,6 +7,7 @@ PROS:
     + Allows users to easily modify or replace anything in the require files
     + Allows for easy updating without needing to recompile autoconf
     + In plain "lua" vice minimized so easy to understand and modify.
+    + Error reports are much easier to analyze and track.
 CONS:
     - Cannot be used on Geforce Now.  Continue to use the GeForce Now version (1.515)
 The following "require" files have been created:
@@ -15,6 +16,7 @@ The following "require" files have been created:
     * hudclass.lua - This contains all of the material dealing with the appearance of the hud and buttons
 To USE:  Download the ArchHUD.zip on the Release page and extract it in your %ProgramData%\Dual Universe\Game\data\lua\autoconf\custom directory.
 This should create an `ArchHUD.conf` like normal, and a subfolder named `archhud` that has the 3 require files in it.
+NOTE: When extracting ZIP file, be sure to check option to keep directory structure if available.
 
 Version 1.515 - MAJOR Update to HUD appears (Thanks Dimencia!!)
 - Major: Change to appearance of HUD
