@@ -11,7 +11,7 @@ function HudClass()
     local hover = hoverGlobal
     local shield_1 = shield_1Global
     
--- END OF REQUIRED DEFINES
+    -- END OF REQUIRED DEFINES
 
     local gravConstant = 9.80665
     local ControlButtons = {}
