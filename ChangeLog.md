@@ -1,5 +1,19 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.600 - Modularization of ArchHUD for easy user changes.
+- Major overhaul to code structure to support modularization. NOTE: Change any "require" file does not require recompiling or reloading
+of the autoconf file.  "Require" files are loaded each time you get into the seat.
+PROS:
+    + Allows users to easily modify or replace anything in the require files
+    + Allows for easy updating without needing to recompile autoconf
+    + In plain "lua" vice minimized so easy to understand and modify.
+CONS:
+    - Cannot be used on Geforce Now.  Continue to use the GeForce Now version (1.515)
+The following "require" files have been created:
+    * globals.lua - Has all user settings in it for easy modification and contain different position settings for 1920x1080 and 2560x1440.
+    * apclass.lua - This is the file that has all of the Autopilot handling
+    * hudclass.lua - This contains all of the material dealing with the appearance of the hud
+
 Version 1.515 - MAJOR Update to HUD appears (Thanks Dimencia!!)
 - Major: Change to appearance of HUD
 - Removed depreciated user settings of `showHelp`, `ShowOdometer`, and `DisplayOrbit`

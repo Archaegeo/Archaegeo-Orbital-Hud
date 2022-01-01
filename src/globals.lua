@@ -57,6 +57,7 @@
         WipeDamage = 0 --export: (Default: 0) % damage above which hud will wipe saved locations on databank.  Requires ShouldCheckDamage to be true.
 
     -- HUD Postioning variables
+        -- These values are a default set for 1920x1080 ResolutionX and Y settings.  Put [[ after -- at start of line to comment out.
         ResolutionX = 1920 --export: (Default: 1920) Does not need to be set to same as game resolution. You can set 1920 on a 2560 to get larger resolution
         ResolutionY = 1080 --export: (Default: 1080) Does not need to be set to same as game resolution. You can set 1080 on a 1440 to get larger resolution
         circleRad = 400 --export: (Default: 400) The size of the artifical horizon circle, recommended minimum 100, maximum 400. Looks different > 200. Set to 0 to remove.
@@ -83,6 +84,36 @@
         OrbitMapX = 75 --export: (Default: 75) X postion of Orbit Display 
         OrbitMapY = 0 --export: (Default: 0) Y position of Orbit Display
         soundVolume = 100 --export: (Default: 100) Set to value (0-100 recommended) to control volume of voice and alerts. Alerts will automatically lower other hud sounds 50% if needed.
+        --]]
+
+        --[[ These values are a default set for 2560x1440 ResolutionX and Y settings.  Remove [[ at start of line to uncomment
+        ResolutionX = 2560 --export: (Default: 2560) Does not need to be set to same as game resolution. You can set 1920 on a 2560 to get larger resolution
+        ResolutionY = 1440 --export: (Default: 1440) Does not need to be set to same as game resolution. You can set 1080 on a 1440 to get larger resolution
+        circleRad = 400 --export: (Default: 400) The size of the artifical horizon circle, recommended minimum 100, maximum 400. Looks different > 200. Set to 0 to remove.
+        SafeR = 130 --export: (Default: 130) Primary HUD color
+        SafeG = 224 --export: (Default: 224) Primary HUD color
+        SafeB = 255 --export: (Default: 255) Primary HUD color
+        PvPR = 255 --export: (Default: 255) PvP HUD color
+        PvPG = 0 --export: (Default: 0) PvP HUD color
+        PvPB = 0 --export: (Default: 0) PvP HUD color
+        centerX = 1280 --export: (Default: 1280) X postion of Artifical Horizon (KSP Navball), Default 960. Use centerX=700 and centerY=880 for lower left placement.
+        centerY = 720 --export: (Default: 720) Y postion of Artifical Horizon (KSP Navball), Default 540. Use centerX=700 and centerY=880 for lower left placement.
+        throtPosX = 1400 --export: (Default: 1400) X position of Throttle Indicator, default 1300 to put it to right of default AH centerX parameter.
+        throtPosY = 720 --export: (Default: 720) Y position of Throttle indicator, default is 540 to place it centered on default AH centerY parameter
+        vSpdMeterX = 2150  --export: (Default: 2150) X postion of Vertical Speed Meter. Default 1525
+        vSpdMeterY = 380 --export: (Default: 380) Y postion of Vertical Speed Meter. Default 325
+        altMeterX = 1090  --export: (Default: 1090) X postion of Altimeter. Default 550
+        altMeterY = 710 --export: (Default: 710) Y postion of Altimeter. Default 500
+        fuelX = 40 --export: (Default: 40) X position of fuel tanks, set to 100 for non-bar style fuel display, set both fuelX and fuelY to 0 to hide fuel display
+        fuelY = 940 --export: (Default: 940) Y position of fuel tanks, set to 300 for non-bar style fuel display, set both fuelX and fuelY to 0 to hide fuel display
+        shieldX = 2330 --export: (Default: 2330) X position of shield indicator
+        shieldY = 380 --export: (Default: 380) Y position of shield indicator
+        DeadZone = 50 --export: (Default: 50) Number of pixels of deadzone at the center of the screen
+        OrbitMapSize = 250 --export: (Default: 250) Size of the orbit map, make sure it is divisible by 4
+        OrbitMapX = 0 --export: (Default: 0) X postion of Orbit Display 
+        OrbitMapY = 25 --export: (Default: 25) Y position of Orbit Display
+        soundVolume = 100 --export: (Default: 100) Set to value (0-100 recommended) to control volume of voice and alerts. Alerts will automatically lower other hud sounds 50% if needed.
+        --]]
 
     -- Ship flight physics variables - Change with care, can have large effects on ships performance.
         speedChangeLarge = 5 --export: (Default: 5) The speed change that occurs when you tap speed up/down, default is 5 (25% throttle change).
