@@ -1719,22 +1719,6 @@ VERSION_NUMBER = 1.595
         return Radar
     end 
 
-    function ConvertResolutionX (v)
-        if resolutionWidth == 1920 then 
-            return v
-        else
-            return round(resolutionWidth * v / 1920, 0)
-        end
-    end
-
-    function ConvertResolutionY (v)
-        if resolutionHeight == 1080 then 
-            return v
-        else
-            return round(resolutionHeight * v / 1080, 0)
-        end
-    end
-
     local function AtlasClass() -- Atlas and Interplanetary functions including Update Autopilot Target
 
         -- Atlas functions
@@ -2346,22 +2330,21 @@ VERSION_NUMBER = 1.595
                 end
             end
 
-            local function ToggleBoolean(v)
-
-                _G[v] = not _G[v]
-                if _G[v] then 
-                    msgText = v.." set to true"
-                else
-                    msgText = v.." set to false"
-                end
-                if v == "showHud" then
-                    oldShowHud = _G[v]
-                elseif v == "BrakeToggleDefault" then 
-                    BrakeToggleStatus = BrakeToggleDefault
-                end
-            end
-
             local function SettingsButtons()
+                local function ToggleBoolean(v)
+
+                    _G[v] = not _G[v]
+                    if _G[v] then 
+                        msgText = v.." set to true"
+                    else
+                        msgText = v.." set to false"
+                    end
+                    if v == "showHud" then
+                        oldShowHud = _G[v]
+                    elseif v == "BrakeToggleDefault" then 
+                        BrakeToggleStatus = BrakeToggleDefault
+                    end
+                end
                 local buttonHeight = 50
                 local buttonWidth = 340 -- Defaults
                 local x = 500
@@ -2755,8 +2738,7 @@ VERSION_NUMBER = 1.595
                 -- Setup Modular Classes
                 Kinematic = Kinematics()
                 Kep = Keplers()
-                RADAR = RadarClass()
-                HUD = HudClass()
+
                 ATLAS = AtlasClass()
             end
         
@@ -2789,11 +2771,9 @@ VERSION_NUMBER = 1.595
             Buttons = ControlButtons
             coroutine.yield() -- Just to make sure
 
-            -- Set up Jaylebreak and atlas
-
             atlasSetup()
-            --AP = APClass()
-        
+            RADAR = RadarClass()
+            HUD = HudClass()
             coroutine.yield()
  
             unit.hide()
@@ -3272,226 +3252,7 @@ VERSION_NUMBER = 1.595
             simulatedY = 0
             unit.stopTimer("animateTick")
         elseif timerId == "hudTick" then -- Timer for all hud updates not called elsewhere
-            if not planet then return end -- Avoid errors if APTick hasn't initialized before this is called
-
-            -- Local Functions for hudTick
-                local function DrawCursorLine(newContent)
-                    local strokeColor = mfloor(uclamp((distance / (resolutionWidth / 4)) * 255, 0, 255))
-                    newContent[#newContent + 1] = stringf(
-                                                    "<line x1='0' y1='0' x2='%fpx' y2='%fpx' style='stroke:rgb(%d,%d,%d);stroke-width:2;transform:translate(50%%, 50%%)' />",
-                                                    simulatedX, simulatedY, mfloor(PrimaryR + 0.5) + strokeColor,
-                                                    mfloor(PrimaryG + 0.5) - strokeColor, mfloor(PrimaryB + 0.5) - strokeColor)
-                end
-                local function CheckButtons()
-                    for _, v in pairs(Buttons) do
-                        if v.hovered then
-                            if not v.drawCondition or v.drawCondition(v) then
-                                v.toggleFunction(v)
-                            end
-                            v.hovered = false
-                        end
-                    end
-                    for _, v in pairs(TabButtons) do
-                        if v.hovered then
-                            SelectedTab = v.label
-                            v.hovered = false
-                        end
-                    end
-                end    
-                local function SetButtonContains()
-
-                    local function Contains(mousex, mousey, x, y, width, height)
-                        if mousex >= x and mousex <= (x + width) and mousey >= y and mousey <= (y + height) then
-                            return true
-                        else
-                            return false
-                        end
-                    end
-                    local x = simulatedX + resolutionWidth / 2
-                    local y = simulatedY + resolutionHeight / 2
-                    for _, v in pairs(Buttons) do
-                        -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
-                        v.hovered = Contains(x, y, v.x, v.y, v.width, v.height)
-                    end
-                    for _, v in pairs(TabButtons) do
-                        -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
-                        v.hovered = Contains(x, y, v.x, v.y, v.width, v.height)
-                    end
-                    if apButtonsHovered then -- Keep it hovered if any buttons are hovered
-                        local hovered = false
-                        for _,b in ipairs(apExtraButtons) do
-                            if b.hovered then hovered = true break end
-                        end
-                        if apbutton.hovered then hovered = true end
-                        apButtonsHovered = hovered
-                    else
-                        apButtonsHovered = apbutton.hovered
-                        if not apButtonsHovered then
-                            apScrollIndex = AutopilotTargetIndex -- Reset when no longer hovering
-                        end
-                    end
-                    
-                end
-                local function DrawTabButtons(newContent)
-                    if not SelectedTab or SelectedTab == "" then
-                        SelectedTab = "HELP"
-                    end
-                    for k,v in pairs(TabButtons) do
-                        local class = "dim brightstroke"
-                        local opacity = 0.2
-                        if SelectedTab == k then
-                            class = "pbright dimstroke"
-                            opacity = 0.6
-                        end
-                        local extraStyle = ""
-                        if v.hovered then
-                            opacity = 0.8
-                            extraStyle = ";stroke:white"
-                        end
-                        newContent[#newContent + 1] = stringf(
-                                                            [[<rect width="%f" height="%d" x="%d" y="%d" clip-path="url(#round-corner)" class="%s" style="stroke-width:1;fill-opacity:%f;%s" />]],
-                                                            v.width, v.height, v.x,v.y, class, opacity, extraStyle)
-                        newContent[#newContent + 1] = svgText(v.x+v.width/2, v.y + v.height/2 + 5, v.label, "txt txtmid pdim")
-                    end
-                end
-                local function DrawButtons(newContent)
-
-                    local function DrawButton(newContent, toggle, hover, x, y, w, h, activeColor, inactiveColor, activeText, inactiveText, button)
-                        if type(activeText) == "function" then
-                            activeText = activeText(button)
-                        end
-                        if type(inactiveText) == "function" then
-                            inactiveText = inactiveText(button)
-                        end
-                        newContent[#newContent + 1] = stringf("<rect x='%f' y='%f' width='%f' height='%f' fill='", x, y, w, h)
-                        if toggle then
-                            newContent[#newContent + 1] = stringf("%s'", activeColor)
-                        else
-                            newContent[#newContent + 1] = inactiveColor
-                        end
-                        if hover then
-                            newContent[#newContent + 1] = stringf(" style='stroke:rgb(%d,%d,%d); stroke-width:2'",SafeR, SafeG, SafeB)
-                        else
-                            newContent[#newContent + 1] = stringf(" style='stroke:rgb(%d,%d,%d); stroke-width:1'",round(SafeR*0.5,0),round(SafeG*0.5,0),round(SafeB*0.5,0))
-                        end
-                        newContent[#newContent + 1] = " rx='5'></rect>"
-                        newContent[#newContent + 1] = stringf("<text x='%f' y='%f' font-size='24' fill='", x + w / 2,
-                                                        y + (h / 2) + 5)
-                        if toggle then
-                            newContent[#newContent + 1] = "black"
-                        else
-                            newContent[#newContent + 1] = "white"
-                        end
-                        newContent[#newContent + 1] = "' text-anchor='middle' font-family='Play' style='stroke-width:0px;'>"
-                        if toggle then
-                            newContent[#newContent + 1] = stringf("%s</text>", activeText)
-                        else
-                            newContent[#newContent + 1] = stringf("%s</text>", inactiveText)
-                        end
-                    end    
-                    local defaultColor = stringf("rgb(%d,%d,%d)'",round(SafeR*0.1,0),round(SafeG*0.1,0),round(SafeB*0.1,0))
-                    local onColor = stringf("rgb(%d,%d,%d)",round(SafeR*0.8,0),round(SafeG*0.8,0),round(SafeB*0.8,0))
-                    local draw = DrawButton
-                    for _, v in pairs(Buttons) do
-                        -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
-                        local disableName = v.disableName
-                        local enableName = v.enableName
-                        if type(disableName) == "function" then
-                            disableName = disableName(v)
-                        end
-                        if type(enableName) == "function" then
-                            enableName = enableName(v)
-                        end
-                        if not v.drawCondition or v.drawCondition(v) then -- If they gave us a nil condition
-                            draw(newContent, v.toggleVar(v), v.hovered, v.x, v.y, v.width, v.height, onColor, defaultColor,
-                                disableName, enableName, v)
-                        end
-                    end
-                end
-                local halfResolutionX = round(ResolutionX / 2,0)
-                local halfResolutionY = round(ResolutionY / 2,0)
-            local newContent = {}
-            --local t0 = system.getTime()
-            HUD.HUDPrologue(newContent)
-            if showHud then
-                --local t0 = system.getTime()
-                HUD.UpdateHud(newContent) -- sets up Content for us
-                --_logCompute.addValue(system.getTime() - t0)
-            else
-                if AlwaysVSpd then HUD.DrawVerticalSpeed(newContent, coreAltitude) end
-                HUD.DisplayOrbitScreen(newContent)
-                HUD.DrawWarnings(newContent)
-            end
-            if showSettings and settingsVariables ~= {} then 
-                HUD.DrawSettings(newContent) 
-            end
-            if radar_1 or radar_2 then RADAR.assignRadar() end
-            if radars[1] then HUD.DrawRadarInfo() end
-            HUD.HUDEpilogue(newContent)
-            newContent[#newContent + 1] = stringf(
-                [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
-                resolutionWidth, resolutionHeight)   
-            if msgText ~= "empty" then
-                HUD.DisplayMessage(newContent, msgText)
-            end
-            if isRemote() == 0 and userControlScheme == "virtual joystick" then
-                if DisplayDeadZone then HUD.DrawDeadZone(newContent) end
-            end
-
-            DrawTabButtons(newContent)
-            if sysIsVwLock() == 0 then
-                if isRemote() == 1 and holdingShift then
-                    if not AltIsOn then
-                        SetButtonContains()
-                        DrawButtons(newContent)
-                    end
-                    -- If they're remote, it's kinda weird to be 'looking' everywhere while you use the mouse
-                    -- We need to add a body with a background color
-                    if not Animating and not Animated then
-                        local collapsedContent = table.concat(newContent, "")
-                        newContent = {}
-                        newContent[#newContent + 1] = stringf("<style>@keyframes test { from { opacity: 0; } to { opacity: 1; } }  body { animation-name: test; animation-duration: 0.5s; }</style><body><svg width='100%%' height='100%%' position='absolute' top='0' left='0'><rect width='100%%' height='100%%' x='0' y='0' position='absolute' style='fill:rgb(6,5,26);'/></svg><svg width='50%%' height='50%%' style='position:absolute;top:30%%;left:25%%' viewbox='0 0 %d %d'>", resolutionWidth, resolutionHeight)
-                        newContent[#newContent + 1] = collapsedContent
-                        newContent[#newContent + 1] = "</body>"
-                        Animating = true
-                        newContent[#newContent + 1] = [[</svg></body>]] -- Uh what.. okay...
-                        unit.setTimer("animateTick", 0.5)
-                        local content = table.concat(newContent, "")
-                        system.setScreen(content)
-                    elseif Animated then
-                        local collapsedContent = table.concat(newContent, "")
-                        newContent = {}
-                        newContent[#newContent + 1] = stringf("<body style='background-color:rgb(6,5,26)'><svg width='50%%' height='50%%' style='position:absolute;top:30%%;left:25%%' viewbox='0 0 %d %d'>", resolutionWidth, resolutionHeight)
-                        newContent[#newContent + 1] = collapsedContent
-                        newContent[#newContent + 1] = "</body>"
-                    end
-
-                    if not Animating then
-                        newContent[#newContent + 1] = stringf(
-                                                        [[<g transform="translate(%d %d)"><circle class="cursor" cx="%fpx" cy="%fpx" r="5"/></g>]],
-                                                        halfResolutionX, halfResolutionY, simulatedX, simulatedY)
-                    end
-                else
-                    CheckButtons()
-                end
-            else
-                if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
-                    CheckButtons()
-                    if distance > DeadZone then -- Draw a line to the cursor from the screen center
-                        -- Note that because SVG lines fucking suck, we have to do a translate and they can't use calc in their params
-                        if DisplayDeadZone then DrawCursorLine(newContent) end
-                    end
-                elseif not AltIsOn and holdingShift then
-                    SetButtonContains()
-                    DrawButtons(newContent)
-                end
-                -- Cursor always on top, draw it last
-                newContent[#newContent + 1] = stringf(
-                                                [[<g transform="translate(%d %d)"><circle class="cursor" cx="%fpx" cy="%fpx" r="5"/></g>]],
-                                                halfResolutionX, halfResolutionY, simulatedX, simulatedY)
-            end
-            newContent[#newContent + 1] = [[</svg></body>]]
-            content = table.concat(newContent, "")
+            HUD.hudtick()
         elseif timerId == "apTick" then -- Timer for all autopilot functions
             AP.APTick()
         elseif timerId == "radarTick" then
