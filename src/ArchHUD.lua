@@ -21,7 +21,7 @@ require("autoconf/custom/archhud/hudclass")
 require("autoconf/custom/archhud/apclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.600
+VERSION_NUMBER = 1.601
 
 -- function localizations for improved performance when used frequently or in loops.
     mabs = math.abs
@@ -45,7 +45,6 @@ VERSION_NUMBER = 1.600
     sysIsVwLock = system.isViewLocked
     msqrt = math.sqrt
     tonum = tonumber
-
 
     function round(num, numDecimalPlaces) -- rounds variable num to numDecimalPlaces
         local mult = 10 ^ (numDecimalPlaces or 0)
@@ -185,7 +184,6 @@ VERSION_NUMBER = 1.600
     AtlasOrdered = {}
     notPvPZone = false
     pvpDist = 50000
-
     pipeMessage = ""
     ReversalIsOn = nil
     contacts = {}
