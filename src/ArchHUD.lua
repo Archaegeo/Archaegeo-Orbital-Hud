@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.515
+VERSION_NUMBER = 1.516
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -3316,9 +3316,10 @@ VERSION_NUMBER = 1.515
             --if TurnBurn then flightStyle = "TB-"..flightStyle end
             --if not stablized then flightStyle = flightStyle.."-DeCoupled" end
 
-            local labelY1 = crx(99)
-            local labelY2 = crx(80)
-            local lineY = cry(85)
+            local labelY1 = cry(99)
+            local labelY2 = cry(80)
+            local lineY = cr
+            y(85)
             local lineY2 = cry(31)
             local maxMass = 0
             local reqThrust = 0
