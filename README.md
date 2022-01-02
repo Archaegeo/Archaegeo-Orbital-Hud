@@ -3,7 +3,7 @@
 # Arch-Orbital-HUD
 ## A general purpose HUD for Dual Universe, based on DU Orbital Hud 5.450 and earlier
 
-### NOTE: Version 1.600 and on is a modular version and will not work on GeForce Now. Use version 1.515 for GEForce Now.
+### NOTE: Version 1.6XX+ is a modular version that uses require files and will not work on GeForce Now. Use version ArchHUDGFN.conf for GEForce Now.
 
 ###### For assistance, see my personal [Discord](https://discord.gg/CNRE45xRu7) or the OSIN discord channel [Discord](https://discord.gg/9RD3xQfYXG)
 ###### Donations are accepted but not expected. You may donate to Archaegeo in game via Wallet or to https://paypal.me/archaegeo for Paypal.
