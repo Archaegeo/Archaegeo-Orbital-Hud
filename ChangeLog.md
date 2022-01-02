@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.5161
+- Fix: Show buttons when in keyboard mode with freelook toggle off, use Alt-SHIFT to see buttons.
+
 Version 1.516 - Dynamic Orbitg panel.
 - New Feature - Dynamic Orbit Panel.  When the Orbit panel is selected, it is now dynamic, showing more when in atmo, going to orbit, and if you escape orbit, the galaxy.
 - Fix typo in hudclass that caused formatting errors for > 1920x1080.
