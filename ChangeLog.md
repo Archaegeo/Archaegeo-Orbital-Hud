@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.5161
+- FEATURE: Changed fuel tank display to color code bars by type and to put a small gap between types. (Thanks Zrips!)
 - Fix: Show buttons when in keyboard mode with freelook toggle off, use Alt-SHIFT to see buttons.
 
 Version 1.516 - Dynamic Orbitg panel.

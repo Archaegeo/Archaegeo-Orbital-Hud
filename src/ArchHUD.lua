@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.516
+VERSION_NUMBER = 1.5161
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -2033,14 +2033,29 @@ VERSION_NUMBER = 1.516
                                 class = "red "
                             end
                             local backColor = stringf("rgb(%d,%d,%d)", uclamp(mfloor((255-colorMod)/2.55),50,100), uclamp(mfloor(colorMod/2.55),0,50), 50)
+                            local strokeColor = "rgb(196,0,255)"
+                            if nameReplacePrefix == "ATMO" then
+                                strokeColor = "rgb(0,188,255)"
+                            elseif nameReplacePrefix == "SPACE" then
+                                strokeColor = "rgb(239,255,0)"
+                            end
+                            local changed = false
+                            if previous ~= strokeColor then
+                                changed = true
+                            end
+                            previous = strokeColor
                             if BarFuelDisplay then
+                                if changed then
+                                    y1 = y1 - 5
+                                    y2 = y2 - 5
+                                end
                                 tankMessage = tankMessage..stringf([[
                                     <g class="pdim">                        
-                                    <rect fill=%s class="bar" x="%d" y="%d" width="170" height="20"></rect></g>
+                                    <rect fill=%s class="bar" stroke=%s x="%d" y="%d" width="170" height="20"></rect></g>
                                     <g class="bar txtstart">
                                     <rect fill=%s width="%d" height="20" x="%d" y="%d"></rect>
-                                    <text class="txtstart" fill="white" x="%d" y="%d" style="font-family:Play;font-size:14px">%s %s%% %s</text>
-                                    </g>]], backColor, x, y2, color, mfloor(fuelPercentTable[i]*1.7+0.5), x, y2, x+5, y2+14,name, fuelPercentTable[i], fuelTimeDisplay
+                                    <text class="txtstart" fill="white" x="%d" y="%d" style="font-family:Play;font-size:14px">%s %s%%&nbsp;&nbsp;&nbsp;&nbsp;%s</text>
+                                    </g>]], backColor, strokeColor, x, y2, color, mfloor(fuelPercentTable[i]*1.7+0.5), x, y2, x+5, y2+14, name, fuelPercentTable[i], fuelTimeDisplay
                                 )
                                 --tankMessage = tankMessage..svgText(x, y1, name, class.."txtstart pdim txtfuel") 
                                 y1 = y1 - 22
