@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.603
+- hudclass.lua FEATURE: Changed fuel tank display to color code bars by type and to put a small gap between types. (Thanks Zrips!)
 - hudclass.lua FIX: Fixed issue with buttons not being showable if in keyboard mode and freelook toggle is off.  (Hold alt-shift to see buttons)
 
 Version 1.602 - New Dynamic Orbit Map
