@@ -308,8 +308,8 @@ function APClass() -- Autopiloting functions including tick
         if sysIsVwLock() == 0 then
             if isRemote() == 1 and holdingShift then
                 if not Animating then
-                    simulatedX = simulatedX + deltaX
-                    simulatedY = simulatedY + deltaY
+                    simulatedX = uclamp(simulatedX + deltaX,-resolutionWidth/2,resolutionWidth/2)
+                    simulatedY = uclamp(simulatedY + deltaY,-resolutionHeight/2,resolutionHeight/2)
                 end
             else
                 simulatedX = 0
@@ -317,8 +317,8 @@ function APClass() -- Autopiloting functions including tick
                 -- Except of course autopilot, which is later.
             end
         else
-            simulatedX = simulatedX + deltaX
-            simulatedY = simulatedY + deltaY
+            simulatedX = uclamp(simulatedX + deltaX,-resolutionWidth/2,resolutionWidth/2)
+            simulatedY = uclamp(simulatedY + deltaY,-resolutionHeight/2,resolutionHeight/2)
             distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
             if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                 if userControlScheme == "virtual joystick" then -- Virtual Joystick

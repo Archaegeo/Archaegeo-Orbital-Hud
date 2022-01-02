@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.602 - New Dynamic Orbit Map
+REMINDER - For GEForce Now you need the Standalone version (ArchHUDStandalone.conf)
+- New Feature - Dynamic Orbit Panel. When the Orbit panel is selected, it is now dynamic, showing more when in atmo, going to orbit, and if you escape orbit, the galaxy.
+- hudclass.lua FIX: Typo in hudclass.lua that caused text not to line up properly up top at higher resolutions.
+- New Folder on github: RequireRepository - has working replacements for the require files.
+
 Version 1.600 - Modularization of ArchHUD for easy user changes. DOES NOT WORK ON GEFORCE NOW (use 1.515 for GFN)
 - Major overhaul to code structure to support modularization. NOTE: Change to any "require" file does not require recompiling or reloading
 of the autoconf file.  "Require" files are loaded each time you get into the seat.

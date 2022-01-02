@@ -21,7 +21,7 @@ require("autoconf/custom/archhud/hudclass")
 require("autoconf/custom/archhud/apclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.601
+VERSION_NUMBER = 1.602
 
 -- function localizations for improved performance when used frequently or in loops.
     mabs = math.abs
@@ -194,7 +194,8 @@ VERSION_NUMBER = 1.601
     rType = "Atmo"
     apButtonsHovered = false
     apScrollIndex = 0
-    TabButtons = {}
+    passengers = nil
+    ships = nil
 
 -- Function Definitions that are used in more than one areause 
     --[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
@@ -1471,7 +1472,8 @@ VERSION_NUMBER = 1.601
                 eccentricAnomaly = EccentricAnomaly,
                 meanAnomaly = MeanAnomaly,
                 timeToPeriapsis = TimeToPeriapsis,
-                timeToApoapsis = TimeToApoapsis
+                timeToApoapsis = TimeToApoapsis,
+                trueAnomaly = trueAnomaly
             }
         end
         local function new(bodyParameters)
@@ -2278,6 +2280,18 @@ VERSION_NUMBER = 1.601
                         planet.planetarySystemId = galaxyId
                         planet.bodyId = planet.id
                         atlasCopy[galaxyId][planetId] = planet
+                        if minAtlasX == nil or planet.center.x < minAtlasX then
+                            minAtlasX = planet.center.x
+                        end
+                        if maxAtlasX == nil or planet.center.x > maxAtlasX then
+                            maxAtlasX = planet.center.x
+                        end
+                        if minAtlasY == nil or planet.center.y < minAtlasY then
+                            minAtlasY = planet.center.y
+                        end
+                        if maxAtlasY == nil or planet.center.y > maxAtlasY then
+                            maxAtlasY = planet.center.y
+                        end
                     end
                 end
                 PlanetaryReference = PlanetRef()

@@ -2,6 +2,7 @@
 1. Scroll down the the **Assets** and click on **`ArchHUD.zip`**, this should trigger a download for this file.
 1. NOTE: When extracting ZIP file, be sure to check option to keep directory structure if available.
 1. Unzip the file to %ProgramData%\Dual Universe\Game\data\lua\autoconf\custom (or equivalent directory if you did not do default install), this will create an `ArchHUD.conf` file and a `archhud` sub directory in `..\custom`
+1. (NOTE: This will also create an ArchHUDGFN.conf for use on GeForce Now or without the require files.  It will have a version number starting with 1.5XX when installed, the Modular will be 1.6XX+)
 1. If using a databank, manually link the databank to the control unit(s) that will be running the HUD PRIOR to the next step.
 1. In-game, right click your seat and go to Advanced -> Update custom autoconf list - If you get a YAML error, you did not follow the above directions correctly.
 1. IMPORTANT: Right click the seat and set the user control scheme to Keyboard (Advanced -> Change Control Scheme -> Keyboard). This is necessary for the HUD to work, but you can change the actual control scheme in the next step - fear not virtual joystick aces!
