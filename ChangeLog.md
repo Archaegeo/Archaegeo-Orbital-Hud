@@ -1,8 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.516
+Version 1.516 - Dynamic Orbitg panel.
+- New Feature - Dynamic Orbit Panel.  When the Orbit panel is selected, it is now dynamic, showing more when in atmo, going to orbit, and if you escape orbit, the galaxy.
 - Fix typo in hudclass that caused formatting errors for > 1920x1080.
-- Update internally to match Modular version for ease of keeping both branches active.
+- Updated code internally to match Modular version for ease of keeping both branches active.
 
 Version 1.515 - MAJOR Update to HUD appears (Thanks Dimencia!!)
 NOTE NOTE NOTE - This is the version that works on GeForce Now.  Single file install on seat.
