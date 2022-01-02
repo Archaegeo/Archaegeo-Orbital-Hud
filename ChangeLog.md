@@ -1,7 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.602 - New Dynamic Orbit Map
-REMINDER - For GEForce Now you need the Standalone version (ArchHUDStandalone.conf)
+REMINDER - For GEForce Now you need to use the provided ArchHUDGFN.conf standalone version which will install with the modular version.
+It has a version number when loaded of 1.51X+ where the modular one is 1.6XX+
 - New Feature - Dynamic Orbit Panel. When the Orbit panel is selected, it is now dynamic, showing more when in atmo, going to orbit, and if you escape orbit, the galaxy.
 - hudclass.lua FIX: Typo in hudclass.lua that caused text not to line up properly up top at higher resolutions.
 - New Folder on github: RequireRepository - has working replacements for the require files.
