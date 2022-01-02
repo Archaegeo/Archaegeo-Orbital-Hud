@@ -1,8 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.602 
-hudclass.lua FIX: Typo in hudclass.lua that caused text not to line up properly up top at higher resolutions.
-New Folder on github: RequireRepository - has working replacements for the require files.
+- hudclass.lua FIX: Typo in hudclass.lua that caused text not to line up properly up top at higher resolutions.
+- New Folder on github: RequireRepository - has working replacements for the require files.
 
 Version 1.600 - Modularization of ArchHUD for easy user changes. DOES NOT WORK ON GEFORCE NOW (use 1.515 for GFN)
 - Major overhaul to code structure to support modularization. NOTE: Change to any "require" file does not require recompiling or reloading
