@@ -1909,8 +1909,8 @@ function HudClass()
         --if TurnBurn then flightStyle = "TB-"..flightStyle end
         --if not stablized then flightStyle = flightStyle.."-DeCoupled" end
 
-        local labelY1 = crx(99)
-        local labelY2 = crx(80)
+        local labelY1 = cry(99)
+        local labelY2 = cry(80)
         local lineY = cry(85)
         local lineY2 = cry(31)
         local maxMass = 0
