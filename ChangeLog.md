@@ -2,6 +2,7 @@
 
 Version 1.516
 - Fix typo in hudclass that caused formatting errors for > 1920x1080.
+- Update internally to match Modular version for ease of keeping both branches active.
 
 Version 1.515 - MAJOR Update to HUD appears (Thanks Dimencia!!)
 NOTE NOTE NOTE - This is the version that works on GeForce Now.  Single file install on seat.

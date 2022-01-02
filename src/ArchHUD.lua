@@ -1842,8 +1842,6 @@ VERSION_NUMBER = 1.516
         return Radar
     end 
 
-    
-
     local function ConvertResolutionX (v)
         if resolutionWidth == 1920 then 
             return v
@@ -1860,10 +1858,12 @@ VERSION_NUMBER = 1.516
         end
     end
 
-    local function HudClass() -- Everything HUD display releated including tick
+    local function HudClass()
 
         local gravConstant = 9.80665
-
+        local ControlButtons = {}
+        local SettingButtons = {}
+    
         --Local Huds Functions
             -- safezone() variables
                 local safeWorldPos = vec3({13771471,7435803,-128971})
@@ -1884,11 +1884,27 @@ VERSION_NUMBER = 1.516
                     return szsafe, mabs(distsz - safeRadius)
                 end
             end
-
+    
+            local function ConvertResolutionX (v)
+                if resolutionWidth == 1920 then 
+                    return v
+                else
+                    return round(resolutionWidth * v / 1920, 0)
+                end
+            end
+        
+            local function ConvertResolutionY (v)
+                if resolutionHeight == 1080 then 
+                    return v
+                else
+                    return round(resolutionHeight * v / 1080, 0)
+                end
+            end
+    
             local function IsInFreeLook()
                 return sysIsVwLock() == 0 and userControlScheme ~= "keyboard" and isRemote() == 0
             end
-
+    
             local function GetFlightStyle()
                 local flightStyle = "TRAVEL"
                 if not throttleMode then
@@ -1948,9 +1964,9 @@ VERSION_NUMBER = 1.516
                                 break
                             end
                         end
-
+    
                         local curTime = systime()
-
+    
                         if fuelTimeLeftTable[i] == nil or fuelPercentTable[i] == nil or (curTime - tankTable[i][tankLastTime]) > fuelUpdateDelay then
                             
                             local fuelMassLast
@@ -2021,10 +2037,10 @@ VERSION_NUMBER = 1.516
                 end
                 tankY = y1
             end
-
+    
             local function DrawVerticalSpeed(newContent, altitude) -- Draw vertical speed indicator - Code by lisa-lionheart
                 if (altitude < 200000 and not inAtmo) or (altitude and inAtmo) then
-
+    
                     local angle = 0
                     if mabs(vSpd) > 1 then
                         angle = 45 * math.log(mabs(vSpd), 10)
@@ -2052,7 +2068,7 @@ VERSION_NUMBER = 1.516
                 end
                 return newContent
             end
-
+    
             local function getHeading(forward) -- code provided by tomisunlucky   
                 local up = -worldVertical
                 forward = forward - forward:project_on(up)
@@ -2065,7 +2081,7 @@ VERSION_NUMBER = 1.516
                 end
                 return angle
             end
-
+    
             local function DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
                 local horizonRadius = circleRad -- Aliased global
                 local OFFSET = 20
@@ -2133,7 +2149,7 @@ VERSION_NUMBER = 1.516
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(85), bottomText, "dim txt txtmid size20","")
                 newContent[#newContent + 1] = [[</g>]]
             end
-
+    
             local function DrawArtificialHorizon(newContent, originalPitch, originalRoll, centerX, centerY, nearPlanet, atmoYaw, speed)
                 -- ** CIRCLE ALTIMETER  - Base Code from Discord @Rainsome = Youtube CaptainKilmar** 
                 local horizonRadius = circleRad -- Aliased global
@@ -2220,7 +2236,7 @@ VERSION_NUMBER = 1.516
                     end
                 end
             end
-
+    
             local function DrawAltitudeDisplay(newContent, altitude, nearPlanet)
                 local rectX = altMeterX
                 local rectY = altMeterY
@@ -2228,11 +2244,11 @@ VERSION_NUMBER = 1.516
                 local rectH = 19
             
                 local gndHeight = abvGndDet
-
+    
                 if abvGndDet ~= -1 then
                     newContent[#newContent + 1] = svgText(rectX+rectW, rectY+rectH+20, stringf("AGL: %.1fm", abvGndDet), "pdim altsm txtend")
                 end
-
+    
                 if nearPlanet and ((altitude < 200000 and not inAtmo) or (altitude and inAtmo)) then
                     table.insert(newContent, stringf([[
                         <g class="pdim">                        
@@ -2245,14 +2261,14 @@ VERSION_NUMBER = 1.516
                     local divisor = 1
                     local forwardFract = 0
                     local isNegative = altitude < 0
-
+    
                     local isLand = altitude < planet.surfaceMaxAltitude
-
+    
                     local rolloverDigit = 9
                     if isNegative then
                         rolloverDigit = 0
                     end
-
+    
                     local altitude = mabs(altitude)
                     while index < 6 do
                         local glyphW = 11
@@ -2286,7 +2302,7 @@ VERSION_NUMBER = 1.516
                                 fract = 1 - fract
                             end
                         end
-
+    
                         if isNegative and (index == 0 or forwardFract ~= 0) then
                             local temp = fracDigit
                             fracDigit = intDigit
@@ -2301,7 +2317,7 @@ VERSION_NUMBER = 1.516
                         
                         newContent[#newContent + 1] = svgText(x, y + topGlyphOffset,fracDigit, class)
                         newContent[#newContent + 1] = svgText(x, y + botGlyphOffset,intDigit , class)
-
+    
                         index = index + 1
                         divisor = divisor * 10
                         if intDigit == rolloverDigit then
@@ -2313,7 +2329,7 @@ VERSION_NUMBER = 1.516
                     table.insert(newContent, [[</g></g>]])
                 end
             end
-
+    
             local function getRelativePitch(velocity)
                 local pitch = -math.deg(atan(velocity.y, velocity.z)) + 180
                 -- This is 0-360 where 0 is straight up
@@ -2329,7 +2345,7 @@ VERSION_NUMBER = 1.516
                 -- And it's backwards.  
                 return -pitch
             end
-
+    
             local function getRelativeYaw(velocity)
                 local yaw = math.deg(atan(velocity.y, velocity.x)) - 90
                 if yaw < -180 then
@@ -2337,7 +2353,7 @@ VERSION_NUMBER = 1.516
                 end
                 return yaw
             end    
-
+    
             local function DrawPrograde (newContent, velocity, speed, centerX, centerY)
                 if (speed > 5 and not inAtmo) or (speed > minAutopilotSpeed) then
                     local horizonRadius = circleRad -- Aliased global
@@ -2441,7 +2457,7 @@ VERSION_NUMBER = 1.516
                     end
                 end
             end
-
+    
             local function DrawThrottle(newContent, flightStyle, throt, flightValue)
                 throt = mfloor(throt+0.5) -- Hard-round it to an int
                 local y1 = throtPosY+10
@@ -2494,7 +2510,7 @@ VERSION_NUMBER = 1.516
                     newContent[#newContent + 1] = svgText(throtPosX+10, y1-40, "LIMIT: ".. mfloor(MaxGameVelocity*3.6+0.5) .. " km/h", "dim txtstart")
                 end
             end
-
+    
             local function DrawSpeed(newContent, spd)
                 local ys = throtPosY-10 
                 local x1 = throtPosX + 10
@@ -2504,9 +2520,9 @@ VERSION_NUMBER = 1.516
                 end
                 newContent[#newContent + 1] = svgText( x1, ys, mfloor(spd).." km/h" , "pbright txtbig txtstart")
             end
-
+    
             local function DrawWarnings(newContent)
-
+    
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(1900), ConvertResolutionY(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
                 newContent[#newContent + 1] = [[<g class="warnings">]]
                 if unit.isMouseControlActivated() == 1 then
@@ -2533,7 +2549,7 @@ VERSION_NUMBER = 1.516
                 local onFill = "white"
                 local defaultClass = "dimmer"
                 local fillClass = "pbright"
-
+    
                 local brakeFill = "#110000"
                 local brakeStroke = defaultStroke
                 local brakeClass = defaultClass
@@ -2560,7 +2576,7 @@ VERSION_NUMBER = 1.516
                 if ReversalIsOn then
                     newContent[#newContent + 1] = svgText(warningX, apY+90, "Flight Assist in Progress", "warnings")
                 end
-
+    
                 if gyroIsOn then
                     newContent[#newContent + 1] = svgText(warningX, gyroY, "Gyro Enabled", "warnings")
                 end
@@ -2690,24 +2706,24 @@ VERSION_NUMBER = 1.516
                     boardersStroke = onFill
                     boardersClass = fillClass
                 end
-
+    
                 -- Removed because nobody liked these 'lights' at the bottom
                 --newContent[#newContent + 1] = stringf([[
                 --    <path class="linethick %s" style="fill:%s" d="M 730 940 l 100 0 l 50 50 l -200 0 l 50 -50 Z"/>
                 --    <text class="txtmid size20" x=780 y=975 style="fill:%s">BOARDERS</text>
                 --    <path class="linethick %s" style="fill:%s" d="M 1190 940 l -100 0 l -50 50 l 200 0 l -50 -50 Z"/>
                 --    <text class="txtmid size20" x=1140 y=975 style="fill:%s">COLLISION</text>
-
+    
                 --    <path class="linethick %s" style="fill:%s" d="M 675 1000 l 100 0 l 50 50 l -200 0 l 50 -50 Z"/>
                 --    <text class="txtmid size20" x=725 y=1030 style="fill:%s">BRAKE</text>
                 --    <path class="linethick %s" style="fill:%s" d="M 790 1000 l 95 0 l 50 50 l -95 0 l -50 -50 Z"/>
                 --    <text class="txtmid size20" x=860 y=1030 style="fill:%s">GEAR</text>
-
+    
                 --    <path class="linethick %s" style="fill:%s" d="M 1245 1000 l -100 0 l -50 50 l 200 0 l -50 -50 Z"/>
                 --    <text class="txtmid size20" x=1195 y=1030 style="fill:%s">ROCKETS</text>
                 --    <path class="linethick %s" style="fill:%s" d="M 1130 1000 l -95 0 l -50 50 l 95 0 l 50 -50 Z"/>
                 --    <text class="txtmid size20" x=1055 y=1030 style="fill:%s">AGG</text>
-
+    
                 --    <path class="linethick %s" style="fill:%s" d="M 850 940 l 220 0 l -110 110 l -110 -110 Z"/>
                 --    <text class="txtmid" x=960 y=980 style="font-size:32px;fill:%s">STALL</text>
                 --]], boardersClass, boardersFill, boardersStroke, 
@@ -2719,7 +2735,7 @@ VERSION_NUMBER = 1.516
                 --stallClass, stallFill, stallStroke)
                 local crx = ConvertResolutionX
                 local cry = ConvertResolutionY
-
+    
                 local defaultClass = "topButton"
                 local activeClass = "topButtonActive"
                 local apClass = defaultClass
@@ -2746,7 +2762,7 @@ VERSION_NUMBER = 1.516
                 if IntoOrbit or (OrbitAchieved and Autopilot) then
                     orbitClass = activeClass
                 end
-
+    
                 local texty = cry(30)
                 newContent[#newContent + 1] = stringf([[ 
                     <g class="pdim txt txtmid">
@@ -2756,35 +2772,35 @@ VERSION_NUMBER = 1.516
                 newContent[#newContent + 1] = svgText(crx(910),texty, "AUTOPILOT")
                 newContent[#newContent + 1] = stringf([[
                         </g>
-
+    
                         <g class="%s">
                         <path d="M %f %f l %f %f l %f 0 l %f %f Z"/>
                         ]], progradeClass, crx(865), cry(51), crx(-25), cry(-50), crx(-110), crx(25), cry(46))
                 newContent[#newContent + 1] = svgText(crx(800), texty, "PROGRADE")
                 newContent[#newContent + 1] = stringf([[
                         </g>
-
+    
                         <g class="%s">
                         <path d="M %f %f l %f %f l %f 0 l %f %f Z"/>
                         ]], landClass, crx(755), cry(47), crx(-25), cry(-46), crx(-98), crx(44), cry(44))
                 newContent[#newContent + 1] = svgText(crx(700), texty, "LAND")
                 newContent[#newContent + 1] = stringf([[
                         </g>
-
+    
                         <g class="%s">
                         <path d="M %f %f l 0 %f l %f 0 l %f %f Z"/>
                         ]], altHoldClass, crx(960), cry(54), cry(-53), crx(120), crx(-25), cry(50))
                 newContent[#newContent + 1] = svgText(crx(1010), texty, "ALT HOLD")
                 newContent[#newContent + 1] = stringf([[
                         </g>
-
+    
                         <g class="%s">
                         <path d="M %f %f l %f %f l %f 0 l %f %f Z"/>
                         ]], retroClass, crx(1055), cry(51), crx(25), cry(-50), crx(110), crx(-25), cry(46))
                 newContent[#newContent + 1] = svgText(crx(1122), texty, "RETROGRADE")
                 newContent[#newContent + 1] = stringf([[
                         </g>
-
+    
                         <g class="%s">
                         <path d="M %f %f l %f %f l %f 0 l %f %f Z"/>
                         ]], orbitClass, crx(1165), cry(47), crx(25), cry(-46), crx(98), crx(-44), cry(44))
@@ -2796,11 +2812,11 @@ VERSION_NUMBER = 1.516
                 newContent[#newContent + 1] = "</g>"
                 return newContent
             end
-
+    
             local function getSpeedDisplayString(speed) -- TODO: Allow options, for now just do kph
                 return mfloor(round(speed * 3.6, 0) + 0.5) .. " km/h" -- And generally it's not accurate enough to not twitch unless we round 0
             end
-
+    
             local function DisplayHelp(newContent)
                 local x = OrbitMapX+10
                 local y = OrbitMapY+20
@@ -2879,12 +2895,12 @@ VERSION_NUMBER = 1.516
                 local orbitMapY = ConvertResolutionY(OrbitMapY)
                 local orbitMapSize = OrbitMapSize -- Always square
                 local pad = 4
-
+    
                 local orbitInfoYOffset = 15
                 local x = 0
                 local y = 0
                 local rx, ry, scale, xOffset
-
+    
                 local function orbitInfo(type)
                     local alt, time, speed, line
                     if type == "Periapsis" then
@@ -2898,7 +2914,7 @@ VERSION_NUMBER = 1.516
                         speed = orbit.apoapsis.speed
                         line = -35
                     end
-
+    
                     newContent[#newContent + 1] = svgText(x, y, type)
                     y = y + orbitInfoYOffset
                     local displayText = getDistanceDisplayString(alt)
@@ -2908,12 +2924,12 @@ VERSION_NUMBER = 1.516
                     y = y + orbitInfoYOffset
                     newContent[#newContent + 1] = svgText(x, y, getSpeedDisplayString(speed))
                 end
-
+    
                 local targetHeight = orbitMapSize*1.5
                 if SelectedTab == "INFO" then
                     targetHeight = 25*8
                 end
-
+    
                 if SelectedTab ~= "HIDE" then
                 newContent[#newContent + 1] = [[<g class="pbright txtorb txtmid">]]
                 -- Draw a darkened box around it to keep it visible
@@ -2921,8 +2937,8 @@ VERSION_NUMBER = 1.516
                                                 '<rect width="%f" height="%d" rx="10" ry="10" x="%d" y="%d" class="dimfill brightstroke" style="stroke-width:3;fill-opacity:0.3;" />',
                                                 orbitMapSize*2, targetHeight, orbitMapX, orbitMapY)
                 end
-
-
+    
+    
                 if SelectedTab == "ORBIT" then
                     -- If orbits are up, let's try drawing a mockup
                     
@@ -2955,7 +2971,7 @@ VERSION_NUMBER = 1.516
             
                     y = orbitMapY + orbitMapSize*1.5 / 2 + 5 + pad
                     x = orbitMapX + orbitMapSize * 1.5 + pad
-
+    
                     if orbit.apoapsis ~= nil and orbit.apoapsis.speed < MaxGameVelocity and orbit.apoapsis.speed > 1 then
                         orbitInfo("Apoapsis")
                     end
@@ -2994,7 +3010,7 @@ VERSION_NUMBER = 1.516
                     return newContent
                 end
             end
-
+    
             local function getPipeDistance(origCenter, destCenter)  -- Many thanks to Tiramon for the idea and functionality.
                 local pipeDistance
                 local pipe = (destCenter - origCenter):normalize()
@@ -3008,7 +3024,7 @@ VERSION_NUMBER = 1.516
                 pipeDistance =  (L - worldPos):len()
                 return pipeDistance
             end
-
+    
             local function getClosestPipe() -- Many thanks to Tiramon for the idea and functionality, thanks to Dimencia for the assist
                 local pipeDistance
                 local nearestDistance = nil
@@ -3044,11 +3060,436 @@ VERSION_NUMBER = 1.516
                     pipeMessage = svgText(pipeX, pipeY, "Pipe ("..pipeOriginPlanet.name.."--"..nearestPipePlanet.name.."): "..pipeDistance, txtadd.."pbright txtmid") 
                 end
             end
-
-
+    
+            local function MakeTabButton(x, y, width, height, label)
+                local newButton = {
+                    x = x, 
+                    y = y,
+                    width = width,
+                    height = height,
+                    label = label
+                }
+                TabButtons[label] = newButton
+                return newButton
+            end
+    
+            local function MakeButton(enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition, buttonList)
+                local newButton = {
+                    enableName = enableName,
+                    disableName = disableName,
+                    width = width,
+                    height = height,
+                    x = x,
+                    y = y,
+                    toggleVar = toggleVar,
+                    toggleFunction = toggleFunction,
+                    drawCondition = drawCondition,
+                    hovered = false
+                }
+                if buttonList then 
+                    table.insert(SettingButtons, newButton)
+                else
+                    table.insert(ControlButtons, newButton)
+                end
+                return newButton -- readonly, I don't think it will be saved if we change these?  Maybe.
+                
+            end
+    
+            local function ToggleShownSettings(whichVar)
+                if not showSettings then
+                    showHandlingVariables = false
+                    showHudVariables = false
+                    showPhysicsVariables = false
+                    showHud = true
+                    return
+                elseif whichVar == "handling" then
+                    showHandlingVariables = not showHandlingVariables
+                    showHudVariables = false
+                    showPhysicsVariables = false
+                elseif whichVar == "hud" then 
+                    showHudVariables = not showHudVariables
+                    showHandlingVariables = false
+                    showPhysicsVariables = false
+                elseif whichVar == "physics" then
+                    showPhysicsVariables = not showPhysicsVariables
+                    showHandlingVariables = false
+                    showHudVariables = false
+                end
+                if showPhysicsVariables or showHudVariables or showHandlingVariables then 
+                    settingsVariables = saveableVariables(whichVar)
+                    showHud = false 
+                else
+                    settingsVariables = {}
+                    showHud = true
+                end
+            end
+    
+            local function ToggleButtons()
+                showSettings = not showSettings 
+                if showSettings then 
+                    Buttons = SettingButtons
+                    msgText = "Hold SHIFT to see Settings" 
+                    oldShowHud = showHud
+                else
+                    Buttons = ControlButtons
+                    msgText = "Hold SHIFT to see Control Buttons"
+                    ToggleShownSettings()
+                    showHud = oldShowHud
+                end
+            end
+    
+            local function SettingsButtons()
+                local function ToggleBoolean(v)
+    
+                    _G[v] = not _G[v]
+                    if _G[v] then 
+                        msgText = v.." set to true"
+                    else
+                        msgText = v.." set to false"
+                    end
+                    if v == "showHud" then
+                        oldShowHud = _G[v]
+                    elseif v == "BrakeToggleDefault" then 
+                        BrakeToggleStatus = BrakeToggleDefault
+                    end
+                end
+                local buttonHeight = 50
+                local buttonWidth = 340 -- Defaults
+                local x = 500
+                local y = resolutionHeight / 2 - 400
+                local cnt = 0
+                for k, v in pairs(saveableVariables("boolean")) do
+                    if type(_G[v]) == "boolean" then
+                        MakeButton(v, v, buttonWidth, buttonHeight, x, y,
+                            function() return _G[v] end, 
+                            function() ToggleBoolean(v) end,
+                            function() return true end, true) 
+                        y = y + buttonHeight + 20
+                        if cnt == 9 then 
+                            x = x + buttonWidth + 20 
+                            y = resolutionHeight / 2 - 400
+                            cnt = 0
+                        else
+                            cnt = cnt + 1
+                        end
+                    end
+                end
+                MakeButton("Control View", "Control View", buttonWidth, buttonHeight, 10, resolutionHeight / 2 - 500, function() return true end, 
+                    ToggleButtons, function() return true end, true)
+                MakeButton("View Handling Settings", 'Hide Handling Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight), 
+                    function() return showHandlingVariables end, function() ToggleShownSettings("handling") end, 
+                    function() return true end, true)
+                MakeButton("View Hud Settings", 'Hide Hud Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight*2), 
+                    function() return showHudVariables end, function() ToggleShownSettings("hud") end, 
+                    function() return true end, true)
+                MakeButton("View Physics Settings", 'Hide Physics Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight*3), 
+                    function() return showPhysicsVariables end, function() ToggleShownSettings("physics") end, 
+                    function() return true end, true)
+            end
+            
+            local function ControlsButtons()
+                local function AddNewLocation()
+                    -- Add a new location to SavedLocations
+                    local position = worldPos
+                    local name = planet.name .. ". " .. #SavedLocations
+                    if radars[1] then -- Just match the first one
+                        local id,_ = radars[1].getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
+                        if id ~= nil and id ~= "" then
+                            name = name .. " " .. radars[1].getConstructName(id)
+                        end
+                    end
+                    
+                    return ATLAS.AddNewLocation(name, position, false, true)
+                    
+                end
+                
+                local function ToggleTurnBurn()
+                    TurnBurn = not TurnBurn
+                end
+    
+                local function gradeToggle(pro)
+                    if pro == 1 then 
+                        ProgradeIsOn = not ProgradeIsOn
+                        RetrogradeIsOn = false
+                    else
+                        RetrogradeIsOn = not RetrogradeIsOn
+                        ProgradeIsOn = false
+                    end        
+                    Autopilot = false
+                    AltitudeHold = false
+                    followMode = false
+                    BrakeLanding = false
+                    LockPitch = nil
+                    Reentry = false
+                    AutoTakeoff = false
+                end
+    
+                local function UpdatePosition()
+                    ATLAS.UpdatePosition()
+                end
+                local function ClearCurrentPosition()
+                    -- So AutopilotTargetIndex is special and not a real index.  We have to do this by hand.
+                        ATLAS.ClearCurrentPosition()
+                end
+    
+                local function getAPName(index)
+                    local name = AutopilotTargetName
+                    if index ~= nil and type(index) == "number" then 
+                        if index == 0 then return "None" end
+                        name = AtlasOrdered[index].name
+                    end
+                    if name == nil then
+                        name = CustomTarget.name
+                    end
+                    if name == nil then
+                        name = "None"
+                    end
+                    return name
+                end
+                
+                local function getAPEnableName(index)
+                    return "Engage Autopilot: " .. getAPName(index)
+                end
+    
+                local function getAPDisableName(index)
+                    return "Disable Autopilot: " .. getAPName(index)
+                end   
+    
+                local function ToggleFollowMode() -- Toggle Follow Mode on and off
+                    if isRemote() == 1 then
+                        followMode = not followMode
+                        if followMode then
+                            Autopilot = false
+                            RetrogradeIsOn = false
+                            ProgradeIsOn = false
+                            AltitudeHold = false
+                            Reentry = false
+                            BrakeLanding = false
+                            AutoTakeoff = false
+                            OldGearExtended = GearExtended
+                            GearExtended = false
+                            Nav.control.retractLandingGears()
+                            navCom:setTargetGroundAltitude(TargetHoverHeight)
+                            play("folOn","F")
+                        else
+                            play("folOff","F")
+                            BrakeIsOn = true
+                            autoRoll = autoRollPreference
+                            GearExtended = OldGearExtended
+                            if GearExtended then
+                                Nav.control.extendLandingGears()
+                                navCom:setTargetGroundAltitude(LandingGearGroundHeight)
+                            end
+                        end
+                    else
+                        msgText = "Follow Mode only works with Remote controller"
+                        followMode = false
+                    end
+                end
+            
+                -- BEGIN BUTTON DEFINITIONS
+            
+                -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
+                
+                local buttonHeight = 50
+                local buttonWidth = 260 -- Defaults
+                local brake = MakeButton("Enable Brake Toggle", "Disable Brake Toggle", buttonWidth, buttonHeight,
+                                    resolutionWidth / 2 - buttonWidth / 2, resolutionHeight / 2 + 350, function()
+                        return BrakeToggleStatus
+                    end, function()
+                        BrakeToggleStatus = not BrakeToggleStatus
+                        if (BrakeToggleStatus) then
+                            msgText = "Brakes in Toggle Mode"
+                        else
+                            msgText = "Brakes in Default Mode"
+                        end
+                    end)
+                MakeButton("Align Prograde", "Disable Prograde", buttonWidth, buttonHeight,
+                    resolutionWidth / 2 - buttonWidth / 2 - 50 - brake.width, resolutionHeight / 2 - buttonHeight + 380,
+                    function()
+                        return ProgradeIsOn
+                    end, function() gradeToggle(1) end)
+                MakeButton("Align Retrograde", "Disable Retrograde", buttonWidth, buttonHeight,
+                    resolutionWidth / 2 - buttonWidth / 2 + brake.width + 50, resolutionHeight / 2 - buttonHeight + 380,
+                    function()
+                        return RetrogradeIsOn
+                    end, gradeToggle, function()
+                        return atmosDensity == 0
+                    end) -- Hope this works
+                apbutton = MakeButton(getAPEnableName, getAPDisableName, 600, 60, resolutionWidth / 2 - 600 / 2,
+                                        resolutionHeight / 2 - 60 / 2 - 330, function()
+                        return Autopilot or VectorToTarget or spaceLaunch or IntoOrbit
+                    end, function() end) -- No toggle function because we draw over this with things that do toggle
+                -- Make 9 more buttons that only show when moused over the AP button
+                local i
+                local function getAtlasIndexFromAddition(add)
+                    local index = apScrollIndex + add
+                    if index > #AtlasOrdered then
+                        index = index-#AtlasOrdered-1
+                    end
+                    if index < 0 then
+                        index = #AtlasOrdered+index
+                    end
+                    
+                    return index
+                end
+                apExtraButtons = {}
+                for i=0,10 do
+                    local button = MakeButton(function(b)
+                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
+                        if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
+                            return "Redirect: " .. getAPName(index)
+                        end
+                        return getAPEnableName(index)
+                    end, function(b)
+                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
+                        return getAPDisableName(index)
+                    end, 600, 60, resolutionWidth/2 - 600/2, 
+                    resolutionHeight/2 - 60/2 - 330 + 60*i, function(b)
+                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
+                        return index == AutopilotTargetIndex and (Autopilot or VectorToTarget or spaceLaunch or IntoOrbit)
+                    end, function(b)
+                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
+                        local disable = AutopilotTargetIndex == index
+                        AutopilotTargetIndex = index
+                        ATLAS.UpdateAutopilotTarget()
+                        ToggleAutopilot()
+                        -- Let buttons redirect AP, they're hard to do by accident
+                        if not disable and not (Autopilot or VectorToTarget or spaceLaunch or IntoOrbit) then
+                            ToggleAutopilot()
+                        end
+                    end, function()
+                        return apButtonsHovered
+                    end)
+                    button.apExtraIndex = i
+                    apExtraButtons[i] = button
+                end
+    
+    
+                MakeButton("Save Position", "Save Position", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y,
+                    function()
+                        return false
+                    end, AddNewLocation, function()
+                        return AutopilotTargetIndex == 0 or CustomTarget == nil
+                    end)
+                MakeButton("Update Position", "Update Position", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y,
+                    function()
+                        return false
+                    end, UpdatePosition, function()
+                        return AutopilotTargetIndex > 0 and CustomTarget ~= nil
+                    end)
+                MakeButton("Clear Position", "Clear Position", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y,
+                    function()
+                        return true
+                    end, ClearCurrentPosition, function()
+                        return AutopilotTargetIndex > 0 and CustomTarget ~= nil
+                    end)
+                -- The rest are sort of standardized
+                buttonHeight = 60
+                buttonWidth = 300
+                local x = 0
+                local y = resolutionHeight / 2 - 150
+                MakeButton("View Settings", "View Settings", buttonWidth, buttonHeight, x, y, function() return true end, ToggleButtons)
+                y = y + buttonHeight + 20
+                MakeButton("Enable Turn and Burn", "Disable Turn and Burn", buttonWidth, buttonHeight, x, y, function()
+                    return TurnBurn
+                end, ToggleTurnBurn)
+                x = 10
+                y = resolutionHeight / 2 - 300
+                MakeButton("Horizontal Takeoff Mode", "Vertical Takeoff Mode", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
+                    function() return VertTakeOffEngine end, 
+                    function () 
+                        VertTakeOffEngine = not VertTakeOffEngine 
+                        if VertTakeOffEngine then 
+                            msgText = "Vertical Takeoff Mode"
+                        else
+                            msgText = "Horizontal Takeoff Mode"
+                        end
+                    end, function() return UpVertAtmoEngine end)
+                y = y + buttonHeight + 20
+    
+                -- prevent this button from being an option until you're in atmosphere
+                MakeButton("Engage Orbiting", "Cancel Orbiting", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
+                        function()
+                            return IntoOrbit
+                        end, ToggleIntoOrbit, function()
+                            return (atmosDensity == 0 and nearPlanet)
+                        end)
+                y = y + buttonHeight + 20
+                MakeButton("Glide Re-Entry", "Cancel Glide Re-Entry", buttonWidth, buttonHeight, x, y,
+                    function() return Reentry end, function() spaceLand = 1 gradeToggle(1) end, function() return (planet.hasAtmosphere and not inAtmo) end )
+                MakeButton("Parachute Re-Entry", "Cancel Parachute Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
+                    function() return Reentry end, BeginReentry, function() return (planet.hasAtmosphere and not inAtmo) end )
+                y = y + buttonHeight + 20
+                MakeButton("Engage Follow Mode", "Disable Follow Mode", buttonWidth, buttonHeight, x, y, function()
+                    return followMode
+                    end, ToggleFollowMode, function()
+                        return isRemote() == 1
+                    end)
+                    MakeButton("Enable Repair Arrows", "Disable Repair Arrows", buttonWidth, buttonHeight, x + buttonWidth + 20, y, function()
+                        return repairArrows
+                    end, function()
+                        repairArrows = not repairArrows
+                        if (repairArrows) then
+                            msgText = "Repair Arrows Enabled"
+                        else
+                            msgText = "Repair Arrows Diabled"
+                        end
+                    end, function()
+                        return isRemote() == 1
+                    end)
+                y = y + buttonHeight + 20
+                if not ExternalAGG then
+                    MakeButton("Enable AGG", "Disable AGG", buttonWidth, buttonHeight, x, y, function()
+                    return antigravOn end, ToggleAntigrav, function()
+                    return antigrav ~= nil end)
+                end
+                MakeButton(function() return stringf("Switch IPH Mode - Current: %s", iphCondition)
+                end, function()
+                    return stringf("IPH Mode: %s", iphCondition)
+                end, buttonWidth * 2, buttonHeight, x, y, function()
+                    return false
+                end, function()
+                    if iphCondition == "All" then
+                        iphCondition = "Custom Only"
+                    elseif iphCondition == "Custom Only" then
+                        iphCondition = "No Moons"
+                    else
+                        iphCondition = "All"
+                    end
+                    msgText = "IPH Mode: "..iphCondition
+                end)
+                y = y + buttonHeight + 20
+                MakeButton(function() return stringf("Toggle Control Scheme - Current: %s", userControlScheme)
+                    end, function()
+                        return stringf("Control Scheme: %s", userControlScheme)
+                    end, buttonWidth * 2, buttonHeight, x, y, function()
+                        return false
+                    end, function()
+                        if userControlScheme == "keyboard" then
+                            userControlScheme = "mouse"
+                        elseif userControlScheme == "mouse" then
+                            userControlScheme = "virtual joystick"
+                        else
+                            userControlScheme = "keyboard"
+                        end
+                        msgText = "New Control Scheme: "..userControlScheme
+                    end)
+    
+    
+                -- Make tab buttons
+                local tabHeight = ConvertResolutionY(20)
+                local button = MakeTabButton(0, 0, ConvertResolutionX(70), tabHeight, "INFO")
+                button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(80),tabHeight, "ORBIT")
+                button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"HELP")
+                MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"HIDE")
+            end
+    
+    
         local Hud = {}
         local StaticPaths = nil
-
+    
+    
         function Hud.HUDPrologue(newContent)
             notPvPZone, pvpDist = safeZone(worldPos)
             if not notPvPZone then -- misnamed variable, fix later
@@ -3079,7 +3520,7 @@ VERSION_NUMBER = 1.516
                 dim = [[rgb(]] .. mfloor(PrimaryR * 0.3 + 0.5) .. "," .. mfloor(PrimaryG * 0.3 + 0.5) .. "," ..
                         mfloor(PrimaryB * 0.2 + 0.5) .. [[)]]
             end
-        
+    
             -- When applying styles, apply color first, then type (e.g. "bright line")
             -- so that "fill:none" gets applied
             local crx = ConvertResolutionX
@@ -3196,12 +3637,11 @@ VERSION_NUMBER = 1.516
             newContent[#newContent+1] = StaticPaths
             return newContent
         end
-
+    
         function Hud.DrawVerticalSpeed(newContent, altitude)
             DrawVerticalSpeed(newContent, altitude)
         end
-
-
+    
         function Hud.UpdateHud(newContent)
             local pitch = adjustedPitch
             local roll = adjustedRoll
@@ -3216,12 +3656,12 @@ VERSION_NUMBER = 1.516
                 flightValue = PlayerThrottle
                 throt = PlayerThrottle*100
             end
-        
+    
             local flightStyle = GetFlightStyle()
             local bottomText = "ROLL"
             
             if throt == nil then throt = 0 end
-        
+    
             if (not nearPlanet) then
                 if (velMag > 5) then
                     pitch = getRelativePitch(coreVelocity)
@@ -3238,31 +3678,31 @@ VERSION_NUMBER = 1.516
                 dist = getDistanceDisplayString(pvpDist)
                 newContent[#newContent + 1] = svgText(pvpBoundaryX, pvpBoundaryY, "PvP Boundary: "..dist, "pbright txtbig txtmid")
             end
-
+    
             -- CRUISE/ODOMETER
-        
+    
             newContent[#newContent + 1] = lastOdometerOutput
-        
+    
             -- DAMAGE
-        
+    
             newContent[#newContent + 1] = damageMessage
-        
+    
             -- RADAR
-        
+    
             newContent[#newContent + 1] = radarMessage
-
+    
             -- Pipe distance
-
+    
             if pipeMessage ~= "" then newContent[#newContent +1] = pipeMessage end
-        
-
+    
+    
             if tankMessage ~= "" then newContent[#newContent + 1] = tankMessage end
             if shieldMessage ~= "" then newContent[#newContent +1] = shieldMessage end
             -- PRIMARY FLIGHT INSTRUMENTS
-        
+    
             DrawVerticalSpeed(newContent, coreAltitude) -- Weird this is draw during remote control...?
-        
-        
+    
+    
             if isRemote() == 0 or RemoteHud then
                 -- Draw this in freelook now that it's less intrusive
                 if nearPlanet then -- use real pitch, roll, and heading
@@ -3282,24 +3722,24 @@ VERSION_NUMBER = 1.516
                     DrawPrograde(newContent, coreVelocity, velMag, centerX, centerY)
                 end
             end
-
+    
             DrawThrottle(newContent, flightStyle, throt, flightValue)
-        
+    
             -- PRIMARY DATA DISPLAYS
-        
+    
             DrawSpeed(newContent, spd)
-        
+    
             DrawWarnings(newContent)
             DisplayOrbitScreen(newContent)
-
+    
             return newContent
         end
-
+    
         function Hud.HUDEpilogue(newContent)
             newContent[#newContent + 1] = "</svg>"
             return newContent
         end
-
+    
         function Hud.ExtraData(newContent)
             local xg = ConvertResolutionX(1240)
             local yg1 = ConvertResolutionY(55)
@@ -3307,7 +3747,7 @@ VERSION_NUMBER = 1.516
             local gravity 
             local crx = ConvertResolutionX
             local cry = ConvertResolutionY
-
+    
             local brakeValue = 0
             local flightStyle = GetFlightStyle()
             --if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
@@ -3315,15 +3755,14 @@ VERSION_NUMBER = 1.516
             --if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
             --if TurnBurn then flightStyle = "TB-"..flightStyle end
             --if not stablized then flightStyle = flightStyle.."-DeCoupled" end
-
+    
             local labelY1 = cry(99)
             local labelY2 = cry(80)
-            local lineY = cr
-            y(85)
+            local lineY = cry(85)
             local lineY2 = cry(31)
             local maxMass = 0
             local reqThrust = 0
-
+    
             local mass = coreMass > 1000000 and round(coreMass / 1000000,2).."kT" or round(coreMass / 1000, 2).."T"
             if inAtmo then brakeValue = LastMaxBrakeInAtmo else brakeValue = LastMaxBrake end
             local brkDist, brkTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, brakeValue)
@@ -3338,7 +3777,7 @@ VERSION_NUMBER = 1.516
                 maxMass = maxMass > 1000000 and round(maxMass / 1000000,2).."kT" or round(maxMass / 1000, 2).."T"
             end
             maxThrust = round((maxThrust / (coreMass * gravConstant)),2).."g"
-
+    
             local accel = (vec3(core.getWorldAcceleration()):len() / 9.80665)
             gravity =  core.g()
             newContent[#newContent + 1] = [[<g class="dim txt txtend size14">]]
@@ -3355,11 +3794,11 @@ VERSION_NUMBER = 1.516
             newContent[#newContent + 1] = svgText(crx(1025), labelY1, "GRAVITY", "txtstart")
             newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1025), lineY, crx(80))
             newContent[#newContent + 1] = svgText(crx(1105), labelY2, stringf("%.2fg", (gravity / 9.80665)), "size20")
-
+    
             newContent[#newContent + 1] = svgText(crx(1125), labelY1, "ACCEL", "txtstart")
             newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1125), lineY, crx(80))
             newContent[#newContent + 1] = svgText(crx(1205), labelY2, stringf("%.2fg", accel), "size20") 
-
+    
             newContent[#newContent + 1] = svgText(crx(695), labelY1, "BRK TIME", "")
             newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(695),lineY, crx(-80))
             newContent[#newContent + 1] = svgText(crx(615), labelY2, stringf("%s", FormatTimeString(brkTime)), "txtstart size20") 
@@ -3385,11 +3824,11 @@ VERSION_NUMBER = 1.516
             newContent[#newContent + 1] = svgText(crx(1220), labelY1, "THRUST", "txtstart")
             newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]], crx(1220), lineY, crx(80))
             newContent[#newContent + 1] = svgText(crx(1300), labelY2, stringf("%s", maxThrust), "size20") 
-
+    
             newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(175), flightStyle, "pbright txtbig txtmid size20")
             newContent[#newContent + 1] = "</g>"
         end
-
+    
         function Hud.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
             if SelectedTab ~= "INFO" then return newContent end
             local gravity 
@@ -3435,15 +3874,15 @@ VERSION_NUMBER = 1.516
             newContent[#newContent + 1] = "</g></g>"
             return newContent
         end
-
+    
         function Hud.DrawWarnings(newContent)
             return DrawWarnings(newContent)
         end
-
+    
         function Hud.DisplayOrbitScreen(newContent)
             return DisplayOrbitScreen(newContent)
         end
-
+    
         function Hud.DisplayMessage(newContent, displayText)
             if displayText ~= "empty" then
                 local y = 310
@@ -3457,13 +3896,13 @@ VERSION_NUMBER = 1.516
                 msgTimer = 0
             end
         end
-
+    
         function Hud.DrawDeadZone(newContent)
             newContent[#newContent + 1] = stringf(
                                             [[<circle class="dim line" style="fill:none" cx="50%%" cy="50%%" r="%d"/>]],
                                             DeadZone)
         end
-
+    
         function Hud.UpdatePipe() -- Many thanks to Tiramon for the idea and math part of the code.
             if inAtmo then 
                 pipeMessage = "" 
@@ -3471,7 +3910,7 @@ VERSION_NUMBER = 1.516
             end
             getClosestPipe()           
         end
-        
+    
         function Hud.DrawSettings(newContent)
             if #settingsVariables > 0  then
                 local x = ConvertResolutionX(640)
@@ -3490,7 +3929,7 @@ VERSION_NUMBER = 1.516
             end
             return newContent
         end
-
+    
             -- DrawRadarInfo() variables
             local perisPanelID
             local radarX = ConvertResolutionX(1770)
@@ -3499,7 +3938,7 @@ VERSION_NUMBER = 1.516
             local friendx = ConvertResolutionX(1370)
             local msg, where
             local peris = 0
-
+    
         function Hud.DrawRadarInfo()
             local function ToggleRadarPanel()
                 if radarPanelID ~= nil and peris == 0 then
@@ -3514,12 +3953,12 @@ VERSION_NUMBER = 1.516
                     if peris == 1 then
                         sysDestWid(radarPanelID)
                         radarPanelID = nil
-                        _autoconf.displayCategoryPanel(radars, 1, L_TEXT("ui_lua_widget_periscope", "Periscope"),
+                        _autoconf.displayCategoryPanel(radars, 1, "Periscope",
                             "periscope")
                         perisPanelID = _autoconf.panels[_autoconf.panels_size]
                     end
                     if radarPanelID == nil then
-                        _autoconf.displayCategoryPanel(radars, 1, L_TEXT("ui_lua_widget_radar", "Radar"), "radar")
+                        _autoconf.displayCategoryPanel(radars, 1, "Radar", "radar")
                         radarPanelID = _autoconf.panels[_autoconf.panels_size]
                     end
                     peris = 0
@@ -3541,7 +3980,7 @@ VERSION_NUMBER = 1.516
                         radarMessage = radarMessage..svgText(friendx, friendy, radars[1].getConstructName(v), "pdim txtmid")
                     end
                 end
-
+    
                 if target == nil and perisPanelID == nil then
                     peris = 1
                     ToggleRadarPanel()
@@ -3564,7 +4003,7 @@ VERSION_NUMBER = 1.516
                 end
             end
         end
-
+    
         function Hud.DrawTanks()
             -- FUEL TANKS
             if (fuelX ~= 0 and fuelY ~= 0) then
@@ -3574,9 +4013,9 @@ VERSION_NUMBER = 1.516
                 DrawTank( fuelX, "Space Fuel T", "SPACE", spaceTanks, fuelTimeLeftS, fuelPercentS)
                 DrawTank( fuelX, "Rocket Fuel ", "ROCKET", rocketTanks, fuelTimeLeftR, fuelPercentR)
             end
-
+    
         end
-
+    
         function Hud.DrawShield()
             local shieldState = (shield_1.getState() == 1) and "Shield Active" or "Shield Disabled"
             local pvpTime = core.getPvPTimer()
@@ -3602,9 +4041,10 @@ VERSION_NUMBER = 1.516
             shieldMessage = shieldMessage..svgText(x, y-5, shieldState, class.."txtstart pbright txtbig") 
             shieldMessage = shieldMessage..svgText(x,y+30, resistString, class.."txtstart pbright txtsmall")
         end
+    
         function Hud.hudtick()
             if not planet then return end -- Avoid errors if APTick hasn't initialized before this is called
-
+    
             -- Local Functions for hudTick
                 local function DrawCursorLine(newContent)
                     local strokeColor = mfloor(uclamp((distance / (resolutionWidth / 4)) * 255, 0, 255))
@@ -3630,7 +4070,7 @@ VERSION_NUMBER = 1.516
                     end
                 end    
                 local function SetButtonContains()
-
+    
                     local function Contains(mousex, mousey, x, y, width, height)
                         if mousex >= x and mousex <= (x + width) and mousey >= y and mousey <= (y + height) then
                             return true
@@ -3686,7 +4126,7 @@ VERSION_NUMBER = 1.516
                     end
                 end
                 local function DrawButtons(newContent)
-
+    
                     local function DrawButton(newContent, toggle, hover, x, y, w, h, activeColor, inactiveColor, activeText, inactiveText, button)
                         if type(activeText) == "function" then
                             activeText = activeText(button)
@@ -3768,7 +4208,7 @@ VERSION_NUMBER = 1.516
             if isRemote() == 0 and userControlScheme == "virtual joystick" then
                 if DisplayDeadZone then HUD.DrawDeadZone(newContent) end
             end
-
+    
             DrawTabButtons(newContent)
             if sysIsVwLock() == 0 then
                 if isRemote() == 1 and holdingShift then
@@ -3796,7 +4236,7 @@ VERSION_NUMBER = 1.516
                         newContent[#newContent + 1] = collapsedContent
                         newContent[#newContent + 1] = "</body>"
                     end
-
+    
                     if not Animating then
                         newContent[#newContent + 1] = stringf(
                                                         [[<g transform="translate(%d %d)"><circle class="cursor" cx="%fpx" cy="%fpx" r="5"/></g>]],
@@ -3824,8 +4264,41 @@ VERSION_NUMBER = 1.516
             newContent[#newContent + 1] = [[</svg></body>]]
             content = table.concat(newContent, "")
         end
+    
+        function Hud.TenthTick()
+            HUD.DrawTanks()
+            if shield_1 then HUD.DrawShield() end
+        end
+    
+        function Hud.OneSecond(newContent)
+            local function updateDistance()
+                local curTime = systime()
+                local spd = velMag
+                local elapsedTime = curTime - lastTravelTime
+                if (spd > 1.38889) then
+                    spd = spd / 1000
+                    local newDistance = spd * (curTime - lastTravelTime)
+                    TotalDistanceTravelled = TotalDistanceTravelled + newDistance
+                    totalDistanceTrip = totalDistanceTrip + newDistance
+                end
+                flightTime = flightTime + elapsedTime
+                TotalFlightTime = TotalFlightTime + elapsedTime
+                lastTravelTime = curTime
+            end
+    
+            updateDistance()
+            HUD.UpdatePipe()
+            HUD.ExtraData(newContent)
+        end
+    
+        function Hud.ButtonSetup()
+            SettingsButtons()
+            ControlsButtons() -- Set up all the pushable buttons.
+            Buttons = ControlButtons
+        end
+    
         return Hud
-    end 
+    end
     local function AtlasClass() -- Atlas and Interplanetary functions including Update Autopilot Target
 
         -- Atlas functions
@@ -5781,8 +6254,7 @@ VERSION_NUMBER = 1.516
 -- DU Events written for wrap and minimization. Written by Dimencia and Archaegeo. Optimization and Automation of scripting by ChronosWS  Linked sources where appropriate, most have been modified.
     function script.onStart()
         -- Local functions for onStart
-            local ControlButtons = {}
-            local SettingButtons = {}
+
             local valuesAreSet = false
             local function LoadVariables()
 
@@ -6053,431 +6525,6 @@ VERSION_NUMBER = 1.516
                 WasInAtmo = inAtmo
             end
 
-            local function MakeTabButton(x, y, width, height, label)
-                local newButton = {
-                    x = x, 
-                    y = y,
-                    width = width,
-                    height = height,
-                    label = label
-                }
-                TabButtons[label] = newButton
-                return newButton
-            end
-
-            local function MakeButton(enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition, buttonList)
-                local newButton = {
-                    enableName = enableName,
-                    disableName = disableName,
-                    width = width,
-                    height = height,
-                    x = x,
-                    y = y,
-                    toggleVar = toggleVar,
-                    toggleFunction = toggleFunction,
-                    drawCondition = drawCondition,
-                    hovered = false
-                }
-                if buttonList then 
-                    table.insert(SettingButtons, newButton)
-                else
-                    table.insert(ControlButtons, newButton)
-                end
-                return newButton -- readonly, I don't think it will be saved if we change these?  Maybe.
-                
-            end
-
-            local function ToggleShownSettings(whichVar)
-                if not showSettings then
-                    showHandlingVariables = false
-                    showHudVariables = false
-                    showPhysicsVariables = false
-                    showHud = true
-                    return
-                elseif whichVar == "handling" then
-                    showHandlingVariables = not showHandlingVariables
-                    showHudVariables = false
-                    showPhysicsVariables = false
-                elseif whichVar == "hud" then 
-                    showHudVariables = not showHudVariables
-                    showHandlingVariables = false
-                    showPhysicsVariables = false
-                elseif whichVar == "physics" then
-                    showPhysicsVariables = not showPhysicsVariables
-                    showHandlingVariables = false
-                    showHudVariables = false
-                end
-                if showPhysicsVariables or showHudVariables or showHandlingVariables then 
-                    settingsVariables = saveableVariables(whichVar)
-                    showHud = false 
-                else
-                    settingsVariables = {}
-                    showHud = true
-                end
-            end
-
-            local function ToggleButtons()
-                showSettings = not showSettings 
-                if showSettings then 
-                    Buttons = SettingButtons
-                    msgText = "Hold SHIFT to see Settings" 
-                    oldShowHud = showHud
-                else
-                    Buttons = ControlButtons
-                    msgText = "Hold SHIFT to see Control Buttons"
-                    ToggleShownSettings()
-                    showHud = oldShowHud
-                end
-            end
-
-            local function SettingsButtons()
-                local function ToggleBoolean(v)
-
-                    _G[v] = not _G[v]
-                    if _G[v] then 
-                        msgText = v.." set to true"
-                    else
-                        msgText = v.." set to false"
-                    end
-                    if v == "showHud" then
-                        oldShowHud = _G[v]
-                    elseif v == "BrakeToggleDefault" then 
-                        BrakeToggleStatus = BrakeToggleDefault
-                    end
-                end
-    
-                local buttonHeight = 50
-                local buttonWidth = 340 -- Defaults
-                local x = 500
-                local y = resolutionHeight / 2 - 400
-                local cnt = 0
-                for k, v in pairs(saveableVariables("boolean")) do
-                    if type(_G[v]) == "boolean" then
-                        MakeButton(v, v, buttonWidth, buttonHeight, x, y,
-                            function() return _G[v] end, 
-                            function() ToggleBoolean(v) end,
-                            function() return true end, true) 
-                        y = y + buttonHeight + 20
-                        if cnt == 9 then 
-                            x = x + buttonWidth + 20 
-                            y = resolutionHeight / 2 - 400
-                            cnt = 0
-                        else
-                            cnt = cnt + 1
-                        end
-                    end
-                end
-                MakeButton("Control View", "Control View", buttonWidth, buttonHeight, 10, resolutionHeight / 2 - 500, function() return true end, 
-                    ToggleButtons, function() return true end, true)
-                MakeButton("View Handling Settings", 'Hide Handling Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight), 
-                    function() return showHandlingVariables end, function() ToggleShownSettings("handling") end, 
-                    function() return true end, true)
-                MakeButton("View Hud Settings", 'Hide Hud Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight*2), 
-                    function() return showHudVariables end, function() ToggleShownSettings("hud") end, 
-                    function() return true end, true)
-                MakeButton("View Physics Settings", 'Hide Physics Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight*3), 
-                    function() return showPhysicsVariables end, function() ToggleShownSettings("physics") end, 
-                    function() return true end, true)
-            end
-            
-            local function ControlsButtons()
-                local function AddNewLocation()
-                    -- Add a new location to SavedLocations
-                    local position = worldPos
-                    local name = planet.name .. ". " .. #SavedLocations
-                    if radars[1] then -- Just match the first one
-                        local id,_ = radars[1].getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
-                        if id ~= nil and id ~= "" then
-                            name = name .. " " .. radars[1].getConstructName(id)
-                        end
-                    end
-                    
-                    return ATLAS.AddNewLocation(name, position, false, true)
-                    
-                end
-                
-                local function ToggleTurnBurn()
-                    TurnBurn = not TurnBurn
-                end
-
-                local function gradeToggle(pro)
-                    if pro == 1 then 
-                        ProgradeIsOn = not ProgradeIsOn
-                        RetrogradeIsOn = false
-                    else
-                        RetrogradeIsOn = not RetrogradeIsOn
-                        ProgradeIsOn = false
-                    end        
-                    Autopilot = false
-                    AltitudeHold = false
-                    followMode = false
-                    BrakeLanding = false
-                    LockPitch = nil
-                    Reentry = false
-                    AutoTakeoff = false
-                end
-
-                local function UpdatePosition()
-                    ATLAS.UpdatePosition()
-                end
-                local function ClearCurrentPosition()
-                    -- So AutopilotTargetIndex is special and not a real index.  We have to do this by hand.
-                        ATLAS.ClearCurrentPosition()
-                end
-
-                local function getAPName(index)
-                    local name = AutopilotTargetName
-                    if index ~= nil and type(index) == "number" then 
-                        if index == 0 then return "None" end
-                        name = AtlasOrdered[index].name
-                    end
-                    if name == nil then
-                        name = CustomTarget.name
-                    end
-                    if name == nil then
-                        name = "None"
-                    end
-                    return name
-                end
-                
-                local function getAPEnableName(index)
-                    return "Engage Autopilot: " .. getAPName(index)
-                end
-
-                local function getAPDisableName(index)
-                    return "Disable Autopilot: " .. getAPName(index)
-                end   
-
-                local function ToggleFollowMode() -- Toggle Follow Mode on and off
-                    if isRemote() == 1 then
-                        followMode = not followMode
-                        if followMode then
-                            Autopilot = false
-                            RetrogradeIsOn = false
-                            ProgradeIsOn = false
-                            AltitudeHold = false
-                            Reentry = false
-                            BrakeLanding = false
-                            AutoTakeoff = false
-                            OldGearExtended = GearExtended
-                            GearExtended = false
-                            Nav.control.retractLandingGears()
-                            navCom:setTargetGroundAltitude(TargetHoverHeight)
-                            play("folOn","F")
-                        else
-                            play("folOff","F")
-                            BrakeIsOn = true
-                            autoRoll = autoRollPreference
-                            GearExtended = OldGearExtended
-                            if GearExtended then
-                                Nav.control.extendLandingGears()
-                                navCom:setTargetGroundAltitude(LandingGearGroundHeight)
-                            end
-                        end
-                    else
-                        msgText = "Follow Mode only works with Remote controller"
-                        followMode = false
-                    end
-                end
-            
-                -- BEGIN BUTTON DEFINITIONS
-            
-                -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
-                
-                local buttonHeight = 50
-                local buttonWidth = 260 -- Defaults
-                local brake = MakeButton("Enable Brake Toggle", "Disable Brake Toggle", buttonWidth, buttonHeight,
-                                    resolutionWidth / 2 - buttonWidth / 2, resolutionHeight / 2 + 350, function()
-                        return BrakeToggleStatus
-                    end, function()
-                        BrakeToggleStatus = not BrakeToggleStatus
-                        if (BrakeToggleStatus) then
-                            msgText = "Brakes in Toggle Mode"
-                        else
-                            msgText = "Brakes in Default Mode"
-                        end
-                    end)
-                MakeButton("Align Prograde", "Disable Prograde", buttonWidth, buttonHeight,
-                    resolutionWidth / 2 - buttonWidth / 2 - 50 - brake.width, resolutionHeight / 2 - buttonHeight + 380,
-                    function()
-                        return ProgradeIsOn
-                    end, function() gradeToggle(1) end)
-                MakeButton("Align Retrograde", "Disable Retrograde", buttonWidth, buttonHeight,
-                    resolutionWidth / 2 - buttonWidth / 2 + brake.width + 50, resolutionHeight / 2 - buttonHeight + 380,
-                    function()
-                        return RetrogradeIsOn
-                    end, gradeToggle, function()
-                        return atmosDensity == 0
-                    end) -- Hope this works
-                apbutton = MakeButton(getAPEnableName, getAPDisableName, 600, 60, resolutionWidth / 2 - 600 / 2,
-                                        resolutionHeight / 2 - 60 / 2 - 330, function()
-                        return Autopilot or VectorToTarget or spaceLaunch or IntoOrbit
-                    end, function() end) -- No toggle function because we draw over this with things that do toggle
-                -- Make 9 more buttons that only show when moused over the AP button
-                local i
-                local function getAtlasIndexFromAddition(add)
-                    local index = apScrollIndex + add
-                    if index > #AtlasOrdered then
-                        index = index-#AtlasOrdered-1
-                    end
-                    if index < 0 then
-                        index = #AtlasOrdered+index
-                    end
-                    
-                    return index
-                end
-                apExtraButtons = {}
-                for i=0,10 do
-                    local button = MakeButton(function(b)
-                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
-                        if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
-                            return "Redirect: " .. getAPName(index)
-                        end
-                        return getAPEnableName(index)
-                    end, function(b)
-                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
-                        return getAPDisableName(index)
-                    end, 600, 60, resolutionWidth/2 - 600/2, 
-                    resolutionHeight/2 - 60/2 - 330 + 60*i, function(b)
-                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
-                        return index == AutopilotTargetIndex and (Autopilot or VectorToTarget or spaceLaunch or IntoOrbit)
-                    end, function(b)
-                        local index = getAtlasIndexFromAddition(b.apExtraIndex)
-                        local disable = AutopilotTargetIndex == index
-                        AutopilotTargetIndex = index
-                        ATLAS.UpdateAutopilotTarget()
-                        ToggleAutopilot()
-                        -- Let buttons redirect AP, they're hard to do by accident
-                        if not disable and not (Autopilot or VectorToTarget or spaceLaunch or IntoOrbit) then
-                            ToggleAutopilot()
-                        end
-                    end, function()
-                        return apButtonsHovered
-                    end)
-                    button.apExtraIndex = i
-                    apExtraButtons[i] = button
-                end
-
-
-                MakeButton("Save Position", "Save Position", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y,
-                    function()
-                        return false
-                    end, AddNewLocation, function()
-                        return AutopilotTargetIndex == 0 or CustomTarget == nil
-                    end)
-                MakeButton("Update Position", "Update Position", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y,
-                    function()
-                        return false
-                    end, UpdatePosition, function()
-                        return AutopilotTargetIndex > 0 and CustomTarget ~= nil
-                    end)
-                MakeButton("Clear Position", "Clear Position", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y,
-                    function()
-                        return true
-                    end, ClearCurrentPosition, function()
-                        return AutopilotTargetIndex > 0 and CustomTarget ~= nil
-                    end)
-                -- The rest are sort of standardized
-                buttonHeight = 60
-                buttonWidth = 300
-                local x = 0
-                local y = resolutionHeight / 2 - 150
-                MakeButton("View Settings", "View Settings", buttonWidth, buttonHeight, x, y, function() return true end, ToggleButtons)
-                y = y + buttonHeight + 20
-                MakeButton("Enable Turn and Burn", "Disable Turn and Burn", buttonWidth, buttonHeight, x, y, function()
-                    return TurnBurn
-                end, ToggleTurnBurn)
-                x = 10
-                y = resolutionHeight / 2 - 300
-                MakeButton("Horizontal Takeoff Mode", "Vertical Takeoff Mode", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
-                    function() return VertTakeOffEngine end, 
-                    function () 
-                        VertTakeOffEngine = not VertTakeOffEngine 
-                        if VertTakeOffEngine then 
-                            msgText = "Vertical Takeoff Mode"
-                        else
-                            msgText = "Horizontal Takeoff Mode"
-                        end
-                    end, function() return UpVertAtmoEngine end)
-                y = y + buttonHeight + 20
-
-                -- prevent this button from being an option until you're in atmosphere
-                MakeButton("Engage Orbiting", "Cancel Orbiting", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
-                        function()
-                            return IntoOrbit
-                        end, ToggleIntoOrbit, function()
-                            return (atmosDensity == 0 and nearPlanet)
-                        end)
-                y = y + buttonHeight + 20
-                MakeButton("Glide Re-Entry", "Cancel Glide Re-Entry", buttonWidth, buttonHeight, x, y,
-                    function() return Reentry end, function() spaceLand = 1 gradeToggle(1) end, function() return (planet.hasAtmosphere and not inAtmo) end )
-                MakeButton("Parachute Re-Entry", "Cancel Parachute Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
-                    function() return Reentry end, BeginReentry, function() return (planet.hasAtmosphere and not inAtmo) end )
-                y = y + buttonHeight + 20
-                MakeButton("Engage Follow Mode", "Disable Follow Mode", buttonWidth, buttonHeight, x, y, function()
-                    return followMode
-                    end, ToggleFollowMode, function()
-                        return isRemote() == 1
-                    end)
-                    MakeButton("Enable Repair Arrows", "Disable Repair Arrows", buttonWidth, buttonHeight, x + buttonWidth + 20, y, function()
-                        return repairArrows
-                    end, function()
-                        repairArrows = not repairArrows
-                        if (repairArrows) then
-                            msgText = "Repair Arrows Enabled"
-                        else
-                            msgText = "Repair Arrows Diabled"
-                        end
-                    end, function()
-                        return isRemote() == 1
-                    end)
-                y = y + buttonHeight + 20
-                if not ExternalAGG then
-                    MakeButton("Enable AGG", "Disable AGG", buttonWidth, buttonHeight, x, y, function()
-                    return antigravOn end, ToggleAntigrav, function()
-                    return antigrav ~= nil end)
-                end
-                MakeButton(function() return stringf("Switch IPH Mode - Current: %s", iphCondition)
-                end, function()
-                    return stringf("IPH Mode: %s", iphCondition)
-                end, buttonWidth * 2, buttonHeight, x, y, function()
-                    return false
-                end, function()
-                    if iphCondition == "All" then
-                        iphCondition = "Custom Only"
-                    elseif iphCondition == "Custom Only" then
-                        iphCondition = "No Moons"
-                    else
-                        iphCondition = "All"
-                    end
-                    msgText = "IPH Mode: "..iphCondition
-                end)
-                y = y + buttonHeight + 20
-                MakeButton(function() return stringf("Toggle Control Scheme - Current: %s", userControlScheme)
-                    end, function()
-                        return stringf("Control Scheme: %s", userControlScheme)
-                    end, buttonWidth * 2, buttonHeight, x, y, function()
-                        return false
-                    end, function()
-                        if userControlScheme == "keyboard" then
-                            userControlScheme = "mouse"
-                        elseif userControlScheme == "mouse" then
-                            userControlScheme = "virtual joystick"
-                        else
-                            userControlScheme = "keyboard"
-                        end
-                        msgText = "New Control Scheme: "..userControlScheme
-                    end)
-
-
-                -- Make tab buttons
-                local tabHeight = ConvertResolutionY(20)
-                local button = MakeTabButton(0, 0, ConvertResolutionX(70), tabHeight, "INFO")
-                button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(80),tabHeight, "ORBIT")
-                button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"HELP")
-                MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"HIDE")
-            end
-
             local function atlasSetup()
                 local atlasCopy = {}
                 
@@ -6567,9 +6614,6 @@ VERSION_NUMBER = 1.516
             AP = APClass()
             SetupChecks() -- All the if-thens to set up for particular ship.  Specifically override these with the saved variables if available
           
-            SettingsButtons()
-            ControlsButtons() -- Set up all the pushable buttons.
-            Buttons = ControlButtons
             coroutine.yield() -- Just to make sure
 
             -- Set up Jaylebreak and atlas
@@ -6577,6 +6621,7 @@ VERSION_NUMBER = 1.516
             atlasSetup()
             RADAR = RadarClass()
             HUD = HudClass()
+            HUD.ButtonSetup()
             --AP = APClass()
         
             coroutine.yield()
@@ -6881,8 +6926,7 @@ VERSION_NUMBER = 1.516
                     showWarpWidget = false
                 end
             end
-            HUD.DrawTanks()
-            if shield_1 then HUD.DrawShield() end
+            HUD.TenthTick()
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
             -- Local Functions for oneSecond
 
@@ -6972,29 +7016,13 @@ VERSION_NUMBER = 1.516
                         end
                     end
                 end    
-                local function updateDistance()
-                    local curTime = systime()
-                    local spd = velMag
-                    local elapsedTime = curTime - lastTravelTime
-                    if (spd > 1.38889) then
-                        spd = spd / 1000
-                        local newDistance = spd * (curTime - lastTravelTime)
-                        TotalDistanceTravelled = TotalDistanceTravelled + newDistance
-                        totalDistanceTrip = totalDistanceTrip + newDistance
-                    end
-                    flightTime = flightTime + elapsedTime
-                    TotalFlightTime = TotalFlightTime + elapsedTime
-                    lastTravelTime = curTime
-                end
 
-            updateDistance()
-            HUD.UpdatePipe()
             passengers = core.getPlayersOnBoard()
             ships = core.getDockedConstructs()
             updateWeapons()
             -- Update odometer output string
             local newContent = {}
-            HUD.ExtraData(newContent)
+            HUD.OneSecond(newContent)
             if ShouldCheckDamage then
                 CheckDamage(newContent)
             end
