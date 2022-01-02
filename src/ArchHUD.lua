@@ -990,7 +990,21 @@ VERSION_NUMBER = 1.516
         end
     end
 
+    local function ConvertResolutionX (v)
+        if resolutionWidth == 1920 then 
+            return v
+        else
+            return round(resolutionWidth * v / 1920, 0)
+        end
+    end
 
+    local function ConvertResolutionY (v)
+        if resolutionHeight == 1080 then 
+            return v
+        else
+            return round(resolutionHeight * v / 1080, 0)
+        end
+    end
 -- Planet Info - https://gitlab.com/JayleBreak/dualuniverse/-/tree/master/DUflightfiles/autoconf/custom with modifications to support HUD, vanilla JayleBreak will not work anymore
 
     local function PlanetRef()
@@ -1841,22 +1855,6 @@ VERSION_NUMBER = 1.516
         UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
         return Radar
     end 
-
-    local function ConvertResolutionX (v)
-        if resolutionWidth == 1920 then 
-            return v
-        else
-            return round(resolutionWidth * v / 1920, 0)
-        end
-    end
-
-    local function ConvertResolutionY (v)
-        if resolutionHeight == 1080 then 
-            return v
-        else
-            return round(resolutionHeight * v / 1080, 0)
-        end
-    end
 
     local function HudClass()
 
