@@ -2586,7 +2586,7 @@ function HudClass()
                     -- Note that because SVG lines fucking suck, we have to do a translate and they can't use calc in their params
                     if DisplayDeadZone then DrawCursorLine(newContent) end
                 end
-            elseif not AltIsOn and holdingShift then
+            elseif holdingShift and (not AltIsOn or not freeLookToggle)  then
                 SetButtonContains()
                 DrawButtons(newContent)
             end

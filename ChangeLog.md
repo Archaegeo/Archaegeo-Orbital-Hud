@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.603
+- hudclass.lua FIX: Fixed issue with buttons not being showable if in keyboard mode and freelook toggle is off.  (Hold alt-shift to see buttons)
+
 Version 1.602 - New Dynamic Orbit Map
 REMINDER - For GEForce Now you need to use the provided ArchHUDGFN.conf standalone version which will install with the modular version.
 It has a version number when loaded of 1.51X+ where the modular one is 1.6XX+
