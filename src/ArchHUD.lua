@@ -2280,6 +2280,18 @@ VERSION_NUMBER = 1.602
                         planet.planetarySystemId = galaxyId
                         planet.bodyId = planet.id
                         atlasCopy[galaxyId][planetId] = planet
+                        if minAtlasX == nil or planet.center.x < minAtlasX then
+                            minAtlasX = planet.center.x
+                        end
+                        if maxAtlasX == nil or planet.center.x > maxAtlasX then
+                            maxAtlasX = planet.center.x
+                        end
+                        if minAtlasY == nil or planet.center.y < minAtlasY then
+                            minAtlasY = planet.center.y
+                        end
+                        if maxAtlasY == nil or planet.center.y > maxAtlasY then
+                            maxAtlasY = planet.center.y
+                        end
                     end
                 end
                 PlanetaryReference = PlanetRef()
