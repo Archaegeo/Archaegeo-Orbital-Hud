@@ -16,6 +16,7 @@ function HudClass()
     local gravConstant = 9.80665
     local ControlButtons = {}
     local SettingButtons = {}
+    local TabButtons = {}
 
     --Local Huds Functions
         -- safezone() variables

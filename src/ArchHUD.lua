@@ -194,7 +194,8 @@ VERSION_NUMBER = 1.602
     rType = "Atmo"
     apButtonsHovered = false
     apScrollIndex = 0
-    TabButtons = {}
+    passengers = nil
+    ships = nil
 
 -- Function Definitions that are used in more than one areause 
     --[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
@@ -1471,7 +1472,8 @@ VERSION_NUMBER = 1.602
                 eccentricAnomaly = EccentricAnomaly,
                 meanAnomaly = MeanAnomaly,
                 timeToPeriapsis = TimeToPeriapsis,
-                timeToApoapsis = TimeToApoapsis
+                timeToApoapsis = TimeToApoapsis,
+                trueAnomaly = trueAnomaly
             }
         end
         local function new(bodyParameters)
