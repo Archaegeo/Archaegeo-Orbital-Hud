@@ -4,6 +4,7 @@ Version 1.5161
 - FEATURE: Changed fuel tank display to color code bars by type and to put a small gap between types. (Thanks Zrips!)
 - Fix: Show buttons when in keyboard mode with freelook toggle off, use Alt-SHIFT to see buttons.
 - Removed user variable `WipeDamage` and its code support since a repair unit can roll back a databank to last autosnapshot.
+- Moved functions into AP class to mirror apclass.lua in Modular.
 
 Version 1.516 - Dynamic Orbitg panel.
 - New Feature - Dynamic Orbit Panel.  When the Orbit panel is selected, it is now dynamic, showing more when in atmo, going to orbit, and if you escape orbit, the galaxy.
