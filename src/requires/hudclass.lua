@@ -186,14 +186,29 @@ function HudClass()
                             class = "red "
                         end
                         local backColor = stringf("rgb(%d,%d,%d)", uclamp(mfloor((255-colorMod)/2.55),50,100), uclamp(mfloor(colorMod/2.55),0,50), 50)
+                        local strokeColor = "rgb(196,0,255)"
+						if nameReplacePrefix == "ATMO" then
+                          strokeColor = "rgb(0,188,255)"
+                        elseif nameReplacePrefix == "SPACE" then
+						  strokeColor = "rgb(239,255,0)"
+    					end
+                        local changed = false
+						if previous ~= strokeColor then
+						  changed = true
+						end
+						previous = strokeColor
                         if BarFuelDisplay then
+							if changed then
+							  y1 = y1 - 5
+                              y2 = y2 - 5
+							end
                             tankMessage = tankMessage..stringf([[
                                 <g class="pdim">                        
-                                <rect fill=%s class="bar" x="%d" y="%d" width="170" height="20"></rect></g>
+                                <rect fill=%s class="bar" stroke=%s x="%d" y="%d" width="170" height="20"></rect></g>
                                 <g class="bar txtstart">
                                 <rect fill=%s width="%d" height="20" x="%d" y="%d"></rect>
-                                <text class="txtstart" fill="white" x="%d" y="%d" style="font-family:Play;font-size:14px">%s %s%% %s</text>
-                                </g>]], backColor, x, y2, color, mfloor(fuelPercentTable[i]*1.7+0.5), x, y2, x+5, y2+14,name, fuelPercentTable[i], fuelTimeDisplay
+                                <text class="txtstart" fill="white" x="%d" y="%d" style="font-family:Play;font-size:14px">%s %s%%&nbsp;&nbsp;&nbsp;&nbsp;%s</text>
+                                </g>]], backColor, strokeColor, x, y2, color, mfloor(fuelPercentTable[i]*1.7+0.5), x, y2, x+5, y2+14, name, fuelPercentTable[i], fuelTimeDisplay
                             )
                             --tankMessage = tankMessage..svgText(x, y1, name, class.."txtstart pdim txtfuel") 
                             y1 = y1 - 22
@@ -855,7 +870,7 @@ function HudClass()
                 if string.find(collisionAlertStatus, "COLLISION") then type = "warnings" else type = "crit" end
                 newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, collisionAlertStatus, type)
             elseif atmosDensity == 0 then
-                local intersectBody, atmoDistance = checkLOS((constructVelocity):normalize())
+                local intersectBody, atmoDistance = AP.checkLOS((constructVelocity):normalize())
                 if atmoDistance ~= nil then
                     collisionClass = fillClass
                     collisionFill = "#FF0000"
@@ -1687,10 +1702,10 @@ function HudClass()
                     local disable = AutopilotTargetIndex == index
                     AutopilotTargetIndex = index
                     ATLAS.UpdateAutopilotTarget()
-                    ToggleAutopilot()
+                    AP.ToggleAutopilot()
                     -- Let buttons redirect AP, they're hard to do by accident
                     if not disable and not (Autopilot or VectorToTarget or spaceLaunch or IntoOrbit) then
-                        ToggleAutopilot()
+                        AP.ToggleAutopilot()
                     end
                 end, function()
                     return apButtonsHovered
@@ -1746,14 +1761,14 @@ function HudClass()
             MakeButton("Engage Orbiting", "Cancel Orbiting", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
                     function()
                         return IntoOrbit
-                    end, ToggleIntoOrbit, function()
+                    end, AP.ToggleIntoOrbit, function()
                         return (atmosDensity == 0 and nearPlanet)
                     end)
             y = y + buttonHeight + 20
             MakeButton("Glide Re-Entry", "Cancel Glide Re-Entry", buttonWidth, buttonHeight, x, y,
                 function() return Reentry end, function() spaceLand = 1 gradeToggle(1) end, function() return (planet.hasAtmosphere and not inAtmo) end )
             MakeButton("Parachute Re-Entry", "Cancel Parachute Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
-                function() return Reentry end, BeginReentry, function() return (planet.hasAtmosphere and not inAtmo) end )
+                function() return Reentry end, AP.BeginReentry, function() return (planet.hasAtmosphere and not inAtmo) end )
             y = y + buttonHeight + 20
             MakeButton("Engage Follow Mode", "Disable Follow Mode", buttonWidth, buttonHeight, x, y, function()
                 return followMode
@@ -1775,7 +1790,7 @@ function HudClass()
             y = y + buttonHeight + 20
             if not ExternalAGG then
                 MakeButton("Enable AGG", "Disable AGG", buttonWidth, buttonHeight, x, y, function()
-                return antigravOn end, ToggleAntigrav, function()
+                return antigravOn end, AP.ToggleAntigrav, function()
                 return antigrav ~= nil end)
             end
             MakeButton(function() return stringf("Switch IPH Mode - Current: %s", iphCondition)
@@ -2264,7 +2279,7 @@ function HudClass()
         return newContent
     end
 
-        -- DrawRadarInfo() variables
+    -- DrawRadarInfo() variables
         local perisPanelID
         local radarX = ConvertResolutionX(1770)
         local radarY = ConvertResolutionY(350)
@@ -2586,7 +2601,7 @@ function HudClass()
                     -- Note that because SVG lines fucking suck, we have to do a translate and they can't use calc in their params
                     if DisplayDeadZone then DrawCursorLine(newContent) end
                 end
-            elseif not AltIsOn and holdingShift then
+            elseif holdingShift and (not AltIsOn or not freeLookToggle)  then
                 SetButtonContains()
                 DrawButtons(newContent)
             end
@@ -2630,6 +2645,9 @@ function HudClass()
         ControlsButtons() -- Set up all the pushable buttons.
         Buttons = ControlButtons
     end
+
+    -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
+    --for k,v in pairs(require("autoconf/custom/archhud/custom/customhudclass")) do Hud[k] = v end 
 
     return Hud
 

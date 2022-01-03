@@ -43,7 +43,7 @@
         savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "ReEntryPitch","LockPitchTarget", "AutopilotSpaceDistance", "TargetOrbitRadius", "LowOrbitHeight",
         "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
         "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
-        "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization", "WipeDamage"}
+        "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization"}
         YawStallAngle = 35 --export: (Default: 35) Angle at which the ship stalls when yawing, determine by experimentation. Higher allows faster AP Bank turns.
         PitchStallAngle = 35 --export: (Default: 35) Angle at which the ship stalls when pitching, determine by experimentation.
         brakeLandingRate = 30 --export: (Default: 30) Max loss of altitude speed in m/s when doing a brake landing. 30 is safe for almost all ships.  Overriden if CalculateBrakeLandingSpeed is true.
@@ -67,7 +67,7 @@
         fuelTankHandlingRocket = 0 --export:  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
         ContainerOptimization = 0 --export: (Default: 0) For accurate estimates on unslotted tanks, set this to the Container Optimization level of the person who placed the tanks. Ignored for slotted tanks.
         FuelTankOptimization = 0 --export: (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank optimization skill level of the person who placed the tank. Ignored for slotted tanks.
-        WipeDamage = 0 --export: (Default: 0) % damage above which hud will wipe saved locations on databank.  Requires ShouldCheckDamage to be true.
+
 
     -- HUD Postioning variables
         -- NOTE: savableVariablesHud below must contain any HUD Postioning variables that needs to be saved/loaded from databank.
