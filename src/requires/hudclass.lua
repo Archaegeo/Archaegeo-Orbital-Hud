@@ -2279,7 +2279,7 @@ function HudClass()
         return newContent
     end
 
-        -- DrawRadarInfo() variables
+    -- DrawRadarInfo() variables
         local perisPanelID
         local radarX = ConvertResolutionX(1770)
         local radarY = ConvertResolutionY(350)
@@ -2645,6 +2645,9 @@ function HudClass()
         ControlsButtons() -- Set up all the pushable buttons.
         Buttons = ControlButtons
     end
+
+    -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
+    --for k,v in pairs(require("autoconf/custom/archhud/custom/customhudclass")) do Hud[k] = v end 
 
     return Hud
 

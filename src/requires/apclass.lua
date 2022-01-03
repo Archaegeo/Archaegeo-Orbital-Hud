@@ -1704,5 +1704,9 @@ function APClass() -- Autopiloting functions including tick
         end
     end
     abvGndDet = AboveGroundLevel()
+
+    -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
+    --for k,v in pairs(require("autoconf/custom/archhud/custom/customapclass")) do Hud[k] = v end 
+
     return ap
 end

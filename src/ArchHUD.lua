@@ -2743,6 +2743,7 @@ VERSION_NUMBER = 1.602
             -- Update odometer output string
             local newContent = {}
             HUD.OneSecond(newContent)
+            HUD.TestFunction("Hello")
 
             if ShouldCheckDamage then
                 CheckDamage(newContent)
