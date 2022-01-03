@@ -1,14 +1,14 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.603 - Override Function support for require files
-(Default hudclass.lua and apclass.lua requires changed)
+(Default hudclass.lua and apclass.lua updated)
 - FEATURE: Provided support for Override require files to override specific functions without changing the default require file. (Thanks Davemane42 for format)
 To Use: Uncomment the line at the bottom of the default require file, then put things in the custom/override file.  See files for more info.
 This is an advanced flexibilty feature that is provided for those who want to change stuff in the default require files but not lose their
 changes when the default files are updated.
 - hudclass.lua FEATURE: Changed fuel tank display to color code bars by type and to put a small gap between types. (Thanks Zrips!)
 - hudclass.lua FIX: Fixed issue with buttons not being showable if in keyboard mode and freelook toggle is off.  (Hold alt-shift to see buttons)
-- apclass.lua: Moved more AP features out of .conf into apclass.lua
+- apclass.lua: Moved more AP features out of .conf into apclass.lua, exposing a lot more to end user modification if they wish.
 - Removed user variable `WipeDamage` and its code support since a repair unit can roll back a databank to last autosnapshot.
 
 Version 1.602 - New Dynamic Orbit Map
