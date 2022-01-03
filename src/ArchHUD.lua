@@ -64,7 +64,6 @@ VERSION_NUMBER = 1.5161
     fuelTankHandlingRocket = 0 --export:
     ContainerOptimization = 0 --export:
     FuelTankOptimization = 0 --export:
-    WipeDamage = 0 --export:
 
     -- HUD Postioning variables
     ResolutionX = 1920 --export:
@@ -505,7 +504,7 @@ VERSION_NUMBER = 1.5161
             local savableVariablesHandling = {"YawStallAngle","PitchStallAngle","brakeLandingRate","MaxPitch", "ReEntryPitch","LockPitchTarget", "AutopilotSpaceDistance", "TargetOrbitRadius", "LowOrbitHeight",
                 "AtmoSpeedLimit","SpaceSpeedLimit","AutoTakeoffAltitude","TargetHoverHeight", "LandingGearGroundHeight", "ReEntryHeight",
                 "MaxGameVelocity", "AutopilotInterplanetaryThrottle","warmup","fuelTankHandlingAtmo","fuelTankHandlingSpace",
-                "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization", "WipeDamage"}
+                "fuelTankHandlingRocket","ContainerOptimization","FuelTankOptimization"}
             local savableVariablesHud = {"ResolutionX","ResolutionY","circleRad","SafeR", "SafeG", "SafeB", 
                 "PvPR", "PvPG", "PvPB","centerX", "centerY", "throtPosX", "throtPosY",
                 "vSpdMeterX", "vSpdMeterY","altMeterX", "altMeterY","fuelX", "fuelY", "shieldX", "shieldY", "DeadZone",
@@ -7195,12 +7194,6 @@ VERSION_NUMBER = 1.5161
                     end
                     percentDam = mfloor((curShipHP / maxShipHP)*100)
                     if percentDam < 100 then
-                        if percentDam > 0 and percentDam < WipeDamage then 
-                            SavedLocations={}
-                            ATLAS.UpdateAtlasLocationsList()
-                            ATLAS.UpdateAutopilotTarget()
-                            SaveDataBank()
-                        end
                         newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
                         colorMod = mfloor(percentDam * 2.55)
                         color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
