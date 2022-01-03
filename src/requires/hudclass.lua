@@ -870,7 +870,7 @@ function HudClass()
                 if string.find(collisionAlertStatus, "COLLISION") then type = "warnings" else type = "crit" end
                 newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, collisionAlertStatus, type)
             elseif atmosDensity == 0 then
-                local intersectBody, atmoDistance = checkLOS((constructVelocity):normalize())
+                local intersectBody, atmoDistance = AP.checkLOS((constructVelocity):normalize())
                 if atmoDistance ~= nil then
                     collisionClass = fillClass
                     collisionFill = "#FF0000"
@@ -1702,10 +1702,10 @@ function HudClass()
                     local disable = AutopilotTargetIndex == index
                     AutopilotTargetIndex = index
                     ATLAS.UpdateAutopilotTarget()
-                    ToggleAutopilot()
+                    AP.ToggleAutopilot()
                     -- Let buttons redirect AP, they're hard to do by accident
                     if not disable and not (Autopilot or VectorToTarget or spaceLaunch or IntoOrbit) then
-                        ToggleAutopilot()
+                        AP.ToggleAutopilot()
                     end
                 end, function()
                     return apButtonsHovered
@@ -1761,14 +1761,14 @@ function HudClass()
             MakeButton("Engage Orbiting", "Cancel Orbiting", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
                     function()
                         return IntoOrbit
-                    end, ToggleIntoOrbit, function()
+                    end, AP.ToggleIntoOrbit, function()
                         return (atmosDensity == 0 and nearPlanet)
                     end)
             y = y + buttonHeight + 20
             MakeButton("Glide Re-Entry", "Cancel Glide Re-Entry", buttonWidth, buttonHeight, x, y,
                 function() return Reentry end, function() spaceLand = 1 gradeToggle(1) end, function() return (planet.hasAtmosphere and not inAtmo) end )
             MakeButton("Parachute Re-Entry", "Cancel Parachute Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
-                function() return Reentry end, BeginReentry, function() return (planet.hasAtmosphere and not inAtmo) end )
+                function() return Reentry end, AP.BeginReentry, function() return (planet.hasAtmosphere and not inAtmo) end )
             y = y + buttonHeight + 20
             MakeButton("Engage Follow Mode", "Disable Follow Mode", buttonWidth, buttonHeight, x, y, function()
                 return followMode
@@ -1790,7 +1790,7 @@ function HudClass()
             y = y + buttonHeight + 20
             if not ExternalAGG then
                 MakeButton("Enable AGG", "Disable AGG", buttonWidth, buttonHeight, x, y, function()
-                return antigravOn end, ToggleAntigrav, function()
+                return antigravOn end, AP.ToggleAntigrav, function()
                 return antigrav ~= nil end)
             end
             MakeButton(function() return stringf("Switch IPH Mode - Current: %s", iphCondition)

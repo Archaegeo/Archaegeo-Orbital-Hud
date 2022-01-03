@@ -21,7 +21,7 @@ require("autoconf/custom/archhud/hudclass")
 require("autoconf/custom/archhud/apclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.602
+VERSION_NUMBER = 1.603
 
 -- function localizations for improved performance when used frequently or in loops.
     mabs = math.abs
@@ -313,16 +313,6 @@ VERSION_NUMBER = 1.602
         end
     end
 
-    function checkLOS(vector)
-        local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, vector,
-            function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
-        local atmoDistance = farSide
-        if nearSide ~= nil and farSide ~= nil then
-            atmoDistance = math.min(nearSide,farSide)
-        end
-        if atmoDistance ~= nil then return intersectBody, atmoDistance else return nil, nil end
-    end
-
     function play(sound, ID, type)
         if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
         if type ~= nil then
@@ -370,23 +360,6 @@ VERSION_NUMBER = 1.602
         return stringf([[<text class="%s" x=%s y=%s style="%s">%s</text>]], class,x, y, style, text)
     end
 
-    function cmdThrottle(value, dontSwitch) -- sets the throttle value to value, also switches to throttle mode (vice cruise) unless dontSwitch passed
-        if navCom:getAxisCommandType(0) ~= axisCommandType.byThrottle and not dontSwitch then
-            Nav.control.cancelCurrentControlMasterMode()
-        end
-        navCom:setThrottleCommand(axisCommandId.longitudinal, value)
-        PlayerThrottle = uclamp(round(value*100,0)/100, -1, 1)
-        setCruiseSpeed = nil
-    end
-
-    function cmdCruise(value, dontSwitch) -- sets the cruise target speed to value, also switches to cruise mode (vice throttle) unless dontSwitch passed
-        if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed and not dontSwitch then
-            Nav.control.cancelCurrentControlMasterMode()
-        end
-        navCom:setTargetSpeedCommand(axisCommandId.longitudinal, value)
-        setCruiseSpeed = value
-    end
-
     function float_eq(a, b) -- float equation
         if a == 0 then
             return mabs(b) < 1e-09
@@ -411,371 +384,7 @@ VERSION_NUMBER = 1.602
         end
     end
 
-    function ToggleVerticalTakeoff() -- Toggle vertical takeoff mode on and off
-        AltitudeHold = false
-        if VertTakeOff then
-            StrongBrakes = true -- We don't care about this anymore
-            Reentry = false
-            AutoTakeoff = false
-            BrakeLanding = true
-            autoRoll = true
-            upAmount = 0
-            if inAtmo and abvGndDet == -1 then
-                BrakeLanding = false
-                AltitudeHold = true
-                upAmount = 0
-                Nav:setEngineForceCommand('thrust analog vertical fueled ', vec3(), 1)
-                cmdCruise(mfloor(adjustedAtmoSpeedLimit))
-            end
-        else
-            OrbitAchieved = false
-            GearExtended = false
-            Nav.control.retractLandingGears()
-            navCom:setTargetGroundAltitude(TargetHoverHeight) 
-            BrakeIsOn = true
-        end
-        VertTakeOff = not VertTakeOff
-    end
 
-    function ToggleIntoOrbit() -- Toggle IntoOrbit mode on and off
-        OrbitAchieved = false
-        orbitPitch = nil
-        orbitRoll = nil
-        OrbitTicks = 0
-        if atmosDensity == 0 then
-            if IntoOrbit then
-                play("orOff", "AP")
-                IntoOrbit = false
-                orbitAligned = false
-                OrbitTargetPlanet = nil
-                autoRoll = autoRollPreference
-                if AltitudeHold then AltitudeHold = false AutoTakeoff = false end
-                orbitalParams.VectorToTarget = false
-                orbitalParams.AutopilotAlign = false
-                OrbitTargetSet = false
-            elseif nearPlanet then
-                play("orOn", "AP")
-                IntoOrbit = true
-                autoRoll = true
-                if OrbitTargetPlanet == nil then
-                    OrbitTargetPlanet = planet
-                end
-                if AltitudeHold then AltitudeHold = false AutoTakeoff = false end
-            else
-                msgText = "Unable to engage auto-orbit, not near a planet"
-            end
-        else
-            -- If this got called while in atmo, make sure it's all false
-            IntoOrbit = false
-            orbitAligned = false
-            OrbitTargetPlanet = nil
-            autoRoll = autoRollPreference
-            if AltitudeHold then AltitudeHold = false end
-            orbitalParams.VectorToTarget = false
-            orbitalParams.AutopilotAlign = false
-            OrbitTargetSet = false
-        end
-    end
-
-    function ToggleAltitudeHold()  -- Toggle Altitude Hold mode on and off
-        if (time - ahDoubleClick) < 1.5 then
-            if planet.hasAtmosphere  then
-                if atmosDensity > 0 then
-
-                    HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude
-                    play("11","EP")
-                else
-                    if nearPlanet then
-                        HoldAltitude = planet.noAtmosphericDensityAltitude + LowOrbitHeight
-                        OrbitTargetOrbit = HoldAltitude
-                        OrbitTargetSet = true
-                        if not IntoOrbit then ToggleIntoOrbit() end
-                        orbitAligned = true
-                    end
-                end
-                ahDoubleClick = -1
-                if AltitudeHold or IntoOrbit or VertTakeOff then 
-                    return 
-                end
-            end
-        else
-            ahDoubleClick = time
-        end
-        if nearPlanet and atmosDensity == 0 then
-            OrbitTargetOrbit = coreAltitude
-            OrbitTargetSet = true
-            orbitAligned = true
-            ToggleIntoOrbit()
-            if IntoOrbit then
-                ahDoubleClick = time
-            else
-                ahDoubleClick = 0
-            end
-            return 
-        end        
-        AltitudeHold = not AltitudeHold
-        BrakeLanding = false
-        Reentry = false
-        if AltitudeHold then
-            Autopilot = false
-            ProgradeIsOn = false
-            RetrogradeIsOn = false
-            followMode = false
-            autoRoll = true
-            LockPitch = nil
-            OrbitAchieved = false
-            if abvGndDet ~= -1 and velMag < 20 then
-                play("lfs", "LS")
-                AutoTakeoff = true
-                if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
-                GearExtended = false
-                Nav.control.retractLandingGears()
-                BrakeIsOn = true
-                navCom:setTargetGroundAltitude(TargetHoverHeight)
-                if VertTakeOffEngine and UpVertAtmoEngine then 
-                    ToggleVerticalTakeoff()
-                end
-            else
-                play("altOn","AH")
-                AutoTakeoff = false
-                if ahDoubleClick > -1 then
-                    if nearPlanet then
-                        HoldAltitude = coreAltitude
-                    end
-                end
-                if VertTakeOff then ToggleVerticalTakeoff() end
-            end
-            if spaceLaunch then HoldAltitude = 100000 end
-        else
-            play("altOff","AH")
-            if IntoOrbit then ToggleIntoOrbit() end
-            if VertTakeOff then 
-                ToggleVerticalTakeoff() 
-            end
-            autoRoll = autoRollPreference
-            AutoTakeoff = false
-            VectorToTarget = false
-            ahDoubleClick = 0
-        end
-    end
-
-    function ResetAutopilots(ap)
-        if ap then 
-            spaceLaunch = false
-            Autopilot = false
-            AutopilotRealigned = false
-            apThrottleSet = false
-            HoldAltitude = coreAltitude
-            TargetSet = false
-        end
-        VectorToTarget = false
-        AutoTakeoff = false
-        Reentry = false
-        -- We won't abort interplanetary because that would fuck everyone.
-        ProgradeIsOn = false -- No reason to brake while facing prograde, but retrograde yes.
-        BrakeLanding = false
-        AutoLanding = false
-        ReversalIsOn = nil
-        if not antigravOn then
-            AltitudeHold = false -- And stop alt hold
-            LockPitch = nil
-        end
-        if VertTakeOff then
-            ToggleVerticalTakeoff()
-        end
-        if IntoOrbit then
-            ToggleIntoOrbit()
-        end
-        autoRoll = autoRollPreference
-        spaceLand = false
-        finalLand = false
-        upAmount = 0
-    end
-
-    function ToggleAutopilot() -- Toggle autopilot mode on and off
-
-        local function ToggleVectorToTarget(SpaceTarget)
-            -- This is a feature to vector toward the target destination in atmo or otherwise on-planet
-            -- Uses altitude hold.  
-            collisionAlertStatus = false
-            VectorToTarget = not VectorToTarget
-            if VectorToTarget then
-                TurnBurn = false
-                if not AltitudeHold and not SpaceTarget then
-                    ToggleAltitudeHold()
-                end
-            end
-            VectorStatus = "Proceeding to Waypoint"
-        end
-
-        if (time - apDoubleClick) < 1.5 and atmosDensity > 0 then
-            if not SpaceEngines then
-                msgText = "No space engines detected, Orbital Hop not supported"
-                return
-            end
-            if planet.hasAtmosphere then
-                if atmosDensity > 0 then
-                    HoldAltitude = planet.noAtmosphericDensityAltitude + LowOrbitHeight
-                    play("orH","OH")
-                end
-                apDoubleClick = -1
-                if Autopilot or VectorToTarget or IntoOrbit then 
-                    return 
-                end
-            end
-        else
-            apDoubleClick = time
-        end
-        TargetSet = false -- No matter what
-        -- Toggle Autopilot, as long as the target isn't None
-        if AutopilotTargetIndex > 0 and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
-            if 0.5 * Nav:maxForceForward() / core.g() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
-            ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
-            AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
-
-            if CustomTarget ~= nil then
-                LockPitch = nil
-                SpaceTarget = (CustomTarget.planetname == "Space")
-                if SpaceTarget then
-                    play("apSpc", "AP")
-                    if atmosDensity ~= 0 then 
-                        spaceLaunch = true
-                        ToggleAltitudeHold()
-                    else
-                        Autopilot = true
-                    end
-                elseif planet.name  == CustomTarget.planetname then
-                    StrongBrakes = true
-                    if atmosDensity > 0 then
-                        if not VectorToTarget then
-                            play("vtt", "AP")
-                            ToggleVectorToTarget(SpaceTarget)
-                        end
-                    else
-                        play("apOn", "AP")
-                        if not (autopilotTargetPlanet.name == planet.name and coreAltitude < (AutopilotTargetOrbit*1.5) ) then
-                            OrbitAchieved = false
-                            Autopilot = true
-                        elseif not inAtmo then
-                            if IntoOrbit then ToggleIntoOrbit() end -- Reset all appropriate vars
-                            OrbitTargetOrbit = planet.noAtmosphericDensityAltitude + LowOrbitHeight
-                            OrbitTargetSet = true
-                            orbitalParams.AutopilotAlign = true
-                            orbitalParams.VectorToTarget = true
-                            orbitAligned = false
-                            if not IntoOrbit then ToggleIntoOrbit() end
-                        end
-                    end
-                else
-                    play("apP", "AP")
-                    RetrogradeIsOn = false
-                    ProgradeIsOn = false
-                    if atmosDensity ~= 0 then 
-                        spaceLaunch = true
-                        ToggleAltitudeHold() 
-                    else
-                        Autopilot = true
-                    end
-                end
-            elseif atmosDensity == 0 then -- Planetary autopilot
-                if CustomTarget == nil and (autopilotTargetPlanet.name == planet.name and nearPlanet) and not IntoOrbit then
-                    WaypointSet = false
-                    OrbitAchieved = false
-                    orbitAligned = false
-                    ToggleIntoOrbit() -- this works much better here
-                else
-                    play("apP","AP")
-                    Autopilot = true
-                    RetrogradeIsOn = false
-                    ProgradeIsOn = false
-                    AutopilotRealigned = false
-                    followMode = false
-                    AltitudeHold = false
-                    BrakeLanding = false
-                    Reentry = false
-                    AutoTakeoff = false
-                    apThrottleSet = false
-                    LockPitch = nil
-                    WaypointSet = false
-                end
-            else
-                play("apP", "AP")
-                spaceLaunch = true
-                ToggleAltitudeHold()
-            end
-        else
-            play("apOff", "AP")
-            ResetAutopilots(1)
-        end
-    end
-
-    function BrakeToggle() -- Toggle brakes on and off
-        -- Toggle brakes
-        BrakeIsOn = not BrakeIsOn
-        if BrakeLanding then
-            BrakeLanding = false
-            autoRoll = autoRollPreference
-        end
-        if BrakeIsOn then
-            play("bkOn","B",1)
-            -- If they turn on brakes, disable a few things
-            ResetAutopilots()
-        else
-            play("bkOff","B",1)
-        end
-    end
-
-    function BeginReentry() -- Begins re-entry process
-        if Reentry then
-            msgText = "Re-Entry cancelled"
-            play("reOff", "RE")
-            Reentry = false
-            autoRoll = autoRollPreference
-            AltitudeHold = false
-        elseif not planet.hasAtmosphere then
-            msgText = "Re-Entry requirements not met: you must start out of atmosphere\n and within a planets gravity well over a planet with atmosphere"
-            msgTimer = 5
-        elseif not reentryMode then-- Parachute ReEntry
-            Reentry = true
-            if navCom:getAxisCommandType(0) ~= controlMasterModeId.cruise then
-                Nav.control.cancelCurrentControlMasterMode()
-            end                
-            autoRoll = true
-            BrakeIsOn = false
-            msgText = "Beginning Parachute Re-Entry - Strap In.  Target speed: " .. adjustedAtmoSpeedLimit
-            play("par", "RE")
-        else --Glide Reentry
-            Reentry = true
-            AltitudeHold = true
-            autoRoll = true
-            BrakeIsOn = false
-            HoldAltitude = planet.surfaceMaxAltitude + ReEntryHeight
-            if HoldAltitude > planet.spaceEngineMinAltitude then HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude end
-            local text = getDistanceDisplayString(HoldAltitude)
-            msgText = "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text 
-            play("glide","RE")
-            cmdCruise(mfloor(adjustedAtmoSpeedLimit))
-        end
-        AutoTakeoff = false -- This got left on somewhere.. 
-    end
-
-    function ToggleAntigrav() -- Toggles antigrav on and off
-        if antigrav and not ExternalAGG then
-            if antigravOn then
-                play("aggOff","AG")
-                antigrav.deactivate()
-                antigrav.hide()
-            else
-                if AntigravTargetAltitude == nil then AntigravTargetAltitude = coreAltitude end
-                if AntigravTargetAltitude < 1000 then
-                    AntigravTargetAltitude = 1000
-                end
-                play("aggOn","AG")
-                antigrav.activate()
-                antigrav.show()
-            end
-        end
-    end
 
     function FormatTimeString(seconds) -- Format a time string for display
         local minutes = 0
@@ -822,22 +431,6 @@ VERSION_NUMBER = 1.602
             if copy and dbHud_2 then
                 msgText = "Databank copied.  Remove copy when ready."
             end
-        end
-    end
-
-    function ConvertResolutionX (v)
-        if resolutionWidth == 1920 then 
-            return v
-        else
-            return round(resolutionWidth * v / 1920, 0)
-        end
-    end
-
-    function ConvertResolutionY (v)
-        if resolutionHeight == 1080 then 
-            return v
-        else
-            return round(resolutionHeight * v / 1080, 0)
         end
     end
 
@@ -1692,7 +1285,6 @@ VERSION_NUMBER = 1.602
         UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
         return Radar
     end 
-
     local function AtlasClass() -- Atlas and Interplanetary functions including Update Autopilot Target
 
         -- Atlas functions
@@ -2543,7 +2135,7 @@ VERSION_NUMBER = 1.602
             RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
             if setCruiseSpeed ~= nil then
                 if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
-                    cmdCruise(setCruiseSpeed)
+                    AP.cmdCruise(setCruiseSpeed)
                 else
                     setCruiseSpeed = nil
                 end
@@ -2604,7 +2196,7 @@ VERSION_NUMBER = 1.602
                         if not throttleMode and AtmoSpeedAssist and (AltitudeHold or Reentry or finalLand) then
                             -- If they're reentering atmo from cruise, and have atmo speed Assist
                             -- Put them in throttle mode at 100%
-                            cmdThrottle(1)
+                            AP.cmdThrottle(1)
                             BrakeIsOn = false
                             WasInCruise = false -- And override the thing that would reset it, in this case
                         end
@@ -2937,7 +2529,7 @@ VERSION_NUMBER = 1.602
     
         if throttleMode and WasInCruise then
             -- Not in cruise, but was last tick
-            cmdThrottle(0)
+            AP.cmdThrottle(0)
             WasInCruise = false
         elseif not throttleMode and not WasInCruise then
             -- Is in cruise, but wasn't last tick
@@ -3390,7 +2982,7 @@ VERSION_NUMBER = 1.602
                 if ReversalIsOn == nil then 
                     if t == "table" then
                         if Autopilot or VectorToTarget then 
-                            ToggleAutopilot() 
+                            AP.ToggleAutopilot() 
                         end
                         play("180On", "BR")
                     elseif vectorType==1 then
@@ -3399,7 +2991,7 @@ VERSION_NUMBER = 1.602
                         play("bnkRht", "BR")
                     end
                     if not AltitudeHold and not Autopilot and not VectorToTarget then 
-                        ToggleAltitudeHold() 
+                        AP.ToggleAltitudeHold() 
                         if t ~= "table" then 
                             vectorType = vectorType + 1 
                         end
@@ -3415,7 +3007,7 @@ VERSION_NUMBER = 1.602
             if GearExtended then
                 VectorToTarget = false
                 LockPitch = nil
-                cmdThrottle(0)
+                AP.cmdThrottle(0)
                 if vBooster or hover then 
                     if inAtmo and abvGndDet == -1 then
                         play("bklOn", "BL")
@@ -3601,23 +3193,10 @@ VERSION_NUMBER = 1.602
                 return
             end
             ReversalIsOn = nil
-            ToggleAutopilot()
+            AP.ToggleAutopilot()
         elseif action == "option5" then
             toggleView = false 
-            function ToggleLockPitch()
-                if LockPitch == nil then
-                    play("lkPOn","LP")
-                    if not holdingShift then LockPitch = adjustedPitch
-                    else LockPitch = LockPitchTarget end
-                    AutoTakeoff = false
-                    AltitudeHold = false
-                    BrakeLanding = false
-                else
-                    play("lkPOff","LP")
-                    LockPitch = nil
-                end
-            end
-            ToggleLockPitch()
+            AP.ToggleLockPitch()
         elseif action == "option6" then
             toggleView = false 
             if AltIsOn and holdingShift then 
@@ -3631,7 +3210,7 @@ VERSION_NUMBER = 1.602
                     return
                 end
             end
-            ToggleAltitudeHold()
+            AP.ToggleAltitudeHold()
         elseif action == "option7" then
             toggleView = false
             if AltIsOn and holdingShift then 
@@ -3667,7 +3246,7 @@ VERSION_NUMBER = 1.602
                 navCom:resetCommand(axisCommandId.longitudinal)
                 navCom:resetCommand(axisCommandId.lateral)
                 navCom:resetCommand(axisCommandId.vertical)
-                cmdThrottle(0)
+                AP.cmdThrottle(0)
                 unit.setTimer("tagTick",0.1)
             elseif gyro ~= nil then
                 gyro.toggle()
@@ -3689,9 +3268,9 @@ VERSION_NUMBER = 1.602
             end
         elseif action == "brake" then
             if BrakeToggleStatus or AltIsOn then
-                BrakeToggle()
+                AP.BrakeToggle()
             elseif not BrakeIsOn then
-                BrakeToggle() -- Trigger the cancellations
+                AP.BrakeToggle() -- Trigger the cancellations
             else
                 BrakeIsOn = true -- Should never happen
             end
@@ -3755,18 +3334,18 @@ VERSION_NUMBER = 1.602
             if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed then
                 if PlayerThrottle ~= 0 then
                     navCom:resetCommand(axisCommandId.longitudinal)
-                    cmdThrottle(0)
+                    AP.cmdThrottle(0)
                 else
-                    cmdThrottle(100)
+                    AP.cmdThrottle(100)
                 end
             else
                 if navCom:getTargetSpeed(axisCommandId.longitudinal) ~= 0 then
                     navCom:resetCommand(axisCommandId.longitudinal)
                 else
                     if inAtmo then 
-                        cmdCruise(AtmoSpeedLimit) 
+                        AP.cmdCruise(AtmoSpeedLimit) 
                     else
-                        cmdCruise(MaxGameVelocity*3.6)
+                        AP.cmdCruise(MaxGameVelocity*3.6)
                     end
                 end
             end
@@ -3776,7 +3355,7 @@ VERSION_NUMBER = 1.602
             changeSpd(true)
         elseif action == "antigravity" and not ExternalAGG then
             if antigrav ~= nil then
-                ToggleAntigrav()
+                AP.ToggleAntigrav()
             end
         end
     end
@@ -3848,7 +3427,7 @@ VERSION_NUMBER = 1.602
         elseif action == "brake" then
             if not BrakeToggleStatus and not AltIsOn then
                 if BrakeIsOn then
-                    BrakeToggle()
+                    AP.BrakeToggle()
                 else
                     BrakeIsOn = false -- Should never happen
                 end
