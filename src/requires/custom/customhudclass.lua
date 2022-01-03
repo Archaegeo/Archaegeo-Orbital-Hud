@@ -1,4 +1,5 @@
 --EXAMPLE CUSTOM HUD OVERRIDE FILE FOR DEFAULT HUDCLASS REQUIRE
+-- Recommend backing up outside of the default DU path in case a DU update wipes the autoconf/custom directory
 
 local Hud = {}
     -- REQUIRED DEFINES FROM HERE TILL NEXT REMARK - THESE CAN BE REMOVED IN THIS CUSTOM REQUIRE IF NOT USED
