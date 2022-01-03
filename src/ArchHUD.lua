@@ -2696,12 +2696,6 @@ VERSION_NUMBER = 1.602
                     end
                     percentDam = mfloor((curShipHP / maxShipHP)*100)
                     if percentDam < 100 then
-                        if percentDam > 0 and percentDam < WipeDamage then 
-                            SavedLocations={}
-                            ATLAS.UpdateAtlasLocationsList()
-                            ATLAS.UpdateAutopilotTarget()
-                            SaveDataBank()
-                        end
                         newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
                         colorMod = mfloor(percentDam * 2.55)
                         color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)

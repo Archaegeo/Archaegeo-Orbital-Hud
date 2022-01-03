@@ -3,6 +3,7 @@
 Version 1.603
 - hudclass.lua FEATURE: Changed fuel tank display to color code bars by type and to put a small gap between types. (Thanks Zrips!)
 - hudclass.lua FIX: Fixed issue with buttons not being showable if in keyboard mode and freelook toggle is off.  (Hold alt-shift to see buttons)
+- Removed user variable `WipeDamage` and its code support since a repair unit can roll back a databank to last autosnapshot.
 
 Version 1.602 - New Dynamic Orbit Map
 REMINDER - For GEForce Now you need to use the provided ArchHUDGFN.conf standalone version which will install with the modular version.
