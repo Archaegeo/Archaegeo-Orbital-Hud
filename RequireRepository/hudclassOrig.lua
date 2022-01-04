@@ -1,18 +1,6 @@
-function HudClass() -- Everything HUD display releated including tick
-
--- REQUIRED DEFINES FROM HERE TILL NEXT REMARK - DO NOT REMOVE/CHANGE IF YOU DONT KNOW WHY
-    local Nav = navGlobal
-    local core = coreGlobal
-    local unit = unitGlobal
-    local system = systemGlobal
-    local atlas = atlasGlobal
-    local radar_1 = radar_1Global
-    local radar_2 = radar_2Global
-    local antigrav = antigravGlobal
-    local hover = hoverGlobal
-    local shield_1 = shield_1Global
-    
--- END OF REQUIRED DEFINES
+function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, hover, shield_1,
+    mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
+    navCom, sysDestWid, sysIsVwLock, msqrt, round, svgText)
 
 -- Modify beyond here as you will
     local gravConstant = 9.80665

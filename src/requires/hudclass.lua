@@ -1,22 +1,19 @@
-function HudClass()
-    -- REQUIRED DEFINES FROM HERE TILL NEXT REMARK - DO NOT REMOVE/CHANGE IF YOU DONT KNOW WHY
-    local Nav = navGlobal
-    local core = coreGlobal
-    local unit = unitGlobal
-    local system = systemGlobal
-    local atlas = atlasGlobal
-    local radar_1 = radar_1Global
-    local radar_2 = radar_2Global
-    local antigrav = antigravGlobal
-    local hover = hoverGlobal
-    local shield_1 = shield_1Global
-    
-    -- END OF REQUIRED DEFINES
+function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, hover, shield_1,
+    mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
+    navCom, sysDestWid, sysIsVwLock, msqrt, round, svgText)
 
     local gravConstant = 9.80665
+    local Buttons = {}
     local ControlButtons = {}
     local SettingButtons = {}
     local TabButtons = {}
+    local MapXRatio = nil
+    local MapYRatio = nil
+    local YouAreHere = nil
+    local showSettings = false
+    local settingsVariables = {}
+    local oldShowHud = showHud
+    local pipeMessage = ""
 
     --Local Huds Functions
         -- safezone() variables
@@ -2155,7 +2152,7 @@ function HudClass()
         newContent[#newContent + 1] = svgText(crx(635), cry(45), "TRIP", "")
         newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(635),cry(31),crx(-90))
         if travelTime then
-            newContent[#newContent + 1] = svgText(crx(532), cry(23), stringf("%s", FormatTimeString(travelTime)), "txtstart size20") 
+            newContent[#newContent + 1] = svgText(crx(545), cry(25), stringf("%s", FormatTimeString(travelTime)), "txtstart size20") 
         end
         --newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(20), stringf("Trip: %.2f km", totalDistanceTrip), "txtstart") 
         --TODO: newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(30), stringf("Lifetime: %.2f kSU", (TotalDistanceTravelled / 200000)), "txtstart") 
@@ -2167,7 +2164,7 @@ function HudClass()
         --newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(30), "Total Time: "..FormatTimeString(TotalFlightTime), "txtstart") 
         newContent[#newContent + 1] = svgText(crx(1285), cry(45), "MASS", "txtstart")
         newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1285), cry(31), crx(90))
-        newContent[#newContent + 1] = svgText(crx(1388), cry(23), stringf("%s", mass), "size20") 
+        newContent[#newContent + 1] = svgText(crx(1375), cry(25), stringf("%s", mass), "size20") 
         --newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(20), stringf("Mass: %s", mass), "txtstart") 
         --newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(10), stringf("Max Brake: %s",  brakeValue), "txtend") 
         newContent[#newContent + 1] = svgText(crx(1220), labelY1, "THRUST", "txtstart")

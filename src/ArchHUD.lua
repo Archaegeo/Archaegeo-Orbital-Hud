@@ -4,56 +4,43 @@ require("autoconf/custom/archhud/globals")
 local Nav = Navigator.new(system, core, unit)
 local atlas = require("atlas")
 
-navGlobal = Nav
-atlasGlobal = atlas
-coreGlobal = core
-unitGlobal = unit
-systemGlobal = system
-vBoosterGlobal = vBooster
-hoverGlobal = hover
-telmeter_1Global = telemeter_1
-radar_1Global = radar_1
-radar_2Global = radar_2
-antigravGlobal = antigrav
-shield_1Global = shield_1
-
 require("autoconf/custom/archhud/hudclass")
 require("autoconf/custom/archhud/apclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.603
+VERSION_NUMBER = 1.604
 
 -- function localizations for improved performance when used frequently or in loops.
-    mabs = math.abs
-    mfloor = math.floor
-    stringf = string.format
-    jdecode = json.decode
-    jencode = json.encode
-    eleMaxHp = core.getElementMaxHitPointsById
-    atmosphere = unit.getAtmosphereDensity
-    eleMass = core.getElementMassById
-    isRemote = Nav.control.isRemoteControlled
-    atan = math.atan
-    stringmatch = string.match
-    systime = system.getTime
-    uclamp = utils.clamp
-    navCom = Nav.axisCommandManager
-    sysDestWid = system.destroyWidgetPanel
-    sysUpData = system.updateData
-    sysAddData = system.addDataToWidget
-    sysLockVw = system.lockView
-    sysIsVwLock = system.isViewLocked
-    msqrt = math.sqrt
-    tonum = tonumber
+    local mabs = math.abs
+    local mfloor = math.floor
+    local stringf = string.format
+    local jdecode = json.decode
+    local jencode = json.encode
+    local eleMaxHp = core.getElementMaxHitPointsById
+    local atmosphere = unit.getAtmosphereDensity
+    local eleMass = core.getElementMassById
+    local isRemote = Nav.control.isRemoteControlled
+    local atan = math.atan
+    local stringmatch = string.match
+    local systime = system.getTime
+    local uclamp = utils.clamp
+    local navCom = Nav.axisCommandManager
+    local sysDestWid = system.destroyWidgetPanel
+    local sysUpData = system.updateData
+    local sysAddData = system.addDataToWidget
+    local sysLockVw = system.lockView
+    local sysIsVwLock = system.isViewLocked
+    local msqrt = math.sqrt
+    local tonum = tonumber
 
-    function round(num, numDecimalPlaces) -- rounds variable num to numDecimalPlaces
+    local function round(num, numDecimalPlaces) -- rounds variable num to numDecimalPlaces
         local mult = 10 ^ (numDecimalPlaces or 0)
         return mfloor(num * mult + 0.5) / mult
     end
 -- Variables that we declare local outside script because they will be treated as global but get local effectiveness
     time = systime()
-    clearAllCheck = systime()
-    coreHalfDiag = 13
+    local clearAllCheck = systime()
+    local coreHalfDiag = 13
     PrimaryR = SafeR
     PrimaryB = SafeB
     PrimaryG = SafeG
@@ -66,25 +53,25 @@ VERSION_NUMBER = 1.603
     minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in
     reentryMode = false
     hasGear = false
-    pitchInput = 0
+    local pitchInput = 0
     pitchInput2 = 0
     yawInput2 = 0
-    rollInput = 0
-    yawInput = 0
+    local rollInput = 0
+    local yawInput = 0
     brakeInput = 0
     rollInput2 = 0
     followMode = false 
     holdingShift = false
     msgText = "empty"
-    holdAltitudeButtonModifier = 5
-    antiGravButtonModifier = 5
-    currentHoldAltModifier = holdAltitudeButtonModifier
-    currentAggModifier = antiGravButtonModifier
+    local holdAltitudeButtonModifier = 5
+    local antiGravButtonModifier = 5
+    local currentHoldAltModifier = holdAltitudeButtonModifier
+    local currentAggModifier = antiGravButtonModifier
     isBoosting = false -- Dodgin's Don't Die Rocket Govenor
     brakeDistance = 0
     brakeTime = 0
-    maxBrakeDistance = 0
-    maxBrakeTime = 0
+    local maxBrakeDistance = 0
+    local maxBrakeTime = 0
     autopilotTargetPlanet = nil
     totalDistanceTrip = 0
     flightTime = 0
@@ -94,41 +81,32 @@ VERSION_NUMBER = 1.603
     msgTimer = 3
     distance = 0
     lastOdometerOutput = ""
-
     spaceLand = false
     spaceLaunch = false
     finalLand = false
     abvGndDet = -1
-    myAutopilotTarget=""
+    local myAutopilotTarget=""
     inAtmo = (atmosphere() > 0)
     atmosDensity = atmosphere()
     coreAltitude = core.getAltitude()
-    elementsID = core.getElementIdList()
+    local elementsID = core.getElementIdList()
     lastTravelTime = systime()
     coreMass = core.getConstructMass()
-    mousePause = false
+    local mousePause = false
     gyroIsOn = nil
     rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
     rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..   mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]
-    markers = {}
-    previousYawAmount = 0
-    previousPitchAmount = 0
+    local markers = {}
     damageMessage = ""
-    UnitHidden = true
-    Buttons = {}
+    local UnitHidden = true
     resolutionWidth = ResolutionX
     resolutionHeight = ResolutionY
     atmoTanks = {}
     spaceTanks = {}
     rocketTanks = {}
-    eleTotalMaxHp = 0
+    local eleTotalMaxHp = 0
     repairArrows = false
-
-    --atlas = nil
-    MapXRatio = nil
-    MapYRatio = nil
-    YouAreHere = nil
-    PlanetaryReference = nil
+    local PlanetaryReference = nil
     galaxyReference = nil
     Kinematic = nil
     maxKinematicUp = nil
@@ -140,28 +118,27 @@ VERSION_NUMBER = 1.603
     Animating = false
     Animated = false
     autoRoll = autoRollPreference
-    targetGroundAltitude = LandingGearGroundHeight -- So it can tell if one loaded or not
+    local targetGroundAltitude = LandingGearGroundHeight -- So it can tell if one loaded or not
     stalling = false
-    lastApTickTime = systime()
+
     targetRoll = 0
-    ahDoubleClick = 0
-    apDoubleClick = 0
+
     adjustedAtmoSpeedLimit = AtmoSpeedLimit
     VtPitch = 0
     orbitMsg = nil
-    orbitPitch = 0
-    orbitRoll = 0
-    orbitAligned = false
-    orbitalRecover = false
-    orbitalParams = { VectorToTarget = false } --, AltitudeHold = false }
-    OrbitTargetSet = false
+
+
+
+    
+    orbitalParams = { VectorToTarget = false } 
+    
     OrbitTargetOrbit = 0
-    OrbitTargetPlanet = nil
+    
     OrbitAchieved = false
-    SpaceEngineVertUp = false
+    local SpaceEngineVertUp = false
     SpaceEngineVertDn = false
     SpaceEngines = false
-    OrbitTicks = 0
+    
     constructUp = vec3(core.getConstructWorldOrientationUp())
     constructForward = vec3(core.getConstructWorldOrientationForward())
     constructRight = vec3(core.getConstructWorldOrientationRight())
@@ -171,22 +148,22 @@ VERSION_NUMBER = 1.603
     worldVertical = vec3(core.getWorldVertical())
     vSpd = -worldVertical:dot(constructVelocity)
     worldPos = vec3(core.getConstructWorldPos())
-    soundAlarm = 0
+
     UpVertAtmoEngine = false
     antigravOn = false
     setCruiseSpeed = nil
     throttleMode = true
     adjustedPitch = 0
     adjustedRoll = 0
-    showSettings = false
-    settingsVariables = {}
-    oldShowHud = showHud
+    
+    
+    
     AtlasOrdered = {}
     notPvPZone = false
     pvpDist = 50000
-    pipeMessage = ""
+    
     ReversalIsOn = nil
-    contacts = {}
+    local contacts = {}
     nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
     collisionAlertStatus = false
     collisionTarget = nil
@@ -281,7 +258,7 @@ VERSION_NUMBER = 1.603
     end
     --]]
 
-    function changeSpd(down)
+    local function changeSpd(down)
         local mult=1
         if down then mult = -1 end
         if not holdingShift then
@@ -354,7 +331,7 @@ VERSION_NUMBER = 1.603
         end            
     end
 
-    function svgText(x, y, text, class, style) -- processes a svg text string, saves code lines by doing it this way
+    local function svgText(x, y, text, class, style) -- processes a svg text string, saves code lines by doing it this way
         if class == nil then class = "" end
         if style == nil then style = "" end
         return stringf([[<text class="%s" x=%s y=%s style="%s">%s</text>]], class,x, y, style, text)
@@ -415,7 +392,7 @@ VERSION_NUMBER = 1.603
         end
     end
 
-    function SaveDataBank(copy) -- Save values to the databank.
+    local function SaveDataBank(copy) -- Save values to the databank.
         local function writeData(dataList)
             for k, v in pairs(dataList) do
                 dbHud_1.setStringValue(v, jencode(_G[v]))
@@ -1916,14 +1893,18 @@ VERSION_NUMBER = 1.603
             ProcessElements()
             coroutine.yield() -- Give it some time to breathe before we do the rest
 
-            AP = APClass()
+            AP = APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, antigrav,
+                mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
+                navCom, sysUpData, sysIsVwLock, msqrt, round)
             SetupChecks() -- All the if-thens to set up for particular ship.  Specifically override these with the saved variables if available
           
             coroutine.yield() -- Just to make sure
 
             atlasSetup()
             RADAR = RadarClass()
-            HUD = HudClass()
+            HUD = HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, hover, shield_1,
+                mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
+                navCom, sysDestWid, sysIsVwLock, msqrt, round, svgText)
             HUD.ButtonSetup()
             coroutine.yield()
  
