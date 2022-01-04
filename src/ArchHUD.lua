@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.5161
+VERSION_NUMBER = 1.5162
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -259,11 +259,8 @@ VERSION_NUMBER = 1.5161
     local rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
     local rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..   mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]
     local markers = {}
-    local previousYawAmount = 0
-    local previousPitchAmount = 0
     local damageMessage = ""
     local UnitHidden = true
-    local Buttons = {}
     local resolutionWidth = ResolutionX
     local resolutionHeight = ResolutionY
     local atmoTanks = {}
@@ -271,11 +268,6 @@ VERSION_NUMBER = 1.5161
     local rocketTanks = {}
     local eleTotalMaxHp = 0
     local repairArrows = false
-
-    --local atlas = nil
-    local MapXRatio = nil
-    local MapYRatio = nil
-    local YouAreHere = nil
     local PlanetaryReference = nil
     local galaxyReference = nil
     local Kinematic = nil
@@ -290,26 +282,22 @@ VERSION_NUMBER = 1.5161
     local autoRoll = autoRollPreference
     local targetGroundAltitude = LandingGearGroundHeight -- So it can tell if one loaded or not
     local stalling = false
-    local lastApTickTime = systime()
+
     local targetRoll = 0
-    local ahDoubleClick = 0
-    local apDoubleClick = 0
+
     local adjustedAtmoSpeedLimit = AtmoSpeedLimit
     local VtPitch = 0
     local orbitMsg = nil
-    local orbitPitch = 0
-    local orbitRoll = 0
-    local orbitAligned = false
-    local orbitalRecover = false
+
     local orbitalParams = { VectorToTarget = false } --, AltitudeHold = false }
-    local OrbitTargetSet = false
+
     local OrbitTargetOrbit = 0
-    local OrbitTargetPlanet = nil
+
     local OrbitAchieved = false
     local SpaceEngineVertUp = false
     local SpaceEngineVertDn = false
     local SpaceEngines = false
-    local OrbitTicks = 0
+
     local constructUp = vec3(core.getConstructWorldOrientationUp())
     local constructForward = vec3(core.getConstructWorldOrientationForward())
     local constructRight = vec3(core.getConstructWorldOrientationRight())
@@ -319,21 +307,19 @@ VERSION_NUMBER = 1.5161
     local worldVertical = vec3(core.getWorldVertical())
     local vSpd = -worldVertical:dot(constructVelocity)
     local worldPos = vec3(core.getConstructWorldPos())
-    local soundAlarm = 0
+
     local UpVertAtmoEngine = false
     local antigravOn = false
     local setCruiseSpeed = nil
     local throttleMode = true
     local adjustedPitch = 0
     local adjustedRoll = 0
-    local showSettings = false
-    local settingsVariables = {}
-    local oldShowHud = showHud
+
     local AtlasOrdered = {}
     local notPvPZone = false
     local pvpDist = 50000
 
-    local pipeMessage = ""
+
     local ReversalIsOn = nil
     local contacts = {}
     local nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
@@ -598,21 +584,7 @@ VERSION_NUMBER = 1.5161
         end
     end
 
-    local function ConvertResolutionX (v)
-        if resolutionWidth == 1920 then 
-            return v
-        else
-            return round(resolutionWidth * v / 1920, 0)
-        end
-    end
 
-    local function ConvertResolutionY (v)
-        if resolutionHeight == 1080 then 
-            return v
-        else
-            return round(resolutionHeight * v / 1080, 0)
-        end
-    end
 -- Planet Info - https://gitlab.com/JayleBreak/dualuniverse/-/tree/master/DUflightfiles/autoconf/custom with modifications to support HUD, vanilla JayleBreak will not work anymore
 
     local function PlanetRef()
@@ -1468,8 +1440,17 @@ VERSION_NUMBER = 1.5161
     local function HudClass()
 
         local gravConstant = 9.80665
+        local Buttons = {}
         local ControlButtons = {}
         local SettingButtons = {}
+        local TabButtons = {}
+        local MapXRatio = nil
+        local MapYRatio = nil
+        local YouAreHere = nil
+        local showSettings = false
+        local settingsVariables = {}
+        local oldShowHud = showHud
+        local pipeMessage = ""
     
         --Local Huds Functions
             -- safezone() variables
@@ -4386,8 +4367,20 @@ VERSION_NUMBER = 1.5161
                 return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, Nav:maxForceForward(),
                         warmup, LastMaxBrake - (AutopilotPlanetGravity * coreMass))
             end
-        local speedLimitBreaking = false
-        local lastPvPDist = 0
+            local speedLimitBreaking = false
+            local lastPvPDist = 0
+            local previousYawAmount = 0
+            local previousPitchAmount = 0
+            local lastApTickTime = systime()
+            local ahDoubleClick = 0
+            local apDoubleClick = 0
+            local orbitPitch = 0
+            local orbitRoll = 0
+            local orbitAligned = false
+            local orbitalRecover = false
+            local OrbitTargetSet = false
+            local OrbitTargetPlanet = nil
+            local OrbitTicks = 0
 
         function ap.GetAutopilotBrakeDistanceAndTime(speed)
             return GetAutopilotBrakeDistanceAndTime(speed)
