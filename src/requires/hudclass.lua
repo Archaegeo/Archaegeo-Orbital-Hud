@@ -1910,7 +1910,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                 </style>
             </head>
             <body>
-                <svg height="100%%" width="100%%" viewBox="0 0 %d %d" preserveAspectRatio="none>
+                <svg height="100%%" width="100%%" viewBox="0 0 %d %d" preserveAspectRatio="none">
                     <defs>
                         <radialGradient id="RadialGradientCenterTop" cx="0.5" cy="0" r="1">
                             <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/>
@@ -2525,7 +2525,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         if radars[1] then HUD.DrawRadarInfo() end
         HUD.HUDEpilogue(newContent)
         newContent[#newContent + 1] = stringf(
-            [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d" preserveAspectRatio="none>]],
+            [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d" preserveAspectRatio="none">]],
             resolutionWidth, resolutionHeight)   
         if msgText ~= "empty" then
             HUD.DisplayMessage(newContent, msgText)
