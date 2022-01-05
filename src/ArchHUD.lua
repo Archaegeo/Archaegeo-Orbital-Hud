@@ -99,8 +99,8 @@ VERSION_NUMBER = 1.604
     local markers = {}
     damageMessage = ""
     local UnitHidden = true
-    resolutionWidth = ResolutionX
-    resolutionHeight = ResolutionY
+    resolutionWidth = 1920
+    resolutionHeight = 1080
     atmoTanks = {}
     spaceTanks = {}
     rocketTanks = {}
@@ -1555,8 +1555,6 @@ VERSION_NUMBER = 1.604
                     coroutine.yield()
                     if valuesAreSet then
                         msgText = "Loaded Saved Variables"
-                        resolutionWidth = ResolutionX
-                        resolutionHeight = ResolutionY
                         BrakeToggleStatus = BrakeToggleDefault
                         userControlScheme = string.lower(userControlScheme)
                         autoRoll = autoRollPreference

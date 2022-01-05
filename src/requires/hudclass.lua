@@ -36,22 +36,6 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             end
         end
 
-        local function ConvertResolutionX (v)
-            if resolutionWidth == 1920 then 
-                return v
-            else
-                return round(resolutionWidth * v / 1920, 0)
-            end
-        end
-    
-        local function ConvertResolutionY (v)
-            if resolutionHeight == 1080 then 
-                return v
-            else
-                return round(resolutionHeight * v / 1080, 0)
-            end
-        end
-
         local function IsInFreeLook()
             return sysIsVwLock() == 0 and userControlScheme ~= "keyboard" and isRemote() == 0
         end
@@ -298,8 +282,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             local yawy = (centerY + horizonRadius + OFFSET + 20)
             local yawx = centerX
             if bottomText ~= "YAW" then 
-                yawy = ConvertResolutionY(130)
-                yawx = ConvertResolutionX(960)
+                yawy = 130
+                yawx = 960
             end
             local tickerPath = [[<path class="txttick line" d="]]
             local degRange = mfloor(yawC - (range+10) - yawC % 5 + 0.5)
@@ -329,8 +313,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             newContent[#newContent + 1] = stringf([[<<polygon class="bright" points="%d,%d %d,%d %d,%d"/>]],
                 yawx-5, yawy-20, yawx+5, yawy-20, yawx, yawy-10)
             if nearPlanet then bottomText = "HDG" end
-            newContent[#newContent + 1] = svgText(ConvertResolutionX(960) , ConvertResolutionY(100), yawC.."°" , "dim txt txtmid size14", "")
-            newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(85), bottomText, "dim txt txtmid size20","")
+            newContent[#newContent + 1] = svgText(960 , 100, yawC.."°" , "dim txt txtmid size14", "")
+            newContent[#newContent + 1] = svgText(960, 85, bottomText, "dim txt txtmid size20","")
             newContent[#newContent + 1] = [[</g>]]
         end
 
@@ -707,27 +691,27 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
 
         local function DrawWarnings(newContent)
 
-            newContent[#newContent + 1] = svgText(ConvertResolutionX(1900), ConvertResolutionY(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
+            newContent[#newContent + 1] = svgText(1900, 1070, stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
             newContent[#newContent + 1] = [[<g class="warnings">]]
             if unit.isMouseControlActivated() == 1 then
-                newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(550), "Warning: Invalid Control Scheme Detected", "warnings")
-                newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(600), "Keyboard Scheme must be selected", "warnings")
-                newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(650), "Set your preferred scheme in Lua Parameters instead", "warnings")
+                newContent[#newContent + 1] = svgText(960, 550, "Warning: Invalid Control Scheme Detected", "warnings")
+                newContent[#newContent + 1] = svgText(960, 600, "Keyboard Scheme must be selected", "warnings")
+                newContent[#newContent + 1] = svgText(960, 650, "Set your preferred scheme in Lua Parameters instead", "warnings")
             end
-            local warningX = ConvertResolutionX(960)
-            local brakeY = ConvertResolutionY(860)
-            local gearY = ConvertResolutionY(880)
-            local hoverY = ConvertResolutionY(900)
-            local ewarpY = ConvertResolutionY(960)
-            local apY = ConvertResolutionY(200)
-            local turnBurnY = ConvertResolutionY(250)
-            local gyroY = ConvertResolutionY(960)
+            local warningX = 960
+            local brakeY = 860
+            local gearY = 880
+            local hoverY = 900
+            local ewarpY = 960
+            local apY = 200
+            local turnBurnY = 250
+            local gyroY = 960
             if isRemote() == 1 and not RemoteHud then
-                brakeY = ConvertResolutionY(135)
-                gearY = ConvertResolutionY(155)
-                hoverY = ConvertResolutionY(175)
-                apY = ConvertResolutionY(115)
-                turnBurnY = ConvertResolutionY(95)
+                brakeY = 135
+                gearY = 155
+                hoverY = 175
+                apY = 115
+                turnBurnY = 95
             end
             local defaultStroke = "#222222"
             local onFill = "white"
@@ -917,8 +901,6 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             --rocketClass, rocketFill, rocketStroke, 
             --aggClass, aggFill, aggStroke, 
             --stallClass, stallFill, stallStroke)
-            local crx = ConvertResolutionX
-            local cry = ConvertResolutionY
 
             local defaultClass = "topButton"
             local activeClass = "topButtonActive"
@@ -947,48 +929,48 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                 orbitClass = activeClass
             end
 
-            local texty = cry(30)
+            local texty = 30
             newContent[#newContent + 1] = stringf([[ 
                 <g class="pdim txt txtmid">
                     <g class="%s">
                     <path d="M %f %f l 0 %f l %f 0 l %f %f Z"/>
-                    ]], apClass, crx(960), cry(54), cry(-53), crx(-120), crx(25), cry(50))
-            newContent[#newContent + 1] = svgText(crx(910),texty, "AUTOPILOT")
+                    ]], apClass, 960, 54, -53, -120, 25, 50)
+            newContent[#newContent + 1] = svgText(910,texty, "AUTOPILOT")
             newContent[#newContent + 1] = stringf([[
                     </g>
 
                     <g class="%s">
                     <path d="M %f %f l %f %f l %f 0 l %f %f Z"/>
-                    ]], progradeClass, crx(865), cry(51), crx(-25), cry(-50), crx(-110), crx(25), cry(46))
-            newContent[#newContent + 1] = svgText(crx(800), texty, "PROGRADE")
+                    ]], progradeClass, 865, 51, -25, -50, -110, 25, 46)
+            newContent[#newContent + 1] = svgText(800, texty, "PROGRADE")
             newContent[#newContent + 1] = stringf([[
                     </g>
 
                     <g class="%s">
                     <path d="M %f %f l %f %f l %f 0 l %f %f Z"/>
-                    ]], landClass, crx(755), cry(47), crx(-25), cry(-46), crx(-98), crx(44), cry(44))
-            newContent[#newContent + 1] = svgText(crx(700), texty, "LAND")
+                    ]], landClass, 755, 47, -25, -46, -98, 44, 44)
+            newContent[#newContent + 1] = svgText(700, texty, "LAND")
             newContent[#newContent + 1] = stringf([[
                     </g>
 
                     <g class="%s">
                     <path d="M %f %f l 0 %f l %f 0 l %f %f Z"/>
-                    ]], altHoldClass, crx(960), cry(54), cry(-53), crx(120), crx(-25), cry(50))
-            newContent[#newContent + 1] = svgText(crx(1010), texty, "ALT HOLD")
+                    ]], altHoldClass, 960, 54, -53, 120, -25, 50)
+            newContent[#newContent + 1] = svgText(1010, texty, "ALT HOLD")
             newContent[#newContent + 1] = stringf([[
                     </g>
 
                     <g class="%s">
                     <path d="M %f %f l %f %f l %f 0 l %f %f Z"/>
-                    ]], retroClass, crx(1055), cry(51), crx(25), cry(-50), crx(110), crx(-25), cry(46))
-            newContent[#newContent + 1] = svgText(crx(1122), texty, "RETROGRADE")
+                    ]], retroClass, 1055, 51, 25, -50, 110, -25, 46)
+            newContent[#newContent + 1] = svgText(1122, texty, "RETROGRADE")
             newContent[#newContent + 1] = stringf([[
                     </g>
 
                     <g class="%s">
                     <path d="M %f %f l %f %f l %f 0 l %f %f Z"/>
-                    ]], orbitClass, crx(1165), cry(47), crx(25), cry(-46), crx(98), crx(-44), cry(44))
-            newContent[#newContent + 1] = svgText(crx(1220), texty, "ORBIT")
+                    ]], orbitClass, 1165, 47, 25, -46, 98, -44, 44)
+            newContent[#newContent + 1] = svgText(1220, texty, "ORBIT")
             newContent[#newContent + 1] = [[
                     </g>
                 </g>]]
@@ -1075,8 +1057,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         end
         
         local function DisplayOrbitScreen(newContent)
-            local orbitMapX = ConvertResolutionX(OrbitMapX)
-            local orbitMapY = ConvertResolutionY(OrbitMapY)
+            local orbitMapX = OrbitMapX
+            local orbitMapY = OrbitMapY
             local orbitMapSize = OrbitMapSize -- Always square
             local pad = 4
 
@@ -1394,8 +1376,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                     end
                 end
             end 
-            local pipeX = ConvertResolutionX(1770)
-            local pipeY = ConvertResolutionY(330)
+            local pipeX = 1770
+            local pipeY = 330
             if nearestDistance then
                 local txtadd = "txttick "
                 local fudge = 500000
@@ -1824,11 +1806,11 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
 
 
             -- Make tab buttons
-            local tabHeight = ConvertResolutionY(20)
-            local button = MakeTabButton(0, 0, ConvertResolutionX(70), tabHeight, "INFO")
-            button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(80),tabHeight, "ORBIT")
-            button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"HELP")
-            MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"HIDE")
+            local tabHeight = 20
+            local button = MakeTabButton(0, 0, 70, tabHeight, "INFO")
+            button = MakeTabButton(button.x + button.width,button.y,80,tabHeight, "ORBIT")
+            button = MakeTabButton(button.x + button.width,button.y,70,tabHeight,"HELP")
+            MakeTabButton(button.x + button.width,button.y,70,tabHeight,"HIDE")
         end
 
 
@@ -1869,8 +1851,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
 
         -- When applying styles, apply color first, then type (e.g. "bright line")
         -- so that "fill:none" gets applied
-        local crx = ConvertResolutionX
-        local cry = ConvertResolutionY
+
         newContent[#newContent + 1] = stringf([[
             <head>
                 <style>
@@ -1973,11 +1954,11 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                 <path class="linethick dimstroke" style="fill:black;fill-opacity:0.4;" d="M %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f Z"/>
             </clipPath>
             <path class="linethick dimstroke" style="fill:black;fill-opacity:0.4;" d="M %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f L %f %f Z"/>]],
-            crx(630), cry(0), crx(675), cry(45), crx(960), cry(55), crx(1245), cry(45), crx(1290), cry(0),
-            crx(1000), cry(105), crx(1040), cry(59), crx(1250), cry(51), crx(1300), cry(0), crx(1920), cry(0), crx(1920), cry(20), crx(1400), cry(20), crx(1300), cry(105),
-            crx(920), cry(105), crx(880), cry(59), crx(670), cry(51), crx(620), cry(0), crx(0), cry(0), crx(0), cry(20), crx(520), cry(20), crx(620), cry(105),
-            crx(890), cry(59), crx(960), cry(62), crx(1030), cry(59), crx(985), cry (112), crx(1150), cry(112), crx(1100), cry(152), crx(820), cry(152), crx(780), cry(112), crx(935), cry(112),
-            crx(890), cry(59), crx(960), cry(62), crx(1030), cry(59), crx(985), cry (112), crx(1150), cry(112), crx(1100), cry(152), crx(820), cry(152), crx(780), cry(112), crx(935), cry(112)
+            630, 0, 675, 45, 960, 55, 1245, 45, 1290, 0,
+            1000, 105, 1040, 59, 1250, 51, 1300, 0, 1920, 0, 1920, 20, 1400, 20, 1300, 105,
+            920, 105, 880, 59, 670, 51, 620, 0, 0, 0, 0, 20, 520, 20, 620, 105,
+            890, 59, 960, 62, 1030, 59, 985, 112, 1150, 112, 1100, 152, 820, 152, 780, 112, 935, 112,
+            890, 59, 960, 62, 1030, 59, 985, 112, 1150, 112, 1100, 152, 820, 152, 780, 112, 935, 112
             )
         end
         newContent[#newContent+1] = StaticPaths
@@ -1996,8 +1977,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         local throt = mfloor(unit.getThrottle())
         local spd = velMag * 3.6
         local flightValue = unit.getAxisCommandValue(0)
-        local pvpBoundaryX = ConvertResolutionX(1770)
-        local pvpBoundaryY = ConvertResolutionY(310)
+        local pvpBoundaryX = 1770
+        local pvpBoundaryY = 310
         if AtmoSpeedAssist and throttleMode then
             flightValue = PlayerThrottle
             throt = PlayerThrottle*100
@@ -2087,12 +2068,10 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
     end
 
     function Hud.ExtraData(newContent)
-        local xg = ConvertResolutionX(1240)
-        local yg1 = ConvertResolutionY(55)
+        local xg = 1240
+        local yg1 = 55
         local yg2 = yg1+10
         local gravity 
-        local crx = ConvertResolutionX
-        local cry = ConvertResolutionY
 
         local brakeValue = 0
         local flightStyle = GetFlightStyle()
@@ -2102,10 +2081,10 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         --if TurnBurn then flightStyle = "TB-"..flightStyle end
         --if not stablized then flightStyle = flightStyle.."-DeCoupled" end
 
-        local labelY1 = cry(99)
-        local labelY2 = cry(80)
-        local lineY = cry(85)
-        local lineY2 = cry(31)
+        local labelY1 = 99
+        local labelY2 = 80
+        local lineY = 85
+        local lineY2 = 31
         local maxMass = 0
         local reqThrust = 0
 
@@ -2128,50 +2107,50 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         gravity =  core.g()
         newContent[#newContent + 1] = [[<g class="dim txt txtend size14">]]
         if isRemote() == 1 and not RemoteHud then
-            xg = ConvertResolutionX(1120)
-            yg1 = ConvertResolutionY(55)
+            xg = 1120
+            yg1 = 55
             yg2 = yg1+10
         elseif inAtmo then -- We only show atmo when not remote
-            local atX = ConvertResolutionX(770)
-            newContent[#newContent + 1] = svgText(crx(895), labelY1, "ATMO", "")
-            newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke"  d="M %f %f l %f 0"/>]],crx(895),lineY,crx(-80))
-            newContent[#newContent + 1] = svgText(crx(815), labelY2, stringf("%.1f%%", atmosDensity*100), "txtstart size20")
+            local atX = 770
+            newContent[#newContent + 1] = svgText(895, labelY1, "ATMO", "")
+            newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke"  d="M %f %f l %f 0"/>]],895,lineY,-80)
+            newContent[#newContent + 1] = svgText(815, labelY2, stringf("%.1f%%", atmosDensity*100), "txtstart size20")
         end
-        newContent[#newContent + 1] = svgText(crx(1025), labelY1, "GRAVITY", "txtstart")
-        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1025), lineY, crx(80))
-        newContent[#newContent + 1] = svgText(crx(1105), labelY2, stringf("%.2fg", (gravity / 9.80665)), "size20")
+        newContent[#newContent + 1] = svgText(1025, labelY1, "GRAVITY", "txtstart")
+        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],1025, lineY, 80)
+        newContent[#newContent + 1] = svgText(1105, labelY2, stringf("%.2fg", (gravity / 9.80665)), "size20")
 
-        newContent[#newContent + 1] = svgText(crx(1125), labelY1, "ACCEL", "txtstart")
-        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1125), lineY, crx(80))
-        newContent[#newContent + 1] = svgText(crx(1205), labelY2, stringf("%.2fg", accel), "size20") 
+        newContent[#newContent + 1] = svgText(1125, labelY1, "ACCEL", "txtstart")
+        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],1125, lineY, 80)
+        newContent[#newContent + 1] = svgText(1205, labelY2, stringf("%.2fg", accel), "size20") 
 
-        newContent[#newContent + 1] = svgText(crx(695), labelY1, "BRK TIME", "")
-        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(695),lineY, crx(-80))
-        newContent[#newContent + 1] = svgText(crx(615), labelY2, stringf("%s", FormatTimeString(brkTime)), "txtstart size20") 
-        --newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(10), stringf("BrkTime: %s", FormatTimeString(brkTime)), "txtstart")
-        newContent[#newContent + 1] = svgText(crx(635), cry(45), "TRIP", "")
-        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(635),cry(31),crx(-90))
+        newContent[#newContent + 1] = svgText(695, labelY1, "BRK TIME", "")
+        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],695,lineY, -80)
+        newContent[#newContent + 1] = svgText(615, labelY2, stringf("%s", FormatTimeString(brkTime)), "txtstart size20") 
+        --newContent[#newContent + 1] = svgText(700, 10, stringf("BrkTime: %s", FormatTimeString(brkTime)), "txtstart")
+        newContent[#newContent + 1] = svgText(635, 45, "TRIP", "")
+        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],635,31,-90)
         if travelTime then
-            newContent[#newContent + 1] = svgText(crx(545), cry(25), stringf("%s", FormatTimeString(travelTime)), "txtstart size20") 
+            newContent[#newContent + 1] = svgText(545, 25, stringf("%s", FormatTimeString(travelTime)), "txtstart size20") 
         end
-        --newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(20), stringf("Trip: %.2f km", totalDistanceTrip), "txtstart") 
-        --TODO: newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(30), stringf("Lifetime: %.2f kSU", (TotalDistanceTravelled / 200000)), "txtstart") 
-        newContent[#newContent + 1] = svgText(crx(795), labelY1, "BRK DIST", "")
-        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(795),lineY, crx(-80))
-        newContent[#newContent + 1] = svgText(crx(715), labelY2, stringf("%s", getDistanceDisplayString(brkDist)), "txtstart size20") 
-        --newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(10), stringf("BrkDist: %s", getDistanceDisplayString(brkDist)) , "txtstart")
-        --newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(20), "Trip Time: "..FormatTimeString(flightTime), "txtstart") 
-        --newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(30), "Total Time: "..FormatTimeString(TotalFlightTime), "txtstart") 
-        newContent[#newContent + 1] = svgText(crx(1285), cry(45), "MASS", "txtstart")
-        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1285), cry(31), crx(90))
-        newContent[#newContent + 1] = svgText(crx(1375), cry(25), stringf("%s", mass), "size20") 
-        --newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(20), stringf("Mass: %s", mass), "txtstart") 
-        --newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(10), stringf("Max Brake: %s",  brakeValue), "txtend") 
-        newContent[#newContent + 1] = svgText(crx(1220), labelY1, "THRUST", "txtstart")
-        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]], crx(1220), lineY, crx(80))
-        newContent[#newContent + 1] = svgText(crx(1300), labelY2, stringf("%s", maxThrust), "size20") 
+        --newContent[#newContent + 1] = svgText(700, 20, stringf("Trip: %.2f km", totalDistanceTrip), "txtstart") 
+        --TODO: newContent[#newContent + 1] = svgText(700, 30, stringf("Lifetime: %.2f kSU", (TotalDistanceTravelled / 200000)), "txtstart") 
+        newContent[#newContent + 1] = svgText(795, labelY1, "BRK DIST", "")
+        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],795,lineY, -80)
+        newContent[#newContent + 1] = svgText(715, labelY2, stringf("%s", getDistanceDisplayString(brkDist)), "txtstart size20") 
+        --newContent[#newContent + 1] = svgText(830, 10, stringf("BrkDist: %s", getDistanceDisplayString(brkDist)) , "txtstart")
+        --newContent[#newContent + 1] = svgText(830, 20, "Trip Time: "..FormatTimeString(flightTime), "txtstart") 
+        --newContent[#newContent + 1] = svgText(830, 30, "Total Time: "..FormatTimeString(TotalFlightTime), "txtstart") 
+        newContent[#newContent + 1] = svgText(1285, 45, "MASS", "txtstart")
+        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],1285, 31, 90)
+        newContent[#newContent + 1] = svgText(1375, 25, stringf("%s", mass), "size20") 
+        --newContent[#newContent + 1] = svgText(970, 20, stringf("Mass: %s", mass), "txtstart") 
+        --newContent[#newContent + 1] = svgText(1240, 10, stringf("Max Brake: %s",  brakeValue), "txtend") 
+        newContent[#newContent + 1] = svgText(1220, labelY1, "THRUST", "txtstart")
+        newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]], 1220, lineY, 80)
+        newContent[#newContent + 1] = svgText(1300, labelY2, stringf("%s", maxThrust), "size20") 
 
-        newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(175), flightStyle, "pbright txtbig txtmid size20")
+        newContent[#newContent + 1] = svgText(960, 175, flightStyle, "pbright txtbig txtmid size20")
         newContent[#newContent + 1] = "</g>"
     end
 
@@ -2195,9 +2174,9 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         end
         maxThrust = round((maxThrust / (coreMass * gravConstant)),2).." g"
         if isRemote() == 0 or RemoteHud then 
-            local startX = ConvertResolutionX(OrbitMapX+10)
-            local startY = ConvertResolutionY(OrbitMapY+20)
-            local midX = ConvertResolutionX(OrbitMapX+10+OrbitMapSize/1.25)
+            local startX = OrbitMapX+10
+            local startY = OrbitMapY+20
+            local midX = OrbitMapX+10+OrbitMapSize/1.25
             local height = 25
             newContent[#newContent + 1] = "<g class='txtstart size14 bright'>"
             newContent[#newContent + 1] = svgText(startX, startY, stringf("BrkTime: %s", FormatTimeString(brkTime)))
@@ -2259,18 +2238,18 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
 
     function Hud.DrawSettings(newContent)
         if #settingsVariables > 0  then
-            local x = ConvertResolutionX(640)
-            local y = ConvertResolutionY(200)
+            local x = 640
+            local y = 200
             newContent[#newContent + 1] = [[<g class="pbright txtvspd txtstart">]]
             for k, v in pairs(settingsVariables) do
                 newContent[#newContent + 1] = svgText(x, y, v..": ".._G[v])
                 y = y + 20
                 if k%12 == 0 then
-                    x = x + ConvertResolutionX(350)
-                    y = ConvertResolutionY(200)
+                    x = x + 350
+                    y = 200
                 end
             end
-            newContent[#newContent + 1] = svgText(ConvertResolutionX(640), ConvertResolutionY(200)+260, "To Change: In Lua Chat, enter /G VariableName Value")
+            newContent[#newContent + 1] = svgText(640, 200+260, "To Change: In Lua Chat, enter /G VariableName Value")
             newContent[#newContent + 1] = "</g>"
         end
         return newContent
@@ -2278,10 +2257,10 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
 
     -- DrawRadarInfo() variables
         local perisPanelID
-        local radarX = ConvertResolutionX(1770)
-        local radarY = ConvertResolutionY(350)
-        local friendy = ConvertResolutionY(15)
-        local friendx = ConvertResolutionX(1370)
+        local radarX = 1770
+        local radarY = 350
+        local friendy = 15
+        local friendx = 1370
         local msg, where
         local peris = 0
 
@@ -2525,8 +2504,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                     end
                 end
             end
-            local halfResolutionX = round(ResolutionX / 2,0)
-            local halfResolutionY = round(ResolutionY / 2,0)
+            local halfResolutionX = round(resolutionWidth / 2,0)
+            local halfResolutionY = round(resolutionHeight / 2,0)
         local newContent = {}
         --local t0 = system.getTime()
         HUD.HUDPrologue(newContent)
