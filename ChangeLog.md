@@ -4,6 +4,7 @@ Version 1.605 - Proper scaling for other than 16:9 ratios! Localization and mass
 IMPORTANT:  User variables `ResolutionX` and `ResolutionY` should now be set to your GAME resolution for proper scaling
 - MANDATORY UPDATE: hudclass.lua, apclass.lua, customapclass.lua and customhudclass.lua (If using modular)
 - REMOVAL: Removed all ConvertX and ConvertY function calls (> 150) that would be called every hud tick.
+- hudclass: Neatened up fuelbar appearance
 
 Version 1.603 - Override Function support for require files
 (Default hudclass.lua and apclass.lua updated)
