@@ -689,6 +689,15 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             newContent[#newContent + 1] = svgText( x1, ys, mfloor(spd).." km/h" , "pbright txtbig txtstart")
         end
 
+        local warningX = 960
+        local brakeY = resolutionHeight-(1080-960)
+        local gearY = resolutionHeight-(1080-980)
+        local hoverY = resolutionHeight-(1080-1000)
+        local ewarpY = resolutionHeight-(1080-1060)
+        local apY = resolutionHeight-(1080-300)
+        local turnBurnY = resolutionHeight-(1080-350)
+        local gyroY = resolutionHeight-(1080-1060)
+
         local function DrawWarnings(newContent)
 
             newContent[#newContent + 1] = svgText(1900, resolutionHeight-10, stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
@@ -698,14 +707,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                 newContent[#newContent + 1] = svgText(960, 600, "Keyboard Scheme must be selected", "warnings")
                 newContent[#newContent + 1] = svgText(960, 650, "Set your preferred scheme in Lua Parameters instead", "warnings")
             end
-            local warningX = 960
-            local brakeY = 860
-            local gearY = 880
-            local hoverY = 900
-            local ewarpY = 960
-            local apY = 200
-            local turnBurnY = 250
-            local gyroY = 960
+
             if isRemote() == 1 and not RemoteHud then
                 brakeY = 135
                 gearY = 155
@@ -1484,7 +1486,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             local buttonHeight = 50
             local buttonWidth = 340 -- Defaults
             local x = 500
-            local y = resolutionHeight / 2 - 400
+            local y = halfResolutionHeight - 400
             local cnt = 0
             for k, v in pairs(saveableVariables("boolean")) do
                 if type(_G[v]) == "boolean" then
@@ -1493,24 +1495,24 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                         function() ToggleBoolean(v) end,
                         function() return true end, true) 
                     y = y + buttonHeight + 20
-                    if cnt == 9 then 
+                    if cnt == 8 then 
                         x = x + buttonWidth + 20 
-                        y = resolutionHeight / 2 - 400
+                        y = halfResolutionHeight - 400
                         cnt = 0
                     else
                         cnt = cnt + 1
                     end
                 end
             end
-            MakeButton("Control View", "Control View", buttonWidth, buttonHeight, 10, resolutionHeight / 2 - 500, function() return true end, 
+            MakeButton("Control View", "Control View", buttonWidth, buttonHeight, 10, halfResolutionHeight - 500, function() return true end, 
                 ToggleButtons, function() return true end, true)
-            MakeButton("View Handling Settings", 'Hide Handling Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight), 
+            MakeButton("View Handling Settings", 'Hide Handling Settings', buttonWidth, buttonHeight, 10, halfResolutionHeight - (500 - buttonHeight), 
                 function() return showHandlingVariables end, function() ToggleShownSettings("handling") end, 
                 function() return true end, true)
-            MakeButton("View Hud Settings", 'Hide Hud Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight*2), 
+            MakeButton("View Hud Settings", 'Hide Hud Settings', buttonWidth, buttonHeight, 10, halfResolutionHeight - (500 - buttonHeight*2), 
                 function() return showHudVariables end, function() ToggleShownSettings("hud") end, 
                 function() return true end, true)
-            MakeButton("View Physics Settings", 'Hide Physics Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight*3), 
+            MakeButton("View Physics Settings", 'Hide Physics Settings', buttonWidth, buttonHeight, 10, halfResolutionHeight - (500 - buttonHeight*3), 
                 function() return showPhysicsVariables end, function() ToggleShownSettings("physics") end, 
                 function() return true end, true)
         end
@@ -1622,7 +1624,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             local buttonHeight = 50
             local buttonWidth = 260 -- Defaults
             local brake = MakeButton("Enable Brake Toggle", "Disable Brake Toggle", buttonWidth, buttonHeight,
-                                resolutionWidth / 2 - buttonWidth / 2, resolutionHeight / 2 + 350, function()
+                                halfResolutionWidth - buttonWidth / 2, halfResolutionHeight + 350, function()
                     return BrakeToggleStatus
                 end, function()
                     BrakeToggleStatus = not BrakeToggleStatus
@@ -1633,19 +1635,19 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                     end
                 end)
             MakeButton("Align Prograde", "Disable Prograde", buttonWidth, buttonHeight,
-                resolutionWidth / 2 - buttonWidth / 2 - 50 - brake.width, resolutionHeight / 2 - buttonHeight + 380,
+                halfResolutionWidth - buttonWidth / 2 - 50 - brake.width, halfResolutionHeight - buttonHeight + 380,
                 function()
                     return ProgradeIsOn
                 end, function() gradeToggle(1) end)
             MakeButton("Align Retrograde", "Disable Retrograde", buttonWidth, buttonHeight,
-                resolutionWidth / 2 - buttonWidth / 2 + brake.width + 50, resolutionHeight / 2 - buttonHeight + 380,
+                halfResolutionWidth - buttonWidth / 2 + brake.width + 50, halfResolutionHeight - buttonHeight + 380,
                 function()
                     return RetrogradeIsOn
                 end, gradeToggle, function()
                     return atmosDensity == 0
                 end) -- Hope this works
-            apbutton = MakeButton(getAPEnableName, getAPDisableName, 600, 60, resolutionWidth / 2 - 600 / 2,
-                                    resolutionHeight / 2 - 60 / 2 - 330, function()
+            apbutton = MakeButton(getAPEnableName, getAPDisableName, 600, 60, halfResolutionWidth - 600 / 2,
+                                    halfResolutionHeight - 60 / 2 - 330, function()
                     return Autopilot or VectorToTarget or spaceLaunch or IntoOrbit
                 end, function() end) -- No toggle function because we draw over this with things that do toggle
             -- Make 9 more buttons that only show when moused over the AP button
@@ -1672,8 +1674,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                 end, function(b)
                     local index = getAtlasIndexFromAddition(b.apExtraIndex)
                     return getAPDisableName(index)
-                end, 600, 60, resolutionWidth/2 - 600/2, 
-                resolutionHeight/2 - 60/2 - 330 + 60*i, function(b)
+                end, 600, 60, halfResolutionWidth - 600/2, 
+                halfResolutionHeight - 60/2 - 330 + 60*i, function(b)
                     local index = getAtlasIndexFromAddition(b.apExtraIndex)
                     return index == AutopilotTargetIndex and (Autopilot or VectorToTarget or spaceLaunch or IntoOrbit)
                 end, function(b)
@@ -1716,14 +1718,14 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             buttonHeight = 60
             buttonWidth = 300
             local x = 0
-            local y = resolutionHeight / 2 - 150
+            local y = halfResolutionHeight - 150
             MakeButton("View Settings", "View Settings", buttonWidth, buttonHeight, x, y, function() return true end, ToggleButtons)
             y = y + buttonHeight + 20
             MakeButton("Enable Turn and Burn", "Disable Turn and Burn", buttonWidth, buttonHeight, x, y, function()
                 return TurnBurn
             end, ToggleTurnBurn)
             x = 10
-            y = resolutionHeight / 2 - 300
+            y = halfResolutionHeight - 300
             MakeButton("Horizontal Takeoff Mode", "Vertical Takeoff Mode", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
                 function() return VertTakeOffEngine end, 
                 function () 
@@ -2403,8 +2405,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                         return false
                     end
                 end
-                local x = simulatedX + resolutionWidth / 2
-                local y = simulatedY + resolutionHeight / 2
+                local x = simulatedX + halfResolutionWidth
+                local y = simulatedY + halfResolutionHeight
                 for _, v in pairs(Buttons) do
                     -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
                     v.hovered = Contains(x, y, v.x, v.y, v.width, v.height)
@@ -2504,8 +2506,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                     end
                 end
             end
-            local halfResolutionX = round(resolutionWidth / 2,0)
-            local halfResolutionY = round(resolutionHeight / 2,0)
+            local halfResolutionX = round(halfResolutionWidth,0)
+            local halfResolutionY = round(halfResolutionHeight,0)
         local newContent = {}
         --local t0 = system.getTime()
         HUD.HUDPrologue(newContent)

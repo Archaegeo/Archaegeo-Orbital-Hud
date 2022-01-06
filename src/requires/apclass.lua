@@ -310,8 +310,8 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
         if sysIsVwLock() == 0 then
             if isRemote() == 1 and holdingShift then
                 if not Animating then
-                    simulatedX = uclamp(simulatedX + deltaX,-resolutionWidth/2,resolutionWidth/2)
-                    simulatedY = uclamp(simulatedY + deltaY,-resolutionHeight/2,resolutionHeight/2)
+                    simulatedX = uclamp(simulatedX + deltaX,-halfResolutionWidth,halfResolutionWidth)
+                    simulatedY = uclamp(simulatedY + deltaY,-halfResolutionHeight,halfResolutionHeight)
                 end
             else
                 simulatedX = 0
@@ -319,8 +319,8 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
                 -- Except of course autopilot, which is later.
             end
         else
-            simulatedX = uclamp(simulatedX + deltaX,-resolutionWidth/2,resolutionWidth/2)
-            simulatedY = uclamp(simulatedY + deltaY,-resolutionHeight/2,resolutionHeight/2)
+            simulatedX = uclamp(simulatedX + deltaX,-halfResolutionWidth,halfResolutionWidth)
+            simulatedY = uclamp(simulatedY + deltaY,-halfResolutionHeight,halfResolutionHeight)
             distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
             if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                 if userControlScheme == "virtual joystick" then -- Virtual Joystick
