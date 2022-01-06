@@ -71,11 +71,12 @@
 
     -- HUD Postioning variables
         -- NOTE: savableVariablesHud below must contain any HUD Postioning variables that needs to be saved/loaded from databank.
-        savableVariablesHud = {"circleRad","SafeR", "SafeG", "SafeB", 
+        savableVariablesHud = {"ResolutionX", "ResolutionY", "circleRad","SafeR", "SafeG", "SafeB", 
         "PvPR", "PvPG", "PvPB","centerX", "centerY", "throtPosX", "throtPosY",
         "vSpdMeterX", "vSpdMeterY","altMeterX", "altMeterY","fuelX", "fuelY", "shieldX", "shieldY", "DeadZone",
         "OrbitMapSize", "OrbitMapX", "OrbitMapY", "soundVolume"}
- 
+        ResolutionX = 1920 --export: (Default: 1920) Set this to your game resolution for proper scaling
+        ResolutionY = 1080 --export: (Default: 1080) Set this to your game resolution for proper scaling
         circleRad = 400 --export: (Default: 400) The size of the artifical horizon circle, recommended minimum 100, maximum 400. Looks different > 200. Set to 0 to remove.
         SafeR = 130 --export: (Default: 130) Primary HUD color
         SafeG = 224 --export: (Default: 224) Primary HUD color

@@ -691,7 +691,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
 
         local function DrawWarnings(newContent)
 
-            newContent[#newContent + 1] = svgText(1900, 1070, stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
+            newContent[#newContent + 1] = svgText(1900, resolutionHeight*ResolutionY/ResolutionX, stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
             newContent[#newContent + 1] = [[<g class="warnings">]]
             if unit.isMouseControlActivated() == 1 then
                 newContent[#newContent + 1] = svgText(960, 550, "Warning: Invalid Control Scheme Detected", "warnings")
