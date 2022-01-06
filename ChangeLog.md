@@ -2,6 +2,7 @@
 
 Version 1.606
 Updated hudclass.lua, apclass.lua
+- Fix float vs int error cause by strange resolutions.
 - Restored flight mode indicators.
 - Fix warning and buttons positions for all ratios
 
