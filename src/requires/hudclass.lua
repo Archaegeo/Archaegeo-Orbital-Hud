@@ -203,9 +203,9 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                                 <g class="pdim">                        
                                 <rect fill=%s class="bar" stroke=%s x="%d" y="%d" width="170" height="20"></rect></g>
                                 <g class="bar txtstart">
-                                <rect fill=%s width="%d" height="20" x="%d" y="%d"></rect>
+                                <rect fill=%s width="%d" height="18" x="%d" y="%d"></rect>
                                 <text class="txtstart" fill="white" x="%d" y="%d" style="font-family:Play;font-size:14px">%s %s%%&nbsp;&nbsp;&nbsp;&nbsp;%s</text>
-                                </g>]], backColor, strokeColor, x, y2, color, mfloor(fuelPercentTable[i]*1.7+0.5), x, y2, x+5, y2+14, name, fuelPercentTable[i], fuelTimeDisplay
+                                </g>]], backColor, strokeColor, x, y2, color, mfloor(fuelPercentTable[i]*1.7+0.5)-2, x+1, y2+1, x+5, y2+14, name, fuelPercentTable[i], fuelTimeDisplay
                             )
                             --tankMessage = tankMessage..svgText(x, y1, name, class.."txtstart pdim txtfuel") 
                             y1 = y1 - 22
@@ -2096,11 +2096,11 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
 
         local brakeValue = 0
         local flightStyle = GetFlightStyle()
-        --if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
-        --if CollisionSystem and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
-        --if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
-        --if TurnBurn then flightStyle = "TB-"..flightStyle end
-        --if not stablized then flightStyle = flightStyle.."-DeCoupled" end
+        if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
+        if CollisionSystem and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
+        if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
+        if TurnBurn then flightStyle = "TB-"..flightStyle end
+        if not stablized then flightStyle = flightStyle.."-DeCoupled" end
 
         local labelY1 = cry(99)
         local labelY2 = cry(80)
