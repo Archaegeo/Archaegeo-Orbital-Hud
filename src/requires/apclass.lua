@@ -1,18 +1,7 @@
-function APClass() -- Autopiloting functions including tick
-    -- REQUIRED DEFINES FROM HERE TILL NEXT REMARK - DO NOT REMOVE/CHANGE IF YOU DONT KNOW WHY
-        local Nav = navGlobal
-        local core = coreGlobal
-        local unit = unitGlobal
-        local system = systemGlobal
-        local atlas = atlasGlobal
-        local vBooster = vBoosterGlobal
-        local hover = hoverGlobal
-        local telemeter_1 = telmeter_1Global
-        local antigrav = antigravGlobal
-        
-    -- END OF REQUIRED DEFINES
+function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, antigrav,
+    mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
+    navCom, sysUpData, sysIsVwLock, msqrt, round) 
     
-    -- Modify beyond here as you will
     local ap = {}
         local function GetAutopilotBrakeDistanceAndTime(speed)
             -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
@@ -41,6 +30,18 @@ function APClass() -- Autopiloting functions including tick
         end
     local speedLimitBreaking = false
     local lastPvPDist = 0
+    local previousYawAmount = 0
+    local previousPitchAmount = 0
+    local lastApTickTime = systime()
+    local ahDoubleClick = 0
+    local apDoubleClick = 0
+    local orbitPitch = 0
+    local orbitRoll = 0
+    local orbitAligned = false
+    local orbitalRecover = false
+    local OrbitTargetSet = false
+    local OrbitTargetPlanet = nil
+    local OrbitTicks = 0
 
     function ap.GetAutopilotBrakeDistanceAndTime(speed)
         return GetAutopilotBrakeDistanceAndTime(speed)

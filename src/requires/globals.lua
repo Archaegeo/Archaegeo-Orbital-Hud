@@ -71,13 +71,12 @@
 
     -- HUD Postioning variables
         -- NOTE: savableVariablesHud below must contain any HUD Postioning variables that needs to be saved/loaded from databank.
-        savableVariablesHud = {"ResolutionX","ResolutionY","circleRad","SafeR", "SafeG", "SafeB", 
+        savableVariablesHud = {"ResolutionX", "ResolutionY", "circleRad","SafeR", "SafeG", "SafeB", 
         "PvPR", "PvPG", "PvPB","centerX", "centerY", "throtPosX", "throtPosY",
         "vSpdMeterX", "vSpdMeterY","altMeterX", "altMeterY","fuelX", "fuelY", "shieldX", "shieldY", "DeadZone",
         "OrbitMapSize", "OrbitMapX", "OrbitMapY", "soundVolume"}
- 
-        ResolutionX = 1920 --export: (Default: 1920) Does not need to be set to same as game resolution. You can set 1920 on a 2560 to get larger resolution
-        ResolutionY = 1080 --export: (Default: 1080) Does not need to be set to same as game resolution. You can set 1080 on a 1440 to get larger resolution
+        ResolutionX = 1920 --export: (Default: 1920) Set this to your game resolution for proper scaling
+        ResolutionY = 1080 --export: (Default: 1080) Set this to your game resolution for proper scaling
         circleRad = 400 --export: (Default: 400) The size of the artifical horizon circle, recommended minimum 100, maximum 400. Looks different > 200. Set to 0 to remove.
         SafeR = 130 --export: (Default: 130) Primary HUD color
         SafeG = 224 --export: (Default: 224) Primary HUD color
@@ -99,8 +98,8 @@
         shieldY = 250 --export: (Default: 250) Y position of shield indicator
         DeadZone = 50 --export: (Default: 50) Number of pixels of deadzone at the center of the screen
         OrbitMapSize = 250 --export: (Default: 250) Size of the orbit map, make sure it is divisible by 4
-        OrbitMapX = 75 --export: (Default: 75) X postion of Orbit Display 
-        OrbitMapY = 0 --export: (Default: 0) Y position of Orbit Display
+        OrbitMapX = 5--export: (Default: 5) X postion of Orbit Display 
+        OrbitMapY = 25 --export: (Default: 25) Y position of Orbit Display
         soundVolume = 100 --export: (Default: 100) Set to value (0-100 recommended) to control volume of voice and alerts. Alerts will automatically lower other hud sounds 50% if needed.
 
     -- Ship flight physics variables - Change with care, can have large effects on ships performance.
