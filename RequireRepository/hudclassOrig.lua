@@ -6,7 +6,10 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
     local gravConstant = 9.80665
     local ControlButtons = {}
     local SettingButtons = {}
-
+    local showSettings = false
+    local settingsVariables = {}
+    local oldShowHud = showHud
+    local pipeMessage = ""
 
     --Local Huds Functions
         -- safezone() variables

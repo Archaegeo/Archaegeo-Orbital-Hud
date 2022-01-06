@@ -179,17 +179,17 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
 						end
 						previous = strokeColor
                         if BarFuelDisplay then
-							if changed then
-							  y1 = y1 - 5
-                              y2 = y2 - 5
-							end
+                            if changed then
+                                y1 = y1 - 5
+                                y2 = y2 - 5
+                            end
                             tankMessage = tankMessage..stringf([[
                                 <g class="pdim">                        
                                 <rect fill=%s class="bar" stroke=%s x="%d" y="%d" width="170" height="20"></rect></g>
                                 <g class="bar txtstart">
-                                <rect fill=%s width="%d" height="20" x="%d" y="%d"></rect>
+                                <rect fill=%s width="%d" height="18" x="%d" y="%d"></rect>
                                 <text class="txtstart" fill="white" x="%d" y="%d" style="font-family:Play;font-size:14px">%s %s%%&nbsp;&nbsp;&nbsp;&nbsp;%s</text>
-                                </g>]], backColor, strokeColor, x, y2, color, mfloor(fuelPercentTable[i]*1.7+0.5), x, y2, x+5, y2+14, name, fuelPercentTable[i], fuelTimeDisplay
+                                </g>]], backColor, strokeColor, x, y2, color, mfloor(fuelPercentTable[i]*1.7+0.5)-2, x+1, y2+1, x+5, y2+14, name, fuelPercentTable[i], fuelTimeDisplay
                             )
                             --tankMessage = tankMessage..svgText(x, y1, name, class.."txtstart pdim txtfuel") 
                             y1 = y1 - 22

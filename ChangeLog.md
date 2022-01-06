@@ -1,7 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.604 - Localization of main .conf and require files
+Version 1.604 - Proper scaling for other than 16:9 ratios! Localization and massive performance update
+IMPORTANT:  User variables `ResolutionX` and `ResolutionY` should now be set to your GAME resolution for proper scaling
 - MANDATORY UPDATE: hudclass.lua, apclass.lua, customapclass.lua and customhudclass.lua (If using modular)
+- REMOVAL: Removed all ConvertX and ConvertY function calls (> 150) that would be called every hud tick.
 
 Version 1.603 - Override Function support for require files
 (Default hudclass.lua and apclass.lua updated)
