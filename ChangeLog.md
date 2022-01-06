@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.606
+Updated hudclass.lua, apclass.lua
 - Restored flight mode indicators.
 - Fix warning and buttons positions for all ratios
 
