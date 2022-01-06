@@ -8,7 +8,7 @@ require("autoconf/custom/archhud/hudclass")
 require("autoconf/custom/archhud/apclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.605
+VERSION_NUMBER = 1.606
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -100,7 +100,9 @@ VERSION_NUMBER = 1.605
     damageMessage = ""
     local UnitHidden = true
     resolutionWidth = 1920
-    resolutionHeight = resolutionWidth*ResolutionY/ResolutionX
+    resolutionHeight = round(resolutionWidth*ResolutionY/ResolutionX,0)
+    halfResolutionWidth = 960
+    halfResolutionHeight = 540
     atmoTanks = {}
     spaceTanks = {}
     rocketTanks = {}
@@ -1555,7 +1557,7 @@ VERSION_NUMBER = 1.605
                     coroutine.yield()
                     if valuesAreSet then
                         msgText = "Loaded Saved Variables"
-                        resolutionHeight=resolutionWidth*ResolutionY/ResolutionX
+                        resolutionHeight=round(resolutionWidth*ResolutionY/ResolutionX,0)
                         BrakeToggleStatus = BrakeToggleDefault
                         userControlScheme = string.lower(userControlScheme)
                         autoRoll = autoRollPreference

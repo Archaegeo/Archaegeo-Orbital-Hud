@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.606
+Updated hudclass.lua, apclass.lua
+- Fix float vs int error cause by strange resolutions.
+- Restored flight mode indicators.
+- Fix warning and buttons positions for all ratios
+
 Version 1.605 - Proper scaling for other than 16:9 ratios! Localization and massive performance update
 IMPORTANT:  User variables `ResolutionX` and `ResolutionY` should now be set to your GAME resolution for proper scaling
 - MANDATORY UPDATE: hudclass.lua, apclass.lua, customapclass.lua and customhudclass.lua (If using modular)
