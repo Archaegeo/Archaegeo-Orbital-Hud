@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.5162
+VERSION_NUMBER = 1.520
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -1640,9 +1640,9 @@ VERSION_NUMBER = 1.5162
                                     <g class="pdim">                        
                                     <rect fill=%s class="bar" stroke=%s x="%d" y="%d" width="170" height="20"></rect></g>
                                     <g class="bar txtstart">
-                                    <rect fill=%s width="%d" height="20" x="%d" y="%d"></rect>
+                                    <rect fill=%s width="%d" height="18" x="%d" y="%d"></rect>
                                     <text class="txtstart" fill="white" x="%d" y="%d" style="font-family:Play;font-size:14px">%s %s%%&nbsp;&nbsp;&nbsp;&nbsp;%s</text>
-                                    </g>]], backColor, strokeColor, x, y2, color, mfloor(fuelPercentTable[i]*1.7+0.5), x, y2, x+5, y2+14, name, fuelPercentTable[i], fuelTimeDisplay
+                                    </g>]], backColor, strokeColor, x, y2, color, mfloor(fuelPercentTable[i]*1.7+0.5)-2, x+1, y2+1, x+5, y2+14, name, fuelPercentTable[i], fuelTimeDisplay
                                 )
                                 --tankMessage = tankMessage..svgText(x, y1, name, class.."txtstart pdim txtfuel") 
                                 y1 = y1 - 22
@@ -3533,11 +3533,11 @@ VERSION_NUMBER = 1.5162
     
             local brakeValue = 0
             local flightStyle = GetFlightStyle()
-            --if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
-            --if CollisionSystem and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
-            --if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
-            --if TurnBurn then flightStyle = "TB-"..flightStyle end
-            --if not stablized then flightStyle = flightStyle.."-DeCoupled" end
+            if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
+            if CollisionSystem and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
+            if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
+            if TurnBurn then flightStyle = "TB-"..flightStyle end
+            if not stablized then flightStyle = flightStyle.."-DeCoupled" end
     
             local labelY1 = cry(99)
             local labelY2 = cry(80)
