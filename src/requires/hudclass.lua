@@ -2075,11 +2075,11 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
 
         local brakeValue = 0
         local flightStyle = GetFlightStyle()
-        --if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
-        --if CollisionSystem and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
-        --if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
-        --if TurnBurn then flightStyle = "TB-"..flightStyle end
-        --if not stablized then flightStyle = flightStyle.."-DeCoupled" end
+        if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
+        if CollisionSystem and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
+        if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
+        if TurnBurn then flightStyle = "TB-"..flightStyle end
+        if not stablized then flightStyle = flightStyle.."-DeCoupled" end
 
         local labelY1 = 99
         local labelY2 = 80
