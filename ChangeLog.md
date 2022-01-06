@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.700
+- Update to increment version number to clean point after rollback from 1.606 to 1.604
+- Include fuel cell appeareance and flightStyle tags.
+
 Version 1.604 - Localization of main .conf and require files
 - MANDATORY UPDATE: hudclass.lua, apclass.lua, customapclass.lua and customhudclass.lua (If using modular)
 
