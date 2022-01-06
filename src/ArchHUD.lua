@@ -100,7 +100,7 @@ VERSION_NUMBER = 1.606
     damageMessage = ""
     local UnitHidden = true
     resolutionWidth = 1920
-    resolutionHeight = resolutionWidth*ResolutionY/ResolutionX
+    resolutionHeight = round(resolutionWidth*ResolutionY/ResolutionX,0)
     halfResolutionWidth = 960
     halfResolutionHeight = 540
     atmoTanks = {}
@@ -1557,7 +1557,7 @@ VERSION_NUMBER = 1.606
                     coroutine.yield()
                     if valuesAreSet then
                         msgText = "Loaded Saved Variables"
-                        resolutionHeight=resolutionWidth*ResolutionY/ResolutionX
+                        resolutionHeight=round(resolutionWidth*ResolutionY/ResolutionX,0)
                         BrakeToggleStatus = BrakeToggleDefault
                         userControlScheme = string.lower(userControlScheme)
                         autoRoll = autoRollPreference
