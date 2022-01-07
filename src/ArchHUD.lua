@@ -3049,7 +3049,7 @@ VERSION_NUMBER = 1.5201
                             else
                                 textX = x+xMod
                             end
-                            if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not anyHovered then
+                            if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand and not anyHovered then
                                 anyHovered = true
                                 -- Find it in AtlasOrdered
                                 if AutopilotTargetName ~= v.name then
@@ -4634,7 +4634,7 @@ VERSION_NUMBER = 1.5201
             end
 
             local function adjustAutopilotTargetIndex(up)
-                if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then -- added to prevent crash when index == 0
+                if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand then -- added to prevent crash when index == 0
                     if up == nil then 
                         AutopilotTargetIndex = AutopilotTargetIndex + 1
                         if AutopilotTargetIndex > #AtlasOrdered then
