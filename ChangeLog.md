@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.701 - SCOPE feature - View of all planets in space around you.
+(Updates to hudclass.lua, apclass.lua, globals.lua and base ArchHUD.lua)
+- New Feature: SCOPE - To use, hold SHIFT and mouseover SCOPE in upper left, release shift to "click"
+
 Version 1.700
 - Update to increment version number to clean point after rollback from 1.606 to 1.604
 - Include fuel cell appeareance and flightStyle tags.

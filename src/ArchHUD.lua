@@ -8,7 +8,7 @@ require("autoconf/custom/archhud/hudclass")
 require("autoconf/custom/archhud/apclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.700
+VERSION_NUMBER = 1.701
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -120,25 +120,16 @@ VERSION_NUMBER = 1.700
     autoRoll = autoRollPreference
     local targetGroundAltitude = LandingGearGroundHeight -- So it can tell if one loaded or not
     stalling = false
-
     targetRoll = 0
-
     adjustedAtmoSpeedLimit = AtmoSpeedLimit
     VtPitch = 0
     orbitMsg = nil
-
-
-
-    
     orbitalParams = { VectorToTarget = false } 
-    
     OrbitTargetOrbit = 0
-    
     OrbitAchieved = false
     local SpaceEngineVertUp = false
     SpaceEngineVertDn = false
     SpaceEngines = false
-    
     constructUp = vec3(core.getConstructWorldOrientationUp())
     constructForward = vec3(core.getConstructWorldOrientationForward())
     constructRight = vec3(core.getConstructWorldOrientationRight())
@@ -148,20 +139,15 @@ VERSION_NUMBER = 1.700
     worldVertical = vec3(core.getWorldVertical())
     vSpd = -worldVertical:dot(constructVelocity)
     worldPos = vec3(core.getConstructWorldPos())
-
     UpVertAtmoEngine = false
     antigravOn = false
     setCruiseSpeed = nil
     throttleMode = true
     adjustedPitch = 0
     adjustedRoll = 0
-    
-    
-    
     AtlasOrdered = {}
     notPvPZone = false
     pvpDist = 50000
-    
     ReversalIsOn = nil
     local contacts = {}
     nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
@@ -173,6 +159,8 @@ VERSION_NUMBER = 1.700
     apScrollIndex = 0
     passengers = nil
     ships = nil
+    planetAtlas = {}
+    scopeFOV = 90
 
 -- Function Definitions that are used in more than one areause 
     --[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
@@ -1860,6 +1848,9 @@ VERSION_NUMBER = 1.700
                         end
                         if maxAtlasY == nil or planet.center.y > maxAtlasY then
                             maxAtlasY = planet.center.y
+                        end
+                        if planet.center and planet.name ~= "Space" then
+                            planetAtlas[#planetAtlas + 1] = planet
                         end
                     end
                 end
