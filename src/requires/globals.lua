@@ -139,7 +139,7 @@
                     "AutopilotPlanetGravity", "PrevViewLock", "AutopilotTargetName", "AutopilotTargetCoords",
                     "AutopilotTargetIndex", "TotalDistanceTravelled",
                     "TotalFlightTime", "SavedLocations", "VectorToTarget", "LocationIndex", "LastMaxBrake", 
-                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "iphCondition", "stablized", "UseExtra", "SelectedTab", "scopeFOV"}
+                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "iphCondition", "stablized", "UseExtra", "SelectedTab"}
         BrakeToggleStatus = BrakeToggleDefault
         VertTakeOffEngine = false 
         BrakeIsOn = false

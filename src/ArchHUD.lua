@@ -161,6 +161,7 @@ VERSION_NUMBER = 1.701
     ships = nil
     planetAtlas = {}
     scopeFOV = 90
+    oldShowHud = showHud
 
 -- Function Definitions that are used in more than one areause 
     --[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
@@ -1363,7 +1364,7 @@ VERSION_NUMBER = 1.701
             end
 
             local function adjustAutopilotTargetIndex(up)
-                if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then -- added to prevent crash when index == 0
+                if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand then -- added to prevent crash when index == 0
                     if up == nil then 
                         AutopilotTargetIndex = AutopilotTargetIndex + 1
                         if AutopilotTargetIndex > #AtlasOrdered then
@@ -1949,6 +1950,7 @@ VERSION_NUMBER = 1.701
                 v.toggle()
             end
         end
+        showHud = oldShowHud
         SaveDataBank()
         if button then
             button.activate()
