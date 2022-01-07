@@ -12,7 +12,6 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
     local YouAreHere = nil
     local showSettings = false
     local settingsVariables = {}
-    local oldShowHud = showHud
     local pipeMessage = ""
 
     --Local Huds Functions
@@ -1049,8 +1048,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         end
         
         local function DisplayOrbitScreen(newContent)
-            local orbitMapX = ConvertResolutionX(OrbitMapX)
-            local orbitMapY = ConvertResolutionY(OrbitMapY)
+            local orbitMapX = OrbitMapX
+            local orbitMapY = OrbitMapY
             local orbitMapSize = OrbitMapSize -- Always square
             local pad = 4
 
@@ -1564,40 +1563,17 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                         textX = x+xMod
                         textY = y
                     end
-
-                    local adjusted
-                    repeat
-                        adjusted = false
-                        for tpi,d in pairs(data) do
-                            local textPos = d.textPositions
-                            local yDiff = textPos.y-textY
-                            if tpi ~= i and mabs(yDiff) < textPos.height and textPos.x+textPos.width > textX and textPos.x < textX+textWidth then
-                                -- This could cause an overlap on an edge case where the text is below center
-                                -- Then we have a collision so it moves above center
-                                -- Then we have another collision so it moves below again and draws over one... 
-                                -- But it should be kinda rare.
-                                --if y > orbitMapSize*1.5/2 then
-                                --    textY = textY - 15
-                                --else
-                                    if size > textWidth then
-                                        textY = uclamp(textY+textHeight,orbitMapY+15,orbitMaxY-5) -- If we clamp, don't re-do, it's meant to overlap
-                                    else
-                                        textY = textPos.y+textPos.height+1
-                                        adjusted = true
-                                    end
-                                    --if v.systemId == 0 then
-                                    --    textX = textX + 10
-                                    --else
-                                    --    textX = textX - 10
-                                    --end
-                                --end
-                                --break
-                                
-                                break -- Abort to re-check previous ones, to avoid iterating the later ones for no reason
+                    for tpi,d in pairs(data) do
+                        local textPos = d.textPositions
+                        local yDiff = textPos.y-textY
+                        if tpi ~= i and mabs(yDiff) < textPos.height and textPos.x+textPos.width > textX and textPos.x < textX+textWidth then
+                            if size > textWidth then
+                                textY = uclamp(textY+textHeight,orbitMapY+15,orbitMaxY-5) -- These clamped values are meant to be on top
+                            else
+                                textY = textPos.y+textPos.height+1
                             end
                         end
-                    until not adjusted
-
+                    end
                     local hovered = displayString ~= v.name or (textX <= orbitMidX and textX+textWidth >= orbitMidX and textY-textHeight <= orbitMidY and textY >= orbitMidY)
                     d.hovered = hovered
                     local opacityMult = 1
@@ -1623,7 +1599,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                         else
                             textX = x+xMod
                         end
-                        if not Autopilot and not VectorToTarget and not IntoOrbit and not anyHovered then
+                        if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand and not anyHovered then
                             anyHovered = true
                             -- Find it in AtlasOrdered
                             if AutopilotTargetName ~= v.name then
@@ -1657,7 +1633,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                     data[i].output = data[i].output .. stringf('<circle cx="%f" cy="%f" r="%f" stroke="%s" stroke-width="1" stroke-opacity="%f" fill="url(#RadialPlanetCenter)" />',
                                                         x, y, size, rgbdim, 0.2*opacityMult)
                     
-                     -- If it's centered text, don't bother with a line
+                        -- If it's centered text, don't bother with a line
                     if v.systemId == 0 then
                         data[i].output = data[i].output .. stringf([[<text x='%f' y='%f'
                                 font-size='12' fill='%s' class='%s' font-family='Montserrat'>%s</text>]]
@@ -2069,9 +2045,9 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             -- TODO: This should use defined orbitMapHeight and Width vars but to move them out they'd have to be unlocal cuz we're out of locals
             -- But we know that height is orbitMapSize*1.5, width is orbitMapSize*2
             local orbitButtonSize = ConvertResolutionX(30)
-            local orbitButtonX = ConvertResolutionX(OrbitMapX+OrbitMapSize*2+2)
-            local orbitButtonY = ConvertResolutionY(OrbitMapY+1)
-            MakeButton("+", "+", orbitButtonSize, orbitButtonSize, orbitButtonX, ConvertResolutionY(orbitButtonY+orbitButtonSize+1),
+            local orbitButtonX = OrbitMapX+OrbitMapSize*2+2
+            local orbitButtonY = OrbitMapY+1
+            MakeButton("+", "+", orbitButtonSize, orbitButtonSize, orbitButtonX, orbitButtonY+orbitButtonSize+1,
                                 function() return false end, function() scopeFOV = scopeFOV/8 end, function() return SelectedTab == "SCOPE" end, nil, "ZoomButton")
             MakeButton("-", "-", orbitButtonSize, orbitButtonSize, orbitButtonX, orbitButtonY,
                                 function() return false end, function() scopeFOV = math.min(scopeFOV*8,90) end, function() return SelectedTab == "SCOPE" end, nil, "ZoomButton")
@@ -2190,8 +2166,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                         msgText = "Horizontal Takeoff Mode"
                     end
                 end, function() return UpVertAtmoEngine end)
-            y = y + buttonHeight + 20
-
+            y = y + buttonHeight + 20    
             -- prevent this button from being an option until you're in atmosphere
             MakeButton("Engage Orbiting", "Cancel Orbiting", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
                     function()
@@ -2199,9 +2174,10 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                     end, AP.ToggleIntoOrbit, function()
                         return (atmosDensity == 0 and nearPlanet)
                     end)
-            y = y + buttonHeight + 20
-            MakeButton("Glide Re-Entry", "Cancel Glide Re-Entry", buttonWidth, buttonHeight, x, y,
+            y = resolutionHeight / 2 - 150
+            MakeButton("Glide Re-Entry", "Cancel Glide Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
                 function() return Reentry end, function() spaceLand = 1 gradeToggle(1) end, function() return (planet.hasAtmosphere and not inAtmo) end )
+            y = y + buttonHeight + 20
             MakeButton("Parachute Re-Entry", "Cancel Parachute Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
                 function() return Reentry end, AP.BeginReentry, function() return (planet.hasAtmosphere and not inAtmo) end )
             y = y + buttonHeight + 20
@@ -2270,10 +2246,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"HIDE")
         end
 
-
     local Hud = {}
     local StaticPaths = nil
-
 
     function Hud.HUDPrologue(newContent)
         notPvPZone, pvpDist = safeZone(worldPos)
@@ -3093,6 +3067,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         Buttons = ControlButtons
     end
 
+
+    
     -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
     --for k,v in pairs(require("autoconf/custom/archhud/custom/customhudclass")) do Hud[k] = v end 
     return Hud
