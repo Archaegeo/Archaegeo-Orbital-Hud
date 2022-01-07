@@ -686,18 +686,21 @@ VERSION_NUMBER = 1.701
          
          function PlanetarySystem:castIntersections(origin, direction, sizeCalculator, bodyIds, collection, sorted)
             local candidates = {}
-            local selfie = collection or self
-            -- Since we don't use bodyIds anywhere, got rid of them
-            -- It was two tables doing basically the same thing
-            
-            -- Changed this to insert the body to candidates
-            for _, body in pairs(selfie) do
-                table.insert(candidates, body)
+            if collection then
+                -- Since we don't use bodyIds anywhere, got rid of them
+                -- It was two tables doing basically the same thing
+
+                -- Changed this to insert the body to candidates
+                for _, body in pairs(collection) do
+                    table.insert(candidates, body)
+                end
+            else
+                candidates = planetAtlas -- Already-built and probably already sorted
             end
             -- Added this because, your knownContacts list is already sorted, can skip an expensive re-sort
             if not sorted then
-                table.sort(candidates, function (b1, b2)
-                    return (b1.center - origin):len() < (b2.center - origin):len()
+                table.sort(candidates, function (a, b)
+                    return (a.center.x-origin.x)^2+(a.center.y-origin.y)^2+(a.center.z-origin.z)^2 < (b.center.x-origin.x)^2+(b.center.y-origin.y)^2+(b.center.z-origin.z)^2
                 end)
             end
             local dir = direction:normalize()
