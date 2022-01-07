@@ -167,7 +167,7 @@ VERSION_NUMBER = 1.5201
                     "AutopilotPlanetGravity", "PrevViewLock", "AutopilotTargetName", "AutopilotTargetCoords",
                     "AutopilotTargetIndex", "TotalDistanceTravelled",
                     "TotalFlightTime", "SavedLocations", "VectorToTarget", "LocationIndex", "LastMaxBrake", 
-                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "iphCondition", "stablized", "UseExtra", "SelectedTab", "scopeFOV"}
+                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "iphCondition", "stablized", "UseExtra", "SelectedTab"}
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -2488,8 +2488,8 @@ VERSION_NUMBER = 1.5201
             end
             
             local function DisplayOrbitScreen(newContent)
-                local orbitMapX = ConvertResolutionX(OrbitMapX)
-                local orbitMapY = ConvertResolutionY(OrbitMapY)
+                local orbitMapX = OrbitMapX
+                local orbitMapY = OrbitMapY
                 local orbitMapSize = OrbitMapSize -- Always square
                 local pad = 4
 
@@ -3062,7 +3062,7 @@ VERSION_NUMBER = 1.5201
                             else
                                 textX = x+xMod
                             end
-                            if not Autopilot and not VectorToTarget and not IntoOrbit and not anyHovered then
+                            if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not anyHovered then
                                 anyHovered = true
                                 -- Find it in AtlasOrdered
                                 if AutopilotTargetName ~= v.name then
@@ -3508,9 +3508,9 @@ VERSION_NUMBER = 1.5201
                 -- TODO: This should use defined orbitMapHeight and Width vars but to move them out they'd have to be unlocal cuz we're out of locals
                 -- But we know that height is orbitMapSize*1.5, width is orbitMapSize*2
                 local orbitButtonSize = ConvertResolutionX(30)
-                local orbitButtonX = ConvertResolutionX(OrbitMapX+OrbitMapSize*2+2)
-                local orbitButtonY = ConvertResolutionY(OrbitMapY+1)
-                MakeButton("+", "+", orbitButtonSize, orbitButtonSize, orbitButtonX, ConvertResolutionY(orbitButtonY+orbitButtonSize+1),
+                local orbitButtonX = OrbitMapX+OrbitMapSize*2+2
+                local orbitButtonY = OrbitMapY+1
+                MakeButton("+", "+", orbitButtonSize, orbitButtonSize, orbitButtonX, orbitButtonY+orbitButtonSize+1,
                                     function() return false end, function() scopeFOV = scopeFOV/8 end, function() return SelectedTab == "SCOPE" end, nil, "ZoomButton")
                 MakeButton("-", "-", orbitButtonSize, orbitButtonSize, orbitButtonX, orbitButtonY,
                                     function() return false end, function() scopeFOV = math.min(scopeFOV*8,90) end, function() return SelectedTab == "SCOPE" end, nil, "ZoomButton")
@@ -3629,8 +3629,7 @@ VERSION_NUMBER = 1.5201
                             msgText = "Horizontal Takeoff Mode"
                         end
                     end, function() return UpVertAtmoEngine end)
-                y = y + buttonHeight + 20
-    
+                y = y + buttonHeight + 20    
                 -- prevent this button from being an option until you're in atmosphere
                 MakeButton("Engage Orbiting", "Cancel Orbiting", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
                         function()
@@ -3638,9 +3637,10 @@ VERSION_NUMBER = 1.5201
                         end, AP.ToggleIntoOrbit, function()
                             return (atmosDensity == 0 and nearPlanet)
                         end)
-                y = y + buttonHeight + 20
-                MakeButton("Glide Re-Entry", "Cancel Glide Re-Entry", buttonWidth, buttonHeight, x, y,
+                y = resolutionHeight / 2 - 150
+                MakeButton("Glide Re-Entry", "Cancel Glide Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
                     function() return Reentry end, function() spaceLand = 1 gradeToggle(1) end, function() return (planet.hasAtmosphere and not inAtmo) end )
+                y = y + buttonHeight + 20
                 MakeButton("Parachute Re-Entry", "Cancel Parachute Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
                     function() return Reentry end, AP.BeginReentry, function() return (planet.hasAtmosphere and not inAtmo) end )
                 y = y + buttonHeight + 20
