@@ -3,8 +3,9 @@
 Version 1.701 - SCOPE feature - View of all planets in space around you.
 (Updates to hudclass.lua, apclass.lua, globals.lua and base ArchHUD.lua)
 - New Feature: SCOPE - To use, hold SHIFT and mouseover SCOPE in upper left, release shift to "click"
-This will show you all planets in your field of view.  You can zoom in by holding SHIFT and mousing over +.
-Zoom out by mousing over - or 0 while holding shift.  While zoomed in you can get info on the distance to your cursor.
+This will show you all planets in your ship's field of view.  Control the view by maneuvering your ship.
+You can zoom in by holding SHIFT and mousing over +. Zoom out by mousing over - or 0 while holding shift.  
+While zoomed in you can get info on the distance to your cursor.
 - FIX: Prevent hud being off due to settings view when exiting seat preventing hud on return to seat.
 - Fixed Alt-3 to swap to complete vanilla view hiding everything unless `hideHudOnToggleWidgets` is false.  Will still show vSpd Meter if `AlwaysVSpd` is true.
 - User variable `DisplayOdometer` is back default true, set to false to hide top bar (but not the upper left tab buttons)
