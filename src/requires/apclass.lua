@@ -323,21 +323,25 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
             simulatedY = uclamp(simulatedY + deltaY,-resolutionHeight/2,resolutionHeight/2)
             distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
             if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
+                local dx,dy = deltaX, deltaY
+                if SelectedTab == "SCOPE" then
+                    dx,dy = (scopeFOV/90),(scopeFOV/90)
+                end
                 if userControlScheme == "virtual joystick" then -- Virtual Joystick
                     -- Do navigation things
 
                     if simulatedX > 0 and simulatedX > DeadZone then
-                        yawInput2 = yawInput2 - (simulatedX - DeadZone) * MouseXSensitivity
+                        yawInput2 = yawInput2 - (simulatedX - DeadZone) * MouseXSensitivity * dx
                     elseif simulatedX < 0 and simulatedX < (DeadZone * -1) then
-                        yawInput2 = yawInput2 - (simulatedX + DeadZone) * MouseXSensitivity
+                        yawInput2 = yawInput2 - (simulatedX + DeadZone) * MouseXSensitivity * dx
                     else
                         yawInput2 = 0
                     end
 
                     if simulatedY > 0 and simulatedY > DeadZone then
-                        pitchInput2 = pitchInput2 - (simulatedY - DeadZone) * MouseYSensitivity
+                        pitchInput2 = pitchInput2 - (simulatedY - DeadZone) * MouseYSensitivity * dy
                     elseif simulatedY < 0 and simulatedY < (DeadZone * -1) then
-                        pitchInput2 = pitchInput2 - (simulatedY + DeadZone) * MouseYSensitivity
+                        pitchInput2 = pitchInput2 - (simulatedY + DeadZone) * MouseYSensitivity * dy
                     else
                         pitchInput2 = 0
                     end

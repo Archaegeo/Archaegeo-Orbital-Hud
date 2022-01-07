@@ -8,7 +8,7 @@ require("autoconf/custom/archhud/hudclass")
 require("autoconf/custom/archhud/apclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.700
+VERSION_NUMBER = 1.701
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -120,25 +120,16 @@ VERSION_NUMBER = 1.700
     autoRoll = autoRollPreference
     local targetGroundAltitude = LandingGearGroundHeight -- So it can tell if one loaded or not
     stalling = false
-
     targetRoll = 0
-
     adjustedAtmoSpeedLimit = AtmoSpeedLimit
     VtPitch = 0
     orbitMsg = nil
-
-
-
-    
     orbitalParams = { VectorToTarget = false } 
-    
     OrbitTargetOrbit = 0
-    
     OrbitAchieved = false
     local SpaceEngineVertUp = false
     SpaceEngineVertDn = false
     SpaceEngines = false
-    
     constructUp = vec3(core.getConstructWorldOrientationUp())
     constructForward = vec3(core.getConstructWorldOrientationForward())
     constructRight = vec3(core.getConstructWorldOrientationRight())
@@ -148,20 +139,15 @@ VERSION_NUMBER = 1.700
     worldVertical = vec3(core.getWorldVertical())
     vSpd = -worldVertical:dot(constructVelocity)
     worldPos = vec3(core.getConstructWorldPos())
-
     UpVertAtmoEngine = false
     antigravOn = false
     setCruiseSpeed = nil
     throttleMode = true
     adjustedPitch = 0
     adjustedRoll = 0
-    
-    
-    
     AtlasOrdered = {}
     notPvPZone = false
     pvpDist = 50000
-    
     ReversalIsOn = nil
     local contacts = {}
     nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
@@ -173,6 +159,9 @@ VERSION_NUMBER = 1.700
     apScrollIndex = 0
     passengers = nil
     ships = nil
+    planetAtlas = {}
+    scopeFOV = 90
+    oldShowHud = showHud
 
 -- Function Definitions that are used in more than one areause 
     --[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
@@ -697,18 +686,23 @@ VERSION_NUMBER = 1.700
          
          function PlanetarySystem:castIntersections(origin, direction, sizeCalculator, bodyIds, collection, sorted)
             local candidates = {}
-            local selfie = collection or self
-            -- Since we don't use bodyIds anywhere, got rid of them
-            -- It was two tables doing basically the same thing
-            
-            -- Changed this to insert the body to candidates
-            for _, body in pairs(selfie) do
-                table.insert(candidates, body)
+            if collection then
+                -- Since we don't use bodyIds anywhere, got rid of them
+                -- It was two tables doing basically the same thing
+
+                -- Changed this to insert the body to candidates
+                for _, body in pairs(collection) do
+                    table.insert(candidates, body)
+                end
+            else
+                candidates = planetAtlas -- Already-built and probably already sorted
             end
             -- Added this because, your knownContacts list is already sorted, can skip an expensive re-sort
             if not sorted then
-                table.sort(candidates, function (b1, b2)
-                    return (b1.center - origin):len() < (b2.center - origin):len()
+                table.sort(candidates, function (a1, b2)
+                    local a = a1.center
+                    local b = b2.center
+                    return (a.x-origin.x)^2+(a.y-origin.y)^2+(a.z-origin.z)^2 < (b.x-origin.x)^2+(b.y-origin.y)^2+(b.z-origin.z)^2
                 end)
             end
             local dir = direction:normalize()
@@ -1375,7 +1369,7 @@ VERSION_NUMBER = 1.700
             end
 
             local function adjustAutopilotTargetIndex(up)
-                if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then -- added to prevent crash when index == 0
+                if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand then -- added to prevent crash when index == 0
                     if up == nil then 
                         AutopilotTargetIndex = AutopilotTargetIndex + 1
                         if AutopilotTargetIndex > #AtlasOrdered then
@@ -1861,6 +1855,9 @@ VERSION_NUMBER = 1.700
                         if maxAtlasY == nil or planet.center.y > maxAtlasY then
                             maxAtlasY = planet.center.y
                         end
+                        if planet.center and planet.name ~= "Space" then
+                            planetAtlas[#planetAtlas + 1] = planet
+                        end
                     end
                 end
                 PlanetaryReference = PlanetRef()
@@ -1958,6 +1955,7 @@ VERSION_NUMBER = 1.700
                 v.toggle()
             end
         end
+        showHud = oldShowHud
         SaveDataBank()
         if button then
             button.activate()

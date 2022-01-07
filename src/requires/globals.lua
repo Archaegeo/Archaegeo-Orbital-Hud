@@ -10,7 +10,7 @@
         "InvertMouse", "autoRollPreference", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
         "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "hideHudOnToggleWidgets", 
         "ShiftShowsRemoteButtons", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", 
-        "voices", "alerts", "CollisionSystem", "AutoShieldToggle", "PreventPvP"}
+        "voices", "alerts", "CollisionSystem", "AutoShieldToggle", "PreventPvP", "DisplayOdometer"}
         freeLookToggle = true --export: (Default: true) Set to false for vanilla DU free look behavior.
         BrakeToggleDefault = true --export: (Default: true) Whether your brake toggle is on/off by default. Can be adjusted in the button menu. False is vanilla DU brakes.
         RemoteFreeze = false --export: (Default: false) Whether or not to freeze your character in place when using a remote controller.
@@ -37,6 +37,7 @@
         CollisionSystem = true --export: (Default: true) If True, system will provide collision alerts and abort vector to target if conditions met.
         AutoShieldToggle = true --export: (Default: true) If true, system will toggle Shield off in safe space and on in PvP space automagically.
         PreventPvP = true --export: (Default: true) If true, system will stop you before crossing from safe to pvp space while in autopilot.
+        DisplayOdometer = true --export: (Default: true) If false the top odometer bar of information will be hidden.
 
     -- Ship Handling variables
         -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank.
