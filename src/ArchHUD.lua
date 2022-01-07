@@ -874,18 +874,23 @@ VERSION_NUMBER = 1.5201
          
          function PlanetarySystem:castIntersections(origin, direction, sizeCalculator, bodyIds, collection, sorted)
             local candidates = {}
-            local selfie = collection or self
-            -- Since we don't use bodyIds anywhere, got rid of them
-            -- It was two tables doing basically the same thing
             
-            -- Changed this to insert the body to candidates
-            for _, body in pairs(selfie) do
-                table.insert(candidates, body)
+            if collection then
+                -- Since we don't use bodyIds anywhere, got rid of them
+                -- It was two tables doing basically the same thing
+                
+                -- Changed this to insert the body to candidates
+                for _, body in pairs(collection) do
+                    table.insert(candidates, body)
+                end
+            else
+                candidates = planetAtlas -- Already-built and probably already sorted
             end
+
             -- Added this because, your knownContacts list is already sorted, can skip an expensive re-sort
             if not sorted then
-                table.sort(candidates, function (b1, b2)
-                    return (b1.center - origin):len() < (b2.center - origin):len()
+                table.sort(candidates, function (a, b)
+                    return (a.center.x-origin.x)^2+(a.center.y-origin.y)^2+(a.center.z-origin.z)^2 < (b.center.x-origin.x)^2+(b.center.y-origin.y)^2+(b.center.z-origin.z)^2
                 end)
             end
             local dir = direction:normalize()
@@ -2777,7 +2782,10 @@ VERSION_NUMBER = 1.5201
                     local fov = scopeFOV
                     -- Sort the atlas by distance so closer planets draw on top
                     
-                    table.sort(planetAtlas, function(a,b) return (a.center-worldPos):len2() > (b.center-worldPos):len2()  end)
+                    -- If atmoDensity == 0, this already gets sorted in a hudTick
+                    if atmosDensity > 0 then
+                        table.sort(planetAtlas, function(a,b) return (a.center.x-worldPos.x)^2+(a.center.y-worldPos.y)^2+(a.center.z-worldPos.z)^2 < (b.center.x-worldPos.x)^2+(b.center.y-worldPos.y)^2+(b.center.z-worldPos.z)^2  end)
+                    end
 
                     local data = {} -- structure for text data which gets built first
                     local ySorted = {} -- structure to sort by Y value to help prevent line overlaps
@@ -2788,8 +2796,9 @@ VERSION_NUMBER = 1.5201
                     local minCursorData = nil
 
                     -- Iterate backwards to build text, so nearest planets get priority on positioning
-                    for i=#planetAtlas,1,-1 do
-                        local v = planetAtlas[i]
+                    -- It's already sorted backwards (nearest things are first)
+                    for i,v in ipairs(planetAtlas) do
+                        
 
                         local target =  (v.center)-worldPos -- +v.radius*constructForward
                         local targetDistance = target:len()
@@ -2933,26 +2942,17 @@ VERSION_NUMBER = 1.5201
                             textY = y
                         end
 
-                        local adjusted
-                        local repCount=0
-                        repeat
-                            adjusted = false
-                            for tpi,d in pairs(data) do
-                                local textPos = d.textPositions
-                                local yDiff = textPos.y-textY
-                                if tpi ~= i and mabs(yDiff) < textPos.height and textPos.x+textPos.width > textX and textPos.x < textX+textWidth then
-                                    if size > textWidth then
-                                        textY = uclamp(textY+textHeight,orbitMapY+15,orbitMaxY-5) -- If we clamp, don't re-do, it's meant to overlap
-                                    else
-                                        textY = textPos.y+textPos.height+1
-                                        adjusted = true
-                                        break-- Abort to re-check previous ones, to avoid iterating the later ones for no reason 
-                                        -- when we already have to reiterate and this one isn't necessarily valid yet
-                                    end
+                        for tpi,d in pairs(data) do
+                            local textPos = d.textPositions
+                            local yDiff = textPos.y-textY
+                            if tpi ~= i and mabs(yDiff) < textPos.height and textPos.x+textPos.width > textX and textPos.x < textX+textWidth then
+                                if size > textWidth then
+                                    textY = uclamp(textY+textHeight,orbitMapY+15,orbitMaxY-5) -- These clamped values are meant to be on top
+                                else
+                                    textY = textPos.y+textPos.height+1
                                 end
                             end
-                            repCount = repCount+1
-                        until (not adjusted or repCount == 10)
+                        end
 
                         local hovered = displayString ~= v.name or (textX <= orbitMidX and textX+textWidth >= orbitMidX and textY-textHeight <= orbitMidY and textY >= orbitMidY)
                         d.hovered = hovered
@@ -3036,8 +3036,8 @@ VERSION_NUMBER = 1.5201
                         
                     end
 
-                    -- draw everything in forward order
-                    for k,v in ipairs(planetAtlas) do
+                    -- draw everything.  Reverse order so furthest planets draw first
+                    for k=#planetAtlas,1,-1 do
                         if data[k] then
                             newContent[#newContent+1] = data[k].output
                         end
