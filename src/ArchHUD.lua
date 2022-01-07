@@ -3003,27 +3003,17 @@ VERSION_NUMBER = 1.5201
                             textX = x+xMod
                             textY = y
                         end
-
-                        local adjusted
-                        local repCount=0
-                        repeat
-                            adjusted = false
-                            for tpi,d in pairs(data) do
-                                local textPos = d.textPositions
-                                local yDiff = textPos.y-textY
-                                if tpi ~= i and mabs(yDiff) < textPos.height and textPos.x+textPos.width > textX and textPos.x < textX+textWidth then
-                                    if size > textWidth then
-                                        textY = uclamp(textY+textHeight,orbitMapY+15,orbitMaxY-5) -- If we clamp, don't re-do, it's meant to overlap
-                                    else
-                                        textY = textPos.y+textPos.height+1
-                                        adjusted = true
-                                        break -- Abort to re-check previous ones, to avoid iterating the later ones for no reason
-                                    end
+                        for tpi,d in pairs(data) do
+                            local textPos = d.textPositions
+                            local yDiff = textPos.y-textY
+                            if tpi ~= i and mabs(yDiff) < textPos.height and textPos.x+textPos.width > textX and textPos.x < textX+textWidth then
+                                if size > textWidth then
+                                    textY = uclamp(textY+textHeight,orbitMapY+15,orbitMaxY-5) -- These clamped values are meant to be on top
+                                else
+                                    textY = textPos.y+textPos.height+1
                                 end
                             end
-                            repCount = repCount+1
-                        until (not adjusted or repCount == 10)
-
+                        end
                         local hovered = displayString ~= v.name or (textX <= orbitMidX and textX+textWidth >= orbitMidX and textY-textHeight <= orbitMidY and textY >= orbitMidY)
                         d.hovered = hovered
                         local opacityMult = 1
