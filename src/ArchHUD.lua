@@ -333,7 +333,8 @@ VERSION_NUMBER = 1.5201
     local passengers = nil
     local ships = nil
     local planetAtlas = {} 
-    scopeFOV=90
+    local scopeFOV=90
+    local oldShowHud = showHud
 
 -- Function Definitions that are used in more than one areause 
     --[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
@@ -1451,7 +1452,6 @@ VERSION_NUMBER = 1.5201
         local YouAreHere = nil
         local showSettings = false
         local settingsVariables = {}
-        local oldShowHud = showHud
         local pipeMessage = ""
     
         --Local Huds Functions
@@ -2934,6 +2934,7 @@ VERSION_NUMBER = 1.5201
                         end
 
                         local adjusted
+                        local repCount=0
                         repeat
                             adjusted = false
                             for tpi,d in pairs(data) do
@@ -2950,7 +2951,8 @@ VERSION_NUMBER = 1.5201
                                     end
                                 end
                             end
-                        until not adjusted
+                            repCount = repCount+1
+                        until (not adjusted or repCount == 10)
 
                         local hovered = displayString ~= v.name or (textX <= orbitMidX and textX+textWidth >= orbitMidX and textY-textHeight <= orbitMidY and textY >= orbitMidY)
                         d.hovered = hovered
@@ -2977,7 +2979,7 @@ VERSION_NUMBER = 1.5201
                             else
                                 textX = x+xMod
                             end
-                            if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not anyHovered then
+                            if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand and not anyHovered then
                                 anyHovered = true
                                 -- Find it in AtlasOrdered
                                 -- TODO: This is dumb.  We find it in AtlasOrdered, so that UpdateAPTarget can find the index from atlasOrdered and pull it from atlas
@@ -4558,7 +4560,7 @@ VERSION_NUMBER = 1.5201
             end
 
             local function adjustAutopilotTargetIndex(up)
-                if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then -- added to prevent crash when index == 0
+                if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand then -- added to prevent crash when index == 0
                     if up == nil then 
                         AutopilotTargetIndex = AutopilotTargetIndex + 1
                         if AutopilotTargetIndex > #AtlasOrdered then
@@ -7262,6 +7264,7 @@ VERSION_NUMBER = 1.5201
                 v.toggle()
             end
         end
+        showHud = oldShowHud
         SaveDataBank()
         if button then
             button.activate()
