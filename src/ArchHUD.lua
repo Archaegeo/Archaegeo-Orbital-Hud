@@ -2982,21 +2982,6 @@ VERSION_NUMBER = 1.5201
                             else
                                 textX = x+xMod
                             end
-                            if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand and not anyHovered then
-                                anyHovered = true
-                                -- Find it in AtlasOrdered
-                                -- TODO: This is dumb.  We find it in AtlasOrdered, so that UpdateAPTarget can find the index from atlasOrdered and pull it from atlas
-                                -- We need ATLAS.UpdateAutopilotTarget(id)
-                                if AutopilotTargetName ~= v.name then
-                                    for targetIndex,id in ipairs(AtlasOrdered) do
-                                        if id.index == v.id then
-                                            AutopilotTargetIndex = targetIndex
-                                            ATLAS.UpdateAutopilotTarget()
-                                            break
-                                        end 
-                                    end
-                                end
-                            end
                         end
 
                         data[i] = {}
