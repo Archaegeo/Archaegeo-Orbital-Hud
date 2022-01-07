@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.520
+VERSION_NUMBER = 1.5201
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:
@@ -167,7 +167,7 @@ VERSION_NUMBER = 1.520
                     "AutopilotPlanetGravity", "PrevViewLock", "AutopilotTargetName", "AutopilotTargetCoords",
                     "AutopilotTargetIndex", "TotalDistanceTravelled",
                     "TotalFlightTime", "SavedLocations", "VectorToTarget", "LocationIndex", "LastMaxBrake", 
-                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "iphCondition", "stablized", "UseExtra", "SelectedTab"}
+                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "iphCondition", "stablized", "UseExtra", "SelectedTab", "scopeFOV"}
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -332,6 +332,8 @@ VERSION_NUMBER = 1.520
     local TabButtons = {}
     local passengers = nil
     local ships = nil
+    local planetAtlas = {} 
+    scopeFOV=90
 
 -- Function Definitions that are used in more than one areause 
     --[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
@@ -2328,32 +2330,6 @@ VERSION_NUMBER = 1.520
                     boardersClass = fillClass
                 end
     
-                -- Removed because nobody liked these 'lights' at the bottom
-                --newContent[#newContent + 1] = stringf([[
-                --    <path class="linethick %s" style="fill:%s" d="M 730 940 l 100 0 l 50 50 l -200 0 l 50 -50 Z"/>
-                --    <text class="txtmid size20" x=780 y=975 style="fill:%s">BOARDERS</text>
-                --    <path class="linethick %s" style="fill:%s" d="M 1190 940 l -100 0 l -50 50 l 200 0 l -50 -50 Z"/>
-                --    <text class="txtmid size20" x=1140 y=975 style="fill:%s">COLLISION</text>
-    
-                --    <path class="linethick %s" style="fill:%s" d="M 675 1000 l 100 0 l 50 50 l -200 0 l 50 -50 Z"/>
-                --    <text class="txtmid size20" x=725 y=1030 style="fill:%s">BRAKE</text>
-                --    <path class="linethick %s" style="fill:%s" d="M 790 1000 l 95 0 l 50 50 l -95 0 l -50 -50 Z"/>
-                --    <text class="txtmid size20" x=860 y=1030 style="fill:%s">GEAR</text>
-    
-                --    <path class="linethick %s" style="fill:%s" d="M 1245 1000 l -100 0 l -50 50 l 200 0 l -50 -50 Z"/>
-                --    <text class="txtmid size20" x=1195 y=1030 style="fill:%s">ROCKETS</text>
-                --    <path class="linethick %s" style="fill:%s" d="M 1130 1000 l -95 0 l -50 50 l 95 0 l 50 -50 Z"/>
-                --    <text class="txtmid size20" x=1055 y=1030 style="fill:%s">AGG</text>
-    
-                --    <path class="linethick %s" style="fill:%s" d="M 850 940 l 220 0 l -110 110 l -110 -110 Z"/>
-                --    <text class="txtmid" x=960 y=980 style="font-size:32px;fill:%s">STALL</text>
-                --]], boardersClass, boardersFill, boardersStroke, 
-                --collisionClass, collisionFill, collisionStroke, 
-                --brakeClass, brakeFill, brakeStroke, 
-                --gearClass, gearFill, gearStroke, 
-                --rocketClass, rocketFill, rocketStroke, 
-                --aggClass, aggFill, aggStroke, 
-                --stallClass, stallFill, stallStroke)
                 local crx = ConvertResolutionX
                 local cry = ConvertResolutionY
     
@@ -2578,7 +2554,14 @@ VERSION_NUMBER = 1.520
                                                 orbitMapSize*2, targetHeight, orbitMapX, orbitMapY)
                 end
 
-
+                local orbitMapHeight = orbitMapSize*1.5
+                local orbitMapWidth = orbitMapSize*2
+                local orbitHalfHeight = orbitMapHeight/2
+                local orbitHalfWidth = orbitMapSize -- Just to keep things consistent
+                local orbitMidX = orbitMapX + orbitHalfWidth
+                local orbitMidY = orbitMapY + orbitHalfHeight
+                local orbitMaxX = orbitMapX + orbitMapWidth
+                local orbitMaxY = orbitMapY + orbitMapHeight
                 if SelectedTab == "ORBIT" then
                     -- If orbits are up, let's try drawing a mockup
                     
@@ -2659,8 +2642,8 @@ VERSION_NUMBER = 1.520
                         if velMag < 1 or apsisRatio ~= apsisRatio then apsisRatio = math.pi end
                         -- x = xr * cos(t)
                         -- y = yr * sin(t)
-                        local shipX = -rx * math.cos(apsisRatio) + orbitMapX + orbitMapSize + pad
-                        local shipY = ry * math.sin(apsisRatio) + orbitMapY + orbitMapSize*1.5 / 2 + pad
+                        local shipX = -rx * math.cos(apsisRatio) + orbitMapX + orbitHalfWidth + pad
+                        local shipY = ry * math.sin(apsisRatio) + orbitMapY + orbitHalfHeight + pad
             
                         local ellipseColor = ""
                         --if orbit.periapsis.altitude <= 0 then
@@ -2789,6 +2772,451 @@ VERSION_NUMBER = 1.520
                     newContent = HUD.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
                 elseif SelectedTab == "HELP" then
                     newContent = DisplayHelp(newContent)
+                elseif SelectedTab == "SCOPE" then
+                    -- This might be dumb idk but
+                    -- I want it to show a 'POV' view of the ship's facing, of a galaxy map
+                    -- With a target marker showing where the velocity is
+                    -- Alternatively maybe the POV should be from the velocity vector but let's get this going first
+                    newContent[#newContent + 1] = '<g clip-path="url(#orbitRect)">'
+                    --local GalaxyMapHTML = "" -- No starting SVG tag so we can add it where we want it
+                    -- Figure out our scale here... 
+                    local xRatio = (maxAtlasX - minAtlasX) / orbitMapWidth
+                    local yRatio = (maxAtlasY - minAtlasY) / orbitMapHeight
+                    local fov = scopeFOV
+                    -- Sort the atlas by distance
+                    
+                    table.sort(planetAtlas, function(a,b) return (a.center-worldPos):len2() > (b.center-worldPos):len2()  end)
+
+                    local data = {}
+                    local ySorted = {}
+                    local planetTextWidth = 120
+                    local moonTextWidth = 100
+
+                    -- TODO: Sort this?  But we're hitting overloads
+                    -- Move the calculation to somewhere else that we already iterate
+
+                    -- Iterate backwards to build position strings and other data
+                    -- Then draw iterating forward
+
+                    local minCursorDistance = nil
+                    local minCursorData = nil
+
+                    for i=#planetAtlas,1,-1 do
+                        local v = planetAtlas[i]
+
+                    --end
+
+                    --for k, v in ipairs(planetAtlas) do
+                        --if v.center then -- Only planets and stuff -- It's already only planets now.
+                            -- TODO: FOV?
+                            -- But we should be able to just project the points on a plane defined by constructForward
+                            -- X is then projectedPoint:dot(constructRight) and Y is dot(constructUp)
+                            --local projected = v.center:project_on_plane(constructForward)
+
+                            -- Maybe instead.  We project on up and right
+                            -- And x and y are the respective forward dots for the projections
+                            -- Scaled so that around 0.25 = 90 degrees is no longer onscreen
+
+                            local target =  (v.center)-worldPos -- +v.radius*constructForward
+                            local targetDistance = target:len()
+                            local targetN = target:normalize()
+
+                            local horizontalRight = target:cross(constructForward):normalize()
+                            local rollRad = math.acos(horizontalRight:dot(constructRight))
+                            if horizontalRight:cross(constructRight):dot(constructForward) < 0 then rollRad = -rollRad end
+                                
+
+                            local flatlen = target:project_on_plane(constructForward):len()
+                            local flatRight = target:project_on_plane(constructRight)
+                            local flatUp = target:project_on_plane(constructUp)
+                            local xAngle = math.sin(rollRad)*math.asin(flatlen/targetDistance)*constants.rad2deg
+                            
+                            local yAngle = math.cos(rollRad)*math.asin(flatlen/targetDistance)*constants.rad2deg
+                            -- These are perfect, but they go from -90 to 90 only.  We want them -180 to 180
+                            -- We can't just x2 because they're already right, and also they're only not negative
+                            -- because we need to handle quadrants, it being triangle math and not vector math
+
+                            -- But also, we have the popping problem.  If their roll is near 0, xAngle shouldn't flip to 180
+                            -- Part of the issue is that they're flipping from 0 to 180, and not smoothly going to -180
+                            if targetN:dot(constructForward) < 0 then
+                                -- If it's in top or bottom quadrant, ie yAngle is 90 or -90ish, do this...
+                                
+                                yAngle = 90*math.cos(rollRad) + (90*math.cos(rollRad) - yAngle)
+                                xAngle = 90*math.sin(rollRad) + (90*math.sin(rollRad) - xAngle)
+                            end
+
+                            --if flatRight:dot(constructForward)<0 then
+                            --    yAngle = 90 + (90 - yAngle)
+                            --end
+                            --if flatUp:dot(constructForward)<0 then
+                            --    xAngle = 90 + (90 - xAngle)
+                            --end
+                            --if yAngle > 180 then yAngle = -180 + (yAngle-180) end
+                            --if xAngle > 180 then xAngle = -180 + (xAngle-180) end
+
+                            --local targetn = target:normalize()
+                            -- Find the angle between target and forward on the right plane for Y
+                            --local rollrad = adjustedRoll/180*math.pi
+                            --local yAngle = mabs(targetn:dot(constructUp))*signedRotationAngle(constructRight, target, constructForward)*constants.rad2deg
+                            --local xAngle = mabs(targetn:dot(constructRight))*signedRotationAngle(constructUp, target, constructForward)*constants.rad2deg
+
+                            -- This isn't right.  If they tilt up, there is a component of target behind the ship
+                            -- Flattened along up, that gives us a huge angle from front to that
+                            -- Though technically it *is* behind them.  
+
+                            --if mabs(xAngle) < fov and mabs(yAngle) < fov then 
+                                --p(v.name .. "," .. xAngle .. "," .. yAngle)
+                                local x = orbitMidX + (xAngle/fov)*orbitMapHeight
+                                local y = orbitMidY + (yAngle/fov)*orbitMapHeight
+
+                                local cursorDistance = ((x-orbitMidX)*(x-orbitMidX))+((y-orbitMidY)*(y-orbitMidY))
+                                
+
+                                -- Instead of using vector math for the angle from the center to the edge of the planet
+                                -- Let's use trig. 
+                                -- We have one line from our center to planet center, leg b
+                                -- One line from planet center to an edge, leg a.  This is a 90 degree
+                                -- Then one from there to our center.  We know the lengths of all of these: 
+                                -- Us to center is just target:len(), leg b
+                                -- leg a is just radius
+                                -- c is ... a^2+b^2 but we don't need c
+                                -- To get the angle between a and b, we can atan- adjacent is target:len, opposite is planet.radius
+                                -- atan(planet.radius/target:len())
+
+                                
+
+
+                                --local topTarget = (v.center+v.radius*target:normalize():cross(constructRight))-worldPos
+                                --local topAngle = signedRotationAngle(constructRight, topTarget, target)*constants.rad2deg
+                                
+
+                                --local topAngle = math.atan(v.radius/targetDistance)*constants.rad2deg
+                                -- Should we include surfaceMax? It makes it look wrong sometimes.  But I guess it's important for like, thades
+                                local topAngle = math.asin((v.radius+v.surfaceMaxAltitude)/targetDistance)*constants.rad2deg
+                                local size = topAngle/fov*orbitMapHeight
+                                local atmoAngle = math.asin((v.atmosphereRadius)/targetDistance)*constants.rad2deg
+                                local atmoSize = atmoAngle/fov*orbitMapHeight
+                                --local nearestDistance = targetDistance - v.radius - math.max(v.surfaceMaxAltitude,v.noAtmosphericDensityAltitude)
+                                --if nearestDistance < 0 then nearestDistance = targetDistance - v.radius - v.surfaceMaxAltitude end
+                                --if nearestDistance < 0 then nearestDistance = targetDistance - v.radius end
+
+                                -- Seems useful to give the distance to the atmo, land, etc instead of to the core
+                                -- But it looks weird and I can't really label what it is, it'd take up too much space
+                                local distance = getDistanceDisplayString(targetDistance,1)
+                                local displayString = v.name
+                                
+
+                                local displayY = false
+                                -- TODO: Simplify this somehow... 
+                                if y > orbitMapY then
+                                    if y > orbitMaxY then
+                                        if y - atmoSize <= orbitMaxY then
+                                            displayY = true
+                                        end
+                                    else
+                                        displayY = true
+                                    end
+                                else
+                                    if y+atmoSize >= orbitMapY then
+                                        displayY = true
+                                    end
+                                end
+                                local displayX = false
+                                local tx = x
+                                if v.systemId == 0 then
+                                    tx = x + planetTextWidth -- Don't stop showing til the text is offscreen
+                                else
+                                    tx = x - planetTextWidth -- Also this is just an estimated max... we don't know yet how long it is
+                                end
+                                if tx+planetTextWidth > orbitMapX then
+                                    if tx+planetTextWidth > orbitMaxX then
+                                        if tx-atmoSize-planetTextWidth <= orbitMaxX then
+                                            displayX = true
+                                        end
+                                    else
+                                        displayX = true
+                                    end
+                                else
+                                    if tx+atmoSize+planetTextWidth >= orbitMapX then
+                                        displayX = true
+                                    end
+                                end
+
+                                -- setup what we need for the distance line first
+                                local sortData = {}
+                                sortData.x = x
+                                sortData.y = y
+                                sortData.planet = v
+                                sortData.atmoSize = atmoSize
+
+                                if not minCursorDistance or cursorDistance < minCursorDistance then
+                                    minCursorDistance = cursorDistance
+                                    minCursorData = sortData
+                                end
+
+                                if displayX and displayY then
+                                    local hoverSize = math.max(atmoSize,5)
+                                    if (cursorDistance) < hoverSize*hoverSize then
+                                    --if x-hoverSize <= orbitMidX and x+hoverSize >= orbitMidX and y-hoverSize <= orbitMidY and y+hoverSize >= orbitMidY then
+                                        displayString = displayString .. " - " .. distance
+                                    end
+                                    sortData.size = size
+                                    sortData.i = i
+                                    sortData.displayString = displayString
+                                    sortData.distance = distance
+                                    sortData.visible = true
+                                    ySorted[#ySorted+1] = sortData
+                                else
+                                    sortData.visible = false
+                                end
+                            --end
+                        --end
+                    end
+
+                    local anyHovered = false
+                    -- Setup text in y sort order
+                    table.sort(ySorted,function(a,b) return a.y<b.y end)
+
+                    for k,d in ipairs(ySorted) do
+                        local v,size,i,atmoSize,x,y,displayString,distance = d.planet,d.size,d.i,d.atmoSize,d.x,d.y,d.displayString,d.distance
+
+                        local textX, textY, textWidth, textHeight
+                        local xMod = 15
+                        local class = "pdim"
+                        if v.systemId ~= 0 then
+                            textWidth = ConvertResolutionX(string.len(displayString)*5)
+                            xMod = -(15+textWidth)
+                            textHeight = ConvertResolutionY(10)
+                            class = "pdimfill"
+                        else
+                            textWidth = ConvertResolutionX(string.len(displayString)*9)
+                            textHeight = ConvertResolutionY(15)
+                        end
+                        if size*2 > textWidth then -- Only clamp things that are large enough to matter (larger than the text)
+                            -- and center text, if it's that big
+                            -- Try to clamp it within the planet itself after clamping to screen
+                            textX = uclamp(x,orbitMapX+textWidth/2,orbitMaxX-textWidth/2)
+                            textY = uclamp(y,orbitMapY+textHeight,orbitMaxY-5)
+                            textX = uclamp(textX, x-size+textWidth/2, x+size-textWidth/2)
+                            textY = uclamp(textY, y-size+textHeight, y+size)
+                        else
+                            textX = x+xMod
+                            textY = y
+                        end
+
+                        local adjusted
+                        repeat
+                            adjusted = false
+                            for tpi,d in pairs(data) do
+                                local textPos = d.textPositions
+                                local yDiff = textPos.y-textY
+                                if tpi ~= i and mabs(yDiff) < textPos.height and textPos.x+textPos.width > textX and textPos.x < textX+textWidth then
+                                    -- This could cause an overlap on an edge case where the text is below center
+                                    -- Then we have a collision so it moves above center
+                                    -- Then we have another collision so it moves below again and draws over one... 
+                                    -- But it should be kinda rare.
+                                    --if y > orbitMapSize*1.5/2 then
+                                    --    textY = textY - 15
+                                    --else
+                                        if size > textWidth then
+                                            textY = uclamp(textY+textHeight,orbitMapY+15,orbitMaxY-5) -- If we clamp, don't re-do, it's meant to overlap
+                                        else
+                                            textY = textPos.y+textPos.height+1
+                                            adjusted = true
+                                        end
+                                        --if v.systemId == 0 then
+                                        --    textX = textX + 10
+                                        --else
+                                        --    textX = textX - 10
+                                        --end
+                                    --end
+                                    --break
+                                    
+                                    break -- Abort to re-check previous ones, to avoid iterating the later ones for no reason
+                                end
+                            end
+                        until not adjusted
+
+                        local hovered = displayString ~= v.name or (textX <= orbitMidX and textX+textWidth >= orbitMidX and textY-textHeight <= orbitMidY and textY >= orbitMidY)
+                        d.hovered = hovered
+                        local opacityMult = 1
+                        if hovered then
+                            opacityMult=2
+                            if size*2 < textWidth then opacityMult = 10 end
+                            if displayString == v.name then
+                                displayString = displayString .. " - " .. distance
+                            end
+                            class = "pbright"
+                            -- Sadly we need to redo the size here, I don't like that
+                            -- But we need textX to be right to know if it's hovered
+                            -- Then if it's hovered can change where textX is displayed
+                            if v.systemId ~= 0 then
+                                textWidth = ConvertResolutionX(string.len(displayString)*5)
+                                xMod = -(15+textWidth)
+                            else
+                                textWidth = ConvertResolutionX(string.len(displayString)*7) -- When there are spaces, it's less long per char... 
+                            end
+                            if size*2 > textWidth then -- Only clamp things that are large enough to matter (larger than the text)
+                                textX = uclamp(x,orbitMapX+textWidth/2,orbitMaxX-textWidth/2)
+                                textX = uclamp(textX, x-size+textWidth/2, x+size-textWidth/2)
+                            else
+                                textX = x+xMod
+                            end
+                            if not Autopilot and not VectorToTarget and not IntoOrbit and not anyHovered then
+                                anyHovered = true
+                                -- Find it in AtlasOrdered
+                                if AutopilotTargetName ~= v.name then
+                                    for targetIndex,id in ipairs(AtlasOrdered) do
+                                        if id.index == v.id then
+                                            AutopilotTargetIndex = targetIndex
+                                            ATLAS.UpdateAutopilotTarget()
+                                            break
+                                        end 
+                                    end
+                                end
+                            end
+                        end
+
+                        data[i] = {}
+                        data[i].textPositions = {} -- lua is very slow at inline declare so we do it outline
+                        data[i].textPositions.y = textY
+                        data[i].textPositions.x = textX
+                        data[i].textPositions.width = textWidth
+                        data[i].textPositions.height = textHeight
+                        data[i].output = ""
+
+                        if size*2 > textWidth then class = class .. " txtmid" else class = class .. " txtstart" end
+                        
+                        
+                        if atmoSize-size > 2 then -- Only draw atmo if it's big enough to even show up
+                            data[i].output = stringf('<circle cx="%f" cy="%f" r="%f" stroke-width="1" stroke="%s" stroke-opacity="%f" fill="url(#RadialAtmo)" />', -- fill-opacity="0.5"
+                                                            x, y, atmoSize, rgbdim, 0.1*opacityMult)
+                        end
+
+                        data[i].output = data[i].output .. stringf('<circle cx="%f" cy="%f" r="%f" stroke="%s" stroke-width="1" stroke-opacity="%f" fill="url(#RadialPlanetCenter)" />',
+                                                            x, y, size, rgbdim, 0.2*opacityMult)
+                        
+                         -- If it's centered text, don't bother with a line
+                        if v.systemId == 0 then
+                            data[i].output = data[i].output .. stringf([[<text x='%f' y='%f'
+                                    font-size='12' fill='%s' class='%s' font-family='Montserrat'>%s</text>]]
+                                    , textX, textY, rgb, class, displayString)
+                            if size*2 <= textWidth then
+                                data[i].output = data[i].output .. stringf("<path class='linethin dimstroke' d='M %f %f L %f %f L %f %f' />", 
+                                                                        textX+textWidth, textY+2, textX, textY+2, x, y)
+                            end
+                        else
+                            data[i].output = data[i].output .. stringf([[<text x='%f' y='%f'
+                                    font-size='8' fill='%s' class='%s' font-family='Montserrat'>%s</text>]]
+                                    , textX, textY, rgbdim, class, displayString)
+                            if size*2 <= textWidth then
+                                data[i].output = data[i].output .. stringf("<path class='linethin dimstroke' d='M %f %f L %f %f L %f %f' />", 
+                                textX, textY+2, textX+textWidth, textY+2, x, y)
+                            end
+                        end
+                        
+                    end
+
+                    -- draw everything in forward order
+                    for k,v in ipairs(planetAtlas) do
+                        if data[k] then
+                            newContent[#newContent+1] = data[k].output
+                        end
+                    end
+
+                    if minCursorData ~= nil and scopeFOV < 90 and not minCursorData.hovered then
+                        -- If zoomed in, draw a line and distance label between the center and the nearest thing on screen
+                        -- The distance is the orbital height if they were to go to that point
+                        -- which is really minCursorDistance with some math to extrapolate it back out to a dist
+
+                        -- But I'm a bit lazy.  How about we extrapolate out a scale for pixels to real distance
+                        -- size should make that really easy
+                        local scalar = minCursorData.planet.atmosphereRadius/minCursorData.atmoSize
+
+                        local projAlt = msqrt(minCursorDistance)*scalar
+                        local display = getDistanceDisplayString(projAlt,1)
+                        local textWidth = ConvertResolutionX(math.max(string.len(display)*7,string.len(minCursorData.planet.name)*7))
+                        local textHeight = ConvertResolutionY(12)
+
+                        local textX = uclamp(minCursorData.x + (orbitMidX - minCursorData.x)/2,orbitMapX+textWidth/2,orbitMaxX-textWidth/2)
+                        local textY = uclamp(minCursorData.y + (orbitMidY - minCursorData.y)/2,orbitMapY+textHeight*2,orbitMaxY-5)
+
+                        newContent[#newContent + 1] = stringf("<path class='linethin dimstroke' stroke='white' d='M %f %f L %f %f' />", 
+                                minCursorData.x, minCursorData.y, orbitMidX, orbitMidY)
+                        --newContent[#newContent + 1] = stringf("<path class='linethin dimstroke' stroke='white' d='M %f %f L %f %f' />", 
+                        --        textX+textWidth/2+1, textY-textHeight/2, orbitMidX, orbitMidY)
+                        newContent[#newContent + 1] = stringf([[<text x='%f' y='%f'
+                                font-size='12' fill='%s' class='txtmid' font-family='Montserrat'>%s</text>]]
+                                , textX, textY, "white", display)
+                        if not minCursorData.visible then
+                            newContent[#newContent + 1] = stringf([[<text x='%f' y='%f'
+                                    font-size='12' fill='%s' class='txtmid' font-family='Montserrat'>%s</text>]]
+                                    , textX, textY-textHeight, "white", minCursorData.planet.name)
+                        end
+                    end
+                    
+                    if velMag > 1 then
+                        -- This does sorta work but, also draws retrograde and the arrow and also isn't scaled correctly 
+                        --DrawPrograde(newContent, coreVelocity, velMag, orbitMidX, orbitMidY)
+                        local target = constructVelocity
+                        local targetN = target:normalize()
+                        local flatlen = target:project_on_plane(constructForward):len()
+                        local flatRight = target:project_on_plane(constructRight)
+                        local flatUp = target:project_on_plane(constructUp)
+                        local horizontalRight = target:cross(constructForward):normalize()
+                        local rollRad = math.acos(horizontalRight:dot(constructRight))
+                        if horizontalRight:cross(constructRight):dot(constructForward) < 0 then rollRad = -rollRad end
+                        local xAngle = math.sin(rollRad)*math.asin(flatlen/target:len())*constants.rad2deg
+                        local yAngle = math.cos(rollRad)*math.asin(flatlen/target:len())*constants.rad2deg
+                        -- These are perfect, but they go from -90 to 90 only.  We want them -180 to 180
+                        -- We can't just x2 because they're already right, and also they're only not negative
+                        -- because we need to handle quadrants, it being triangle math and not vector math
+
+                        -- But also, we have the popping problem.  If their roll is near 0, xAngle shouldn't flip to 180
+                        -- Part of the issue is that they're flipping from 0 to 180, and not smoothly going to -180
+                        if targetN:dot(constructForward) < 0 then
+                            -- If it's in top or bottom quadrant, ie yAngle is 90 or -90ish, do this...
+                            
+                            yAngle = 90*math.cos(rollRad) + (90*math.cos(rollRad) - yAngle)
+                            xAngle = 90*math.sin(rollRad) + (90*math.sin(rollRad) - xAngle)
+                        end
+
+                        --local yAngle = signedRotationAngle(constructRight, constructVelocity, constructForward)*constants.rad2deg
+                        --local xAngle = signedRotationAngle(constructUp, constructVelocity, constructForward)*constants.rad2deg
+                        --local x = orbitMapX + orbitMapSize + (xAngle/fov)*orbitMapSize*2
+                        --local y = orbitMapY + orbitMapSize*1.5/2 + (yAngle/fov)*orbitMapSize*1.5
+                        local x = orbitMidX + (xAngle/fov)*orbitMapHeight
+                        local y = orbitMidY + (yAngle/fov)*orbitMapHeight
+                        local dotSize = 14
+                        local dotRadius = dotSize/2
+                        local progradeDot = [[<circle
+                            cx="]] .. x .. [["
+                            cy="]] .. y .. [["
+                            r="]] .. dotRadius/dotSize .. [["
+                            style="fill:#d7fe00;stroke:none;fill-opacity:1"/>
+                        <circle
+                            cx="]] .. x .. [["
+                            cy="]] .. y .. [["
+                            r="]] .. dotRadius .. [["
+                            style="stroke:#d7fe00;stroke-opacity:1;fill:none" />
+                        <path
+                            d="M ]] .. x-dotSize .. [[,]] .. y .. [[ h ]] .. dotRadius .. [["
+                            style="stroke:#d7fe00;stroke-opacity:1" />
+                        <path
+                            d="M ]] .. x+dotRadius .. [[,]] .. y .. [[ h ]] .. dotRadius .. [["
+                            style="stroke:#d7fe00;stroke-opacity:1" />
+                        <path
+                            d="M ]] .. x .. [[,]] .. y-dotSize .. [[ v ]] .. dotRadius .. [["
+                            style="stroke:#d7fe00;stroke-opacity:1" />]]
+                        newContent[#newContent + 1] = progradeDot
+                    end
+                    --Add a + to mark the center
+                    newContent[#newContent+1] = stringf("<line class='linethin dimstroke' x1='%f' y1='%f' x2='%f' y2='%f' />", 
+                                                                                orbitMidX, orbitMidY-10, orbitMidX, orbitMidY+10)
+                    newContent[#newContent+1] = stringf("<line class='linethin dimstroke' x1='%f' y1='%f' x2='%f' y2='%f' />", 
+                    orbitMidX-10, orbitMidY, orbitMidX+10, orbitMidY)
+                    --newContent[#newContent + 1] = GalaxyMapHTML
+                    newContent[#newContent + 1] = '</g>'
                 else
                     return newContent
                 end
@@ -2856,7 +3284,7 @@ VERSION_NUMBER = 1.520
                 return newButton
             end
     
-            local function MakeButton(enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition, buttonList)
+            local function MakeButton(enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition, buttonList, class)
                 local newButton = {
                     enableName = enableName,
                     disableName = disableName,
@@ -2867,7 +3295,8 @@ VERSION_NUMBER = 1.520
                     toggleVar = toggleVar,
                     toggleFunction = toggleFunction,
                     drawCondition = drawCondition,
-                    hovered = false
+                    hovered = false,
+                    class = class
                 }
                 if buttonList then 
                     table.insert(SettingButtons, newButton)
@@ -3076,6 +3505,17 @@ VERSION_NUMBER = 1.520
                 
                 local buttonHeight = 50
                 local buttonWidth = 260 -- Defaults
+                -- TODO: This should use defined orbitMapHeight and Width vars but to move them out they'd have to be unlocal cuz we're out of locals
+                -- But we know that height is orbitMapSize*1.5, width is orbitMapSize*2
+                local orbitButtonSize = ConvertResolutionX(30)
+                local orbitButtonX = ConvertResolutionX(OrbitMapX+OrbitMapSize*2+2)
+                local orbitButtonY = ConvertResolutionY(OrbitMapY+1)
+                MakeButton("+", "+", orbitButtonSize, orbitButtonSize, orbitButtonX, ConvertResolutionY(orbitButtonY+orbitButtonSize+1),
+                                    function() return false end, function() scopeFOV = scopeFOV/8 end, function() return SelectedTab == "SCOPE" end, nil, "ZoomButton")
+                MakeButton("-", "-", orbitButtonSize, orbitButtonSize, orbitButtonX, orbitButtonY,
+                                    function() return false end, function() scopeFOV = math.min(scopeFOV*8,90) end, function() return SelectedTab == "SCOPE" end, nil, "ZoomButton")
+                MakeButton("0", "0", orbitButtonSize, orbitButtonSize, orbitButtonX, orbitButtonY+orbitButtonSize*2+2,
+                                    function() return false end, function() scopeFOV = 90 end, function() return SelectedTab == "SCOPE" and scopeFOV ~= 90 end, nil, "ZoomButton")
                 local brake = MakeButton("Enable Brake Toggle", "Disable Brake Toggle", buttonWidth, buttonHeight,
                                     resolutionWidth / 2 - buttonWidth / 2, resolutionHeight / 2 + 350, function()
                         return BrakeToggleStatus
@@ -3262,9 +3702,10 @@ VERSION_NUMBER = 1.520
     
                 -- Make tab buttons
                 local tabHeight = ConvertResolutionY(20)
-                local button = MakeTabButton(0, 0, ConvertResolutionX(70), tabHeight, "INFO")
-                button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(80),tabHeight, "ORBIT")
-                button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"HELP")
+                local button = MakeTabButton(0, 0, ConvertResolutionX(70), tabHeight, "HELP")
+                button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(80),tabHeight, "INFO")
+                button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"ORBIT")
+                button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"SCOPE")
                 MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"HIDE")
             end
     
@@ -3290,18 +3731,20 @@ VERSION_NUMBER = 1.520
                     shield_1.toggle()
                 end
             end
-            rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
+            rgb = [[rgb(]] .. mfloor(PrimaryR + 0.6) .. "," .. mfloor(PrimaryG + 0.6) .. "," .. mfloor(PrimaryB + 0.6) .. [[)]]
             rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.8 + 0.5) .. "," .. mfloor(PrimaryG * 0.8 + 0.5) .. "," ..   mfloor(PrimaryB * 0.8 + 0.5) .. [[)]]    
             local bright = rgb
             local dim = rgbdim
-            local dimmer = [[rgb(]] .. mfloor(PrimaryR * 0.3 + 0.5) .. "," .. mfloor(PrimaryG * 0.3 + 0.5) .. "," ..   mfloor(PrimaryB * 0.3 + 0.5) .. [[)]]   
+            local dimmer = [[rgb(]] .. mfloor(PrimaryR * 0.4 + 0.5) .. "," .. mfloor(PrimaryG * 0.4 + 0.5) .. "," ..   mfloor(PrimaryB * 0.4 + 0.5) .. [[)]]   
             local brightOrig = rgb
             local dimOrig = rgbdim
+            local dimmerOrig = dimmer
             if IsInFreeLook() and not brightHud then
                 bright = [[rgb(]] .. mfloor(PrimaryR * 0.5 + 0.5) .. "," .. mfloor(PrimaryG * 0.5 + 0.5) .. "," ..
                             mfloor(PrimaryB * 0.5 + 0.5) .. [[)]]
                 dim = [[rgb(]] .. mfloor(PrimaryR * 0.3 + 0.5) .. "," .. mfloor(PrimaryG * 0.3 + 0.5) .. "," ..
                         mfloor(PrimaryB * 0.2 + 0.5) .. [[)]]
+                dimmer = [[rgb(]] .. mfloor(PrimaryR * 0.2 + 0.5) .. "," .. mfloor(PrimaryG * 0.2 + 0.5) .. "," ..   mfloor(PrimaryB * 0.2 + 0.5) .. [[)]]                        
             end
     
             -- When applying styles, apply color first, then type (e.g. "bright line")
@@ -3362,6 +3805,7 @@ VERSION_NUMBER = 1.520
                         .topButtonActive text {font-size:13px;fill:%s; stroke-width:0px; opacity:1}
                         .indicatorFont {font-size:20px;font-family:Bank}
                         .dimmer {stroke: %s;}
+                        .pdimfill {fill: %s;}
                         .dimfill {fill: %s;}
                     </style>
                 </head>
@@ -3392,12 +3836,20 @@ VERSION_NUMBER = 1.520
                                 <stop offset="0%%" stop-color="%s" stop-opacity="0.8"/>
                                 <stop offset="100%%" stop-color="%s" stop-opacity="0.5"/>
                             </radialGradient>
+                            <radialGradient id="RadialPlanetCenter" cx="0.5" cy="0.5" r="0.5">
+                                <stop offset="0%%" stop-color="%s" stop-opacity="1"/>
+                                <stop offset="100%%" stop-color="%s" stop-opacity="1"/>
+                            </radialGradient>
+                            <radialGradient id="RadialAtmo" cx="0.5" cy="0.5" r="0.5">
+                                <stop offset="0%%" stop-color="%s" stop-opacity="1"/>
+                                <stop offset="66%%" stop-color="%s" stop-opacity="1"/>
+                                <stop offset="100%%" stop-color="%s" stop-opacity="0.1"/>
+                            </radialGradient>                            
                         </defs>
                         <g class="pdim txt txtend">
                         
-                    ]], bright, bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig,dim,bright,dimmer,dimOrig,bright,bright,dimmer,dimmer,dimmer, resolutionWidth, resolutionHeight, dim,dim,dim,dim,dim,brightOrig,dim)
-            -- <path class="linethick dimstroke" style="fill:url(#ThinRightTopGradient);" d="M 1920 28 L 1920 800 L 1800 800 L 1750 750 L 1750 420 L 1700 370 L 1510 370 L 1460 320 L 1460 155 L 1410 105 L 1315 105 L 1403 28 Z"/>
-            -- <path class="linethick dimstroke" style="fill:url(#ThinLeftTopGradient);" d="M 0 28 L 0 800 L 120 800 L 170 750 L 170 420 L 220 370 L 410 370 L 460 320 L 460 155 L 510 105 L 605 105 L 517 28 Z"/>
+                    ]], bright, bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig,dim,bright,dimmer,dimOrig,bright,bright,dimmer,dimmer, dimmerOrig,dimmer, 
+                        resolutionWidth, resolutionHeight, dim,dim,dim,dim,dim,brightOrig,dim,dimOrig, dimmerOrig, dimOrig, dimOrig, dimmerOrig)
             
             -- These never change, set and store it on startup because that's a lot of calculations that we don't want to do every frame
             if not StaticPaths then
@@ -3962,8 +4414,8 @@ VERSION_NUMBER = 1.520
                         end
                     end
                 end
-                local halfResolutionX = round(ResolutionX / 2,0)
-                local halfResolutionY = round(ResolutionY / 2,0)
+                local halfResolutionX = round(resolutionWidth / 2,0)
+                local halfResolutionY = round(resolutionHeight / 2,0)
             local newContent = {}
             --local t0 = system.getTime()
             HUD.HUDPrologue(newContent)
@@ -4661,21 +5113,24 @@ VERSION_NUMBER = 1.520
                 simulatedY = uclamp(simulatedY + deltaY,-resolutionHeight/2,resolutionHeight/2)
                 distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
                 if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
+                    local dx,dy = deltaX, deltaY
+                    if SelectedTab == "SCOPE" then
+                        dx,dy = (scopeFOV/90),(scopeFOV/90)
+                    end
                     if userControlScheme == "virtual joystick" then -- Virtual Joystick
                         -- Do navigation things
-
                         if simulatedX > 0 and simulatedX > DeadZone then
-                            yawInput2 = yawInput2 - (simulatedX - DeadZone) * MouseXSensitivity
+                            yawInput2 = yawInput2 - (simulatedX - DeadZone) * MouseXSensitivity * dx
                         elseif simulatedX < 0 and simulatedX < (DeadZone * -1) then
-                            yawInput2 = yawInput2 - (simulatedX + DeadZone) * MouseXSensitivity
+                            yawInput2 = yawInput2 - (simulatedX + DeadZone) * MouseXSensitivity * dx
                         else
                             yawInput2 = 0
                         end
 
                         if simulatedY > 0 and simulatedY > DeadZone then
-                            pitchInput2 = pitchInput2 - (simulatedY - DeadZone) * MouseYSensitivity
+                            pitchInput2 = pitchInput2 - (simulatedY - DeadZone) * MouseYSensitivity * dy
                         elseif simulatedY < 0 and simulatedY < (DeadZone * -1) then
-                            pitchInput2 = pitchInput2 - (simulatedY + DeadZone) * MouseYSensitivity
+                            pitchInput2 = pitchInput2 - (simulatedY + DeadZone) * MouseYSensitivity * dy
                         else
                             pitchInput2 = 0
                         end
@@ -6794,6 +7249,10 @@ VERSION_NUMBER = 1.520
                         end
                         if maxAtlasY == nil or planet.center.y > maxAtlasY then
                             maxAtlasY = planet.center.y
+                        end
+                        -- Clone to planetAtlas
+                        if planet.center and planet.name ~= "Space" then
+                            planetAtlas[#planetAtlas + 1] = planet
                         end
                     end
                 end

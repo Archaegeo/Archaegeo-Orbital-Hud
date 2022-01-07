@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.5201
+- Added SCOPE Feature
+
 Version 1.5162
 - Updated to match Modular changes to hudclass and apclass for localization.
 
