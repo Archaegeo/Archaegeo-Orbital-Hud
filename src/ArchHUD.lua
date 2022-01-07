@@ -889,8 +889,10 @@ VERSION_NUMBER = 1.5201
 
             -- Added this because, your knownContacts list is already sorted, can skip an expensive re-sort
             if not sorted then
-                table.sort(candidates, function (a, b)
-                    return (a.center.x-origin.x)^2+(a.center.y-origin.y)^2+(a.center.z-origin.z)^2 < (b.center.x-origin.x)^2+(b.center.y-origin.y)^2+(b.center.z-origin.z)^2
+                table.sort(candidates, function (a1, b2)
+                    local a = a1.center
+                    local b = b2.center
+                    return (a.x-origin.x)^2+(a.y-origin.y)^2+(a.z-origin.z)^2 < (b.x-origin.x)^2+(b.y-origin.y)^2+(b.z-origin.z)^2
                 end)
             end
             local dir = direction:normalize()
@@ -2784,7 +2786,7 @@ VERSION_NUMBER = 1.5201
                     
                     -- If atmoDensity == 0, this already gets sorted in a hudTick
                     if atmosDensity > 0 then
-                        table.sort(planetAtlas, function(a,b) return (a.center.x-worldPos.x)^2+(a.center.y-worldPos.y)^2+(a.center.z-worldPos.z)^2 < (b.center.x-worldPos.x)^2+(b.center.y-worldPos.y)^2+(b.center.z-worldPos.z)^2  end)
+                        table.sort(planetAtlas, function(a1,b2) local a,b = a1.center,b2.center return (a.x-worldPos.x)^2+(a.y-worldPos.y)^2+(a.z-worldPos.z)^2 < (b.x-worldPos.x)^2+(b.y-worldPos.y)^2+(b.z-worldPos.z)^2  end)
                     end
 
                     local data = {} -- structure for text data which gets built first
@@ -2806,11 +2808,10 @@ VERSION_NUMBER = 1.5201
                        
                         local horizontalRight = target:cross(constructForward):normalize()
                         local rollRad = math.acos(horizontalRight:dot(constructRight))
+                        if rollRad ~= rollRad then rollRad = 0 end -- I don't know why this would fail but it does... so this fixes it... 
                         if horizontalRight:cross(constructRight):dot(constructForward) < 0 then rollRad = -rollRad end
 
                         local flatlen = target:project_on_plane(constructForward):len()
-                        local flatRight = target:project_on_plane(constructRight)
-                        local flatUp = target:project_on_plane(constructUp)
                         -- Triangle math is a bit more efficient than vector math, we just have a triangle with hypotenuse targetDistance
                         -- and the opposite leg is flatlen, so asin gets us the angle
                         -- We then sin it with rollRad to prevent janky square movement when rolling
@@ -2831,12 +2832,16 @@ VERSION_NUMBER = 1.5201
                         
                         -- Get the view angle from the center to the edge of a planet using trig
                         local topAngle = math.asin((v.radius+v.surfaceMaxAltitude)/targetDistance)*constants.rad2deg
+                        if topAngle ~= topAngle then topAngle = fov end
                         local size = topAngle/fov*orbitMapHeight
+
                         local atmoAngle = math.asin((v.atmosphereRadius)/targetDistance)*constants.rad2deg
+                        if atmoAngle ~= atmoAngle then atmoAngle = topAngle end -- hide atmo if inside it
                         local atmoSize = atmoAngle/fov*orbitMapHeight
                         --local nearestDistance = targetDistance - v.radius - math.max(v.surfaceMaxAltitude,v.noAtmosphericDensityAltitude)
                         --if nearestDistance < 0 then nearestDistance = targetDistance - v.radius - v.surfaceMaxAltitude end
                         --if nearestDistance < 0 then nearestDistance = targetDistance - v.radius end
+                        --if v.name == "Teoma" then p(x .. "," .. y .. " - " .. xAngle .. ", " .. yAngle) end
 
                         -- Seems useful to give the distance to the atmo, land, etc instead of to the core
                         -- But it looks weird and I can't really label what it is, it'd take up too much space
@@ -3079,10 +3084,9 @@ VERSION_NUMBER = 1.5201
                         local target = constructVelocity
                         local targetN = target:normalize()
                         local flatlen = target:project_on_plane(constructForward):len()
-                        local flatRight = target:project_on_plane(constructRight)
-                        local flatUp = target:project_on_plane(constructUp)
                         local horizontalRight = target:cross(constructForward):normalize()
                         local rollRad = math.acos(horizontalRight:dot(constructRight))
+                        if rollRad ~= rollRad then rollRad = 0 end -- Again, idk how this could happen but it does
                         if horizontalRight:cross(constructRight):dot(constructForward) < 0 then rollRad = -rollRad end
                         local xAngle = math.sin(rollRad)*math.asin(flatlen/target:len())*constants.rad2deg
                         local yAngle = math.cos(rollRad)*math.asin(flatlen/target:len())*constants.rad2deg
