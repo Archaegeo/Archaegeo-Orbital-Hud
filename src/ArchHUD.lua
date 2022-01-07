@@ -874,18 +874,23 @@ VERSION_NUMBER = 1.5201
          
          function PlanetarySystem:castIntersections(origin, direction, sizeCalculator, bodyIds, collection, sorted)
             local candidates = {}
-            local selfie = collection or self
-            -- Since we don't use bodyIds anywhere, got rid of them
-            -- It was two tables doing basically the same thing
             
-            -- Changed this to insert the body to candidates
-            for _, body in pairs(selfie) do
-                table.insert(candidates, body)
+            if collection then
+                -- Since we don't use bodyIds anywhere, got rid of them
+                -- It was two tables doing basically the same thing
+                
+                -- Changed this to insert the body to candidates
+                for _, body in pairs(collection) do
+                    table.insert(candidates, body)
+                end
+            else
+                candidates = planetAtlas -- Already-built and probably already sorted
             end
+
             -- Added this because, your knownContacts list is already sorted, can skip an expensive re-sort
             if not sorted then
-                table.sort(candidates, function (b1, b2)
-                    return (b1.center - origin):len() < (b2.center - origin):len()
+                table.sort(candidates, function (a, b)
+                    return (a.center.x-origin.x)^2+(a.center.y-origin.y)^2+(a.center.z-origin.z)^2 < (b.center.x-origin.x)^2+(b.center.y-origin.y)^2+(b.center.z-origin.z)^2
                 end)
             end
             local dir = direction:normalize()
@@ -2773,226 +2778,159 @@ VERSION_NUMBER = 1.5201
                 elseif SelectedTab == "HELP" then
                     newContent = DisplayHelp(newContent)
                 elseif SelectedTab == "SCOPE" then
-                    -- This might be dumb idk but
-                    -- I want it to show a 'POV' view of the ship's facing, of a galaxy map
-                    -- With a target marker showing where the velocity is
-                    -- Alternatively maybe the POV should be from the velocity vector but let's get this going first
                     newContent[#newContent + 1] = '<g clip-path="url(#orbitRect)">'
-                    --local GalaxyMapHTML = "" -- No starting SVG tag so we can add it where we want it
-                    -- Figure out our scale here... 
-                    local xRatio = (maxAtlasX - minAtlasX) / orbitMapWidth
-                    local yRatio = (maxAtlasY - minAtlasY) / orbitMapHeight
                     local fov = scopeFOV
-                    -- Sort the atlas by distance
+                    -- Sort the atlas by distance so closer planets draw on top
                     
-                    table.sort(planetAtlas, function(a,b) return (a.center-worldPos):len2() > (b.center-worldPos):len2()  end)
+                    -- If atmoDensity == 0, this already gets sorted in a hudTick
+                    if atmosDensity > 0 then
+                        table.sort(planetAtlas, function(a,b) return (a.center.x-worldPos.x)^2+(a.center.y-worldPos.y)^2+(a.center.z-worldPos.z)^2 < (b.center.x-worldPos.x)^2+(b.center.y-worldPos.y)^2+(b.center.z-worldPos.z)^2  end)
+                    end
 
-                    local data = {}
-                    local ySorted = {}
-                    local planetTextWidth = 120
-                    local moonTextWidth = 100
-
-                    -- TODO: Sort this?  But we're hitting overloads
-                    -- Move the calculation to somewhere else that we already iterate
-
-                    -- Iterate backwards to build position strings and other data
-                    -- Then draw iterating forward
-
+                    local data = {} -- structure for text data which gets built first
+                    local ySorted = {} -- structure to sort by Y value to help prevent line overlaps
+                    local planetTextWidth = 120 -- Just an estimate, we calc later, but need this before we calc
+                    
+                    -- For finding the planet closest to the cursor
                     local minCursorDistance = nil
                     local minCursorData = nil
 
-                    for i=#planetAtlas,1,-1 do
-                        local v = planetAtlas[i]
+                    -- Iterate backwards to build text, so nearest planets get priority on positioning
+                    -- It's already sorted backwards (nearest things are first)
+                    for i,v in ipairs(planetAtlas) do
+                        
 
-                    --end
+                        local target =  (v.center)-worldPos -- +v.radius*constructForward
+                        local targetDistance = target:len()
+                        local targetN = target:normalize()
+                       
+                        local horizontalRight = target:cross(constructForward):normalize()
+                        local rollRad = math.acos(horizontalRight:dot(constructRight))
+                        if horizontalRight:cross(constructRight):dot(constructForward) < 0 then rollRad = -rollRad end
 
-                    --for k, v in ipairs(planetAtlas) do
-                        --if v.center then -- Only planets and stuff -- It's already only planets now.
-                            -- TODO: FOV?
-                            -- But we should be able to just project the points on a plane defined by constructForward
-                            -- X is then projectedPoint:dot(constructRight) and Y is dot(constructUp)
-                            --local projected = v.center:project_on_plane(constructForward)
-
-                            -- Maybe instead.  We project on up and right
-                            -- And x and y are the respective forward dots for the projections
-                            -- Scaled so that around 0.25 = 90 degrees is no longer onscreen
-
-                            local target =  (v.center)-worldPos -- +v.radius*constructForward
-                            local targetDistance = target:len()
-                            local targetN = target:normalize()
-
-                            local horizontalRight = target:cross(constructForward):normalize()
-                            local rollRad = math.acos(horizontalRight:dot(constructRight))
-                            if horizontalRight:cross(constructRight):dot(constructForward) < 0 then rollRad = -rollRad end
-                                
-
-                            local flatlen = target:project_on_plane(constructForward):len()
-                            local flatRight = target:project_on_plane(constructRight)
-                            local flatUp = target:project_on_plane(constructUp)
-                            local xAngle = math.sin(rollRad)*math.asin(flatlen/targetDistance)*constants.rad2deg
+                        local flatlen = target:project_on_plane(constructForward):len()
+                        local flatRight = target:project_on_plane(constructRight)
+                        local flatUp = target:project_on_plane(constructUp)
+                        -- Triangle math is a bit more efficient than vector math, we just have a triangle with hypotenuse targetDistance
+                        -- and the opposite leg is flatlen, so asin gets us the angle
+                        -- We then sin it with rollRad to prevent janky square movement when rolling
+                        local xAngle = math.sin(rollRad)*math.asin(flatlen/targetDistance)*constants.rad2deg
+                        local yAngle = math.cos(rollRad)*math.asin(flatlen/targetDistance)*constants.rad2deg
+                        -- These only output from 0 to 90 so we need to handle quadrants
+                        if targetN:dot(constructForward) < 0 then
+                            -- If it's in top or bottom quadrant, ie yAngle is 90 or -90ish, do this...
                             
-                            local yAngle = math.cos(rollRad)*math.asin(flatlen/targetDistance)*constants.rad2deg
-                            -- These are perfect, but they go from -90 to 90 only.  We want them -180 to 180
-                            -- We can't just x2 because they're already right, and also they're only not negative
-                            -- because we need to handle quadrants, it being triangle math and not vector math
+                            yAngle = 90*math.cos(rollRad) + (90*math.cos(rollRad) - yAngle)
+                            xAngle = 90*math.sin(rollRad) + (90*math.sin(rollRad) - xAngle)
+                        end
 
-                            -- But also, we have the popping problem.  If their roll is near 0, xAngle shouldn't flip to 180
-                            -- Part of the issue is that they're flipping from 0 to 180, and not smoothly going to -180
-                            if targetN:dot(constructForward) < 0 then
-                                -- If it's in top or bottom quadrant, ie yAngle is 90 or -90ish, do this...
-                                
-                                yAngle = 90*math.cos(rollRad) + (90*math.cos(rollRad) - yAngle)
-                                xAngle = 90*math.sin(rollRad) + (90*math.sin(rollRad) - xAngle)
+                        local x = orbitMidX + (xAngle/fov)*orbitMapHeight
+                        local y = orbitMidY + (yAngle/fov)*orbitMapHeight
+
+                        local cursorDistance = ((x-orbitMidX)*(x-orbitMidX))+((y-orbitMidY)*(y-orbitMidY))
+                        
+                        -- Get the view angle from the center to the edge of a planet using trig
+                        local topAngle = math.asin((v.radius+v.surfaceMaxAltitude)/targetDistance)*constants.rad2deg
+                        local size = topAngle/fov*orbitMapHeight
+                        local atmoAngle = math.asin((v.atmosphereRadius)/targetDistance)*constants.rad2deg
+                        local atmoSize = atmoAngle/fov*orbitMapHeight
+                        --local nearestDistance = targetDistance - v.radius - math.max(v.surfaceMaxAltitude,v.noAtmosphericDensityAltitude)
+                        --if nearestDistance < 0 then nearestDistance = targetDistance - v.radius - v.surfaceMaxAltitude end
+                        --if nearestDistance < 0 then nearestDistance = targetDistance - v.radius end
+
+                        -- Seems useful to give the distance to the atmo, land, etc instead of to the core
+                        -- But it looks weird and I can't really label what it is, it'd take up too much space
+                        local distance = getDistanceDisplayString(targetDistance,1)
+                        local displayString = v.name
+                        
+                        -- Calculate whether or not we even display this planet.  In a really convoluted way.
+                        local displayY = false
+                        -- TODO: Simplify this somehow... 
+                        if y > orbitMapY then
+                            if y > orbitMaxY then
+                                if y - atmoSize <= orbitMaxY then
+                                    displayY = true
+                                end
+                            else
+                                displayY = true
                             end
-
-                            --if flatRight:dot(constructForward)<0 then
-                            --    yAngle = 90 + (90 - yAngle)
-                            --end
-                            --if flatUp:dot(constructForward)<0 then
-                            --    xAngle = 90 + (90 - xAngle)
-                            --end
-                            --if yAngle > 180 then yAngle = -180 + (yAngle-180) end
-                            --if xAngle > 180 then xAngle = -180 + (xAngle-180) end
-
-                            --local targetn = target:normalize()
-                            -- Find the angle between target and forward on the right plane for Y
-                            --local rollrad = adjustedRoll/180*math.pi
-                            --local yAngle = mabs(targetn:dot(constructUp))*signedRotationAngle(constructRight, target, constructForward)*constants.rad2deg
-                            --local xAngle = mabs(targetn:dot(constructRight))*signedRotationAngle(constructUp, target, constructForward)*constants.rad2deg
-
-                            -- This isn't right.  If they tilt up, there is a component of target behind the ship
-                            -- Flattened along up, that gives us a huge angle from front to that
-                            -- Though technically it *is* behind them.  
-
-                            --if mabs(xAngle) < fov and mabs(yAngle) < fov then 
-                                --p(v.name .. "," .. xAngle .. "," .. yAngle)
-                                local x = orbitMidX + (xAngle/fov)*orbitMapHeight
-                                local y = orbitMidY + (yAngle/fov)*orbitMapHeight
-
-                                local cursorDistance = ((x-orbitMidX)*(x-orbitMidX))+((y-orbitMidY)*(y-orbitMidY))
-                                
-
-                                -- Instead of using vector math for the angle from the center to the edge of the planet
-                                -- Let's use trig. 
-                                -- We have one line from our center to planet center, leg b
-                                -- One line from planet center to an edge, leg a.  This is a 90 degree
-                                -- Then one from there to our center.  We know the lengths of all of these: 
-                                -- Us to center is just target:len(), leg b
-                                -- leg a is just radius
-                                -- c is ... a^2+b^2 but we don't need c
-                                -- To get the angle between a and b, we can atan- adjacent is target:len, opposite is planet.radius
-                                -- atan(planet.radius/target:len())
-
-                                
-
-
-                                --local topTarget = (v.center+v.radius*target:normalize():cross(constructRight))-worldPos
-                                --local topAngle = signedRotationAngle(constructRight, topTarget, target)*constants.rad2deg
-                                
-
-                                --local topAngle = math.atan(v.radius/targetDistance)*constants.rad2deg
-                                -- Should we include surfaceMax? It makes it look wrong sometimes.  But I guess it's important for like, thades
-                                local topAngle = math.asin((v.radius+v.surfaceMaxAltitude)/targetDistance)*constants.rad2deg
-                                local size = topAngle/fov*orbitMapHeight
-                                local atmoAngle = math.asin((v.atmosphereRadius)/targetDistance)*constants.rad2deg
-                                local atmoSize = atmoAngle/fov*orbitMapHeight
-                                --local nearestDistance = targetDistance - v.radius - math.max(v.surfaceMaxAltitude,v.noAtmosphericDensityAltitude)
-                                --if nearestDistance < 0 then nearestDistance = targetDistance - v.radius - v.surfaceMaxAltitude end
-                                --if nearestDistance < 0 then nearestDistance = targetDistance - v.radius end
-
-                                -- Seems useful to give the distance to the atmo, land, etc instead of to the core
-                                -- But it looks weird and I can't really label what it is, it'd take up too much space
-                                local distance = getDistanceDisplayString(targetDistance,1)
-                                local displayString = v.name
-                                
-
-                                local displayY = false
-                                -- TODO: Simplify this somehow... 
-                                if y > orbitMapY then
-                                    if y > orbitMaxY then
-                                        if y - atmoSize <= orbitMaxY then
-                                            displayY = true
-                                        end
-                                    else
-                                        displayY = true
-                                    end
-                                else
-                                    if y+atmoSize >= orbitMapY then
-                                        displayY = true
-                                    end
+                        else
+                            if y+atmoSize >= orbitMapY then
+                                displayY = true
+                            end
+                        end
+                        local displayX = false
+                        local tx = x
+                        if v.systemId == 0 then
+                            tx = x + planetTextWidth -- Don't stop showing til the text is offscreen
+                        else
+                            tx = x - planetTextWidth -- Still just an estimated max textWidth... we don't know yet how long it is
+                        end
+                        if tx+planetTextWidth > orbitMapX then
+                            if tx+planetTextWidth > orbitMaxX then
+                                if tx-atmoSize-planetTextWidth <= orbitMaxX then
+                                    displayX = true
                                 end
-                                local displayX = false
-                                local tx = x
-                                if v.systemId == 0 then
-                                    tx = x + planetTextWidth -- Don't stop showing til the text is offscreen
-                                else
-                                    tx = x - planetTextWidth -- Also this is just an estimated max... we don't know yet how long it is
-                                end
-                                if tx+planetTextWidth > orbitMapX then
-                                    if tx+planetTextWidth > orbitMaxX then
-                                        if tx-atmoSize-planetTextWidth <= orbitMaxX then
-                                            displayX = true
-                                        end
-                                    else
-                                        displayX = true
-                                    end
-                                else
-                                    if tx+atmoSize+planetTextWidth >= orbitMapX then
-                                        displayX = true
-                                    end
-                                end
+                            else
+                                displayX = true
+                            end
+                        else
+                            if tx+atmoSize+planetTextWidth >= orbitMapX then
+                                displayX = true
+                            end
+                        end
 
-                                -- setup what we need for the distance line first
-                                local sortData = {}
-                                sortData.x = x
-                                sortData.y = y
-                                sortData.planet = v
-                                sortData.atmoSize = atmoSize
+                        -- setup what we need for the distance line, because it draws even if the planet doesn't
+                        local sortData = {}
+                        sortData.x = x
+                        sortData.y = y
+                        sortData.planet = v
+                        sortData.atmoSize = atmoSize
 
-                                if not minCursorDistance or cursorDistance < minCursorDistance then
-                                    minCursorDistance = cursorDistance
-                                    minCursorData = sortData
-                                end
+                        if not minCursorDistance or cursorDistance < minCursorDistance then
+                            minCursorDistance = cursorDistance
+                            minCursorData = sortData
+                        end
 
-                                if displayX and displayY then
-                                    local hoverSize = math.max(atmoSize,5)
-                                    if (cursorDistance) < hoverSize*hoverSize then
-                                    --if x-hoverSize <= orbitMidX and x+hoverSize >= orbitMidX and y-hoverSize <= orbitMidY and y+hoverSize >= orbitMidY then
-                                        displayString = displayString .. " - " .. distance
-                                    end
-                                    sortData.size = size
-                                    sortData.i = i
-                                    sortData.displayString = displayString
-                                    sortData.distance = distance
-                                    sortData.visible = true
-                                    ySorted[#ySorted+1] = sortData
-                                else
-                                    sortData.visible = false
-                                end
-                            --end
-                        --end
+                        if displayX and displayY then
+                            local hoverSize = math.max(atmoSize,5) -- This 5px hoversize for small planets could probably go up a bit
+                            if (cursorDistance) < hoverSize*hoverSize then
+                            --if x-hoverSize <= orbitMidX and x+hoverSize >= orbitMidX and y-hoverSize <= orbitMidY and y+hoverSize >= orbitMidY then
+                                displayString = displayString .. " - " .. distance
+                            end
+                            sortData.size = size
+                            sortData.i = i
+                            sortData.displayString = displayString
+                            sortData.distance = distance
+                            sortData.visible = true
+                            ySorted[#ySorted+1] = sortData
+                        else
+                            sortData.visible = false
+                        end
                     end
 
                     local anyHovered = false
                     -- Setup text in y sort order
                     table.sort(ySorted,function(a,b) return a.y<b.y end)
-
+                    -- Again, we draw the lowest Y first because it prevents the lines from crossing somehow
+                    -- And drawing them in this order makes sure that the upper-most planets get the upper-most labels
                     for k,d in ipairs(ySorted) do
                         local v,size,i,atmoSize,x,y,displayString,distance = d.planet,d.size,d.i,d.atmoSize,d.x,d.y,d.displayString,d.distance
 
                         local textX, textY, textWidth, textHeight
-                        local xMod = 15
-                        local class = "pdim"
-                        if v.systemId ~= 0 then
-                            textWidth = ConvertResolutionX(string.len(displayString)*5)
-                            xMod = -(15+textWidth)
-                            textHeight = ConvertResolutionY(10)
-                            class = "pdimfill"
+                        local xMod = 15 -- Planet names are 15px right or left, for moons or planets respectively
+                        local class = "pdim" -- Planet class is pdim
+                        if v.systemId ~= 0 then -- This is moons
+                            textWidth = ConvertResolutionX(string.len(displayString)*5) -- Smaller text
+                            xMod = -(15+textWidth) -- Drawn left
+                            textHeight = ConvertResolutionY(10) -- Smaller text
+                            class = "pdimfill" -- Darker text
                         else
                             textWidth = ConvertResolutionX(string.len(displayString)*9)
                             textHeight = ConvertResolutionY(15)
                         end
-                        if size*2 > textWidth then -- Only clamp things that are large enough to matter (larger than the text)
+                        -- Only clamp things that are large enough to matter (larger than the text)
+                        if size*2 > textWidth then -- Size is a radius, so *2 for fitting text in it
                             -- and center text, if it's that big
                             -- Try to clamp it within the planet itself after clamping to screen
                             textX = uclamp(x,orbitMapX+textWidth/2,orbitMaxX-textWidth/2)
@@ -3019,8 +2957,8 @@ VERSION_NUMBER = 1.5201
                         local opacityMult = 1
                         if hovered then
                             opacityMult=2
-                            if size*2 < textWidth then opacityMult = 10 end
-                            if displayString == v.name then
+                            if size*2 < textWidth then opacityMult = 10 end -- If v small, make it v bright so you can see it
+                            if displayString == v.name then -- If it's hovered and we don't have a distance in it yet, add one
                                 displayString = displayString .. " - " .. distance
                             end
                             class = "pbright"
@@ -3031,17 +2969,19 @@ VERSION_NUMBER = 1.5201
                                 textWidth = ConvertResolutionX(string.len(displayString)*5)
                                 xMod = -(15+textWidth)
                             else
-                                textWidth = ConvertResolutionX(string.len(displayString)*7) -- When there are spaces, it's less long per char... 
+                                textWidth = ConvertResolutionX(string.len(displayString)*7) -- When there are spaces, it's less long per char ... vs the *9 for just names
                             end
                             if size*2 > textWidth then -- Only clamp things that are large enough to matter (larger than the text)
                                 textX = uclamp(x,orbitMapX+textWidth/2,orbitMaxX-textWidth/2)
-                                textX = uclamp(textX, x-size+textWidth/2, x+size-textWidth/2)
+                                textX = uclamp(textX, x-size+textWidth/2, x+size-textWidth/2) -- Center text if it can fit, no xMod
                             else
                                 textX = x+xMod
                             end
                             if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand and not anyHovered then
                                 anyHovered = true
                                 -- Find it in AtlasOrdered
+                                -- TODO: This is dumb.  We find it in AtlasOrdered, so that UpdateAPTarget can find the index from atlasOrdered and pull it from atlas
+                                -- We need ATLAS.UpdateAutopilotTarget(id)
                                 if AutopilotTargetName ~= v.name then
                                     for targetIndex,id in ipairs(AtlasOrdered) do
                                         if id.index == v.id then
@@ -3094,8 +3034,8 @@ VERSION_NUMBER = 1.5201
                         
                     end
 
-                    -- draw everything in forward order
-                    for k,v in ipairs(planetAtlas) do
+                    -- draw everything.  Reverse order so furthest planets draw first
+                    for k=#planetAtlas,1,-1 do
                         if data[k] then
                             newContent[#newContent+1] = data[k].output
                         end
@@ -3135,6 +3075,7 @@ VERSION_NUMBER = 1.5201
                     if velMag > 1 then
                         -- This does sorta work but, also draws retrograde and the arrow and also isn't scaled correctly 
                         --DrawPrograde(newContent, coreVelocity, velMag, orbitMidX, orbitMidY)
+                        -- TODO: Rework DrawPrograde to be able to accept x,y values for the marker
                         local target = constructVelocity
                         local targetN = target:normalize()
                         local flatlen = target:project_on_plane(constructForward):len()
@@ -3145,12 +3086,8 @@ VERSION_NUMBER = 1.5201
                         if horizontalRight:cross(constructRight):dot(constructForward) < 0 then rollRad = -rollRad end
                         local xAngle = math.sin(rollRad)*math.asin(flatlen/target:len())*constants.rad2deg
                         local yAngle = math.cos(rollRad)*math.asin(flatlen/target:len())*constants.rad2deg
-                        -- These are perfect, but they go from -90 to 90 only.  We want them -180 to 180
-                        -- We can't just x2 because they're already right, and also they're only not negative
-                        -- because we need to handle quadrants, it being triangle math and not vector math
-
-                        -- But also, we have the popping problem.  If their roll is near 0, xAngle shouldn't flip to 180
-                        -- Part of the issue is that they're flipping from 0 to 180, and not smoothly going to -180
+                        
+                        -- Fix quadrants
                         if targetN:dot(constructForward) < 0 then
                             -- If it's in top or bottom quadrant, ie yAngle is 90 or -90ish, do this...
                             
@@ -3158,14 +3095,11 @@ VERSION_NUMBER = 1.5201
                             xAngle = 90*math.sin(rollRad) + (90*math.sin(rollRad) - xAngle)
                         end
 
-                        --local yAngle = signedRotationAngle(constructRight, constructVelocity, constructForward)*constants.rad2deg
-                        --local xAngle = signedRotationAngle(constructUp, constructVelocity, constructForward)*constants.rad2deg
-                        --local x = orbitMapX + orbitMapSize + (xAngle/fov)*orbitMapSize*2
-                        --local y = orbitMapY + orbitMapSize*1.5/2 + (yAngle/fov)*orbitMapSize*1.5
                         local x = orbitMidX + (xAngle/fov)*orbitMapHeight
                         local y = orbitMidY + (yAngle/fov)*orbitMapHeight
                         local dotSize = 14
                         local dotRadius = dotSize/2
+                        -- TODO: stringf
                         local progradeDot = [[<circle
                             cx="]] .. x .. [["
                             cy="]] .. y .. [["
@@ -3192,7 +3126,7 @@ VERSION_NUMBER = 1.5201
                                                                                 orbitMidX, orbitMidY-10, orbitMidX, orbitMidY+10)
                     newContent[#newContent+1] = stringf("<line class='linethin dimstroke' x1='%f' y1='%f' x2='%f' y2='%f' />", 
                     orbitMidX-10, orbitMidY, orbitMidX+10, orbitMidY)
-                    --newContent[#newContent + 1] = GalaxyMapHTML
+                    
                     newContent[#newContent + 1] = '</g>'
                 else
                     return newContent
