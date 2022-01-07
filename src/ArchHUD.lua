@@ -333,7 +333,8 @@ VERSION_NUMBER = 1.5201
     local passengers = nil
     local ships = nil
     local planetAtlas = {} 
-    scopeFOV=90
+    local scopeFOV=90
+    local oldShowHud = showHud
 
 -- Function Definitions that are used in more than one areause 
     --[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
@@ -1451,7 +1452,6 @@ VERSION_NUMBER = 1.5201
         local YouAreHere = nil
         local showSettings = false
         local settingsVariables = {}
-        local oldShowHud = showHud
         local pipeMessage = ""
     
         --Local Huds Functions
@@ -3005,37 +3005,24 @@ VERSION_NUMBER = 1.5201
                         end
 
                         local adjusted
+                        local repCount=0
                         repeat
                             adjusted = false
                             for tpi,d in pairs(data) do
                                 local textPos = d.textPositions
                                 local yDiff = textPos.y-textY
                                 if tpi ~= i and mabs(yDiff) < textPos.height and textPos.x+textPos.width > textX and textPos.x < textX+textWidth then
-                                    -- This could cause an overlap on an edge case where the text is below center
-                                    -- Then we have a collision so it moves above center
-                                    -- Then we have another collision so it moves below again and draws over one... 
-                                    -- But it should be kinda rare.
-                                    --if y > orbitMapSize*1.5/2 then
-                                    --    textY = textY - 15
-                                    --else
-                                        if size > textWidth then
-                                            textY = uclamp(textY+textHeight,orbitMapY+15,orbitMaxY-5) -- If we clamp, don't re-do, it's meant to overlap
-                                        else
-                                            textY = textPos.y+textPos.height+1
-                                            adjusted = true
-                                        end
-                                        --if v.systemId == 0 then
-                                        --    textX = textX + 10
-                                        --else
-                                        --    textX = textX - 10
-                                        --end
-                                    --end
-                                    --break
-                                    
-                                    break -- Abort to re-check previous ones, to avoid iterating the later ones for no reason
+                                    if size > textWidth then
+                                        textY = uclamp(textY+textHeight,orbitMapY+15,orbitMaxY-5) -- If we clamp, don't re-do, it's meant to overlap
+                                    else
+                                        textY = textPos.y+textPos.height+1
+                                        adjusted = true
+                                        break -- Abort to re-check previous ones, to avoid iterating the later ones for no reason
+                                    end
                                 end
                             end
-                        until not adjusted
+                            repCount = repCount+1
+                        until (not adjusted or repCount == 10)
 
                         local hovered = displayString ~= v.name or (textX <= orbitMidX and textX+textWidth >= orbitMidX and textY-textHeight <= orbitMidY and textY >= orbitMidY)
                         d.hovered = hovered
@@ -7351,6 +7338,7 @@ VERSION_NUMBER = 1.5201
                 v.toggle()
             end
         end
+        showHud = oldShowHud
         SaveDataBank()
         if button then
             button.activate()
