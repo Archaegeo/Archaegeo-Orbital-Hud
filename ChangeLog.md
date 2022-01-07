@@ -2,6 +2,9 @@
 
 Version 1.5201
 - Added SCOPE Feature
+- Fixed Alt-3 to swap to complete vanilla view hiding everything unless `hideHudOnToggleWidgets` is false.  Will still show vSpd Meter if `AlwaysVSpd` is true.
+- User variable `DisplayOdometer` is back default true, set to false to hide top bar (but not the upper left tab buttons)
+- Setting `circleRad` to 0 will make NavBall go away.  Setting `fuelX` and `fuelY` to 0 will make fuel bars go away.  Etc for other positions.
 
 Version 1.5162
 - Updated to match Modular changes to hudclass and apclass for localization.
