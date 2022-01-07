@@ -699,8 +699,10 @@ VERSION_NUMBER = 1.701
             end
             -- Added this because, your knownContacts list is already sorted, can skip an expensive re-sort
             if not sorted then
-                table.sort(candidates, function (a, b)
-                    return (a.center.x-origin.x)^2+(a.center.y-origin.y)^2+(a.center.z-origin.z)^2 < (b.center.x-origin.x)^2+(b.center.y-origin.y)^2+(b.center.z-origin.z)^2
+                table.sort(candidates, function (a1, b2)
+                    local a = a1.center
+                    local b = b2.center
+                    return (a.x-origin.x)^2+(a.y-origin.y)^2+(a.z-origin.z)^2 < (b.x-origin.x)^2+(b.y-origin.y)^2+(b.z-origin.z)^2
                 end)
             end
             local dir = direction:normalize()
