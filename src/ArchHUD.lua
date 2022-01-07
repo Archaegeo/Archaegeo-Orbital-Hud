@@ -2941,7 +2941,6 @@ VERSION_NUMBER = 1.5201
                             textX = x+xMod
                             textY = y
                         end
-
                         for tpi,d in pairs(data) do
                             local textPos = d.textPositions
                             local yDiff = textPos.y-textY
@@ -2953,7 +2952,6 @@ VERSION_NUMBER = 1.5201
                                 end
                             end
                         end
-
                         local hovered = displayString ~= v.name or (textX <= orbitMidX and textX+textWidth >= orbitMidX and textY-textHeight <= orbitMidY and textY >= orbitMidY)
                         d.hovered = hovered
                         local opacityMult = 1
