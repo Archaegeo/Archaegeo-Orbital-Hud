@@ -2,7 +2,6 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
     mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
     navCom, sysDestWid, sysIsVwLock, msqrt, round, svgText)
 
-
     local gravConstant = 9.80665
     local Buttons = {}
     local ControlButtons = {}
@@ -1368,7 +1367,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                     local target =  (v.center)-worldPos -- +v.radius*constructForward
                     local targetDistance = target:len()
                     local targetN = target:normalize()
-                    
+                   
                     local horizontalRight = target:cross(constructForward):normalize()
                     local rollRad = math.acos(horizontalRight:dot(constructRight))
                     if rollRad ~= rollRad then rollRad = 0 end -- I don't know why this would fail but it does... so this fixes it... 
@@ -1566,7 +1565,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                     data[i].output = data[i].output .. stringf('<circle cx="%f" cy="%f" r="%f" stroke="%s" stroke-width="1" stroke-opacity="%f" fill="url(#RadialPlanetCenter)" />',
                                                         x, y, size, rgbdim, 0.2*opacityMult)
                     
-                        -- If it's centered text, don't bother with a line
+                     -- If it's centered text, don't bother with a line
                     if v.systemId == 0 then
                         data[i].output = data[i].output .. stringf([[<text x='%f' y='%f'
                                 font-size='12' fill='%s' class='%s' font-family='Montserrat'>%s</text>]]
@@ -1867,15 +1866,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                 -- Add a new location to SavedLocations
                 local position = worldPos
                 local name = planet.name .. ". " .. #SavedLocations
-                if radars[1] then -- Just match the first one
-                    local id,_ = radars[1].getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
-                    if id ~= nil and id ~= "" then
-                        name = name .. " " .. radars[1].getConstructName(id)
-                    end
-                end
-                
+                if radar_1 then name = RADAR.GetClosestName(name) end
                 return ATLAS.AddNewLocation(name, position, false, true)
-                
             end
             
             local function ToggleTurnBurn()
@@ -2641,68 +2633,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         local peris = 0
 
     function Hud.DrawRadarInfo()
-        local function ToggleRadarPanel()
-            if radarPanelID ~= nil and peris == 0 then
-                sysDestWid(radarPanelID)
-                radarPanelID = nil
-                if perisPanelID ~= nil then
-                    sysDestWid(perisPanelID)
-                    perisPanelID = nil
-                end
-            else
-                -- If radar is installed but no weapon, don't show periscope
-                if peris == 1 then
-                    sysDestWid(radarPanelID)
-                    radarPanelID = nil
-                    _autoconf.displayCategoryPanel(radars, 1, "Periscope",
-                        "periscope")
-                    perisPanelID = _autoconf.panels[_autoconf.panels_size]
-                end
-                if radarPanelID == nil then
-                    _autoconf.displayCategoryPanel(radars, 1, "Radar", "radar")
-                    radarPanelID = _autoconf.panels[_autoconf.panels_size]
-                end
-                peris = 0
-            end
-        end 
-        local target, data, radarContacts, numKnown, static, friendlies = RADAR.GetRadarHud()
-        local num = numKnown or 0 
-        if radarContacts > 0 then 
-            if CollisionSystem then 
-                msg = num.."/"..static.." Plotted : "..(radarContacts-static).." Ignored" 
-            else
-                msg = "Radar Contacts: "..radarContacts
-            end
-            radarMessage = svgText(radarX, radarY, msg, "pbright txtbig txtmid")
-            if #friendlies > 0 then
-                radarMessage = radarMessage..svgText( friendx, friendy, "Friendlies In Range", "pbright txtbig txtmid")
-                for k, v in pairs(friendlies) do
-                    friendy = friendy + 20
-                    radarMessage = radarMessage..svgText(friendx, friendy, radars[1].getConstructName(v), "pdim txtmid")
-                end
-            end
-
-            if target == nil and perisPanelID == nil then
-                peris = 1
-                ToggleRadarPanel()
-            end
-            if target ~= nil and perisPanelID ~= nil then
-                ToggleRadarPanel()
-            end
-            if radarPanelID == nil then
-                ToggleRadarPanel()
-            end
-        else
-            if data then
-                radarMessage = svgText(radarX, radarY, rType.." Radar: Jammed", "pbright txtbig txtmid")
-            else
-                radarMessage = svgText(radarX, radarY, "Radar: No "..rType.." Contacts", "pbright txtbig txtmid")
-            end
-            if radarPanelID ~= nil then
-                peris = 0
-                ToggleRadarPanel()
-            end
-        end
+        radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY)
     end
 
     function Hud.DrawTanks()
@@ -2898,8 +2829,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         if showSettings and settingsVariables ~= {} then 
             HUD.DrawSettings(newContent) 
         end
-        if radar_1 or radar_2 then RADAR.assignRadar() end
-        if radars[1] then HUD.DrawRadarInfo() end
+
+        if radar_1 then HUD.DrawRadarInfo() end
         HUD.HUDEpilogue(newContent)
         newContent[#newContent + 1] = stringf(
             [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
@@ -2997,8 +2928,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         SettingsButtons()
         ControlsButtons() -- Set up all the pushable buttons.
         Buttons = ControlButtons
-    end
-    -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
+    end    -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
     --for k,v in pairs(require("autoconf/custom/archhud/custom/customhudclass")) do Hud[k] = v end 
     return Hud
 end
+ 

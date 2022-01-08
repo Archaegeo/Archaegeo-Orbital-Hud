@@ -8,7 +8,7 @@ require("autoconf/custom/archhud/hudclass")
 require("autoconf/custom/archhud/apclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.701
+VERSION_NUMBER = 1.702
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -153,7 +153,6 @@ VERSION_NUMBER = 1.701
     nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
     collisionAlertStatus = false
     collisionTarget = nil
-    radars = {}
     rType = "Atmo"
     apButtonsHovered = false
     apScrollIndex = 0
@@ -1056,7 +1055,7 @@ VERSION_NUMBER = 1.701
     local function RadarClass() -- Everything related to radar but draw data passed to HUD Class.
         local Radar = {}
         -- Radar Class locals
-
+    
             local friendlies = {}
             local sizeMap = { XS = 13, S = 27, M = 55, L = 110, XL = 221}
             local knownContacts = {}
@@ -1065,7 +1064,8 @@ VERSION_NUMBER = 1.701
             local data
             local numKnown
             local static
-
+            local radars = {}
+    
         local function UpdateRadarRoutine()
             
             local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
@@ -1092,7 +1092,7 @@ VERSION_NUMBER = 1.701
                   return t2
                 end
             end
-
+    
             local function getTrueWorldPos()
                 local function getLocalToWorldConverter()
                     local v1 = core.getConstructWorldOrientationRight()
@@ -1142,7 +1142,7 @@ VERSION_NUMBER = 1.701
                     pts[index+1] = {d,offset}
                 end
             end
-
+            if radar_1 or radar_2 then RADAR.assignRadar() end
             if (radars[1]) then
                 radarContacts = #radars[1].getConstructIds()
                 local radarData = radars[1].getData()
@@ -1217,11 +1217,10 @@ VERSION_NUMBER = 1.701
                 end
             end
         end
-
         function Radar.pickType()
             pickType()
         end
-
+    
         function Radar.assignRadar()
             if radar_1 and radars[1]==radar_1 and radar_1.isOperational() ~= 1 then
                 if radar_2 and radar_2.isOperational() == 1 then 
@@ -1235,7 +1234,7 @@ VERSION_NUMBER = 1.701
                 if radars[1] == radar_1 then pickType() end
             end
         end
-
+    
         function Radar.UpdateRadar()
             local cont = coroutine.status (UpdateRadarCoroutine)
             if cont == "suspended" then 
@@ -1246,16 +1245,92 @@ VERSION_NUMBER = 1.701
                 local value, done = coroutine.resume(UpdateRadarCoroutine)
             end
         end
-
-        function Radar.GetRadarHud()
+    
+        function Radar.GetRadarHud(friendx, friendy, radarX, radarY)
             local friends = friendlies
+            local radarMessage, msg
             friendlies = {}
-            return target, data, radarContacts, numKnown, static, friends
+            local num = numKnown or 0 
+            if radarContacts > 0 then 
+                if CollisionSystem then 
+                    msg = num.."/"..static.." Plotted : "..(radarContacts-static).." Ignored" 
+                else
+                    msg = "Radar Contacts: "..radarContacts
+                end
+                radarMessage = svgText(radarX, radarY, msg, "pbright txtbig txtmid")
+                if #friendlies > 0 then
+                    radarMessage = radarMessage..svgText( friendx, friendy, "Friendlies In Range", "pbright txtbig txtmid")
+                    for k, v in pairs(friendlies) do
+                        friendy = friendy + 20
+                        radarMessage = radarMessage..svgText(friendx, friendy, radars[1].getConstructName(v), "pdim txtmid")
+                    end
+                end
+    
+                if target == nil and perisPanelID == nil then
+                    peris = 1
+                    RADAR.ToggleRadarPanel()
+                end
+                if target ~= nil and perisPanelID ~= nil then
+                    RADAR.ToggleRadarPanel()
+                end
+                if radarPanelID == nil then
+                    RADAR.ToggleRadarPanel()
+                end
+            else
+                if data then
+                    radarMessage = svgText(radarX, radarY, rType.." Radar: Jammed", "pbright txtbig txtmid")
+                else
+                    radarMessage = svgText(radarX, radarY, "Radar: No "..rType.." Contacts", "pbright txtbig txtmid")
+                end
+                if radarPanelID ~= nil then
+                    peris = 0
+                    RADAR.ToggleRadarPanel()
+                end
+            end
+            return radarMessage
         end
-        
+    
+        function Radar.GetClosestName(name)
+            if radars[1] then -- Just match the first one
+                local id,_ = radars[1].getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
+                if id ~= nil and id ~= "" then
+                    name = name .. " " .. radars[1].getConstructName(id)
+                end
+            end
+            return name
+        end
+        function Radar.ToggleRadarPanel()
+            if radarPanelID ~= nil and peris == 0 then
+                sysDestWid(radarPanelID)
+                radarPanelID = nil
+                if perisPanelID ~= nil then
+                    sysDestWid(perisPanelID)
+                    perisPanelID = nil
+                end
+            else
+                -- If radar is installed but no weapon, don't show periscope
+                if peris == 1 then
+                    sysDestWid(radarPanelID)
+                    radarPanelID = nil
+                    _autoconf.displayCategoryPanel(radars, 1, "Periscope",
+                        "periscope")
+                    perisPanelID = _autoconf.panels[_autoconf.panels_size]
+                end
+                if radarPanelID == nil then
+                    _autoconf.displayCategoryPanel(radars, 1, "Radar", "radar")
+                    radarPanelID = _autoconf.panels[_autoconf.panels_size]
+                end
+                peris = 0
+            end
+        end
+        radars[1]=nil
+        if radar_1 then
+            radars[1] = radar_1
+            pickType()
+        end
         UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
         return Radar
-    end 
+    end
     local function AtlasClass() -- Atlas and Interplanetary functions including Update Autopilot Target
 
         -- Atlas functions
@@ -1919,11 +1994,6 @@ VERSION_NUMBER = 1.701
             unit.setTimer("oneSecond", 1)
             unit.setTimer("tenthSecond", 1/10)
             unit.setTimer("fiveSecond", 5) 
-            radars[1]=nil
-            if radar_1 then
-                radars[1] = radar_1
-                RADAR.pickType()
-            end
             play("start","SU")
         end)
         coroutine.resume(beginSetup)
@@ -3637,13 +3707,13 @@ VERSION_NUMBER = 1.701
     end
 
     function script.onEnter(id)
-        if radars[1] and not inAtmo and not notPvPZone then 
+        if radar_1 and not inAtmo and not notPvPZone then 
             unit.setTimer("contact",0.1) 
         end
     end
 
     function script.onLeave(id)
-        if radars[1] and CollisionSystem then 
+        if radar_1 and CollisionSystem then 
             if #contacts > 650 then 
                 id = tostring(id)
                 contacts[id] = nil 
