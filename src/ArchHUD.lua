@@ -327,7 +327,7 @@ VERSION_NUMBER = 1.5202
     local collisionAlertStatus = false
     local collisionTarget = nil
 
-    local rType = "Atmo"
+
     local apButtonsHovered = false
     local apScrollIndex = 0
     local TabButtons = {}
@@ -1257,6 +1257,7 @@ VERSION_NUMBER = 1.5202
             local numKnown
             local static
             local radars = {}
+            local rType = "Atmo"
 
         local function UpdateRadarRoutine()
             
