@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.5202
+- Restructure RADARCLASS to support modularizaion.
+- FIX: Fixed issue with virtual joystick when NOT in SCOPE mode.
+
 Version 1.5201
 - Added SCOPE Feature
 - Fixed Alt-3 to swap to complete vanilla view hiding everything unless `hideHudOnToggleWidgets` is false.  Will still show vSpd Meter if `AlwaysVSpd` is true.

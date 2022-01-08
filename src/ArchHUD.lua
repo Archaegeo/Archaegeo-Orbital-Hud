@@ -326,7 +326,7 @@ VERSION_NUMBER = 1.5202
     local nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
     local collisionAlertStatus = false
     local collisionTarget = nil
-    local radars = {}
+
     local rType = "Atmo"
     local apButtonsHovered = false
     local apScrollIndex = 0
@@ -1256,6 +1256,7 @@ VERSION_NUMBER = 1.5202
             local data
             local numKnown
             local static
+            local radars = {}
 
         local function UpdateRadarRoutine()
             
@@ -1333,7 +1334,7 @@ VERSION_NUMBER = 1.5202
                     pts[index+1] = {d,offset}
                 end
             end
-
+            if radar_1 or radar_2 then RADAR.assignRadar() end
             if (radars[1]) then
                 radarContacts = #radars[1].getConstructIds()
                 local radarData = radars[1].getData()
@@ -1408,7 +1409,6 @@ VERSION_NUMBER = 1.5202
                 end
             end
         end
-
         function Radar.pickType()
             pickType()
         end
@@ -1438,12 +1438,88 @@ VERSION_NUMBER = 1.5202
             end
         end
 
-        function Radar.GetRadarHud()
+        function Radar.GetRadarHud(friendx, friendy, radarX, radarY)
             local friends = friendlies
+            local radarMessage, msg
             friendlies = {}
-            return target, data, radarContacts, numKnown, static, friends
+            local num = numKnown or 0 
+            if radarContacts > 0 then 
+                if CollisionSystem then 
+                    msg = num.."/"..static.." Plotted : "..(radarContacts-static).." Ignored" 
+                else
+                    msg = "Radar Contacts: "..radarContacts
+                end
+                radarMessage = svgText(radarX, radarY, msg, "pbright txtbig txtmid")
+                if #friendlies > 0 then
+                    radarMessage = radarMessage..svgText( friendx, friendy, "Friendlies In Range", "pbright txtbig txtmid")
+                    for k, v in pairs(friendlies) do
+                        friendy = friendy + 20
+                        radarMessage = radarMessage..svgText(friendx, friendy, radars[1].getConstructName(v), "pdim txtmid")
+                    end
+                end
+    
+                if target == nil and perisPanelID == nil then
+                    peris = 1
+                    RADAR.ToggleRadarPanel()
+                end
+                if target ~= nil and perisPanelID ~= nil then
+                    RADAR.ToggleRadarPanel()
+                end
+                if radarPanelID == nil then
+                    RADAR.ToggleRadarPanel()
+                end
+            else
+                if data then
+                    radarMessage = svgText(radarX, radarY, rType.." Radar: Jammed", "pbright txtbig txtmid")
+                else
+                    radarMessage = svgText(radarX, radarY, "Radar: No "..rType.." Contacts", "pbright txtbig txtmid")
+                end
+                if radarPanelID ~= nil then
+                    peris = 0
+                    RADAR.ToggleRadarPanel()
+                end
+            end
+            return radarMessage
         end
-        
+
+        function Radar.GetClosestName(name)
+            if radars[1] then -- Just match the first one
+                local id,_ = radars[1].getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
+                if id ~= nil and id ~= "" then
+                    name = name .. " " .. radars[1].getConstructName(id)
+                end
+            end
+            return name
+        end
+        function Radar.ToggleRadarPanel()
+            if radarPanelID ~= nil and peris == 0 then
+                sysDestWid(radarPanelID)
+                radarPanelID = nil
+                if perisPanelID ~= nil then
+                    sysDestWid(perisPanelID)
+                    perisPanelID = nil
+                end
+            else
+                -- If radar is installed but no weapon, don't show periscope
+                if peris == 1 then
+                    sysDestWid(radarPanelID)
+                    radarPanelID = nil
+                    _autoconf.displayCategoryPanel(radars, 1, "Periscope",
+                        "periscope")
+                    perisPanelID = _autoconf.panels[_autoconf.panels_size]
+                end
+                if radarPanelID == nil then
+                    _autoconf.displayCategoryPanel(radars, 1, "Radar", "radar")
+                    radarPanelID = _autoconf.panels[_autoconf.panels_size]
+                end
+                peris = 0
+            end
+        end
+        radars[1]=nil
+        if radar_1 then
+            radars[1] = radar_1
+            pickType()
+        end
         UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
         return Radar
     end 
@@ -3314,15 +3390,8 @@ VERSION_NUMBER = 1.5202
                     -- Add a new location to SavedLocations
                     local position = worldPos
                     local name = planet.name .. ". " .. #SavedLocations
-                    if radars[1] then -- Just match the first one
-                        local id,_ = radars[1].getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
-                        if id ~= nil and id ~= "" then
-                            name = name .. " " .. radars[1].getConstructName(id)
-                        end
-                    end
-                    
+                    if radar_1 then name = RADAR.GetClosestName(name) end
                     return ATLAS.AddNewLocation(name, position, false, true)
-                    
                 end
                 
                 local function ToggleTurnBurn()
@@ -4088,68 +4157,7 @@ VERSION_NUMBER = 1.5202
             local peris = 0
     
         function Hud.DrawRadarInfo()
-            local function ToggleRadarPanel()
-                if radarPanelID ~= nil and peris == 0 then
-                    sysDestWid(radarPanelID)
-                    radarPanelID = nil
-                    if perisPanelID ~= nil then
-                        sysDestWid(perisPanelID)
-                        perisPanelID = nil
-                    end
-                else
-                    -- If radar is installed but no weapon, don't show periscope
-                    if peris == 1 then
-                        sysDestWid(radarPanelID)
-                        radarPanelID = nil
-                        _autoconf.displayCategoryPanel(radars, 1, "Periscope",
-                            "periscope")
-                        perisPanelID = _autoconf.panels[_autoconf.panels_size]
-                    end
-                    if radarPanelID == nil then
-                        _autoconf.displayCategoryPanel(radars, 1, "Radar", "radar")
-                        radarPanelID = _autoconf.panels[_autoconf.panels_size]
-                    end
-                    peris = 0
-                end
-            end 
-            local target, data, radarContacts, numKnown, static, friendlies = RADAR.GetRadarHud()
-            local num = numKnown or 0 
-            if radarContacts > 0 then 
-                if CollisionSystem then 
-                    msg = num.."/"..static.." Plotted : "..(radarContacts-static).." Ignored" 
-                else
-                    msg = "Radar Contacts: "..radarContacts
-                end
-                radarMessage = svgText(radarX, radarY, msg, "pbright txtbig txtmid")
-                if #friendlies > 0 then
-                    radarMessage = radarMessage..svgText( friendx, friendy, "Friendlies In Range", "pbright txtbig txtmid")
-                    for k, v in pairs(friendlies) do
-                        friendy = friendy + 20
-                        radarMessage = radarMessage..svgText(friendx, friendy, radars[1].getConstructName(v), "pdim txtmid")
-                    end
-                end
-    
-                if target == nil and perisPanelID == nil then
-                    peris = 1
-                    ToggleRadarPanel()
-                end
-                if target ~= nil and perisPanelID ~= nil then
-                    ToggleRadarPanel()
-                end
-                if radarPanelID == nil then
-                    ToggleRadarPanel()
-                end
-            else
-                if data then
-                    radarMessage = svgText(radarX, radarY, rType.." Radar: Jammed", "pbright txtbig txtmid")
-                else
-                    radarMessage = svgText(radarX, radarY, "Radar: No "..rType.." Contacts", "pbright txtbig txtmid")
-                end
-                if radarPanelID ~= nil then
-                    peris = 0
-                    ToggleRadarPanel()
-                end
-            end
+            radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY)
         end
     
         function Hud.DrawTanks()
@@ -4345,8 +4353,8 @@ VERSION_NUMBER = 1.5202
             if showSettings and settingsVariables ~= {} then 
                 HUD.DrawSettings(newContent) 
             end
-            if radar_1 or radar_2 then RADAR.assignRadar() end
-            if radars[1] then HUD.DrawRadarInfo() end
+
+            if radar_1 then HUD.DrawRadarInfo() end
             HUD.HUDEpilogue(newContent)
             newContent[#newContent + 1] = stringf(
                 [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
@@ -5027,7 +5035,7 @@ VERSION_NUMBER = 1.5202
                 simulatedY = uclamp(simulatedY + deltaY,-resolutionHeight/2,resolutionHeight/2)
                 distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
                 if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
-                    local dx,dy = deltaX, deltaY
+                    local dx,dy = 1, 1
                     if SelectedTab == "SCOPE" then
                         dx,dy = (scopeFOV/90),(scopeFOV/90)
                     end
@@ -7229,11 +7237,7 @@ VERSION_NUMBER = 1.5202
             unit.setTimer("oneSecond", 1)
             unit.setTimer("tenthSecond", 1/10)
             unit.setTimer("fiveSecond", 5) 
-            radars[1]=nil
-            if radar_1 then
-                radars[1] = radar_1
-                RADAR.pickType()
-            end
+
             play("start","SU")
         end)
         coroutine.resume(beginSetup)
@@ -8929,13 +8933,13 @@ VERSION_NUMBER = 1.5202
     end
 
     function script.onEnter(id)
-        if radars[1] and not inAtmo and not notPvPZone then 
+        if radar_1 and not inAtmo and not notPvPZone then 
             unit.setTimer("contact",0.1) 
         end
     end
 
     function script.onLeave(id)
-        if radars[1] and CollisionSystem then 
+        if radar_1 and CollisionSystem then 
             if #contacts > 650 then 
                 id = tostring(id)
                 contacts[id] = nil 
