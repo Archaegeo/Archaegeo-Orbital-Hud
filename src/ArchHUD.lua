@@ -5,116 +5,116 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.5201
+VERSION_NUMBER = 1.5202
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
-    useTheseSettings = false --export:
-    userControlScheme = "virtual joystick" --export:
-    soundFolder = "archHUD" --export:
+    useTheseSettings = false
+    userControlScheme = "virtual joystick"
+    soundFolder = "archHUD"
     
     -- True/False variables
-    freeLookToggle = true --export:
-    BrakeToggleDefault = true --export:
-    RemoteFreeze = false --export:
-    RemoteHud = true --export:
-    brightHud = false --export:
-    VanillaRockets = false --export:
-    InvertMouse = false --export:
-    autoRollPreference = false --export:
-    ExternalAGG = false --export:
-    UseSatNav = false --export:
-    ShouldCheckDamage = true --export:
-    CalculateBrakeLandingSpeed = false --export:
-    AtmoSpeedAssist = true --export:
-    ForceAlignment = false --export:
-    DisplayDeadZone = true --export:
-    showHud = true --export: 
-    hideHudOnToggleWidgets = true --export:
-    ShiftShowsRemoteButtons = true --export:
-    SetWaypointOnExit = false --export:
-    AlwaysVSpd = false --export:
-    BarFuelDisplay = true --export:
-    voices = true --export:
-    alerts = true --export:
-    CollisionSystem = true --export:
-    AutoShieldToggle = true --export:
-    PreventPvP = true --export:
-    DisplayOdometer = true --export:
+    freeLookToggle = true
+    BrakeToggleDefault = true
+    RemoteFreeze = false
+    RemoteHud = true
+    brightHud = false
+    VanillaRockets = false
+    InvertMouse = false
+    autoRollPreference = false
+    ExternalAGG = false
+    UseSatNav = false
+    ShouldCheckDamage = true
+    CalculateBrakeLandingSpeed = false
+    AtmoSpeedAssist = true
+    ForceAlignment = false
+    DisplayDeadZone = true
+    showHud = true 
+    hideHudOnToggleWidgets = true
+    ShiftShowsRemoteButtons = true
+    SetWaypointOnExit = false
+    AlwaysVSpd = false
+    BarFuelDisplay = true
+    voices = true
+    alerts = true
+    CollisionSystem = true
+    AutoShieldToggle = true
+    PreventPvP = true
+    DisplayOdometer = true
     
     -- Ship Handling variables
-    YawStallAngle = 35 --export:
-    PitchStallAngle = 35 --export:
-    brakeLandingRate = 30 --export:
-    MaxPitch = 30 --export:
-    ReEntryPitch = -30 --export:
-    LockPitchTarget = 0 --export:
-    AutopilotSpaceDistance = 5000 --export:
-    TargetOrbitRadius = 1.2 --export:
-    LowOrbitHeight = 2000 --export:
-    AtmoSpeedLimit = 1050 --export:
-    SpaceSpeedLimit = 30000 --export:
-    AutoTakeoffAltitude = 1000 --export:
-    TargetHoverHeight = 50 --export:
-    LandingGearGroundHeight = 0 --export:
-    ReEntryHeight = 100000 -- export:
-    MaxGameVelocity = 8333.00 --export:
-    AutopilotInterplanetaryThrottle = 1.0 --export:
-    warmup = 32 --export:
-    fuelTankHandlingAtmo = 0 --export:
-    fuelTankHandlingSpace = 0 --export:
-    fuelTankHandlingRocket = 0 --export:
-    ContainerOptimization = 0 --export:
-    FuelTankOptimization = 0 --export:
+    YawStallAngle = 35
+    PitchStallAngle = 35
+    brakeLandingRate = 30
+    MaxPitch = 30
+    ReEntryPitch = -30
+    LockPitchTarget = 0
+    AutopilotSpaceDistance = 5000
+    TargetOrbitRadius = 1.2
+    LowOrbitHeight = 2000
+    AtmoSpeedLimit = 1050
+    SpaceSpeedLimit = 30000
+    AutoTakeoffAltitude = 1000
+    TargetHoverHeight = 50
+    LandingGearGroundHeight = 0
+    ReEntryHeight = 100000 
+    MaxGameVelocity = 8333.00
+    AutopilotInterplanetaryThrottle = 1.0
+    warmup = 32
+    fuelTankHandlingAtmo = 0
+    fuelTankHandlingSpace = 0
+    fuelTankHandlingRocket = 0
+    ContainerOptimization = 0
+    FuelTankOptimization = 0
 
     -- HUD Postioning variables
-    ResolutionX = 1920 --export:
-    ResolutionY = 1080 --export:
-    circleRad = 400 --export:
-    SafeR = 130 --export:
-    SafeG = 224 --export:
-    SafeB = 255 --export:
-    PvPR = 255 --export:
-    PvPG = 0 --export:
-    PvPB = 0 --export:
-    centerX = 960 --export:
-    centerY = 540 --export:
-    throtPosX = 1300 --export:
-    throtPosY = 540 --export:
-    vSpdMeterX = 1525  --export:
-    vSpdMeterY = 325 --export:
-    altMeterX = 550  --export:
-    altMeterY = 540 --export:
-    fuelX = 30 --export:
-    fuelY = 700 --export:
-    shieldX = 1750 --export:
-    shieldY = 250 --export:
-    DeadZone = 50 --export:
-    OrbitMapSize = 250 --export:
-    OrbitMapX = 0 --export:
-    OrbitMapY = 25 --export:
-    soundVolume = 100 --export:
+    ResolutionX = 1920
+    ResolutionY = 1080
+    circleRad = 400
+    SafeR = 130
+    SafeG = 224
+    SafeB = 255
+    PvPR = 255
+    PvPG = 0
+    PvPB = 0
+    centerX = 960
+    centerY = 540
+    throtPosX = 1300
+    throtPosY = 540
+    vSpdMeterX = 1525 
+    vSpdMeterY = 325
+    altMeterX = 550 
+    altMeterY = 540
+    fuelX = 30
+    fuelY = 700
+    shieldX = 1750
+    shieldY = 250
+    DeadZone = 50
+    OrbitMapSize = 250
+    OrbitMapX = 0
+    OrbitMapY = 25
+    soundVolume = 100
 
     --Ship flight physics variables 
-    speedChangeLarge = 5 --export:
-    speedChangeSmall = 1 --export:
-    MouseXSensitivity = 0.003 --export:
-    MouseYSensitivity = 0.003 --export:
-    autoRollFactor = 2 --export:
-    rollSpeedFactor = 1.5 --export:
-    autoRollRollThreshold = 180 --export:
-    minRollVelocity = 150 --export:
-    TrajectoryAlignmentStrength = 0.002 --export:
-    torqueFactor = 2 --export:
-    pitchSpeedFactor = 0.8 --export:
-    yawSpeedFactor = 1 --export:
-    brakeSpeedFactor = 3 --export:
-    brakeFlatFactor = 1 --export:
-    DampingMultiplier = 40 --export:
-    apTickRate = 0.0166667 --export:
-    hudTickRate = 0.0666667 --export:
-    ExtraLongitudeTags = "none" --export:
-    ExtraLateralTags = "none" --export:
-    ExtraVerticalTags = "none" --export:
+    speedChangeLarge = 5
+    speedChangeSmall = 1
+    MouseXSensitivity = 0.003
+    MouseYSensitivity = 0.003
+    autoRollFactor = 2
+    rollSpeedFactor = 1.5
+    autoRollRollThreshold = 180
+    minRollVelocity = 150
+    TrajectoryAlignmentStrength = 0.002
+    torqueFactor = 2
+    pitchSpeedFactor = 0.8
+    yawSpeedFactor = 1
+    brakeSpeedFactor = 3
+    brakeFlatFactor = 1
+    DampingMultiplier = 40
+    apTickRate = 0.0166667
+    hudTickRate = 0.0666667
+    ExtraLongitudeTags = "none"
+    ExtraLateralTags = "none"
+    ExtraVerticalTags = "none"
 
 -- Auto Variable declarations that store status of ship. Must be global because they get saved/read to Databank due to using _G assignment
     BrakeToggleStatus = BrakeToggleDefault
@@ -342,78 +342,78 @@ VERSION_NUMBER = 1.5201
             -- local t0 = system.getTime()
             -- <code to be checked>
             -- _logCompute.addValue(system.getTime() - t0)
-    function Log(name,ty)
-        local self={}
-        self.Name = name or 'Log'
-        self.Value = (ty == 'number' and 0) or {}
-        self.Type = ty or 'mean'
+        function Log(name,ty)
+                local self={}
+                self.Name = name or 'Log'
+                self.Value = (ty == 'number' and 0) or {}
+                self.Type = ty or 'mean'
 
-        function self.Update(v)
-            if self.Type == 'number' then
-                self.Value = v
-            else
-                self.Value[#self.Value] = v
+            function self.Update(v)
+                if self.Type == 'number' then
+                    self.Value = v
+                else
+                    self.Value[#self.Value] = v
+                end
             end
-        end
 
-        function self.getString()
-            if self.Type == 'number' then
-                return tostring(self.Value)
-            elseif self.Type == 'time' then
-                return utils.round(self.getMean()*1000,0.0001) .. 'ms ('..#self.Value..")"
-            elseif self.Type == 'mean' then
-                return tostring(utils.round(self.getMean(),0.01));
+            function self.getString()
+                if self.Type == 'number' then
+                    return tostring(self.Value)
+                elseif self.Type == 'time' then
+                    return utils.round(self.getMean()*1000,0.0001) .. 'ms ('..#self.Value..")"
+                elseif self.Type == 'mean' then
+                    return tostring(utils.round(self.getMean(),0.01));
+                end
             end
-        end
-        
-        function self.getValue()
-            if self.Type == 'number' then
-                return self.value
-            else
-                return self.getMean()
-            end
-        end
             
-        function self.addValue(v)
-            if self.Type == 'number' then return end
+            function self.getValue()
+                if self.Type == 'number' then
+                    return self.value
+                else
+                    return self.getMean()
+                end
+            end
+                
+            function self.addValue(v)
+                if self.Type == 'number' then return end
+                
+                table.insert(self.Value,1,v)
+                if #self.Value > 1000 then self.Value[1001] = nil end
+            end
             
-            table.insert(self.Value,1,v)
-            if #self.Value > 1000 then self.Value[1001] = nil end
-        end
-        
-        function self.getMean()
-            local m = 0;
-            for i=1,#self.Value do
-                m = m + self.Value[i]
+            function self.getMean()
+                local m = 0;
+                for i=1,#self.Value do
+                    m = m + self.Value[i]
+                end
+                return m/#self.Value;
             end
-            return m/#self.Value;
-        end
 
-        return self
-    end
-    function Logger()
-        local self={}
-        self.Logs={}
-
-        function self.CreateLog(name,type)
-            local log = Log(name,type)
-            Register(log)
-            return log;
+            return self
         end
-        
-        function self.getLogs()
-            local logs = {}
-            for _,l in pairs(self.Logs) do
-                logs[#logs+1] = l.Name .. ': ' .. l.getString()
+        function Logger()
+            local self={}
+            self.Logs={}
+
+            function self.CreateLog(name,type)
+                local log = Log(name,type)
+                Register(log)
+                return log;
             end
-            return logs
+            
+            function self.getLogs()
+                local logs = {}
+                for _,l in pairs(self.Logs) do
+                    logs[#logs+1] = l.Name .. ': ' .. l.getString()
+                end
+                return logs
+            end
+            
+            function Register(log)
+                self.Logs[#self.Logs+1] = log;
+            end
+            return self
         end
-        
-        function Register(log)
-            self.Logs[#self.Logs+1] = log;
-        end
-        return self
-    end
     --]]
     --
     function p(msg)
