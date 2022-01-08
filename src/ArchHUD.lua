@@ -1247,7 +1247,7 @@ VERSION_NUMBER = 1.5202
     local function RadarClass() -- Everything related to radar but draw data passed to HUD Class.
         local Radar = {}
         -- Radar Class locals
-
+    
             local friendlies = {}
             local sizeMap = { XS = 13, S = 27, M = 55, L = 110, XL = 221}
             local knownContacts = {}
@@ -1258,83 +1258,85 @@ VERSION_NUMBER = 1.5202
             local static
             local radars = {}
             local rType = "Atmo"
-
+            local UpdateRadarCoroutine
+    
         local function UpdateRadarRoutine()
-            
-            local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
-                p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
-                local r1s, r2s, r3s = r1*r1, r2*r2, r3*r3
-                local v2 = p2 - p1
-                local ax = v2:normalize()
-                local U = v2:len()
-                local v3 = p3 - p1
-                local ay = (v3 - v3:project_on(ax)):normalize()
-                local v3x, v3y = v3:dot(ax), v3:dot(ay)
-                local vs = v3x*v3x + v3y*v3y
-                local az = ax:cross(ay)  
-                local x = (r1s - r2s + U*U) / (2*U) 
-                local y = (r1s - r3s + vs - 2*v3x*x)/(2*v3y)
-                local m = r1s - (x^2) - (y^2) 
-                local z = msqrt(m)
-                local t1 = p1 + ax*x + ay*y + az*z
-                local t2 = p1 + ax*x + ay*y - az*z
-              
-                if mabs((p4 - t1):len() - r4) < mabs((p4 - t2):len() - r4) then
-                  return t1
-                else
-                  return t2
-                end
-            end
-
-            local function getTrueWorldPos()
-                local function getLocalToWorldConverter()
-                    local v1 = core.getConstructWorldOrientationRight()
-                    local v2 = core.getConstructWorldOrientationForward()
-                    local v3 = core.getConstructWorldOrientationUp()
-                    local v1t = library.systemResolution3(v1, v2, v3, {1,0,0})
-                    local v2t = library.systemResolution3(v1, v2, v3, {0,1,0})
-                    local v3t = library.systemResolution3(v1, v2, v3, {0,0,1})
-                    return function(cref)
-                        return library.systemResolution3(v1t, v2t, v3t, cref)
+            -- UpdateRadarRoutine Locals
+                local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
+                    p1,p2,p3,p4 = vec3(p1),vec3(p2),vec3(p3),vec3(p4)
+                    local r1s, r2s, r3s = r1*r1, r2*r2, r3*r3
+                    local v2 = p2 - p1
+                    local ax = v2:normalize()
+                    local U = v2:len()
+                    local v3 = p3 - p1
+                    local ay = (v3 - v3:project_on(ax)):normalize()
+                    local v3x, v3y = v3:dot(ax), v3:dot(ay)
+                    local vs = v3x*v3x + v3y*v3y
+                    local az = ax:cross(ay)  
+                    local x = (r1s - r2s + U*U) / (2*U) 
+                    local y = (r1s - r3s + vs - 2*v3x*x)/(2*v3y)
+                    local m = r1s - (x^2) - (y^2) 
+                    local z = msqrt(m)
+                    local t1 = p1 + ax*x + ay*y + az*z
+                    local t2 = p1 + ax*x + ay*y - az*z
+                
+                    if mabs((p4 - t1):len() - r4) < mabs((p4 - t2):len() - r4) then
+                    return t1
+                    else
+                    return t2
                     end
                 end
-                local cal = getLocalToWorldConverter()
-                local cWorldPos = core.getConstructWorldPos()
-                local pos = core.getElementPositionById(1)
-                local offsetPosition = {pos[1] , pos[2] , pos[3] }
-                local adj = cal(offsetPosition)
-                local adjPos = {cWorldPos[1] - adj[1], cWorldPos[2] - adj[2], cWorldPos[3] - adj[3]}
-                return adjPos
-            end
-            
-            local function updateVariables(construct, d, wp) -- Thanks to EasternGamer and Dimencia
-                local pts = construct.pts
-                local index = #pts
-                local ref = construct.ref
-                if index > 3 then
-                    local in1, in2, in3, in4 = pts[index], pts[index-1], pts[index-2], pts[index-3]
-                    construct.ref = wp
-                    local pos = trilaterate(in1[1], in1[2], in2[1], in2[2], in3[1], in3[2], in4[1], in4[2])
-                    local x,y,z = pos.x, pos.y, pos.z
-                    if x == x and y == y and z == z then
-                        x = x + ref[1]
-                        y = y + ref[2]
-                        z = z + ref[3]
-                        local newPos = vec3(x,y,z)
-                        if not construct.lastPos then
-                            construct.center = newPos
-                        elseif (construct.lastPos - newPos):len() < 2 then
-                            construct.center = newPos
-                            construct.skipCalc = true
+    
+                local function getTrueWorldPos()
+                    local function getLocalToWorldConverter()
+                        local v1 = core.getConstructWorldOrientationRight()
+                        local v2 = core.getConstructWorldOrientationForward()
+                        local v3 = core.getConstructWorldOrientationUp()
+                        local v1t = library.systemResolution3(v1, v2, v3, {1,0,0})
+                        local v2t = library.systemResolution3(v1, v2, v3, {0,1,0})
+                        local v3t = library.systemResolution3(v1, v2, v3, {0,0,1})
+                        return function(cref)
+                            return library.systemResolution3(v1t, v2t, v3t, cref)
                         end
-                        construct.lastPos = newPos
                     end
-                    construct.pts = {}
-                else
-                    local offset = {wp[1]-ref[1],wp[2]-ref[2],wp[3]-ref[3]}
-                    pts[index+1] = {d,offset}
+                    local cal = getLocalToWorldConverter()
+                    local cWorldPos = core.getConstructWorldPos()
+                    local pos = core.getElementPositionById(1)
+                    local offsetPosition = {pos[1] , pos[2] , pos[3] }
+                    local adj = cal(offsetPosition)
+                    local adjPos = {cWorldPos[1] - adj[1], cWorldPos[2] - adj[2], cWorldPos[3] - adj[3]}
+                    return adjPos
                 end
-            end
+                
+                local function updateVariables(construct, d, wp) -- Thanks to EasternGamer and Dimencia
+                    local pts = construct.pts
+                    local index = #pts
+                    local ref = construct.ref
+                    if index > 3 then
+                        local in1, in2, in3, in4 = pts[index], pts[index-1], pts[index-2], pts[index-3]
+                        construct.ref = wp
+                        local pos = trilaterate(in1[1], in1[2], in2[1], in2[2], in3[1], in3[2], in4[1], in4[2])
+                        local x,y,z = pos.x, pos.y, pos.z
+                        if x == x and y == y and z == z then
+                            x = x + ref[1]
+                            y = y + ref[2]
+                            z = z + ref[3]
+                            local newPos = vec3(x,y,z)
+                            if not construct.lastPos then
+                                construct.center = newPos
+                            elseif (construct.lastPos - newPos):len() < 2 then
+                                construct.center = newPos
+                                construct.skipCalc = true
+                            end
+                            construct.lastPos = newPos
+                        end
+                        construct.pts = {}
+                    else
+                        local offset = {wp[1]-ref[1],wp[2]-ref[2],wp[3]-ref[3]}
+                        pts[index+1] = {d,offset}
+                    end
+                end
+    
             if radar_1 or radar_2 then RADAR.assignRadar() end
             if (radars[1]) then
                 radarContacts = #radars[1].getConstructIds()
@@ -1354,8 +1356,7 @@ VERSION_NUMBER = 1.5202
                         end
                         local cType = radars[1].getConstructType(id)
                         if CollisionSystem then
-                            if sz > 27 or cType == "static" or cType == "space"
-                            then
+                            if sz > 27 or cType == "static" or cType == "space" then
                                 static = static + 1
                                 local name = radars[1].getConstructName(id)
                                 local construct = contacts[id]
@@ -1378,8 +1379,7 @@ VERSION_NUMBER = 1.5202
                         end
                     end
                     numKnown = #knownContacts
-                    if numKnown > 0 and velMag > 20 
-                    then 
+                    if numKnown > 0 and velMag > 20 then 
                         local body, far, near, vect
                         local innerCount = 0
                         local galxRef = galaxyReference:getPlanetarySystem(0)
@@ -1413,7 +1413,7 @@ VERSION_NUMBER = 1.5202
         function Radar.pickType()
             pickType()
         end
-
+    
         function Radar.assignRadar()
             if radar_1 and radars[1]==radar_1 and radar_1.isOperational() ~= 1 then
                 if radar_2 and radar_2.isOperational() == 1 then 
@@ -1427,7 +1427,7 @@ VERSION_NUMBER = 1.5202
                 if radars[1] == radar_1 then pickType() end
             end
         end
-
+    
         function Radar.UpdateRadar()
             local cont = coroutine.status (UpdateRadarCoroutine)
             if cont == "suspended" then 
@@ -1438,7 +1438,7 @@ VERSION_NUMBER = 1.5202
                 local value, done = coroutine.resume(UpdateRadarCoroutine)
             end
         end
-
+    
         function Radar.GetRadarHud(friendx, friendy, radarX, radarY)
             local friends = friendlies
             local radarMessage, msg
@@ -1482,7 +1482,7 @@ VERSION_NUMBER = 1.5202
             end
             return radarMessage
         end
-
+    
         function Radar.GetClosestName(name)
             if radars[1] then -- Just match the first one
                 local id,_ = radars[1].getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
