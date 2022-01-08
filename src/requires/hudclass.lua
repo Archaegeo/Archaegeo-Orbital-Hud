@@ -2928,7 +2928,9 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         SettingsButtons()
         ControlsButtons() -- Set up all the pushable buttons.
         Buttons = ControlButtons
-    end    -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
+    end    
+    
+    -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
     --for k,v in pairs(require("autoconf/custom/archhud/custom/customhudclass")) do Hud[k] = v end 
     return Hud
 end
