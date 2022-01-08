@@ -1,7 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.702 - Radar Class modularization
-(hudclass.lua, apclass.lua and radarclass.lua (NEW) updated)
+(hudclass.lua, apclass.lua, globals.lua and radarclass.lua (NEW) updated)
 - Restructure RADARCLASS to support modularizaion.
 - FIX: Fixed issue with virtual joystick when NOT in SCOPE mode.
 
