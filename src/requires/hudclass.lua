@@ -2499,7 +2499,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             newContent[#newContent + 1] = svgText(crx(635), cry(45), "TRIP", "")
             newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(635),cry(31),crx(-90))
             if travelTime then
-                newContent[#newContent + 1] = svgText(crx(532), cry(23), stringf("%s", FormatTimeString(travelTime)), "txtstart size20") 
+                newContent[#newContent + 1] = svgText(crx(545), cry(25), stringf("%s", FormatTimeString(travelTime)), "txtstart size20") 
             end
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(20), stringf("Trip: %.2f km", totalDistanceTrip), "txtstart") 
             --TODO: newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(30), stringf("Lifetime: %.2f kSU", (TotalDistanceTravelled / 200000)), "txtstart") 
@@ -2511,7 +2511,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(30), "Total Time: "..FormatTimeString(TotalFlightTime), "txtstart") 
             newContent[#newContent + 1] = svgText(crx(1285), cry(45), "MASS", "txtstart")
             newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1285), cry(31), crx(90))
-            newContent[#newContent + 1] = svgText(crx(1388), cry(23), stringf("%s", mass), "size20") 
+            newContent[#newContent + 1] = svgText(crx(1375), cry(25), stringf("%s", mass), "size20") 
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(20), stringf("Mass: %s", mass), "txtstart") 
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(10), stringf("Max Brake: %s",  brakeValue), "txtend") 
             newContent[#newContent + 1] = svgText(crx(1220), labelY1, "THRUST", "txtstart")

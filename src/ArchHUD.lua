@@ -150,7 +150,7 @@ VERSION_NUMBER = 1.7021
     notPvPZone = false
     pvpDist = 50000
     ReversalIsOn = nil
-    local contacts = {}
+    contacts = {}
     nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
     collisionAlertStatus = false
     collisionTarget = nil
@@ -1697,7 +1697,7 @@ VERSION_NUMBER = 1.7021
 
             atlasSetup()
             RADAR = RadarClass(core, system, library, radar_1, radar_2, 
-                mabs, sysDestWid, msqrt, svgText)
+                mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag)
             HUD = HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, hover, shield_1,
                 mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
                 navCom, sysDestWid, sysIsVwLock, msqrt, round, svgText)
