@@ -1,4 +1,4 @@
-function RadarClass(core, system, radar_1, radar_2, 
+function RadarClass(core, system, library, radar_1, radar_2, 
     mabs, sysDestWid, msqrt, svgText) -- Everything related to radar but draw data passed to HUD Class.
     local Radar = {}
     -- Radar Class locals
@@ -94,8 +94,9 @@ function RadarClass(core, system, radar_1, radar_2,
         if (radars[1]) then
             radarContacts = #radars[1].getConstructIds()
             local radarData = radars[1].getData()
+            p("HERE1: "..type(radarData))
             local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
-         
+            p("HERE2: "..type(contactData))
             if radarContacts > 0 then
                 local wp = getTrueWorldPos()
                 local count, count2 = 0, 0
