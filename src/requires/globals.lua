@@ -1,6 +1,6 @@
 -- These values are a default set for 1920x1080 ResolutionX and Y settings.
 
--- User variables, visable via Edit Lua Parameters. Must be global to wor kwith databank system as set up due to using _G assignment
+-- User variables. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false --export:  Change this to true to override databank saved settings
     userControlScheme = "virtual joystick" --export: (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard". This can be set by holding SHIFT and clicking the button in lower left of main Control buttons view.
     soundFolder = "archHUD" --export: (Default: "archHUD") Set to the name of the folder with sound files in it. Must be changed from archHUD to prevent other scripts making your PC play sounds.
@@ -100,8 +100,8 @@
         shieldY = 250 --export: (Default: 250) Y position of shield indicator
         DeadZone = 50 --export: (Default: 50) Number of pixels of deadzone at the center of the screen
         OrbitMapSize = 250 --export: (Default: 250) Size of the orbit map, make sure it is divisible by 4
-        OrbitMapX = 75 --export: (Default: 75) X postion of Orbit Display 
-        OrbitMapY = 0 --export: (Default: 0) Y position of Orbit Display
+        OrbitMapX = 0 --export: (Default: 0) X postion of Orbit Display 
+        OrbitMapY = 30 --export: (Default: 30) Y position of Orbit Display
         soundVolume = 100 --export: (Default: 100) Set to value (0-100 recommended) to control volume of voice and alerts. Alerts will automatically lower other hud sounds 50% if needed.
 
     -- Ship flight physics variables - Change with care, can have large effects on ships performance.
