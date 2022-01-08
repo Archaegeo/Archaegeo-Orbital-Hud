@@ -1,8 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.702 - Radar Class modularization
+Version 1.7021 - Radar Class modularization
 (hudclass.lua, apclass.lua, globals.lua and radarclass.lua (NEW) updated)
-- Restructure RADARCLASS to support modularizaion.
+- Restructure RADARCLASS to support modularizaion and override
 - FIX: Fixed issue with virtual joystick when NOT in SCOPE mode.
 
 Version 1.701 - SCOPE feature - View of all planets in space around you.

@@ -6,9 +6,10 @@ local atlas = require("atlas")
 
 require("autoconf/custom/archhud/hudclass")
 require("autoconf/custom/archhud/apclass")
+require("autoconf/custom/archhud/radarclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.702
+VERSION_NUMBER = 1.7021
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -149,7 +150,7 @@ VERSION_NUMBER = 1.702
     notPvPZone = false
     pvpDist = 50000
     ReversalIsOn = nil
-    local contacts = {}
+    contacts = {}
     nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
     collisionAlertStatus = false
     collisionTarget = nil
@@ -1695,8 +1696,8 @@ VERSION_NUMBER = 1.702
             coroutine.yield() -- Just to make sure
 
             atlasSetup()
-            RADAR = RadarClass(core, system, radar_1, radar_2, 
-                mabs, sysDestWid, msqrt, svgText)
+            RADAR = RadarClass(core, system, library, radar_1, radar_2, 
+                mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag)
             HUD = HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, hover, shield_1,
                 mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
                 navCom, sysDestWid, sysIsVwLock, msqrt, round, svgText)
