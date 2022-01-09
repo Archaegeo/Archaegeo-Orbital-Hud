@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.503
+- Add ControlClass to handle start/stop/loop and inputText
+
 Version 1.5202
 - Restructure RADARCLASS to support modularizaion.
 - FIX: Fixed issue with virtual joystick when NOT in SCOPE mode.
