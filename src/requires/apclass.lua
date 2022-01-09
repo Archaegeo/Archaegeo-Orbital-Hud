@@ -2120,7 +2120,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
     abvGndDet = AboveGroundLevel()
 
     -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
-    --for k,v in pairs(require("autoconf/custom/archhud/custom/customapclass")) do Hud[k] = v end 
+    --for k,v in pairs(require("autoconf/custom/archhud/custom/customapclass")) do ap[k] = v end 
 
     return ap
 end

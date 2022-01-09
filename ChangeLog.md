@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.703 - Modularization of Controls
+(all requires updated for consistancy, update all)
+- create controlclass.lua to contain in readable lua all start, stop, loop, and inputText controls.
+
 Version 1.7021 - Radar Class modularization
 (hudclass.lua, apclass.lua, globals.lua and radarclass.lua (NEW) updated)
 - Restructure RADARCLASS to support modularizaion and override
