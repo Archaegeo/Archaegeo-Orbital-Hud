@@ -1,8 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.703 - Modularization of Controls
+Version 1.703 - New ControlClass.  All code now readable lua
 (all requires updated for consistancy, update all)
+- As of this version, in the modular version all code including the ArchHUD.conf is no longer minimized
 - create controlclass.lua to contain in readable lua all start, stop, loop, and inputText controls.
+- Standalone version (ArchHUDGFN.conf) is now version 1.503
 
 Version 1.7021 - Radar Class modularization
 (hudclass.lua, apclass.lua, globals.lua and radarclass.lua (NEW) updated)
