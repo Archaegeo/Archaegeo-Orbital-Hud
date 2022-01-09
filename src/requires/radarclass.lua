@@ -278,6 +278,6 @@ function RadarClass(core, system, library, radar_1, radar_2,
     end
     UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
     -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
-    --for k,v in pairs(require("autoconf/custom/archhud/custom/customradarclass")) do Hud[k] = v end 
+    --for k,v in pairs(require("autoconf/custom/archhud/custom/customradarclass")) do Radar[k] = v end 
     return Radar
 end
