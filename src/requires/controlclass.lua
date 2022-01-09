@@ -1,4 +1,4 @@
-function ControlClass(Nav, core, unit, system, vBooster, hover, antigrav, shield_1, dbHud_2,
+function ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav, shield_1, dbHud_2,
     isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp)
     local Control = {}
     local UnitHidden = true

@@ -10,7 +10,7 @@ require("autoconf/custom/archhud/radarclass")
 require("autoconf/custom/archhud/controlclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.703
+VERSION_NUMBER = 1.7031
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -1701,7 +1701,7 @@ VERSION_NUMBER = 1.703
                 mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
                 navCom, sysDestWid, sysIsVwLock, msqrt, round, svgText)
             HUD.ButtonSetup()
-            CONTROL = ControlClass(Nav, core, unit, system, vBooster, hover, antigrav, shield_1, dbHud_2,
+            CONTROL = ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav, shield_1, dbHud_2,
                 isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp)
             coroutine.yield()
  

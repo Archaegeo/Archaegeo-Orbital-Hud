@@ -1,6 +1,6 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.703 - New ControlClass.  All code now readable lua
+Version 1.7031 - New ControlClass.  All code now readable lua
 (all requires updated for consistancy, update all)
 - As of this version, in the modular version all code including the ArchHUD.conf is no longer minimized
 - create controlclass.lua to contain in readable lua all start, stop, loop, and inputText controls.
