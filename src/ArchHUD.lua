@@ -418,38 +418,6 @@ VERSION_NUMBER = 1.5204
     end
     --]]
 
-    local function changeSpd(down)
-        local mult=1
-        if down then mult = -1 end
-        if not holdingShift then
-            if AtmoSpeedAssist and not AltIsOn and mousePause then
-                local currentPlayerThrot = PlayerThrottle
-                PlayerThrottle = round(uclamp(PlayerThrottle + mult*speedChangeLarge/100, -1, 1),2)
-                if PlayerThrottle >= 0 and currentPlayerThrot < 0 then 
-                    PlayerThrottle = 0 
-                    mousePause = false
-                end
-            elseif AltIsOn then
-                if atmosDensity > 0 or Reentry then
-                    adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
-                elseif Autopilot then
-                    MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 8333.00)
-                end
-            else
-                navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge)
-            end
-        else
-            if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
-                apScrollIndex = apScrollIndex+1*mult*-1
-                if apScrollIndex > #AtlasOrdered then apScrollIndex = 1 end
-                if apScrollIndex < 1 then apScrollIndex = #AtlasOrdered end
-            else
-                if not down then mult = 1 else mult = nil end
-                ATLAS.adjustAutopilotTargetIndex(mult)
-            end
-        end
-    end
-
     local function play(sound, ID, type)
         if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
         if type ~= nil then
@@ -2505,6 +2473,37 @@ VERSION_NUMBER = 1.5204
                 return mfloor(round(speed * 3.6, 0) + 0.5) .. " km/h" -- And generally it's not accurate enough to not twitch unless we round 0
             end
     
+            local function getAPName(index)
+                local name = AutopilotTargetName
+                if index ~= nil and type(index) == "number" then 
+                    if index == 0 then return "None" end
+                    name = AtlasOrdered[index].name
+                end
+                if name == nil then
+                    name = CustomTarget.name
+                end
+                if name == nil then
+                    name = "None"
+                end
+                return name
+            end
+    
+            local function DisplayRoute(newContent)
+                local checkRoute = AP.routeWP(true)
+                if #checkRoute==0 then return end
+                local x = ConvertResolutionX(750)
+                local y = ConvertResolutionY(360)
+                if Autopilot or VectorToTarget then
+                    newContent[#newContent + 1] = svgText(x, y, "REMAINING ROUTE","pdim txtstart size20" )
+                else
+                    newContent[#newContent + 1] = svgText(x, y, "LOADED ROUTE","pdim txtstart size20" )
+                end
+                for k,i in pairs(checkRoute) do
+                    y=y+20
+                    newContent[#newContent + 1] = svgText( x, y, k..". "..getAPName(checkRoute[k]), "pdim txtstart size20")
+                end
+            end
+    
             local function DisplayHelp(newContent)
                 local x = OrbitMapX+10
                 local y = OrbitMapY+20
@@ -2583,14 +2582,14 @@ VERSION_NUMBER = 1.5204
                 local orbitMapY = OrbitMapY
                 local orbitMapSize = OrbitMapSize -- Always square
                 local pad = 4
-
+    
                 local orbitInfoYOffset = 15
                 local x = 0
                 local y = 0
                 local rx, ry, scale, xOffset
-
+    
                 local tempOrbit
-
+    
                 local function orbitInfo(type)
                     local alt, time, speed, line, class, textX
                     if type == "Periapsis" then
@@ -2625,12 +2624,12 @@ VERSION_NUMBER = 1.5204
                     y = y + orbitInfoYOffset
                     newContent[#newContent + 1] = svgText(x, y, getSpeedDisplayString(speed), class)
                 end
-
+    
                 local targetHeight = orbitMapSize*1.5
                 if SelectedTab == "INFO" then
                     targetHeight = 25*7
                 end
-
+    
                 if SelectedTab ~= "HIDE" then
                 newContent[#newContent + 1] = [[<g class="pbright txtorb txtmid">]]
                 -- Draw a darkened box around it to keep it visible
@@ -2644,7 +2643,7 @@ VERSION_NUMBER = 1.5204
                                                 </clippath>]],
                                                 orbitMapSize*2, targetHeight, orbitMapX, orbitMapY)
                 end
-
+    
                 local orbitMapHeight = orbitMapSize*1.5
                 local orbitMapWidth = orbitMapSize*2
                 local orbitHalfHeight = orbitMapHeight/2
@@ -2696,7 +2695,7 @@ VERSION_NUMBER = 1.5204
                         tempOrbit.apoapsis.altitude = coreAltitude -- Prevent flicker when stopped
                         tempOrbit.apoapsis.speed = 0
                     end
-
+    
                     
                     if tempOrbit.apoapsis.altitude then
                     
@@ -2704,7 +2703,7 @@ VERSION_NUMBER = 1.5204
                         ry = ((planet.radius) + tempOrbit.apoapsis.altitude) / scale *(1 - tempOrbit.eccentricity)
                         -- ry is a straight up distance from center multiplied by scale, then eccentricity
                         xOffset = rx - tempOrbit.periapsis.altitude / scale - (planet.radius) / scale
-
+    
                         local apsisRatio = math.pi
                         if tempOrbit.period ~= nil and tempOrbit.period > 0 and tempOrbit.timeToApoapsis ~= nil then
                             --apsisRatio = (tempOrbit.timeToApoapsis / tempOrbit.period) * 2 * math.pi
@@ -2712,7 +2711,7 @@ VERSION_NUMBER = 1.5204
                             -- So that 0% and 100% are both at apoapsis, 50% is at periapsis
                             -- The problem is, when we're 25% through the orbit by time, we do not want to be 25% through the circle
                             -- Because speeds are slower near apoapsis and we spend more time near there if eccentric
-
+    
                             -- I'm p sure one of the orbit params is an angle representing where we are on the circle
                             -- The true anomaly is the angle between the direction of periapsis and the current position
                             -- eccentricAnomaly already exists and is... the same thing... ?
@@ -2788,7 +2787,7 @@ VERSION_NUMBER = 1.5204
                 
                         x = orbitMapX + orbitMapSize + pad*4 + rx -- Aligning left makes us need more padding... for some reason... 
                         y = orbitMapY + orbitMapSize*1.5 / 2 + 5 + pad
-
+    
                         if tempOrbit.apoapsis ~= nil and tempOrbit.apoapsis.speed < MaxGameVelocity then
                             orbitInfo("Apoapsis")
                         end
@@ -2872,7 +2871,7 @@ VERSION_NUMBER = 1.5204
                     if atmosDensity > 0 then
                         table.sort(planetAtlas, function(a1,b2) local a,b = a1.center,b2.center return (a.x-worldPos.x)^2+(a.y-worldPos.y)^2+(a.z-worldPos.z)^2 < (b.x-worldPos.x)^2+(b.y-worldPos.y)^2+(b.z-worldPos.z)^2  end)
                     end
-
+    
                     local data = {} -- structure for text data which gets built first
                     local ySorted = {} -- structure to sort by Y value to help prevent line overlaps
                     local planetTextWidth = 120 -- Just an estimate, we calc later, but need this before we calc
@@ -2880,12 +2879,12 @@ VERSION_NUMBER = 1.5204
                     -- For finding the planet closest to the cursor
                     local minCursorDistance = nil
                     local minCursorData = nil
-
+    
                     -- Iterate backwards to build text, so nearest planets get priority on positioning
                     -- It's already sorted backwards (nearest things are first)
                     for i,v in ipairs(planetAtlas) do
                         
-
+    
                         local target =  (v.center)-worldPos -- +v.radius*constructForward
                         local targetDistance = target:len()
                         local targetN = target:normalize()
@@ -2894,7 +2893,7 @@ VERSION_NUMBER = 1.5204
                         local rollRad = math.acos(horizontalRight:dot(constructRight))
                         if rollRad ~= rollRad then rollRad = 0 end -- I don't know why this would fail but it does... so this fixes it... 
                         if horizontalRight:cross(constructRight):dot(constructForward) < 0 then rollRad = -rollRad end
-
+    
                         local flatlen = target:project_on_plane(constructForward):len()
                         -- Triangle math is a bit more efficient than vector math, we just have a triangle with hypotenuse targetDistance
                         -- and the opposite leg is flatlen, so asin gets us the angle
@@ -2908,17 +2907,17 @@ VERSION_NUMBER = 1.5204
                             yAngle = 90*math.cos(rollRad) + (90*math.cos(rollRad) - yAngle)
                             xAngle = 90*math.sin(rollRad) + (90*math.sin(rollRad) - xAngle)
                         end
-
+    
                         local x = orbitMidX + (xAngle/fov)*orbitMapHeight
                         local y = orbitMidY + (yAngle/fov)*orbitMapHeight
-
+    
                         local cursorDistance = ((x-orbitMidX)*(x-orbitMidX))+((y-orbitMidY)*(y-orbitMidY))
                         
                         -- Get the view angle from the center to the edge of a planet using trig
                         local topAngle = math.asin((v.radius+v.surfaceMaxAltitude)/targetDistance)*constants.rad2deg
                         if topAngle ~= topAngle then topAngle = fov end
                         local size = topAngle/fov*orbitMapHeight
-
+    
                         local atmoAngle = math.asin((v.atmosphereRadius)/targetDistance)*constants.rad2deg
                         if atmoAngle ~= atmoAngle then atmoAngle = topAngle end -- hide atmo if inside it
                         local atmoSize = atmoAngle/fov*orbitMapHeight
@@ -2926,7 +2925,7 @@ VERSION_NUMBER = 1.5204
                         --if nearestDistance < 0 then nearestDistance = targetDistance - v.radius - v.surfaceMaxAltitude end
                         --if nearestDistance < 0 then nearestDistance = targetDistance - v.radius end
                         --if v.name == "Teoma" then p(x .. "," .. y .. " - " .. xAngle .. ", " .. yAngle) end
-
+    
                         -- Seems useful to give the distance to the atmo, land, etc instead of to the core
                         -- But it looks weird and I can't really label what it is, it'd take up too much space
                         local distance = getDistanceDisplayString(targetDistance,1)
@@ -2968,19 +2967,19 @@ VERSION_NUMBER = 1.5204
                                 displayX = true
                             end
                         end
-
+    
                         -- setup what we need for the distance line, because it draws even if the planet doesn't
                         local sortData = {}
                         sortData.x = x
                         sortData.y = y
                         sortData.planet = v
                         sortData.atmoSize = atmoSize
-
+    
                         if not minCursorDistance or cursorDistance < minCursorDistance then
                             minCursorDistance = cursorDistance
                             minCursorData = sortData
                         end
-
+    
                         if displayX and displayY then
                             local hoverSize = math.max(atmoSize,5) -- This 5px hoversize for small planets could probably go up a bit
                             if (cursorDistance) < hoverSize*hoverSize then
@@ -2997,7 +2996,7 @@ VERSION_NUMBER = 1.5204
                             sortData.visible = false
                         end
                     end
-
+    
                     local anyHovered = false
                     -- Setup text in y sort order
                     table.sort(ySorted,function(a,b) return a.y<b.y end)
@@ -3005,7 +3004,7 @@ VERSION_NUMBER = 1.5204
                     -- And drawing them in this order makes sure that the upper-most planets get the upper-most labels
                     for k,d in ipairs(ySorted) do
                         local v,size,i,atmoSize,x,y,displayString,distance = d.planet,d.size,d.i,d.atmoSize,d.x,d.y,d.displayString,d.distance
-
+    
                         local textX, textY, textWidth, textHeight
                         local xMod = 15 -- Planet names are 15px right or left, for moons or planets respectively
                         local class = "pdim" -- Planet class is pdim
@@ -3067,7 +3066,7 @@ VERSION_NUMBER = 1.5204
                                 textX = x+xMod
                             end
                         end
-
+    
                         data[i] = {}
                         data[i].textPositions = {} -- lua is very slow at inline declare so we do it outline
                         data[i].textPositions.y = textY
@@ -3075,7 +3074,7 @@ VERSION_NUMBER = 1.5204
                         data[i].textPositions.width = textWidth
                         data[i].textPositions.height = textHeight
                         data[i].output = ""
-
+    
                         if size*2 > textWidth then class = class .. " txtmid" else class = class .. " txtstart" end
                         
                         
@@ -3083,7 +3082,7 @@ VERSION_NUMBER = 1.5204
                             data[i].output = stringf('<circle cx="%f" cy="%f" r="%f" stroke-width="1" stroke="%s" stroke-opacity="%f" fill="url(#RadialAtmo)" />', -- fill-opacity="0.5"
                                                             x, y, atmoSize, rgbdim, 0.1*opacityMult)
                         end
-
+    
                         data[i].output = data[i].output .. stringf('<circle cx="%f" cy="%f" r="%f" stroke="%s" stroke-width="1" stroke-opacity="%f" fill="url(#RadialPlanetCenter)" />',
                                                             x, y, size, rgbdim, 0.2*opacityMult)
                         
@@ -3107,31 +3106,31 @@ VERSION_NUMBER = 1.5204
                         end
                         
                     end
-
+    
                     -- draw everything.  Reverse order so furthest planets draw first
                     for k=#planetAtlas,1,-1 do
                         if data[k] then
                             newContent[#newContent+1] = data[k].output
                         end
                     end
-
+    
                     if minCursorData ~= nil and scopeFOV < 90 and not minCursorData.hovered then
                         -- If zoomed in, draw a line and distance label between the center and the nearest thing on screen
                         -- The distance is the orbital height if they were to go to that point
                         -- which is really minCursorDistance with some math to extrapolate it back out to a dist
-
+    
                         -- But I'm a bit lazy.  How about we extrapolate out a scale for pixels to real distance
                         -- size should make that really easy
                         local scalar = minCursorData.planet.atmosphereRadius/minCursorData.atmoSize
-
+    
                         local projAlt = msqrt(minCursorDistance)*scalar
                         local display = getDistanceDisplayString(projAlt,1)
                         local textWidth = ConvertResolutionX(math.max(string.len(display)*7,string.len(minCursorData.planet.name)*7))
                         local textHeight = ConvertResolutionY(12)
-
+    
                         local textX = uclamp(minCursorData.x + (orbitMidX - minCursorData.x)/2,orbitMapX+textWidth/2,orbitMaxX-textWidth/2)
                         local textY = uclamp(minCursorData.y + (orbitMidY - minCursorData.y)/2,orbitMapY+textHeight*2,orbitMaxY-5)
-
+    
                         newContent[#newContent + 1] = stringf("<path class='linethin dimstroke' stroke='white' d='M %f %f L %f %f' />", 
                                 minCursorData.x, minCursorData.y, orbitMidX, orbitMidY)
                         --newContent[#newContent + 1] = stringf("<path class='linethin dimstroke' stroke='white' d='M %f %f L %f %f' />", 
@@ -3167,7 +3166,7 @@ VERSION_NUMBER = 1.5204
                             yAngle = 90*math.cos(rollRad) + (90*math.cos(rollRad) - yAngle)
                             xAngle = 90*math.sin(rollRad) + (90*math.sin(rollRad) - xAngle)
                         end
-
+    
                         local x = orbitMidX + (xAngle/fov)*orbitMapHeight
                         local y = orbitMidY + (yAngle/fov)*orbitMapHeight
                         local dotSize = 14
@@ -3421,21 +3420,7 @@ VERSION_NUMBER = 1.5204
                         ATLAS.ClearCurrentPosition()
                 end
     
-                local function getAPName(index)
-                    local name = AutopilotTargetName
-                    if index ~= nil and type(index) == "number" then 
-                        if index == 0 then return "None" end
-                        name = AtlasOrdered[index].name
-                    end
-                    if name == nil then
-                        name = CustomTarget.name
-                    end
-                    if name == nil then
-                        name = "None"
-                    end
-                    return name
-                end
-                
+               
                 local function getAPEnableName(index)
                     local checkRoute = AP.routeWP(true)
                     if #checkRoute > 0 then return "Engage Route: "..getAPName(checkRoute[1]) end
@@ -3443,6 +3428,8 @@ VERSION_NUMBER = 1.5204
                 end
     
                 local function getAPDisableName(index)
+                    local checkRoute = AP.routeWP(true)
+                    if #checkRoute > 0 then return "Next Route Point: "..getAPName(checkRoute[1]) end
                     return "Disable Autopilot: " .. getAPName(index)
                 end   
     
@@ -3525,6 +3512,8 @@ VERSION_NUMBER = 1.5204
                 -- Make 9 more buttons that only show when moused over the AP button
                 local i
                 local function getAtlasIndexFromAddition(add)
+                    local checkRoute = AP.routeWP(true)
+                    if #checkRoute > 0 then return checkRoute[1] end
                     local index = apScrollIndex + add
                     if index > #AtlasOrdered then
                         index = index-#AtlasOrdered-1
@@ -3561,7 +3550,7 @@ VERSION_NUMBER = 1.5204
                             AP.ToggleAutopilot()
                         end
                     end, function()
-                        return apButtonsHovered and #AP.routeWP(true) == 0
+                        return apButtonsHovered and (#AP.routeWP(true) == 0 or i==0)
                     end)
                     button.apExtraIndex = i
                     apExtraButtons[i] = button
@@ -3591,7 +3580,7 @@ VERSION_NUMBER = 1.5204
                 MakeButton("Load Route","Clear Route", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y + apbutton.height + 20,
                     function()
                         return #AP.routeWP(true) > 0
-                    end, function() if #AP.routeWP(true) > 0 then AP.routeWP(false, true) msgText = "Route Cleared" elseif  Autopilot or VectorToTarget then 
+                    end, function() if #AP.routeWP(true) > 0 then AP.routeWP(false, true) elseif  Autopilot or VectorToTarget then 
                         msgText = "Disable Autopilot before loading route" return else AP.routeWP(false, false, 1) end end, function() return true end)   
                 -- The rest are sort of standardized
                 buttonHeight = 60
@@ -3954,6 +3943,7 @@ VERSION_NUMBER = 1.5204
     
             DrawWarnings(newContent)
             DisplayOrbitScreen(newContent)
+            if not showSettings and holdingShift then DisplayRoute(newContent) end
     
             return newContent
         end
@@ -4360,7 +4350,7 @@ VERSION_NUMBER = 1.5204
             if showSettings and settingsVariables ~= {} then 
                 HUD.DrawSettings(newContent) 
             end
-
+    
             if radar_1 then HUD.DrawRadarInfo() end
             HUD.HUDEpilogue(newContent)
             newContent[#newContent + 1] = stringf(
@@ -4459,8 +4449,7 @@ VERSION_NUMBER = 1.5204
             SettingsButtons()
             ControlsButtons() -- Set up all the pushable buttons.
             Buttons = ControlButtons
-        end
-    
+        end    
         return Hud
     end
     local function AtlasClass() -- Atlas and Interplanetary functions including Update Autopilot Target
@@ -4863,6 +4852,39 @@ VERSION_NUMBER = 1.5204
             end
             local AutopilotPaused = false
 
+        function ap.changeSpd(down)
+            local mult=1
+            if down then mult = -1 end
+            if not holdingShift then
+                if AtmoSpeedAssist and not AltIsOn and mousePause then
+                    local currentPlayerThrot = PlayerThrottle
+                    PlayerThrottle = round(uclamp(PlayerThrottle + mult*speedChangeLarge/100, -1, 1),2)
+                    if PlayerThrottle >= 0 and currentPlayerThrot < 0 then 
+                        PlayerThrottle = 0 
+                        mousePause = false
+                    end
+                elseif AltIsOn then
+                    if atmosDensity > 0 or Reentry then
+                        adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
+                    elseif Autopilot then
+                        MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 8333.00)
+                    end
+                else
+                    navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge)
+                end
+            else
+                if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
+                    apScrollIndex = apScrollIndex+1*mult*-1
+                    if apScrollIndex > #AtlasOrdered then apScrollIndex = 1 end
+                    if apScrollIndex < 1 then apScrollIndex = #AtlasOrdered end
+                else
+                    if not down then mult = 1 else mult = nil end
+                    ATLAS.adjustAutopilotTargetIndex(mult)
+                end
+            end
+        end
+    
+        
         function ap.showWayPoint(planet, coordinates, dontSet)
             return showWaypoint(planet, coordinates, dontSet)
         end
@@ -6653,7 +6675,8 @@ VERSION_NUMBER = 1.5204
         function ap.routeWP(getRoute, clear, load)
             if load then 
                 if load == 1 then 
-                    apRoute = saveRoute 
+                    apRoute = {}
+                    apRoute = addTable(apRoute,saveRoute) 
                     if #apRoute>0 then 
                         msgText = "Route Loaded" 
                     else
@@ -6661,12 +6684,14 @@ VERSION_NUMBER = 1.5204
                     end
                 return apRoute 
                 else 
-                    saveRoute = apRoute msgText = "Route Saved" return 
+                    saveRoute = {} 
+                    saveRoute = addTable(saveRoute, apRoute) msgText = "Route Saved" SaveDataBank() return 
                 end
             end
             if getRoute then return apRoute end
             if clear then 
                 apRoute = {}
+                msgText = "Current Route Cleared"
             else
                 apRoute[#apRoute+1]=AutopilotTargetIndex
                 msgText = "Added "..CustomTarget.name.." to route. "
@@ -7338,9 +7363,9 @@ VERSION_NUMBER = 1.5204
                     end
                 end
             elseif action == "speedup" then
-                changeSpd()
+                AP.changeSpd()
             elseif action == "speeddown" then
-                changeSpd(true)
+                AP.changeSpd(true)
             elseif action == "antigravity" and not ExternalAGG then
                 if antigrav ~= nil then
                     AP.ToggleAntigrav()
@@ -8708,9 +8733,9 @@ VERSION_NUMBER = 1.5204
         local wheel = system.getMouseWheel()
 
         if wheel > 0 then
-            changeSpd()
+            AP.changeSpd()
         elseif wheel < 0 then
-            changeSpd(true)
+            AP.changeSpd(true)
         else
             mousePause = true
         end
