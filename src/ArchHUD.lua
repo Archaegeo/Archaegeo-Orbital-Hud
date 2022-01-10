@@ -5,7 +5,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.5203
+VERSION_NUMBER = 1.5204
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
     useTheseSettings = false
@@ -3583,6 +3583,12 @@ VERSION_NUMBER = 1.5203
                     end, ClearCurrentPosition, function()
                         return AutopilotTargetIndex > 0 and CustomTarget ~= nil
                     end)
+                MakeButton("Clear Route", "Clear Route", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y + apbutton.height + 20,
+                    function()
+                        return true
+                    end, function() AP.routeWP(false, true) end, function()
+                        return #AP.routeWP(true) > 0
+                    end)   
                 -- The rest are sort of standardized
                 buttonHeight = 60
                 buttonWidth = 300
@@ -4738,20 +4744,21 @@ VERSION_NUMBER = 1.5203
                 return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, Nav:maxForceForward(),
                         warmup, LastMaxBrake - (AutopilotPlanetGravity * coreMass))
             end
-            local speedLimitBreaking = false
-            local lastPvPDist = 0
-            local previousYawAmount = 0
-            local previousPitchAmount = 0
-            local lastApTickTime = systime()
-            local ahDoubleClick = 0
-            local apDoubleClick = 0
-            local orbitPitch = 0
-            local orbitRoll = 0
-            local orbitAligned = false
-            local orbitalRecover = false
-            local OrbitTargetSet = false
-            local OrbitTargetPlanet = nil
-            local OrbitTicks = 0
+        local speedLimitBreaking = false
+        local lastPvPDist = 0
+        local previousYawAmount = 0
+        local previousPitchAmount = 0
+        local lastApTickTime = systime()
+        local ahDoubleClick = 0
+        local apDoubleClick = 0
+        local orbitPitch = 0
+        local orbitRoll = 0
+        local orbitAligned = false
+        local orbitalRecover = false
+        local OrbitTargetSet = false
+        local OrbitTargetPlanet = nil
+        local OrbitTicks = 0
+        local apRoute = {}
 
         function ap.GetAutopilotBrakeDistanceAndTime(speed)
             return GetAutopilotBrakeDistanceAndTime(speed)
@@ -4869,9 +4876,10 @@ VERSION_NUMBER = 1.5203
                             BrakeIsOn = true
                             AP.cmdThrottle(0)
                             if AltitudeHold then AP.ToggleAltitudeHold() end
-                            if LockPitch then AP.ToggleLockPitch() end
+                            if LockPitch then ToggleLockPitch() end
                             msgText = "Autopilot Cancelled due to possible collision"
-                            if VectorToTarget or Autopilot then 
+                            if VectorToTarget or Autopilot then
+                                apRoute = {} 
                                 AP.ToggleAutopilot()
                             end
                             StrongBrakes = true
@@ -4974,6 +4982,7 @@ VERSION_NUMBER = 1.5203
                     return false
                 end
             end
+            
             inAtmo = (atmosphere() > 0)
             atmosDensity = atmosphere()
             coreAltitude = core.getAltitude()
@@ -5032,12 +5041,13 @@ VERSION_NUMBER = 1.5203
                 simulatedY = uclamp(simulatedY + deltaY,-resolutionHeight/2,resolutionHeight/2)
                 distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
                 if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
-                    local dx,dy = 1, 1
+                    local dx,dy = deltaX, deltaY
                     if SelectedTab == "SCOPE" then
                         dx,dy = (scopeFOV/90),(scopeFOV/90)
                     end
                     if userControlScheme == "virtual joystick" then -- Virtual Joystick
                         -- Do navigation things
+
                         if simulatedX > 0 and simulatedX > DeadZone then
                             yawInput2 = yawInput2 - (simulatedX - DeadZone) * MouseXSensitivity * dx
                         elseif simulatedX < 0 and simulatedX < (DeadZone * -1) then
@@ -5718,6 +5728,12 @@ VERSION_NUMBER = 1.5203
                         --horizontalDistance = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
                     end
                     if (CustomTarget and CustomTarget.planetname == "Space" and velMag < 50) then
+                        if #apRoute>0 then
+                            BrakeIsOn = false
+                            AP.ToggleAutopilot()
+                            AP.ToggleAutopilot()
+                            return
+                        end
                         finishAutopilot("Autopilot complete, arrived at space location")
                         BrakeIsOn = true
                         brakeInput = 1
@@ -6051,7 +6067,7 @@ VERSION_NUMBER = 1.5203
                         if type(ReversalIsOn) == "table" then
                             targetVec = ReversalIsOn
                         elseif ReversalIsOn < 3 and ReversalIsOn > 0 then
-                           targetVec = -worldVertical:cross(constructVelocity)*5000
+                        targetVec = -worldVertical:cross(constructVelocity)*5000
                         elseif ReversalIsOn >= 3 then
                             targetVec = worldVertical:cross(constructVelocity)*5000
                         elseif ReversalIsOn < 0 then
@@ -6109,7 +6125,7 @@ VERSION_NUMBER = 1.5203
 
                     if ReversalIsOn and mabs(yawDiff) <= 0.0001 and
                                         ((type(ReversalIsOn) == "table") or 
-                                         (type(ReversalIsOn) ~= "table" and ReversalIsOn < 0 and mabs(adjustedRoll) < 1)) then
+                                        (type(ReversalIsOn) ~= "table" and ReversalIsOn < 0 and mabs(adjustedRoll) < 1)) then
                         if ReversalIsOn == -2 then AP.ToggleAltitudeHold() end
                         ReversalIsOn = nil
                         play("180Off", "BR")
@@ -6165,6 +6181,11 @@ VERSION_NUMBER = 1.5203
                         if (not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance and -- + (velMag*deltaTick)/2
                                 (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99  or VectorStatus == "Finalizing Approach")) then 
                             VectorStatus = "Finalizing Approach" 
+                            if #apRoute>0 then
+                                AP.ToggleAutopilot()
+                                AP.ToggleAutopilot()
+                                return
+                            end
                             AP.cmdThrottle(0) -- Kill throttle in case they weren't in cruise
                             if AltitudeHold then
                                 -- if not OrbitAchieved then
@@ -6493,7 +6514,7 @@ VERSION_NUMBER = 1.5203
             end
             if atmoDistance ~= nil then return intersectBody, atmoDistance else return nil, nil end
         end
-    
+
         function ap.ToggleAutopilot() -- Toggle autopilot mode on and off
 
             local function ToggleVectorToTarget(SpaceTarget)
@@ -6509,7 +6530,7 @@ VERSION_NUMBER = 1.5203
                 end
                 VectorStatus = "Proceeding to Waypoint"
             end
-    
+            local routeOrbit = false
             if (time - apDoubleClick) < 1.5 and atmosDensity > 0 then
                 if not SpaceEngines then
                     msgText = "No space engines detected, Orbital Hop not supported"
@@ -6530,11 +6551,22 @@ VERSION_NUMBER = 1.5203
             end
             TargetSet = false -- No matter what
             -- Toggle Autopilot, as long as the target isn't None
-            if AutopilotTargetIndex > 0 and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
+            if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
                 if 0.5 * Nav:maxForceForward() / core.g() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
+                if #apRoute>0 and not finalLand then 
+                    AutopilotTargetIndex = apRoute[1]
+                    ATLAS.UpdateAutopilotTarget()
+                    table.remove(apRoute,1)
+                    msgText = "Route Autopilot in Progress"
+                    local targetVec = CustomTarget.position - worldPos
+                    local distanceToTarget = targetVec:project_on_plane(worldVertical):len()
+                    if distanceToTarget > 50000 and CustomTarget.planetname == planet.name then 
+                        routeOrbit=true
+                    end
+                end
                 ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
                 AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
-    
+
                 if CustomTarget ~= nil then
                     LockPitch = nil
                     SpaceTarget = (CustomTarget.planetname == "Space")
@@ -6552,6 +6584,9 @@ VERSION_NUMBER = 1.5203
                             if not VectorToTarget then
                                 play("vtt", "AP")
                                 ToggleVectorToTarget(SpaceTarget)
+                                if routeOrbit then
+                                    HoldAltitude = planet.noAtmosphericDensityAltitude + LowOrbitHeight
+                                end
                             end
                         else
                             play("apOn", "AP")
@@ -6610,7 +6645,19 @@ VERSION_NUMBER = 1.5203
                 AP.ResetAutopilots(1)
             end
         end
-    
+
+        function ap.routeWP(getRoute, clear)
+            if getRoute then return apRoute end
+            if clear then 
+                apRoute = {}
+            else
+                apRoute[#apRoute+1]=AutopilotTargetIndex
+                msgText = "Added "..CustomTarget.name.." to route. "
+                p("Added "..CustomTarget.name.." to route. Total Route: "..json.encode(apRoute))
+            end
+            return apRoute
+        end
+
         function ap.cmdThrottle(value, dontSwitch) -- sets the throttle value to value, also switches to throttle mode (vice cruise) unless dontSwitch passed
             if navCom:getAxisCommandType(0) ~= axisCommandType.byThrottle and not dontSwitch then
                 Nav.control.cancelCurrentControlMasterMode()
@@ -6619,7 +6666,7 @@ VERSION_NUMBER = 1.5203
             PlayerThrottle = uclamp(round(value*100,0)/100, -1, 1)
             setCruiseSpeed = nil
         end
-    
+
         function ap.cmdCruise(value, dontSwitch) -- sets the cruise target speed to value, also switches to cruise mode (vice throttle) unless dontSwitch passed
             if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed and not dontSwitch then
                 Nav.control.cancelCurrentControlMasterMode()
@@ -6641,12 +6688,12 @@ VERSION_NUMBER = 1.5203
                 LockPitch = nil
             end
         end
-
+        
         function ap.ToggleAltitudeHold()  -- Toggle Altitude Hold mode on and off
             if (time - ahDoubleClick) < 1.5 then
                 if planet.hasAtmosphere  then
                     if atmosDensity > 0 then
-    
+
                         HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude
                         play("11","EP")
                     else
@@ -6756,7 +6803,7 @@ VERSION_NUMBER = 1.5203
             finalLand = false
             upAmount = 0
         end
-    
+
         function ap.BrakeToggle() -- Toggle brakes on and off
             -- Toggle brakes
             BrakeIsOn = not BrakeIsOn
@@ -6806,7 +6853,7 @@ VERSION_NUMBER = 1.5203
             end
             AutoTakeoff = false -- This got left on somewhere.. 
         end
-    
+
         function ap.ToggleAntigrav() -- Toggles antigrav on and off
             if antigrav and not ExternalAGG then
                 if antigravOn then
@@ -6824,9 +6871,10 @@ VERSION_NUMBER = 1.5203
                 end
             end
         end
-    
+
         abvGndDet = AboveGroundLevel()
-        return ap
+
+            return ap
     end
     local function ControlClass()
         local Control = {}
@@ -7144,6 +7192,14 @@ VERSION_NUMBER = 1.5203
                 end
             elseif action == "option8" then
                 toggleView = false
+                if AltIsOn and holdingShift then 
+                    if AutopilotTargetIndex > 0 and CustomTarget ~= nil then
+                        AP.routeWP()
+                    else
+                        msgText = "Select a saved wp on IPH to add to or remove from route"
+                    end
+                    return
+                end
                 stablized = not stablized
                 if not stablized then
                     msgText = "DeCoupled Mode - Ground Stabilization off"
