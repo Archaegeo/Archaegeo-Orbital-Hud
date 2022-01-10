@@ -1,5 +1,19 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.704 - AP Route Support
+- New Featue: Route support - Load, Clear, Save 1 route.
+To Setup:  Select a custom wp in IPH.  Press ALT-SHIFT-8 to add it to route.  Keep selecting custom wps and adding to route.
+To Save: Click Save Route button
+To Clear: Click Clear Route button
+To Load Saved route: Clock Load Route button
+To Use: Hit Alt-4 to begin route.  If two points are on same planet and more than 50k apart it will try to low orbit hop.
+Ship will begin route and will only stop or land at final point.  IPH will update to show leg of route you are on.
+Holding SHIFT with a loaded route will display the route or remaining legs if already in progress.
+NOTE: If a route is loaded, alt-4 (and AP Button) will ignore IPH selected target and perform the route instead.
+NOTE: Route is based off of IPH index position of wp when route created, if you add or remove (not update) custom wp's, 
+    route could become invalid.
+NOTE: Standalone version (1.5204) might unload from seat for some people
+
 Version 1.7031 - New ControlClass.  All code now readable lua
 (all requires updated for consistancy, update all)
 - As of this version, in the modular version all code including the ArchHUD.conf is no longer minimized

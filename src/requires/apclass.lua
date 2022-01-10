@@ -42,6 +42,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
     local OrbitTargetSet = false
     local OrbitTargetPlanet = nil
     local OrbitTicks = 0
+    local apRoute = {}
 
     function ap.GetAutopilotBrakeDistanceAndTime(speed)
         return GetAutopilotBrakeDistanceAndTime(speed)
@@ -157,6 +158,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
                 local apAction = (AltitudeHold or VectorToTarget or LockPitch or Autopilot)
                 if apAction and not ignoreCollision and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
                         BrakeIsOn = true
+                        apRoute = {}
                         AP.cmdThrottle(0)
                         if AltitudeHold then AP.ToggleAltitudeHold() end
                         if LockPitch then ToggleLockPitch() end
@@ -1010,6 +1012,12 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
                     --horizontalDistance = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
                 end
                 if (CustomTarget and CustomTarget.planetname == "Space" and velMag < 50) then
+                    if #apRoute>0 then
+                        BrakeIsOn = false
+                        AP.ToggleAutopilot()
+                        AP.ToggleAutopilot()
+                        return
+                    end
                     finishAutopilot("Autopilot complete, arrived at space location")
                     BrakeIsOn = true
                     brakeInput = 1
@@ -1457,6 +1465,11 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
                     if (not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance and -- + (velMag*deltaTick)/2
                             (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99  or VectorStatus == "Finalizing Approach")) then 
                         VectorStatus = "Finalizing Approach" 
+                        if #apRoute>0 then
+                            AP.ToggleAutopilot()
+                            AP.ToggleAutopilot()
+                            return
+                        end
                         AP.cmdThrottle(0) -- Kill throttle in case they weren't in cruise
                         if AltitudeHold then
                             -- if not OrbitAchieved then
@@ -1801,7 +1814,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
             end
             VectorStatus = "Proceeding to Waypoint"
         end
-
+        local routeOrbit = false
         if (time - apDoubleClick) < 1.5 and atmosDensity > 0 then
             if not SpaceEngines then
                 msgText = "No space engines detected, Orbital Hop not supported"
@@ -1822,8 +1835,19 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
         end
         TargetSet = false -- No matter what
         -- Toggle Autopilot, as long as the target isn't None
-        if AutopilotTargetIndex > 0 and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
+        if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
             if 0.5 * Nav:maxForceForward() / core.g() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
+            if #apRoute>0 and not finalLand then 
+                AutopilotTargetIndex = apRoute[1]
+                ATLAS.UpdateAutopilotTarget()
+                table.remove(apRoute,1)
+                msgText = "Route Autopilot in Progress"
+                local targetVec = CustomTarget.position - worldPos
+                local distanceToTarget = targetVec:project_on_plane(worldVertical):len()
+                if distanceToTarget > 50000 and CustomTarget.planetname == planet.name then 
+                    routeOrbit=true
+                end
+            end
             ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
             AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
 
@@ -1844,6 +1868,9 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
                         if not VectorToTarget then
                             play("vtt", "AP")
                             ToggleVectorToTarget(SpaceTarget)
+                            if routeOrbit then
+                                HoldAltitude = planet.noAtmosphericDensityAltitude + LowOrbitHeight
+                            end
                         end
                     else
                         play("apOn", "AP")
@@ -1901,6 +1928,34 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
             play("apOff", "AP")
             AP.ResetAutopilots(1)
         end
+    end
+
+    function ap.routeWP(getRoute, clear, load)
+        if load then 
+            if load == 1 then 
+                apRoute = {}
+                apRoute = addTable(apRoute,saveRoute)
+                if #apRoute>0 then 
+                    msgText = "Route Loaded" 
+                else
+                    msgText = "No Saved Route found on Databank"
+                end
+            return apRoute 
+            else
+                saveRoute = {} 
+                saveRoute = addTable(saveRoute, apRoute) msgText = "Route Saved" SaveDataBank() return 
+            end
+        end
+        if getRoute then return apRoute end
+        if clear then 
+            apRoute = {}
+            msgText = "Current Route Cleared"
+        else
+            apRoute[#apRoute+1]=AutopilotTargetIndex
+            msgText = "Added "..CustomTarget.name.." to route. "
+            p("Added "..CustomTarget.name.." to route. Total Route: "..json.encode(apRoute))
+        end
+        return apRoute
     end
 
     function ap.cmdThrottle(value, dontSwitch) -- sets the throttle value to value, also switches to throttle mode (vice cruise) unless dontSwitch passed
@@ -2113,6 +2168,38 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
                 play("aggOn","AG")
                 antigrav.activate()
                 antigrav.show()
+            end
+        end
+    end
+
+    function ap.changeSpd(down)
+        local mult=1
+        if down then mult = -1 end
+        if not holdingShift then
+            if AtmoSpeedAssist and not AltIsOn and mousePause then
+                local currentPlayerThrot = PlayerThrottle
+                PlayerThrottle = round(uclamp(PlayerThrottle + mult*speedChangeLarge/100, -1, 1),2)
+                if PlayerThrottle >= 0 and currentPlayerThrot < 0 then 
+                    PlayerThrottle = 0 
+                    mousePause = false
+                end
+            elseif AltIsOn then
+                if atmosDensity > 0 or Reentry then
+                    adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
+                elseif Autopilot then
+                    MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 8333.00)
+                end
+            else
+                navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge)
+            end
+        else
+            if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
+                apScrollIndex = apScrollIndex+1*mult*-1
+                if apScrollIndex > #AtlasOrdered then apScrollIndex = 1 end
+                if apScrollIndex < 1 then apScrollIndex = #AtlasOrdered end
+            else
+                if not down then mult = 1 else mult = nil end
+                ATLAS.adjustAutopilotTargetIndex(mult)
             end
         end
     end

@@ -315,6 +315,14 @@ function ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav,
             end
         elseif action == "option8" then
             toggleView = false
+            if AltIsOn and holdingShift then 
+                if AutopilotTargetIndex > 0 and CustomTarget ~= nil then
+                    AP.routeWP()
+                else
+                    msgText = "Select a saved wp on IPH to add to or remove from route"
+                end
+                return
+            end
             stablized = not stablized
             if not stablized then
                 msgText = "DeCoupled Mode - Ground Stabilization off"
@@ -437,9 +445,9 @@ function ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav,
                 end
             end
         elseif action == "speedup" then
-            changeSpd()
+            AP.changeSpd()
         elseif action == "speeddown" then
-            changeSpd(true)
+            AP.changeSpd(true)
         elseif action == "antigravity" and not ExternalAGG then
             if antigrav ~= nil then
                 AP.ToggleAntigrav()
