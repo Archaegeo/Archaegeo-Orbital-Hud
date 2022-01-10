@@ -159,6 +159,7 @@ VERSION_NUMBER = 1.5204
     stablized = true
     UseExtra = "Off"
     LastVersionUpdate = 0.000
+    saveRoute = {}
 
     -- autoVariables table of above variables to be stored on databank to save ships status but are not user settable
         local autoVariables = {"VertTakeOff", "VertTakeOffEngine","SpaceTarget","BrakeToggleStatus", "BrakeIsOn", "RetrogradeIsOn", "ProgradeIsOn",
@@ -168,7 +169,7 @@ VERSION_NUMBER = 1.5204
                     "AutopilotPlanetGravity", "PrevViewLock", "AutopilotTargetName", "AutopilotTargetCoords",
                     "AutopilotTargetIndex", "TotalDistanceTravelled",
                     "TotalFlightTime", "SavedLocations", "VectorToTarget", "LocationIndex", "LastMaxBrake", 
-                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "iphCondition", "stablized", "UseExtra", "SelectedTab"}
+                    "LockPitch", "LastMaxBrakeInAtmo", "AntigravTargetAltitude", "LastStartTime", "iphCondition", "stablized", "UseExtra", "SelectedTab", "saveRoute"}
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -3436,6 +3437,8 @@ VERSION_NUMBER = 1.5204
                 end
                 
                 local function getAPEnableName(index)
+                    local checkRoute = AP.routeWP(true)
+                    if #checkRoute > 0 then return "Engage Route: "..getAPName(checkRoute[1]) end
                     return "Engage Autopilot: " .. getAPName(index)
                 end
     
@@ -3558,7 +3561,7 @@ VERSION_NUMBER = 1.5204
                             AP.ToggleAutopilot()
                         end
                     end, function()
-                        return apButtonsHovered
+                        return apButtonsHovered and #AP.routeWP(true) == 0
                     end)
                     button.apExtraIndex = i
                     apExtraButtons[i] = button
@@ -3583,12 +3586,13 @@ VERSION_NUMBER = 1.5204
                     end, ClearCurrentPosition, function()
                         return AutopilotTargetIndex > 0 and CustomTarget ~= nil
                     end)
-                MakeButton("Clear Route", "Clear Route", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y + apbutton.height + 20,
+                MakeButton("Save Route", "Save Route", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y + apbutton.height + 20, 
+                    function() return false end, function() AP.routeWP(false, false, 2) end, function() return #AP.routeWP(true) > 0 end)
+                MakeButton("Load Route","Clear Route", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y + apbutton.height + 20,
                     function()
-                        return true
-                    end, function() AP.routeWP(false, true) end, function()
                         return #AP.routeWP(true) > 0
-                    end)   
+                    end, function() if #AP.routeWP(true) > 0 then AP.routeWP(false, true) msgText = "Route Cleared" elseif  Autopilot or VectorToTarget then 
+                        msgText = "Disable Autopilot before loading route" return else AP.routeWP(false, false, 1) end end, function() return true end)   
                 -- The rest are sort of standardized
                 buttonHeight = 60
                 buttonWidth = 300
@@ -6646,14 +6650,26 @@ VERSION_NUMBER = 1.5204
             end
         end
 
-        function ap.routeWP(getRoute, clear)
+        function ap.routeWP(getRoute, clear, load)
+            if load then 
+                if load == 1 then 
+                    apRoute = saveRoute 
+                    if #apRoute>0 then 
+                        msgText = "Route Loaded" 
+                    else
+                        msgText = "No Saved Route found on Databank"
+                    end
+                return apRoute 
+                else 
+                    saveRoute = apRoute msgText = "Route Saved" return 
+                end
+            end
             if getRoute then return apRoute end
             if clear then 
                 apRoute = {}
             else
                 apRoute[#apRoute+1]=AutopilotTargetIndex
                 msgText = "Added "..CustomTarget.name.." to route. "
-                p("Added "..CustomTarget.name.." to route. Total Route: "..json.encode(apRoute))
             end
             return apRoute
         end
