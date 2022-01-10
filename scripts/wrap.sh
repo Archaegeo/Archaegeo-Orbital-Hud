@@ -29,8 +29,11 @@ WORK_DIR=${ROOTDIR}/scripts/work
 grep "\-- \?export:" $LUA_SRC | sed -e 's/^[ \t]*/        /' -e 's/-- export:/--export:/' > $WORK_DIR/ArchHUD.exports
 
 VERSION_NUMBER=`grep "VERSION_NUMBER = .*" $LUA_SRC | sed -E "s/\s*VERSION_NUMBER = (.*)/\1/"`
-if [[ "${VERSION_NUMBER}" == "" ]]; then
-    echo "ERROR: Failed to detect version number"; exit 1
+if [[ "${VERSION_NUMBER}" == "" ]]; then #try both with and without spaces because the \? operator doesn't seem to work in the pipe
+    VERSION_NUMBER=`grep "VERSION_NUMBER=.*" $LUA_SRC | sed -E "s/\s*VERSION_NUMBER=(.*)/\1/"`
+    if [[ "${VERSION_NUMBER}" == "" ]]; then
+        echo "ERROR: Failed to detect version number"; exit 1
+    fi
 fi
 
 sed "/-- \?export:/d;/require 'src.slots'/d" $LUA_SRC > $WORK_DIR/ArchHUD.extracted.lua
@@ -85,4 +88,4 @@ echo "$VERSION_NUMBER" > ${ROOTDIR}/ArchHUD.conf.version
 
 echo "Compiled v$VERSION_NUMBER at ${CONF_DST}"
 
-rm $WORK_DIR/*
+#rm $WORK_DIR/*
