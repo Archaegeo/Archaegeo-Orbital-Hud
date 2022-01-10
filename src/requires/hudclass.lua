@@ -1915,6 +1915,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             end
             
             local function getAPEnableName(index)
+                local checkRoute = AP.routeWP(true)
+                if #checkRoute > 0 then return "Engage Route: "..getAPName(checkRoute[1]) end
                 return "Engage Autopilot: " .. getAPName(index)
             end
 
@@ -2037,7 +2039,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                         AP.ToggleAutopilot()
                     end
                 end, function()
-                    return apButtonsHovered
+                    return apButtonsHovered and #AP.routeWP(true) == 0
                 end)
                 button.apExtraIndex = i
                 apExtraButtons[i] = button

@@ -1930,7 +1930,20 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
         end
     end
 
-    function ap.routeWP(getRoute, clear)
+    function ap.routeWP(getRoute, clear, load)
+        if load then 
+            if load == 1 then 
+                apRoute = saveRoute 
+                if #apRoute>0 then 
+                    msgText = "Route Loaded" 
+                else
+                    msgText = "No Saved Route found on Databank"
+                end
+            return apRoute 
+            else 
+                saveRoute = apRoute msgText = "Route Saved" return 
+            end
+        end
         if getRoute then return apRoute end
         if clear then 
             apRoute = {}

@@ -10,7 +10,7 @@ require("autoconf/custom/archhud/radarclass")
 require("autoconf/custom/archhud/controlclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.7031
+VERSION_NUMBER = 1.704
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
