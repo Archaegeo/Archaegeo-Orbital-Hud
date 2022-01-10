@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.704 - AP Route Support
+- New Featue: Route support
+To use:  Select a custom wp in IPH.  Press ALT-SHIFT-8 to add it to route.  Keep selecting and adding to route.
+Hit Alt-4 to begin route.  If two points are on same planet and more than 50k apart it will try to low orbit hop.
+Ship will begin route only landing at final point (or stopping if a space point)
+To clear route, hold shift and choose Clear Route.
+
 Version 1.7031 - New ControlClass.  All code now readable lua
 (all requires updated for consistancy, update all)
 - As of this version, in the modular version all code including the ArchHUD.conf is no longer minimized

@@ -2062,6 +2062,12 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                 end, ClearCurrentPosition, function()
                     return AutopilotTargetIndex > 0 and CustomTarget ~= nil
                 end)
+            MakeButton("Clear Route", "Clear Route", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y + apbutton.height + 20,
+                function()
+                    return true
+                end, function() AP.routeWP(false, true) end, function()
+                    return #AP.routeWP(true) > 0
+                end)    
             -- The rest are sort of standardized
             buttonHeight = 60
             buttonWidth = 300
