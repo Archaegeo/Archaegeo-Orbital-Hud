@@ -2607,6 +2607,7 @@ local function getHandlersObject (slots)
       if slotSelect then
         -- slots with "select: all" or "select: manual" require event handler definitions to be repeated for each element
         for i = 1, 10 do
+          if slotName == "radar" and i > 2 then break end
           local actualSlotName = format("%s_%d", slotName, i)
           handlersObj[actualSlotName] = getHandlersObjectForSlot(slot, actualSlotName)
         end

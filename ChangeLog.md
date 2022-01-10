@@ -1,7 +1,29 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.504
+- New Featue: Route support - Load, Clear, Save 1 route.
+To Setup:  Select a custom wp in IPH.  Press ALT-SHIFT-8 to add it to route.  Keep selecting custom wps and adding to route.
+To Save: Click Save Route button
+To Clear: Click Clear Route button
+To Load Saved route: Clock Load Route button
+To Use: Hit Alt-4 to begin route.  If two points are on same planet and more than 50k apart it will try to low orbit hop.
+Ship will begin route and will only stop or land at final point.
+NOTE: If a route is loaded, alt-4 (and AP Button) will ignore IPH selected target and perform the route instead.
+NOTE: Route is based off of IPH index position of wp when route created, if you add or remove (not update) custom wp's, 
+    route could become invalid.
+
+Version 1.503
+- Add ControlClass to handle start/stop/loop and inputText
+
+Version 1.5202
+- Restructure RADARCLASS to support modularizaion.
+- FIX: Fixed issue with virtual joystick when NOT in SCOPE mode.
+
 Version 1.5201
 - Added SCOPE Feature
+- Fixed Alt-3 to swap to complete vanilla view hiding everything unless `hideHudOnToggleWidgets` is false.  Will still show vSpd Meter if `AlwaysVSpd` is true.
+- User variable `DisplayOdometer` is back default true, set to false to hide top bar (but not the upper left tab buttons)
+- Setting `circleRad` to 0 will make NavBall go away.  Setting `fuelX` and `fuelY` to 0 will make fuel bars go away.  Etc for other positions.
 
 Version 1.5162
 - Updated to match Modular changes to hudclass and apclass for localization.
