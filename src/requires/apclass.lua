@@ -158,6 +158,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
                 local apAction = (AltitudeHold or VectorToTarget or LockPitch or Autopilot)
                 if apAction and not ignoreCollision and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
                         BrakeIsOn = true
+                        apRoute = {}
                         AP.cmdThrottle(0)
                         if AltitudeHold then AP.ToggleAltitudeHold() end
                         if LockPitch then ToggleLockPitch() end
