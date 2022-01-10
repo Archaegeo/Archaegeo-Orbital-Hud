@@ -445,9 +445,9 @@ function ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav,
                 end
             end
         elseif action == "speedup" then
-            changeSpd()
+            AP.changeSpd()
         elseif action == "speeddown" then
-            changeSpd(true)
+            AP.changeSpd(true)
         elseif action == "antigravity" and not ExternalAGG then
             if antigrav ~= nil then
                 AP.ToggleAntigrav()

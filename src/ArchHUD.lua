@@ -246,38 +246,6 @@ VERSION_NUMBER = 1.704
     end
     --]]
 
-    local function changeSpd(down)
-        local mult=1
-        if down then mult = -1 end
-        if not holdingShift then
-            if AtmoSpeedAssist and not AltIsOn and mousePause then
-                local currentPlayerThrot = PlayerThrottle
-                PlayerThrottle = round(uclamp(PlayerThrottle + mult*speedChangeLarge/100, -1, 1),2)
-                if PlayerThrottle >= 0 and currentPlayerThrot < 0 then 
-                    PlayerThrottle = 0 
-                    mousePause = false
-                end
-            elseif AltIsOn then
-                if atmosDensity > 0 or Reentry then
-                    adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
-                elseif Autopilot then
-                    MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 8333.00)
-                end
-            else
-                navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge)
-            end
-        else
-            if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
-                apScrollIndex = apScrollIndex+1*mult*-1
-                if apScrollIndex > #AtlasOrdered then apScrollIndex = 1 end
-                if apScrollIndex < 1 then apScrollIndex = #AtlasOrdered end
-            else
-                if not down then mult = 1 else mult = nil end
-                ATLAS.adjustAutopilotTargetIndex(mult)
-            end
-        end
-    end
-
     function play(sound, ID, type)
         if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
         if type ~= nil then
@@ -2386,9 +2354,9 @@ VERSION_NUMBER = 1.704
         local wheel = system.getMouseWheel()
 
         if wheel > 0 then
-            changeSpd()
+            AP.changeSpd()
         elseif wheel < 0 then
-            changeSpd(true)
+            AP.changeSpd(true)
         else
             mousePause = true
         end

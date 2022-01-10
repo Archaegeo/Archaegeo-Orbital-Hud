@@ -983,6 +983,37 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             return mfloor(round(speed * 3.6, 0) + 0.5) .. " km/h" -- And generally it's not accurate enough to not twitch unless we round 0
         end
 
+        local function getAPName(index)
+            local name = AutopilotTargetName
+            if index ~= nil and type(index) == "number" then 
+                if index == 0 then return "None" end
+                name = AtlasOrdered[index].name
+            end
+            if name == nil then
+                name = CustomTarget.name
+            end
+            if name == nil then
+                name = "None"
+            end
+            return name
+        end
+
+        local function DisplayRoute(newContent)
+            local checkRoute = AP.routeWP(true)
+            if #checkRoute==0 then return end
+            local x = ConvertResolutionX(750)
+            local y = ConvertResolutionY(360)
+            if Autopilot or VectorToTarget then
+                newContent[#newContent + 1] = svgText(x, y, "REMAINING ROUTE","pdim txtstart size20" )
+            else
+                newContent[#newContent + 1] = svgText(x, y, "LOADED ROUTE","pdim txtstart size20" )
+            end
+            for k,i in pairs(checkRoute) do
+                y=y+20
+                newContent[#newContent + 1] = svgText( x, y, k..". "..getAPName(checkRoute[k]), "pdim txtstart size20")
+            end
+        end
+
         local function DisplayHelp(newContent)
             local x = OrbitMapX+10
             local y = OrbitMapY+20
@@ -1899,21 +1930,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                     ATLAS.ClearCurrentPosition()
             end
 
-            local function getAPName(index)
-                local name = AutopilotTargetName
-                if index ~= nil and type(index) == "number" then 
-                    if index == 0 then return "None" end
-                    name = AtlasOrdered[index].name
-                end
-                if name == nil then
-                    name = CustomTarget.name
-                end
-                if name == nil then
-                    name = "None"
-                end
-                return name
-            end
-            
+           
             local function getAPEnableName(index)
                 local checkRoute = AP.routeWP(true)
                 if #checkRoute > 0 then return "Engage Route: "..getAPName(checkRoute[1]) end
@@ -1921,6 +1938,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             end
 
             local function getAPDisableName(index)
+                local checkRoute = AP.routeWP(true)
+                if #checkRoute > 0 then return "Next Route Point: "..getAPName(checkRoute[1]) end
                 return "Disable Autopilot: " .. getAPName(index)
             end   
 
@@ -2003,6 +2022,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             -- Make 9 more buttons that only show when moused over the AP button
             local i
             local function getAtlasIndexFromAddition(add)
+                local checkRoute = AP.routeWP(true)
+                if #checkRoute > 0 then return checkRoute[1] end
                 local index = apScrollIndex + add
                 if index > #AtlasOrdered then
                     index = index-#AtlasOrdered-1
@@ -2039,7 +2060,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                         AP.ToggleAutopilot()
                     end
                 end, function()
-                    return apButtonsHovered and #AP.routeWP(true) == 0
+                    return apButtonsHovered and (#AP.routeWP(true) == 0 or i==0)
                 end)
                 button.apExtraIndex = i
                 apExtraButtons[i] = button
@@ -2064,12 +2085,13 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                 end, ClearCurrentPosition, function()
                     return AutopilotTargetIndex > 0 and CustomTarget ~= nil
                 end)
-            MakeButton("Clear Route", "Clear Route", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y + apbutton.height + 20,
+            MakeButton("Save Route", "Save Route", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y + apbutton.height + 20, 
+                function() return false end, function() AP.routeWP(false, false, 2) end, function() return #AP.routeWP(true) > 0 end)
+            MakeButton("Load Route","Clear Route", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y + apbutton.height + 20,
                 function()
-                    return true
-                end, function() AP.routeWP(false, true) end, function()
                     return #AP.routeWP(true) > 0
-                end)    
+                end, function() if #AP.routeWP(true) > 0 then AP.routeWP(false, true) elseif  Autopilot or VectorToTarget then 
+                    msgText = "Disable Autopilot before loading route" return else AP.routeWP(false, false, 1) end end, function() return true end)   
             -- The rest are sort of standardized
             buttonHeight = 60
             buttonWidth = 300
@@ -2431,6 +2453,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
 
         DrawWarnings(newContent)
         DisplayOrbitScreen(newContent)
+        if not showSettings and holdingShift then DisplayRoute(newContent) end
 
         return newContent
     end
@@ -2507,7 +2530,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             newContent[#newContent + 1] = svgText(crx(635), cry(45), "TRIP", "")
             newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(635),cry(31),crx(-90))
             if travelTime then
-                newContent[#newContent + 1] = svgText(crx(545), cry(25), stringf("%s", FormatTimeString(travelTime)), "txtstart size20") 
+                newContent[#newContent + 1] = svgText(crx(532), cry(23), stringf("%s", FormatTimeString(travelTime)), "txtstart size20") 
             end
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(20), stringf("Trip: %.2f km", totalDistanceTrip), "txtstart") 
             --TODO: newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(30), stringf("Lifetime: %.2f kSU", (TotalDistanceTravelled / 200000)), "txtstart") 
@@ -2519,7 +2542,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(30), "Total Time: "..FormatTimeString(TotalFlightTime), "txtstart") 
             newContent[#newContent + 1] = svgText(crx(1285), cry(45), "MASS", "txtstart")
             newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1285), cry(31), crx(90))
-            newContent[#newContent + 1] = svgText(crx(1375), cry(25), stringf("%s", mass), "size20") 
+            newContent[#newContent + 1] = svgText(crx(1388), cry(23), stringf("%s", mass), "size20") 
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(20), stringf("Mass: %s", mass), "txtstart") 
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(10), stringf("Max Brake: %s",  brakeValue), "txtend") 
             newContent[#newContent + 1] = svgText(crx(1220), labelY1, "THRUST", "txtstart")
@@ -2936,7 +2959,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         SettingsButtons()
         ControlsButtons() -- Set up all the pushable buttons.
         Buttons = ControlButtons
-    end    
+    end
     
     -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
     --for k,v in pairs(require("autoconf/custom/archhud/custom/customhudclass")) do Hud[k] = v end 

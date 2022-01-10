@@ -1933,20 +1933,23 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
     function ap.routeWP(getRoute, clear, load)
         if load then 
             if load == 1 then 
-                apRoute = saveRoute 
+                apRoute = {}
+                apRoute = addTable(apRoute,saveRoute)
                 if #apRoute>0 then 
                     msgText = "Route Loaded" 
                 else
                     msgText = "No Saved Route found on Databank"
                 end
             return apRoute 
-            else 
-                saveRoute = apRoute msgText = "Route Saved" return 
+            else
+                saveRoute = {} 
+                saveRoute = addTable(saveRoute, apRoute) msgText = "Route Saved" SaveDataBank() return 
             end
         end
         if getRoute then return apRoute end
         if clear then 
             apRoute = {}
+            msgText = "Current Route Cleared"
         else
             apRoute[#apRoute+1]=AutopilotTargetIndex
             msgText = "Added "..CustomTarget.name.." to route. "
@@ -2165,6 +2168,38 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
                 play("aggOn","AG")
                 antigrav.activate()
                 antigrav.show()
+            end
+        end
+    end
+
+    function ap.changeSpd(down)
+        local mult=1
+        if down then mult = -1 end
+        if not holdingShift then
+            if AtmoSpeedAssist and not AltIsOn and mousePause then
+                local currentPlayerThrot = PlayerThrottle
+                PlayerThrottle = round(uclamp(PlayerThrottle + mult*speedChangeLarge/100, -1, 1),2)
+                if PlayerThrottle >= 0 and currentPlayerThrot < 0 then 
+                    PlayerThrottle = 0 
+                    mousePause = false
+                end
+            elseif AltIsOn then
+                if atmosDensity > 0 or Reentry then
+                    adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
+                elseif Autopilot then
+                    MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 8333.00)
+                end
+            else
+                navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge)
+            end
+        else
+            if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
+                apScrollIndex = apScrollIndex+1*mult*-1
+                if apScrollIndex > #AtlasOrdered then apScrollIndex = 1 end
+                if apScrollIndex < 1 then apScrollIndex = #AtlasOrdered end
+            else
+                if not down then mult = 1 else mult = nil end
+                ATLAS.adjustAutopilotTargetIndex(mult)
             end
         end
     end
