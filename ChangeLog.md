@@ -7,7 +7,8 @@ To Save: Click Save Route button
 To Clear: Click Clear Route button
 To Load Saved route: Clock Load Route button
 To Use: Hit Alt-4 to begin route.  If two points are on same planet and more than 50k apart it will try to low orbit hop.
-Ship will begin route and will only stop or land at final point.
+Ship will begin route and will only stop or land at final point.  IPH will update to show leg of route you are on.
+Holding SHIFT with a loaded route will display the route or remaining legs if already in progress.
 NOTE: If a route is loaded, alt-4 (and AP Button) will ignore IPH selected target and perform the route instead.
 NOTE: Route is based off of IPH index position of wp when route created, if you add or remove (not update) custom wp's, 
     route could become invalid.
