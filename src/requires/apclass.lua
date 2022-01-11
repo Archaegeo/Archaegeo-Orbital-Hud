@@ -325,7 +325,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
             simulatedY = uclamp(simulatedY + deltaY,-resolutionHeight/2,resolutionHeight/2)
             distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
             if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
-                local dx,dy = deltaX, deltaY
+                local dx,dy = 1,1
                 if SelectedTab == "SCOPE" then
                     dx,dy = (scopeFOV/90),(scopeFOV/90)
                 end
@@ -2173,6 +2173,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
     end
 
     function ap.changeSpd(down)
+        p("HERE2")
         local mult=1
         if down then mult = -1 end
         if not holdingShift then

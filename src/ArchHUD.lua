@@ -10,7 +10,7 @@ require("autoconf/custom/archhud/radarclass")
 require("autoconf/custom/archhud/controlclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.704
+VERSION_NUMBER = 1.705
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -91,7 +91,7 @@ VERSION_NUMBER = 1.704
     local elementsID = core.getElementIdList()
     lastTravelTime = systime()
     coreMass = core.getConstructMass()
-    local mousePause = false
+    mousePause = false
     gyroIsOn = nil
     rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
     rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..   mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]
@@ -2354,6 +2354,7 @@ VERSION_NUMBER = 1.704
         local wheel = system.getMouseWheel()
 
         if wheel > 0 then
+            p("HERE1")
             AP.changeSpd()
         elseif wheel < 0 then
             AP.changeSpd(true)

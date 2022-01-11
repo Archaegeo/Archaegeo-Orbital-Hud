@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.705 
+FIX: Mousewheel not controlling throttle.
+FIX: Virtual Joystick not controlling ship if not in SCOPE mode.
+
 Version 1.704 - AP Route Support
 - New Featue: Route support - Load, Clear, Save 1 route.
 To Setup:  Select a custom wp in IPH.  Press ALT-SHIFT-8 to add it to route.  Keep selecting custom wps and adding to route.
