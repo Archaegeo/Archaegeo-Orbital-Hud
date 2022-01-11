@@ -1,7 +1,11 @@
 require 'src.slots'
 require("autoconf/custom/archhud/globals")
 
-local Nav = Navigator.new(system, core, unit)
+local s=system
+local c=core
+local u=unit
+
+local Nav = Navigator.new(s, c, u)
 local atlas = require("atlas")
 
 require("autoconf/custom/archhud/hudclass")
@@ -10,7 +14,7 @@ require("autoconf/custom/archhud/radarclass")
 require("autoconf/custom/archhud/controlclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.704
+VERSION_NUMBER = 1.705
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -18,20 +22,20 @@ VERSION_NUMBER = 1.704
     local stringf = string.format
     local jdecode = json.decode
     local jencode = json.encode
-    local eleMaxHp = core.getElementMaxHitPointsById
-    local atmosphere = unit.getAtmosphereDensity
-    local eleMass = core.getElementMassById
+    local eleMaxHp = c.getElementMaxHitPointsById
+    local atmosphere = u.getAtmosphereDensity
+    local eleMass = c.getElementMassById
     local isRemote = Nav.control.isRemoteControlled
     local atan = math.atan
     local stringmatch = string.match
-    local systime = system.getTime
+    local systime = s.getTime
     local uclamp = utils.clamp
     local navCom = Nav.axisCommandManager
-    local sysDestWid = system.destroyWidgetPanel
-    local sysUpData = system.updateData
-    local sysAddData = system.addDataToWidget
-    local sysLockVw = system.lockView
-    local sysIsVwLock = system.isViewLocked
+    local sysDestWid = s.destroyWidgetPanel
+    local sysUpData = s.updateData
+    local sysAddData = s.addDataToWidget
+    local sysLockVw = s.lockView
+    local sysIsVwLock = s.isViewLocked
     local msqrt = math.sqrt
     local tonum = tonumber
 
@@ -87,11 +91,11 @@ VERSION_NUMBER = 1.704
     local myAutopilotTarget=""
     inAtmo = (atmosphere() > 0)
     atmosDensity = atmosphere()
-    coreAltitude = core.getAltitude()
-    local elementsID = core.getElementIdList()
+    coreAltitude = c.getAltitude()
+    local elementsID = c.getElementIdList()
     lastTravelTime = systime()
-    coreMass = core.getConstructMass()
-    local mousePause = false
+    coreMass = c.getConstructMass()
+    mousePause = false
     gyroIsOn = nil
     rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
     rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..   mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]
@@ -130,15 +134,15 @@ VERSION_NUMBER = 1.704
     local SpaceEngineVertUp = false
     SpaceEngineVertDn = false
     SpaceEngines = false
-    constructUp = vec3(core.getConstructWorldOrientationUp())
-    constructForward = vec3(core.getConstructWorldOrientationForward())
-    constructRight = vec3(core.getConstructWorldOrientationRight())
-    coreVelocity = vec3(core.getVelocity())
-    constructVelocity = vec3(core.getWorldVelocity())
+    constructUp = vec3(c.getConstructWorldOrientationUp())
+    constructForward = vec3(c.getConstructWorldOrientationForward())
+    constructRight = vec3(c.getConstructWorldOrientationRight())
+    coreVelocity = vec3(c.getVelocity())
+    constructVelocity = vec3(c.getWorldVelocity())
     velMag = vec3(constructVelocity):len()
-    worldVertical = vec3(core.getWorldVertical())
+    worldVertical = vec3(c.getWorldVertical())
     vSpd = -worldVertical:dot(constructVelocity)
-    worldPos = vec3(core.getConstructWorldPos())
+    worldPos = vec3(c.getConstructWorldPos())
     UpVertAtmoEngine = false
     antigravOn = false
     setCruiseSpeed = nil
@@ -150,7 +154,7 @@ VERSION_NUMBER = 1.704
     pvpDist = 50000
     ReversalIsOn = nil
     contacts = {}
-    nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
+    nearPlanet = u.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
     collisionAlertStatus = false
     collisionTarget = nil
 
@@ -164,9 +168,9 @@ VERSION_NUMBER = 1.704
 
 -- Function Definitions that are used in more than one areause 
     --[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
-            -- local t0 = system.getTime()
+            -- local t0 = s.getTime()
             -- <code to be checked>
-            -- _logCompute.addValue(system.getTime() - t0)
+            -- _logCompute.addValue(s.getTime() - t0)
         function Log(name,ty)
             local self={}
             self.Name = name or 'Log'
@@ -242,7 +246,7 @@ VERSION_NUMBER = 1.704
     --]]
     --
     function p(msg)
-        system.print(time..": "..msg)
+        s.print(time..": "..msg)
     end
     --]]
 
@@ -250,12 +254,12 @@ VERSION_NUMBER = 1.704
         if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
         if type ~= nil then
             if type == 2 then
-                system.logInfo("sound_loop|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
+                s.logInfo("sound_loop|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
             else
-                system.logInfo("sound_notification|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
+                s.logInfo("sound_notification|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
             end
         else
-            system.logInfo("sound_q|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
+            s.logInfo("sound_q|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
         end
     end
 
@@ -360,7 +364,7 @@ VERSION_NUMBER = 1.704
         if dbHud_1 then
             writeData(autoVariables) 
             writeData(saveableVariables())
-            system.print("Saved Variables to Datacore")
+            s.print("Saved Variables to Datacore")
             if copy and dbHud_2 then
                 msgText = "Databank copied.  Remove copy when ready."
             end
@@ -556,9 +560,9 @@ VERSION_NUMBER = 1.704
             for _, v in pairs(referenceTable) do
                 local id = v.planetarySystemId
                 if type(id) ~= 'number' then
-                    error('Invalid planetary system ID: ' .. tostring(id))
+                    error('Invalid planetary s ID: ' .. tostring(id))
                 elseif pid and id ~= pid then
-                    error('Mistringmatch planetary system IDs: ' .. id .. ' and ' .. pid)
+                    error('Mistringmatch planetary s IDs: ' .. id .. ' and ' .. pid)
                 end
                 local bid = v.bodyId
                 if type(bid) ~= 'number' then
@@ -573,7 +577,7 @@ VERSION_NUMBER = 1.704
             return setmetatable(atlas, PlanetarySystem)
         end
 
-        -- PlanetaryReference - map planetary system ID to PlanetarySystem
+        -- PlanetaryReference - map planetary s ID to PlanetarySystem
         PlanetaryReference = {}
         local function mkPlanetaryReference(referenceTable)
             return setmetatable({
@@ -582,8 +586,8 @@ VERSION_NUMBER = 1.704
         end
         PlanetaryReference.__index = function(t, i)
             if type(i) == 'number' then
-                local system = t.galaxyAtlas[i]
-                return mkPlanetarySystem(system)
+                local s = t.galaxyAtlas[i]
+                return mkPlanetarySystem(s)
             end
             return rawget(PlanetaryReference, i)
         end
@@ -635,12 +639,12 @@ VERSION_NUMBER = 1.704
                 systemId = overload.systemId
             end
             if type(systemId) == 'number' then
-                local system = self.galaxyAtlas[i]
-                if system then
+                local s = self.galaxyAtlas[i]
+                if s then
                     if getmetatable(nv) ~= PlanetarySystem then
-                        system = mkPlanetarySystem(system)
+                        s = mkPlanetarySystem(s)
                     end
-                    return system
+                    return s
                 end
             end
             -- end
@@ -775,7 +779,7 @@ VERSION_NUMBER = 1.704
             end
             assert(isMapPosition(mapPosition), 'Argument 1 (mapPosition) is not an instance of "MapPosition".')
             assert(mapPosition.systemId == self.systemId,
-                'Argument 1 (mapPosition) has a different planetary system ID.')
+                'Argument 1 (mapPosition) has a different planetary s ID.')
             assert(mapPosition.id == self.id, 'Argument 1 (mapPosition) has a different planetary body ID.')
             local xproj = math.cos(mapPosition.latitude)
             return self.center + (self.radius + mapPosition.altitude) *
@@ -1193,7 +1197,7 @@ VERSION_NUMBER = 1.704
                     local p = getPlanet(position)
                     local gravity = p.gravity
                     if safe then
-                        gravity = unit.getClosestPlanetInfluence()
+                        gravity = u.getClosestPlanetInfluence()
                     end
                     local newLocation = {
                         position = position,
@@ -1249,7 +1253,7 @@ VERSION_NUMBER = 1.704
                     adjustAutopilotTargetIndex()
                 else
                     local location = SavedLocations[index]
-                    location.gravity = unit.getClosestPlanetInfluence()
+                    location.gravity = u.getClosestPlanetInfluence()
                     location.position = worldPos
                     location.safe = true
                 end
@@ -1335,7 +1339,7 @@ VERSION_NUMBER = 1.704
                     end
                     LastVersionUpdate = VERSION_NUMBER
                 else
-                    msgText = "No databank found. Attach one to control unit and rerun \nthe autoconfigure to save preferences and locations"
+                    msgText = "No databank found. Attach one to control u and rerun \nthe autoconfigure to save preferences and locations"
                 end
             
                 if (LastStartTime + 180) < time then -- Variables to reset if out of seat (and not on hud) for more than 3 min
@@ -1375,20 +1379,20 @@ VERSION_NUMBER = 1.704
                     return vanillaMaxVolume            
                 end
 
-                local eleName = core.getElementNameById
+                local eleName = c.getElementNameById
                 local checkTanks = (fuelX ~= 0 and fuelY ~= 0)
-                for k in pairs(elementsID) do --Look for space engines, landing gear, fuel tanks if not slotted and core size
-                    local type = core.getElementTypeById(elementsID[k])
+                for k in pairs(elementsID) do --Look for space engines, landing gear, fuel tanks if not slotted and c size
+                    local type = c.getElementTypeById(elementsID[k])
                     if stringmatch(type, '^.*Atmospheric Engine$') then
-                        if stringmatch(tostring(core.getElementTagsById(elementsID[k])), '^.*vertical.*$') and core.getElementForwardById(elementsID[k])[3]>0 then
+                        if stringmatch(tostring(c.getElementTagsById(elementsID[k])), '^.*vertical.*$') and c.getElementForwardById(elementsID[k])[3]>0 then
                             UpVertAtmoEngine = true
                         end
                     end
 
                     if stringmatch(type, '^.*Space Engine$') then
                         SpaceEngines = true
-                        if stringmatch(tostring(core.getElementTagsById(elementsID[k])), '^.*vertical.*$') then
-                            local enrot = core.getElementForwardById(elementsID[k])
+                        if stringmatch(tostring(c.getElementTagsById(elementsID[k])), '^.*vertical.*$') then
+                            local enrot = c.getElementForwardById(elementsID[k])
                             if enrot[3] < 0 then
                                 SpaceEngineVertUp = true
                             else
@@ -1520,9 +1524,9 @@ VERSION_NUMBER = 1.704
                 end
                 -- unfreeze the player if he is remote controlling the construct
                 if isRemote() == 1 and RemoteFreeze then
-                    system.freeze(1)
+                    s.freeze(1)
                 else
-                    system.freeze(0)
+                    s.freeze(0)
                 end
                 if hasGear then
                     GearExtended = (Nav.control.isAnyLandingGearExtended() == 1)
@@ -1548,7 +1552,7 @@ VERSION_NUMBER = 1.704
             
                 -- Store their max kinematic parameters in ship-up direction for use in brake-landing
                 if inAtmo and abvGndDet ~= -1 then 
-                    maxKinematicUp = core.getMaxKinematicsParametersAlongAxis("ground", core.getConstructOrientationUp())[1]
+                    maxKinematicUp = c.getMaxKinematicsParametersAlongAxis("ground", c.getConstructOrientationUp())[1]
                 end
             
                 WasInAtmo = inAtmo
@@ -1655,7 +1659,7 @@ VERSION_NUMBER = 1.704
             ProcessElements()
             coroutine.yield() -- Give it some time to breathe before we do the rest
 
-            AP = APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, antigrav,
+            AP = APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
                 mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
                 navCom, sysUpData, sysIsVwLock, msqrt, round)
             SetupChecks() -- All the if-thens to set up for particular ship.  Specifically override these with the saved variables if available
@@ -1663,30 +1667,30 @@ VERSION_NUMBER = 1.704
             coroutine.yield() -- Just to make sure
 
             atlasSetup()
-            RADAR = RadarClass(core, system, library, radar_1, radar_2, 
+            RADAR = RadarClass(c, s, library, radar_1, radar_2, 
                 mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag)
-            HUD = HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, hover, shield_1,
+            HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1,
                 mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
                 navCom, sysDestWid, sysIsVwLock, msqrt, round, svgText)
             HUD.ButtonSetup()
-            CONTROL = ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav, shield_1, dbHud_2,
+            CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2,
                 isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp)
             coroutine.yield()
  
-            unit.hide()
-            system.showScreen(1)
-            system.showHelper(0)
+            u.hide()
+            s.showScreen(1)
+            s.showHelper(0)
             -- That was a lot of work with dirty strings and json.  Clean up
             collectgarbage("collect")
             -- Start timers
             coroutine.yield()
 
-            unit.setTimer("apTick", apTickRate)
-            unit.setTimer("radarTick", apTickRate)
-            unit.setTimer("hudTick", hudTickRate)
-            unit.setTimer("oneSecond", 1)
-            unit.setTimer("tenthSecond", 1/10)
-            unit.setTimer("fiveSecond", 5) 
+            u.setTimer("apTick", apTickRate)
+            u.setTimer("radarTick", apTickRate)
+            u.setTimer("hudTick", hudTickRate)
+            u.setTimer("oneSecond", 1)
+            u.setTimer("tenthSecond", 1/10)
+            u.setTimer("fiveSecond", 5) 
             play("start","SU")
         end)
         coroutine.resume(beginSetup)
@@ -1700,7 +1704,7 @@ VERSION_NUMBER = 1.704
         if warpdrive ~= nil then
             warpdrive.hide()
         end
-        core.hide()
+        c.hide()
         Nav.control.switchOffHeadlights()
         -- Open door and extend ramp if available
         if door and (atmosDensity > 0 or (atmosDensity == 0 and coreAltitude < 10000)) then
@@ -1727,7 +1731,7 @@ VERSION_NUMBER = 1.704
         play("stop","SU")
         --[[ --EliasVilld Log Code for printing timing checks.
         for _,s in pairs(Logs.getLogs()) do
-            system.print(s)
+            s.print(s)
         end
         --]]
     end
@@ -1742,45 +1746,45 @@ VERSION_NUMBER = 1.704
                 play("rdrCon","RC")
                 contactTimer = time
             end
-            unit.stopTimer("contact")
+            u.stopTimer("contact")
         elseif timerId == "tenthSecond" then -- Timer executed ever tenth of a second
             -- Local Functions for tenthSecond
 
                 local function SetupInterplanetaryPanel() -- Interplanetary helper
-                    local sysCrData = system.createData
-                    local sysCrWid = system.createWidget
-                    panelInterplanetary = system.createWidgetPanel("Interplanetary Helper")
+                    local sysCrData = s.createData
+                    local sysCrWid = s.createWidget
+                    panelInterplanetary = s.createWidgetPanel("Interplanetary Helper")
                 
                     interplanetaryHeader = sysCrWid(panelInterplanetary, "value")
-                    interplanetaryHeaderText = sysCrData('{"label": "Target Planet", "value": "N/A", "unit":""}')
+                    interplanetaryHeaderText = sysCrData('{"label": "Target Planet", "value": "N/A", "u":""}')
                     sysAddData(interplanetaryHeaderText, interplanetaryHeader)
                 
                     widgetDistance = sysCrWid(panelInterplanetary, "value")
-                    widgetDistanceText = sysCrData('{"label": "distance", "value": "N/A", "unit":""}')
+                    widgetDistanceText = sysCrData('{"label": "distance", "value": "N/A", "u":""}')
                     sysAddData(widgetDistanceText, widgetDistance)
                 
                     widgetTravelTime = sysCrWid(panelInterplanetary, "value")
-                    widgetTravelTimeText = sysCrData('{"label": "Travel Time", "value": "N/A", "unit":""}')
+                    widgetTravelTimeText = sysCrData('{"label": "Travel Time", "value": "N/A", "u":""}')
                     sysAddData(widgetTravelTimeText, widgetTravelTime)
                 
                     widgetMaxMass = sysCrWid(panelInterplanetary, "value")
-                    widgetMaxMassText = sysCrData('{"label": "Maximum Mass", "value": "N/A", "unit":""}')
+                    widgetMaxMassText = sysCrData('{"label": "Maximum Mass", "value": "N/A", "u":""}')
                     sysAddData(widgetMaxMassText, widgetMaxMass)
                 
                     widgetTargetOrbit = sysCrWid(panelInterplanetary, "value")
-                    widgetTargetOrbitText = sysCrData('{"label": "Target Altitude", "value": "N/A", "unit":""}')
+                    widgetTargetOrbitText = sysCrData('{"label": "Target Altitude", "value": "N/A", "u":""}')
                     sysAddData(widgetTargetOrbitText, widgetTargetOrbit)
                 
                     widgetCurBrakeDistance = sysCrWid(panelInterplanetary, "value")
-                    widgetCurBrakeDistanceText = sysCrData('{"label": "Cur Brake distance", "value": "N/A", "unit":""}')
+                    widgetCurBrakeDistanceText = sysCrData('{"label": "Cur Brake distance", "value": "N/A", "u":""}')
                     widgetCurBrakeTime = sysCrWid(panelInterplanetary, "value")
-                    widgetCurBrakeTimeText = sysCrData('{"label": "Cur Brake Time", "value": "N/A", "unit":""}')
+                    widgetCurBrakeTimeText = sysCrData('{"label": "Cur Brake Time", "value": "N/A", "u":""}')
                     widgetMaxBrakeDistance = sysCrWid(panelInterplanetary, "value")
-                    widgetMaxBrakeDistanceText = sysCrData('{"label": "Max Brake distance", "value": "N/A", "unit":""}')
+                    widgetMaxBrakeDistanceText = sysCrData('{"label": "Max Brake distance", "value": "N/A", "u":""}')
                     widgetMaxBrakeTime = sysCrWid(panelInterplanetary, "value")
-                    widgetMaxBrakeTimeText = sysCrData('{"label": "Max Brake Time", "value": "N/A", "unit":""}')
+                    widgetMaxBrakeTimeText = sysCrData('{"label": "Max Brake Time", "value": "N/A", "u":""}')
                     widgetTrajectoryAltitude = sysCrWid(panelInterplanetary, "value")
-                    widgetTrajectoryAltitudeText = sysCrData('{"label": "Projected Altitude", "value": "N/A", "unit":""}')
+                    widgetTrajectoryAltitudeText = sysCrData('{"label": "Projected Altitude", "value": "N/A", "u":""}')
                     if not inAtmo then
                         sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
                         sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime)
@@ -1802,7 +1806,7 @@ VERSION_NUMBER = 1.704
                         end
                     end
                     local speed = velMag
-                    local throttle = unit.getThrottle()/100
+                    local throttle = u.getThrottle()/100
                     if AtmoSpeedAssist then throttle = PlayerThrottle end
                     local accelDistance, accelTime =
                         Kinematic.computeDistanceAndTime(velMag, MaxGameVelocity, -- From currently velocity to max
@@ -1851,12 +1855,12 @@ VERSION_NUMBER = 1.704
                 end
                 local function RefreshLastMaxBrake(gravity, force)
                     if gravity == nil then
-                        gravity = core.g()
+                        gravity = c.g()
                     end
                     gravity = round(gravity, 5) -- round to avoid insignificant updates
                     if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
                         local speed = coreVelocity:len()
-                        local maxBrake = jdecode(unit.getData()).maxBrake 
+                        local maxBrake = jdecode(u.getData()).maxBrake 
                         if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
                             maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
                             maxBrake = maxBrake / atmosDensity
@@ -1894,7 +1898,7 @@ VERSION_NUMBER = 1.704
                         :len())
                     planetMaxMass = planetMaxMass > 1000000 and round(planetMaxMass / 1000000,2).." kTons" or round(planetMaxMass / 1000, 2).." Tons"
                     sysUpData(interplanetaryHeaderText,
-                        '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "unit":""}')
+                        '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "u":""}')
                     travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
                     if customLocation and not Autopilot then -- If in autopilot, keep this displaying properly
                         distance = (worldPos - CustomTarget.position):len()
@@ -1912,28 +1916,28 @@ VERSION_NUMBER = 1.704
                     sysUpData(widgetDistanceText, '{"label": "distance", "value": "' .. displayText
                         .. '"}')
                     sysUpData(widgetTravelTimeText, '{"label": "Travel Time", "value": "' ..
-                        FormatTimeString(travelTime) .. '", "unit":""}')
+                        FormatTimeString(travelTime) .. '", "u":""}')
                     displayText = getDistanceDisplayString(brakeDistance)
                     sysUpData(widgetCurBrakeDistanceText, '{"label": "Cur Brake distance", "value": "' ..
                         displayText.. '"}')
                     sysUpData(widgetCurBrakeTimeText, '{"label": "Cur Brake Time", "value": "' ..
-                        FormatTimeString(brakeTime) .. '", "unit":""}')
+                        FormatTimeString(brakeTime) .. '", "u":""}')
                     displayText = getDistanceDisplayString(maxBrakeDistance)
                     sysUpData(widgetMaxBrakeDistanceText, '{"label": "Max Brake distance", "value": "' ..
                         displayText.. '"}')
                     sysUpData(widgetMaxBrakeTimeText, '{"label": "Max Brake Time", "value": "' ..
-                        FormatTimeString(maxBrakeTime) .. '", "unit":""}')
+                        FormatTimeString(maxBrakeTime) .. '", "u":""}')
                     sysUpData(widgetMaxMassText, '{"label": "Max Brake Mass", "value": "' ..
-                        stringf("%s", planetMaxMass ) .. '", "unit":""}')
+                        stringf("%s", planetMaxMass ) .. '", "u":""}')
                     displayText = getDistanceDisplayString(AutopilotTargetOrbit)
                     sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
                     displayText .. '"}')
                     if atmosDensity > 0 and not WasInAtmo then
-                        system.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
-                        system.removeDataFromWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
-                        system.removeDataFromWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
-                        system.removeDataFromWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
-                        system.removeDataFromWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
+                        s.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
+                        s.removeDataFromWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
+                        s.removeDataFromWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
+                        s.removeDataFromWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
+                        s.removeDataFromWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
                         WasInAtmo = true
                         if not throttleMode and AtmoSpeedAssist and (AltitudeHold or Reentry or finalLand) then
                             -- If they're reentering atmo from cruise, and have atmo speed Assist
@@ -1984,7 +1988,7 @@ VERSION_NUMBER = 1.704
                     local disabledElements = 0
                     local colorMod = 0
                     local color = ""
-                    local eleHp = core.getElementHitPointsById
+                    local eleHp = c.getElementHitPointsById
     
                     for k in pairs(elementsID) do
                         local hp = 0
@@ -2000,30 +2004,30 @@ VERSION_NUMBER = 1.704
                             end
                             -- Thanks to Jerico for the help and code starter for arrow markers!
                             if repairArrows and #markers == 0 then
-                                position = vec3(core.getElementPositionById(elementsID[k]))
+                                position = vec3(c.getElementPositionById(elementsID[k]))
                                 local x = position.x 
                                 local y = position.y 
                                 local z = position.z 
-                                table.insert(markers, core.spawnArrowSticker(x, y, z + 1, "down"))
-                                table.insert(markers, core.spawnArrowSticker(x, y, z + 1, "down"))
-                                core.rotateSticker(markers[2], 0, 0, 90)
-                                table.insert(markers, core.spawnArrowSticker(x + 1, y, z, "north"))
-                                table.insert(markers, core.spawnArrowSticker(x + 1, y, z, "north"))
-                                core.rotateSticker(markers[4], 90, 90, 0)
-                                table.insert(markers, core.spawnArrowSticker(x - 1, y, z, "south"))
-                                table.insert(markers, core.spawnArrowSticker(x - 1, y, z, "south"))
-                                core.rotateSticker(markers[6], 90, -90, 0)
-                                table.insert(markers, core.spawnArrowSticker(x, y - 1, z, "east"))
-                                table.insert(markers, core.spawnArrowSticker(x, y - 1, z, "east"))
-                                core.rotateSticker(markers[8], 90, 0, 90)
-                                table.insert(markers, core.spawnArrowSticker(x, y + 1, z, "west"))
-                                table.insert(markers, core.spawnArrowSticker(x, y + 1, z, "west"))
-                                core.rotateSticker(markers[10], -90, 0, 90)
+                                table.insert(markers, c.spawnArrowSticker(x, y, z + 1, "down"))
+                                table.insert(markers, c.spawnArrowSticker(x, y, z + 1, "down"))
+                                c.rotateSticker(markers[2], 0, 0, 90)
+                                table.insert(markers, c.spawnArrowSticker(x + 1, y, z, "north"))
+                                table.insert(markers, c.spawnArrowSticker(x + 1, y, z, "north"))
+                                c.rotateSticker(markers[4], 90, 90, 0)
+                                table.insert(markers, c.spawnArrowSticker(x - 1, y, z, "south"))
+                                table.insert(markers, c.spawnArrowSticker(x - 1, y, z, "south"))
+                                c.rotateSticker(markers[6], 90, -90, 0)
+                                table.insert(markers, c.spawnArrowSticker(x, y - 1, z, "east"))
+                                table.insert(markers, c.spawnArrowSticker(x, y - 1, z, "east"))
+                                c.rotateSticker(markers[8], 90, 0, 90)
+                                table.insert(markers, c.spawnArrowSticker(x, y + 1, z, "west"))
+                                table.insert(markers, c.spawnArrowSticker(x, y + 1, z, "west"))
+                                c.rotateSticker(markers[10], -90, 0, 90)
                                 table.insert(markers, elementsID[k])
                             end
                         elseif repairArrows and #markers > 0 and markers[11] == elementsID[k] then
                             for j in pairs(markers) do
-                                core.deleteSticker(markers[j])
+                                c.deleteSticker(markers[j])
                             end
                             markers = {}
                         end
@@ -2071,8 +2075,8 @@ VERSION_NUMBER = 1.704
 
             updateDistance()
 
-            passengers = core.getPlayersOnBoard()
-            ships = core.getDockedConstructs()
+            passengers = c.getPlayersOnBoard()
+            ships = c.getDockedConstructs()
             updateWeapons()
             -- Update odometer output string
             local newContent = {}
@@ -2119,7 +2123,7 @@ VERSION_NUMBER = 1.704
                 for i=1,#AtlasOrdered do    
                     if AtlasOrdered[i].name == myAutopilotTarget then
                         AutopilotTargetIndex = i
-                        system.print("Index = "..AutopilotTargetIndex.." "..AtlasOrdered[i].name)          
+                        s.print("Index = "..AutopilotTargetIndex.." "..AtlasOrdered[i].name)          
                         ATLAS.UpdateAutopilotTarget()
                         dbHud_1.setStringValue("SPBAutopilotTargetName", "SatNavNotChanged")
                         break            
@@ -2131,14 +2135,14 @@ VERSION_NUMBER = 1.704
             local newContent = {}
             HUD.DisplayMessage(newContent, "empty")
             msgText = "empty"
-            unit.stopTimer("msgTick")
+            u.stopTimer("msgTick")
             msgTimer = 3
         elseif timerId == "animateTick" then -- Timer for animation
             Animated = true
             Animating = false
             simulatedX = 0
             simulatedY = 0
-            unit.stopTimer("animateTick")
+            u.stopTimer("animateTick")
         elseif timerId == "hudTick" then -- Timer for all hud updates not called elsewhere
             HUD.hudtick()
         elseif timerId == "apTick" then -- Timer for all autopilot functions
@@ -2153,7 +2157,7 @@ VERSION_NUMBER = 1.704
             else UseExtra = "Off"
             end
             msgText = "Extra Engine Tags: "..UseExtra 
-            unit.stopTimer("tagTick")
+            u.stopTimer("tagTick")
         end
     end
 
@@ -2165,22 +2169,22 @@ VERSION_NUMBER = 1.704
                 local axisWorldDirection = vec3()
             
                 if (commandAxis == axisCommandId.longitudinal) then
-                    axisCRefDirection = vec3(core.getConstructOrientationForward())
+                    axisCRefDirection = vec3(c.getConstructOrientationForward())
                     axisWorldDirection = constructForward
                 elseif (commandAxis == axisCommandId.vertical) then
-                    axisCRefDirection = vec3(core.getConstructOrientationUp())
+                    axisCRefDirection = vec3(c.getConstructOrientationUp())
                     axisWorldDirection = constructUp
                 elseif (commandAxis == axisCommandId.lateral) then
-                    axisCRefDirection = vec3(core.getConstructOrientationRight())
+                    axisCRefDirection = vec3(c.getConstructOrientationRight())
                     axisWorldDirection = constructRight
                 else
                     return vec3()
                 end
             
-                local gravityAcceleration = vec3(core.getWorldGravity())
+                local gravityAcceleration = vec3(c.getWorldGravity())
                 local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
             
-                local airResistanceAcceleration = vec3(core.getWorldAirFrictionAcceleration())
+                local airResistanceAcceleration = vec3(c.getWorldAirFrictionAcceleration())
                 local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
             
 
@@ -2199,8 +2203,8 @@ VERSION_NUMBER = 1.704
                 local finalAcceleration = (accelerationCommand - airResistanceAccelerationCommand - gravityAccelerationCommand) * axisWorldDirection  -- Try to compensate air friction
             
                 -- The hell are these? Uncommented recently just in case they were important
-                --system.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
-                --system.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
+                --s.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
+                --s.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
             
                 return finalAcceleration
             end
@@ -2211,22 +2215,22 @@ VERSION_NUMBER = 1.704
                 local axisWorldDirection = vec3()
             
                 if (commandAxis == axisCommandId.longitudinal) then
-                    axisCRefDirection = vec3(core.getConstructOrientationForward())
+                    axisCRefDirection = vec3(c.getConstructOrientationForward())
                     axisWorldDirection = constructForward
                 elseif (commandAxis == axisCommandId.vertical) then
-                    axisCRefDirection = vec3(core.getConstructOrientationUp())
+                    axisCRefDirection = vec3(c.getConstructOrientationUp())
                     axisWorldDirection = constructUp
                 elseif (commandAxis == axisCommandId.lateral) then
-                    axisCRefDirection = vec3(core.getConstructOrientationRight())
+                    axisCRefDirection = vec3(c.getConstructOrientationRight())
                     axisWorldDirection = constructRight
                 else
                     return vec3()
                 end
             
-                local gravityAcceleration = vec3(core.getWorldGravity())
+                local gravityAcceleration = vec3(c.getWorldGravity())
                 local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
             
-                local airResistanceAcceleration = vec3(core.getWorldAirFrictionAcceleration())
+                local airResistanceAcceleration = vec3(c.getWorldAirFrictionAcceleration())
                 local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
             
                 local currentAxisSpeedMS = coreVelocity:dot(axisCRefDirection)
@@ -2244,8 +2248,8 @@ VERSION_NUMBER = 1.704
                 local finalAcceleration = (accelerationCommand - airResistanceAccelerationCommand - gravityAccelerationCommand) * axisWorldDirection  -- Try to compensate air friction
             
                 -- The hell are these? Uncommented recently just in case they were important
-                --system.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
-                --system.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
+                --s.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
+                --s.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
             
                 return finalAcceleration
             end
@@ -2288,24 +2292,24 @@ VERSION_NUMBER = 1.704
         brakeFlatFactor = math.max(brakeFlatFactor, 0.01)
         autoRollFactor = math.max(autoRollFactor, 0.01)
         -- final inputs
-        local finalPitchInput = uclamp(pitchInput + pitchInput2 + system.getControlDeviceForwardInput(),-1,1)
-        local finalRollInput = uclamp(rollInput + rollInput2 + system.getControlDeviceYawInput(),-1,1)
-        local finalYawInput = uclamp((yawInput + yawInput2) - system.getControlDeviceLeftRightInput(),-1,1)
+        local finalPitchInput = uclamp(pitchInput + pitchInput2 + s.getControlDeviceForwardInput(),-1,1)
+        local finalRollInput = uclamp(rollInput + rollInput2 + s.getControlDeviceYawInput(),-1,1)
+        local finalYawInput = uclamp((yawInput + yawInput2) - s.getControlDeviceLeftRightInput(),-1,1)
         local finalBrakeInput = brakeInput
 
         -- Axis
-        worldVertical = vec3(core.getWorldVertical()) -- along gravity
+        worldVertical = vec3(c.getWorldVertical()) -- along gravity
         if worldVertical == nil or worldVertical:len() == 0 then
             worldVertical = (planet.center - worldPos):normalize() -- I think also along gravity hopefully?
         end
 
-        constructUp = vec3(core.getConstructWorldOrientationUp())
-        constructForward = vec3(core.getConstructWorldOrientationForward())
-        constructRight = vec3(core.getConstructWorldOrientationRight())
-        constructVelocity = vec3(core.getWorldVelocity())
-        coreVelocity = vec3(core.getVelocity())
-        worldPos = vec3(core.getConstructWorldPos())
-        coreMass =  core.getConstructMass()
+        constructUp = vec3(c.getConstructWorldOrientationUp())
+        constructForward = vec3(c.getConstructWorldOrientationForward())
+        constructRight = vec3(c.getConstructWorldOrientationRight())
+        constructVelocity = vec3(c.getWorldVelocity())
+        coreVelocity = vec3(c.getVelocity())
+        worldPos = vec3(c.getConstructWorldPos())
+        coreMass =  c.getConstructMass()
         velMag = vec3(constructVelocity):len()
         vSpd = -worldVertical:dot(constructVelocity)
         adjustedRoll = getRoll(worldVertical, constructForward, constructRight) 
@@ -2319,7 +2323,7 @@ VERSION_NUMBER = 1.704
         local currentRollDegSign = utils.sign(adjustedRoll)
     
         -- Rotation
-        local constructAngularVelocity = vec3(core.getWorldAngularVelocity())
+        local constructAngularVelocity = vec3(c.getWorldAngularVelocity())
         local targetAngularVelocity =
             finalPitchInput * pitchSpeedFactor * constructRight + finalRollInput * rollSpeedFactor * constructForward +
                 finalYawInput * yawSpeedFactor * constructUp
@@ -2351,9 +2355,10 @@ VERSION_NUMBER = 1.704
         local keepCollinearity = 1 -- for easier reading
         local dontKeepCollinearity = 0 -- for easier reading
         local tolerancePercentToSkipOtherPriorities = 1 -- if we are within this tolerance (in%), we don't go to the next priorities
-        local wheel = system.getMouseWheel()
+        local wheel = s.getMouseWheel()
 
         if wheel > 0 then
+            p("HERE1")
             AP.changeSpd()
         elseif wheel < 0 then
             AP.changeSpd(true)
@@ -2497,7 +2502,7 @@ VERSION_NUMBER = 1.704
                 navCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle) -- Use PlayerThrottle always.
             end
 
-            local targetSpeed = unit.getAxisCommandValue(0)
+            local targetSpeed = u.getAxisCommandValue(0)
 
             if not throttleMode then -- Use a PID to brake past targetSpeed
                 if (brakePID == nil) then
@@ -2594,7 +2599,7 @@ VERSION_NUMBER = 1.704
 
         -- Rotation
         local angularAcceleration = torqueFactor * (targetAngularVelocity - constructAngularVelocity)
-        local airAcceleration = vec3(core.getWorldAirFrictionAngularAcceleration())
+        local airAcceleration = vec3(c.getWorldAirFrictionAngularAcceleration())
         angularAcceleration = angularAcceleration - airAcceleration -- Try to compensate air friction
         
         Nav:setEngineTorqueCommand('torque', angularAcceleration, keepCollinearity, 'airfoil', '', '',
@@ -2616,7 +2621,7 @@ VERSION_NUMBER = 1.704
                     Nav:toggleBoosters()
                 end
             else -- Atmosphere Rocket Boost Assist Not in Cruise Control by Azraeil
-                local throttle = unit.getThrottle()
+                local throttle = u.getThrottle()
                 if AtmoSpeedAssist then throttle = PlayerThrottle*100 end
                 local targetSpeed = (throttle/100)
                 if atmosphere == 0 then
@@ -2648,7 +2653,7 @@ VERSION_NUMBER = 1.704
             local cont = coroutine.status (beginSetup)
             if cont == "suspended" then 
                 local value, done = coroutine.resume(beginSetup)
-                if done then system.print("ERROR STARTUP: "..done) end
+                if done then s.print("ERROR STARTUP: "..done) end
             elseif cont == "dead" then
                 SetupComplete = true
             end
@@ -2656,7 +2661,7 @@ VERSION_NUMBER = 1.704
         if SetupComplete then
             Nav:update()
             if not Animating and content ~= LastContent then
-                system.setScreen(content) 
+                s.setScreen(content) 
             end
             LastContent = content
         end
@@ -2680,7 +2685,7 @@ VERSION_NUMBER = 1.704
 
     function script.onEnter(id)
         if radar_1 and not inAtmo and not notPvPZone then 
-            unit.setTimer("contact",0.1) 
+            u.setTimer("contact",0.1) 
         end
     end
 
