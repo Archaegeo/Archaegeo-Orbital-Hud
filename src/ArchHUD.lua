@@ -1,13 +1,16 @@
 require 'src.slots'
+local s=system
+local c=core
+local u=unit
 
-local Nav = Navigator.new(system, core, unit)
+local Nav = Navigator.new(s, c, u)
 local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.5204
+VERSION_NUMBER = 0.705
 
--- User variables, visable via Edit Lua Parameters. Must be global to work with databank system as set up due to using _G assignment
+-- User variables, visable via Edit Lua Parameters. Must be global to work with databank s as set up due to using _G assignment
     useTheseSettings = false
     userControlScheme = "virtual joystick"
     soundFolder = "archHUD"
@@ -177,24 +180,23 @@ VERSION_NUMBER = 1.5204
     local stringf = string.format
     local jdecode = json.decode
     local jencode = json.encode
-    local eleMaxHp = core.getElementMaxHitPointsById
-    local atmosphere = unit.getAtmosphereDensity
-    local eleMass = core.getElementMassById
+    local eleMaxHp = c.getElementMaxHitPointsById
+    local atmosphere = u.getAtmosphereDensity
+    local eleMass = c.getElementMassById
     local isRemote = Nav.control.isRemoteControlled
     local atan = math.atan
     local stringmatch = string.match
-    local systime = system.getTime
+    local systime = s.getTime
     local vec3 = vec3
     local uclamp = utils.clamp
     local navCom = Nav.axisCommandManager
-    local sysDestWid = system.destroyWidgetPanel
-    local sysUpData = system.updateData
-    local sysAddData = system.addDataToWidget
-    local sysLockVw = system.lockView
-    local sysIsVwLock = system.isViewLocked
+    local sysDestWid = s.destroyWidgetPanel
+    local sysUpData = s.updateData
+    local sysAddData = s.addDataToWidget
+    local sysLockVw = s.lockView
+    local sysIsVwLock = s.isViewLocked
     local msqrt = math.sqrt
     local tonum = tonumber
-    local core = core
 
     local function round(num, numDecimalPlaces) -- rounds variable num to numDecimalPlaces
         local mult = 10 ^ (numDecimalPlaces or 0)
@@ -248,10 +250,10 @@ VERSION_NUMBER = 1.5204
     local myAutopilotTarget=""
     local inAtmo = (atmosphere() > 0)
     local atmosDensity = atmosphere()
-    local coreAltitude = core.getAltitude()
-    local elementsID = core.getElementIdList()
+    local coreAltitude = c.getAltitude()
+    local elementsID = c.getElementIdList()
     local lastTravelTime = systime()
-    local coreMass = core.getConstructMass()
+    local coreMass = c.getConstructMass()
     local mousePause = false
     local gyroIsOn = nil
     local rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
@@ -296,15 +298,15 @@ VERSION_NUMBER = 1.5204
     local SpaceEngineVertDn = false
     local SpaceEngines = false
 
-    local constructUp = vec3(core.getConstructWorldOrientationUp())
-    local constructForward = vec3(core.getConstructWorldOrientationForward())
-    local constructRight = vec3(core.getConstructWorldOrientationRight())
-    local coreVelocity = vec3(core.getVelocity())
-    local constructVelocity = vec3(core.getWorldVelocity())
+    local constructUp = vec3(c.getConstructWorldOrientationUp())
+    local constructForward = vec3(c.getConstructWorldOrientationForward())
+    local constructRight = vec3(c.getConstructWorldOrientationRight())
+    local coreVelocity = vec3(c.getVelocity())
+    local constructVelocity = vec3(c.getWorldVelocity())
     local velMag = vec3(constructVelocity):len()
-    local worldVertical = vec3(core.getWorldVertical())
+    local worldVertical = vec3(c.getWorldVertical())
     local vSpd = -worldVertical:dot(constructVelocity)
-    local worldPos = vec3(core.getConstructWorldPos())
+    local worldPos = vec3(c.getConstructWorldPos())
 
     local UpVertAtmoEngine = false
     local antigravOn = false
@@ -320,7 +322,7 @@ VERSION_NUMBER = 1.5204
 
     local ReversalIsOn = nil
     local contacts = {}
-    local nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
+    local nearPlanet = u.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
     local collisionAlertStatus = false
     local collisionTarget = nil
 
@@ -336,9 +338,9 @@ VERSION_NUMBER = 1.5204
 
 -- Function Definitions that are used in more than one areause 
     --[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
-            -- local t0 = system.getTime()
+            -- local t0 = s.getTime()
             -- <code to be checked>
-            -- _logCompute.addValue(system.getTime() - t0)
+            -- _logCompute.addValue(s.getTime() - t0)
         function Log(name,ty)
                 local self={}
                 self.Name = name or 'Log'
@@ -412,9 +414,9 @@ VERSION_NUMBER = 1.5204
             return self
         end
     --]]
-    --
+    --[[
     function p(msg)
-        system.print(time..": "..msg)
+        s.print(time..": "..msg)
     end
     --]]
 
@@ -422,12 +424,12 @@ VERSION_NUMBER = 1.5204
         if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
         if type ~= nil then
             if type == 2 then
-                system.logInfo("sound_loop|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
+                s.logInfo("sound_loop|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
             else
-                system.logInfo("sound_notification|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
+                s.logInfo("sound_notification|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
             end
         else
-            system.logInfo("sound_q|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
+            s.logInfo("sound_q|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
         end
     end
 
@@ -548,7 +550,7 @@ VERSION_NUMBER = 1.5204
         if dbHud_1 then
             writeData(autoVariables) 
             writeData(saveableVariables())
-            system.print("Saved Variables to Datacore")
+            s.print("Saved Variables to Datacore")
             if copy and dbHud_2 then
                 msgText = "Databank copied.  Remove copy when ready."
             end
@@ -745,9 +747,9 @@ VERSION_NUMBER = 1.5204
             for _, v in pairs(referenceTable) do
                 local id = v.planetarySystemId
                 if type(id) ~= 'number' then
-                    error('Invalid planetary system ID: ' .. tostring(id))
+                    error('Invalid planetary s ID: ' .. tostring(id))
                 elseif pid and id ~= pid then
-                    error('Mistringmatch planetary system IDs: ' .. id .. ' and ' .. pid)
+                    error('Mistringmatch planetary s IDs: ' .. id .. ' and ' .. pid)
                 end
                 local bid = v.bodyId
                 if type(bid) ~= 'number' then
@@ -762,7 +764,7 @@ VERSION_NUMBER = 1.5204
             return setmetatable(atlas, PlanetarySystem)
         end
 
-        -- PlanetaryReference - map planetary system ID to PlanetarySystem
+        -- PlanetaryReference - map planetary s ID to PlanetarySystem
         PlanetaryReference = {}
         local function mkPlanetaryReference(referenceTable)
             return setmetatable({
@@ -771,8 +773,8 @@ VERSION_NUMBER = 1.5204
         end
         PlanetaryReference.__index = function(t, i)
             if type(i) == 'number' then
-                local system = t.galaxyAtlas[i]
-                return mkPlanetarySystem(system)
+                local s = t.galaxyAtlas[i]
+                return mkPlanetarySystem(s)
             end
             return rawget(PlanetaryReference, i)
         end
@@ -824,12 +826,12 @@ VERSION_NUMBER = 1.5204
                 systemId = overload.systemId
             end
             if type(systemId) == 'number' then
-                local system = self.galaxyAtlas[i]
-                if system then
+                local s = self.galaxyAtlas[i]
+                if s then
                     if getmetatable(nv) ~= PlanetarySystem then
-                        system = mkPlanetarySystem(system)
+                        s = mkPlanetarySystem(s)
                     end
-                    return system
+                    return s
                 end
             end
             -- end
@@ -966,7 +968,7 @@ VERSION_NUMBER = 1.5204
             end
             assert(isMapPosition(mapPosition), 'Argument 1 (mapPosition) is not an instance of "MapPosition".')
             assert(mapPosition.systemId == self.systemId,
-                'Argument 1 (mapPosition) has a different planetary system ID.')
+                'Argument 1 (mapPosition) has a different planetary s ID.')
             assert(mapPosition.id == self.id, 'Argument 1 (mapPosition) has a different planetary body ID.')
             local xproj = math.cos(mapPosition.latitude)
             return self.center + (self.radius + mapPosition.altitude) *
@@ -1256,9 +1258,9 @@ VERSION_NUMBER = 1.5204
     
                 local function getTrueWorldPos()
                     local function getLocalToWorldConverter()
-                        local v1 = core.getConstructWorldOrientationRight()
-                        local v2 = core.getConstructWorldOrientationForward()
-                        local v3 = core.getConstructWorldOrientationUp()
+                        local v1 = c.getConstructWorldOrientationRight()
+                        local v2 = c.getConstructWorldOrientationForward()
+                        local v3 = c.getConstructWorldOrientationUp()
                         local v1t = library.systemResolution3(v1, v2, v3, {1,0,0})
                         local v2t = library.systemResolution3(v1, v2, v3, {0,1,0})
                         local v3t = library.systemResolution3(v1, v2, v3, {0,0,1})
@@ -1267,8 +1269,8 @@ VERSION_NUMBER = 1.5204
                         end
                     end
                     local cal = getLocalToWorldConverter()
-                    local cWorldPos = core.getConstructWorldPos()
-                    local pos = core.getElementPositionById(1)
+                    local cWorldPos = c.getConstructWorldPos()
+                    local pos = c.getElementPositionById(1)
                     local offsetPosition = {pos[1] , pos[2] , pos[3] }
                     local adj = cal(offsetPosition)
                     local adjPos = {cWorldPos[1] - adj[1], cWorldPos[2] - adj[2], cWorldPos[3] - adj[3]}
@@ -1399,7 +1401,7 @@ VERSION_NUMBER = 1.5204
             local cont = coroutine.status (UpdateRadarCoroutine)
             if cont == "suspended" then 
                 local value, done = coroutine.resume(UpdateRadarCoroutine)
-                if done then system.print("ERROR UPDATE RADAR: "..done) end
+                if done then s.print("ERROR UPDATE RADAR: "..done) end
             elseif cont == "dead" then
                 UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
                 local value, done = coroutine.resume(UpdateRadarCoroutine)
@@ -1601,7 +1603,7 @@ VERSION_NUMBER = 1.5204
                         local name = string.sub(tankTable[i][tankName], 1, 12)
                         local slottedIndex = 0
                         for j = 1, slottedTanks do
-                            if tankTable[i][tankName] == jdecode(unit[slottedTankType .. "_" .. j].getData()).name then
+                            if tankTable[i][tankName] == jdecode(u[slottedTankType .. "_" .. j].getData()).name then
                                 slottedIndex = j
                                 break
                             end
@@ -1614,9 +1616,9 @@ VERSION_NUMBER = 1.5204
                             local fuelMassLast
                             local fuelMass = 0
                             if slottedIndex ~= 0 then
-                                fuelPercentTable[i] = jdecode(unit[slottedTankType .. "_" .. slottedIndex].getData())
+                                fuelPercentTable[i] = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
                                                         .percentage
-                                fuelTimeLeftTable[i] = jdecode(unit[slottedTankType .. "_" .. slottedIndex].getData())
+                                fuelTimeLeftTable[i] = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
                                                         .timeLeft
                                 if fuelTimeLeftTable[i] == "n/a" then
                                     fuelTimeLeftTable[i] = 0
@@ -2131,11 +2133,11 @@ VERSION_NUMBER = 1.5204
                     y2 = 65
                 end            
                 local label = "CRUISE"
-                local unit = "km/h"
+                local u = "km/h"
                 local value = flightValue
                 if (flightStyle == "TRAVEL" or flightStyle == "AUTOPILOT") then
                     label = "THROT"
-                    unit = "%"
+                    u = "%"
                     value = throt
                     local throtclass = "dim"
                     if throt < 0 then
@@ -2149,7 +2151,7 @@ VERSION_NUMBER = 1.5204
                         throtPosX-10, throtPosY+50, throtPosX-15, throtPosY+53, throtPosX-15, throtPosY+47)
                 end
                 newContent[#newContent + 1] = svgText(throtPosX+10, y1, label , "pbright txtstart")
-                newContent[#newContent + 1] = svgText(throtPosX+10, y2, stringf("%.0f %s", value, unit), "pbright txtstart")
+                newContent[#newContent + 1] = svgText(throtPosX+10, y2, stringf("%.0f %s", value, u), "pbright txtstart")
                 if inAtmo and AtmoSpeedAssist and throttleMode and ThrottleLimited then
                     -- Display a marker for where the AP throttle is putting it, calculatedThrottle
             
@@ -2190,7 +2192,7 @@ VERSION_NUMBER = 1.5204
     
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(1900), ConvertResolutionY(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
                 newContent[#newContent + 1] = [[<g class="warnings">]]
-                if unit.isMouseControlActivated() == 1 then
+                if u.isMouseControlActivated() == 1 then
                     newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(550), "Warning: Invalid Control Scheme Detected", "warnings")
                     newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(600), "Keyboard Scheme must be selected", "warnings")
                     newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(650), "Set your preferred scheme in Lua Parameters instead", "warnings")
@@ -2821,7 +2823,7 @@ VERSION_NUMBER = 1.5204
                             end
                         end
                         -- Draw a 'You Are Here' - face edition
-                        local pos = vec3(core.getConstructWorldPos())
+                        local pos = vec3(c.getConstructWorldPos())
                         local x = orbitMapX + orbitMapSize + pos.x / xRatio
                         local y = orbitMapY + orbitMapSize*1.5/2 + pos.y / yRatio
                         GalaxyMapHTML = GalaxyMapHTML .. '<circle cx="' .. x .. '" cy="' .. y ..
@@ -2910,7 +2912,7 @@ VERSION_NUMBER = 1.5204
                         --if nearestDistance < 0 then nearestDistance = targetDistance - v.radius end
                         --if v.name == "Teoma" then p(x .. "," .. y .. " - " .. xAngle .. ", " .. yAngle) end
     
-                        -- Seems useful to give the distance to the atmo, land, etc instead of to the core
+                        -- Seems useful to give the distance to the atmo, land, etc instead of to the c
                         -- But it looks weird and I can't really label what it is, it'd take up too much space
                         local distance = getDistanceDisplayString(targetDistance,1)
                         local displayString = v.name
@@ -3710,104 +3712,7 @@ VERSION_NUMBER = 1.5204
             -- so that "fill:none" gets applied
             local crx = ConvertResolutionX
             local cry = ConvertResolutionY
-            newContent[#newContent + 1] = stringf([[
-                <head>
-                    <style>
-                        body {margin: 0}
-                        svg {position:absolute;top:0;left:0;font-family:Montserrat;} 
-                        .txt {font-size:10px;font-weight:bold;}
-                        .txttick {font-size:12px;font-weight:bold;}
-                        .txtbig {font-size:14px;font-weight:bold;}
-                        .altsm {font-size:16px;font-weight:normal;}
-                        .altbig {font-size:21px;font-weight:normal;}
-                        .line {stroke-width:2px;fill:none;stroke:%s}
-                        .linethick {stroke-width:3px;fill:none}
-                        .linethin {stroke-width:1px;fill:none}
-                        .warnings {font-size:26px;fill:red;text-anchor:middle;font-family:Bank;}
-                        .warn {fill:orange; font-size:24px}
-                        .crit {fill:darkred;font-size:28px}
-                        .bright {fill:%s;stroke:%s}
-                        text.bright {stroke:black; stroke-width:10px;paint-order:stroke;}
-                        .pbright {fill:%s;stroke:%s}
-                        text.pbright {stroke:black; stroke-width:10px;paint-order:stroke;}
-                        .dim {fill:%s;stroke:%s}
-                        text.dim {stroke:black; stroke-width:10px;paint-order:stroke;}
-                        .pdim {fill:%s;stroke:%s}
-                        text.pdim {stroke:black; stroke-width:10px;paint-order:stroke;}
-                        .red {fill:red;stroke:red}
-                        text.red {stroke:black; stroke-width:10px;paint-order:stroke;}
-                        .orange {fill:orange;stroke:orange}
-                        text.orange {stroke:black; stroke-width:10px;paint-order:stroke;}
-                        .redout {fill:none;stroke:red}
-                        .op30 {opacity:0.3}
-                        .op10 {opacity:0.1}
-                        .txtstart {text-anchor:start}
-                        .txtend {text-anchor:end}
-                        .txtmid {text-anchor:middle}
-                        .txtvspd {font-family:sans-serif;font-weight:normal}
-                        .txtvspdval {font-size:20px}
-                        .txtfuel {font-size:11px;font-weight:bold}
-                        .txtorb {font-size:12px}
-                        .txtorbbig {font-size:18px}
-                        .hudver {font-size:10px;font-weight:bold;fill:red;text-anchor:end;font-family:Bank}
-                        .msg {font-size:40px;fill:red;text-anchor:middle;font-weight:normal}
-                        .cursor {stroke:white}
-                        text { stroke:black; stroke-width:10px;paint-order:stroke;}
-                        .dimstroke {stroke:%s}
-                        .brightstroke {stroke:%s}
-                        .indicatorText {font-size:20px;fill:white}
-                        .size14 {font-size:14px}
-                        .size20 {font-size:20px}
-                        .topButton {fill:%s;opacity:0.5;stroke-width:2;stroke:%s}
-                        .topButtonActive {fill:url(#RadialGradientCenter);opacity:0.8;stroke-width:2;stroke:%s}
-                        .topButton text {font-size:13px; fill: %s; opacity:1; stroke-width:20px}
-                        .topButtonActive text {font-size:13px;fill:%s; stroke-width:0px; opacity:1}
-                        .indicatorFont {font-size:20px;font-family:Bank}
-                        .dimmer {stroke: %s;}
-                        .pdimfill {fill: %s;}
-                        .dimfill {fill: %s;}
-                    </style>
-                </head>
-                <body>
-                    <svg height="100%%" width="100%%" viewBox="0 0 %d %d">
-                        <defs>
-                            <radialGradient id="RadialGradientCenterTop" cx="0.5" cy="0" r="1">
-                                <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/>
-                                <stop offset="100%%" stop-color="black" stop-opacity="0"/>
-                            </radialGradient>
-                            <radialGradient id="RadialGradientRightTop" cx="1" cy="0" r="1">
-                                <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/>
-                                <stop offset="200%%" stop-color="black" stop-opacity="0"/>
-                            </radialGradient>
-                            <radialGradient id="ThinRightTopGradient" cx="1" cy="0" r="1">
-                                <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/>
-                                <stop offset="200%%" stop-color="black" stop-opacity="0"/>
-                            </radialGradient>
-                            <radialGradient id="RadialGradientLeftTop" cx="0" cy="0" r="1">
-                                <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/>
-                                <stop offset="200%%" stop-color="black" stop-opacity="0"/>
-                            </radialGradient>
-                            <radialGradient id="ThinLeftTopGradient" cx="0" cy="0" r="1">
-                                <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/>
-                                <stop offset="200%%" stop-color="black" stop-opacity="0"/>
-                            </radialGradient>
-                            <radialGradient id="RadialGradientCenter" cx="0.5" cy="0.5" r="1">
-                                <stop offset="0%%" stop-color="%s" stop-opacity="0.8"/>
-                                <stop offset="100%%" stop-color="%s" stop-opacity="0.5"/>
-                            </radialGradient>
-                            <radialGradient id="RadialPlanetCenter" cx="0.5" cy="0.5" r="0.5">
-                                <stop offset="0%%" stop-color="%s" stop-opacity="1"/>
-                                <stop offset="100%%" stop-color="%s" stop-opacity="1"/>
-                            </radialGradient>
-                            <radialGradient id="RadialAtmo" cx="0.5" cy="0.5" r="0.5">
-                                <stop offset="0%%" stop-color="%s" stop-opacity="1"/>
-                                <stop offset="66%%" stop-color="%s" stop-opacity="1"/>
-                                <stop offset="100%%" stop-color="%s" stop-opacity="0.1"/>
-                            </radialGradient>                            
-                        </defs>
-                        <g class="pdim txt txtend">
-                        
-                    ]], bright, bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig,dim,bright,dimmer,dimOrig,bright,bright,dimmer,dimmer, dimmerOrig,dimmer, 
+            newContent[#newContent + 1] = stringf([[ <head> <style>body{margin: 0}svg{position:absolute;top:0;left:0;font-family:Montserrat;}.txt{font-size:10px;font-weight:bold;}.txttick{font-size:12px;font-weight:bold;}.txtbig{font-size:14px;font-weight:bold;}.altsm{font-size:16px;font-weight:normal;}.altbig{font-size:21px;font-weight:normal;}.line{stroke-width:2px;fill:none;stroke:%s}.linethick{stroke-width:3px;fill:none}.linethin{stroke-width:1px;fill:none}.warnings{font-size:26px;fill:red;text-anchor:middle;font-family:Bank;}.warn{fill:orange; font-size:24px}.crit{fill:darkred;font-size:28px}.bright{fill:%s;stroke:%s}text.bright{stroke:black; stroke-width:10px;paint-order:stroke;}.pbright{fill:%s;stroke:%s}text.pbright{stroke:black; stroke-width:10px;paint-order:stroke;}.dim{fill:%s;stroke:%s}text.dim{stroke:black; stroke-width:10px;paint-order:stroke;}.pdim{fill:%s;stroke:%s}text.pdim{stroke:black; stroke-width:10px;paint-order:stroke;}.red{fill:red;stroke:red}text.red{stroke:black; stroke-width:10px;paint-order:stroke;}.orange{fill:orange;stroke:orange}text.orange{stroke:black; stroke-width:10px;paint-order:stroke;}.redout{fill:none;stroke:red}.op30{opacity:0.3}.op10{opacity:0.1}.txtstart{text-anchor:start}.txtend{text-anchor:end}.txtmid{text-anchor:middle}.txtvspd{font-family:sans-serif;font-weight:normal}.txtvspdval{font-size:20px}.txtfuel{font-size:11px;font-weight:bold}.txtorb{font-size:12px}.txtorbbig{font-size:18px}.hudver{font-size:10px;font-weight:bold;fill:red;text-anchor:end;font-family:Bank}.msg{font-size:40px;fill:red;text-anchor:middle;font-weight:normal}.cursor{stroke:white}text{stroke:black; stroke-width:10px;paint-order:stroke;}.dimstroke{stroke:%s}.brightstroke{stroke:%s}.indicatorText{font-size:20px;fill:white}.size14{font-size:14px}.size20{font-size:20px}.topButton{fill:%s;opacity:0.5;stroke-width:2;stroke:%s}.topButtonActive{fill:url(#RadialGradientCenter);opacity:0.8;stroke-width:2;stroke:%s}.topButton text{font-size:13px; fill: %s; opacity:1; stroke-width:20px}.topButtonActive text{font-size:13px;fill:%s; stroke-width:0px; opacity:1}.indicatorFont{font-size:20px;font-family:Bank}.dimmer{stroke: %s;}.pdimfill{fill: %s;}.dimfill{fill: %s;}</style> </head> <body> <svg height="100%%" width="100%%" viewBox="0 0 %d %d"> <defs> <radialGradient id="RadialGradientCenterTop" cx="0.5" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="100%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientRightTop" cx="1" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="ThinRightTopGradient" cx="1" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientLeftTop" cx="0" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="ThinLeftTopGradient" cx="0" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientCenter" cx="0.5" cy="0.5" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.8"/> <stop offset="100%%" stop-color="%s" stop-opacity="0.5"/> </radialGradient> <radialGradient id="RadialPlanetCenter" cx="0.5" cy="0.5" r="0.5"> <stop offset="0%%" stop-color="%s" stop-opacity="1"/> <stop offset="100%%" stop-color="%s" stop-opacity="1"/> </radialGradient> <radialGradient id="RadialAtmo" cx="0.5" cy="0.5" r="0.5"> <stop offset="0%%" stop-color="%s" stop-opacity="1"/> <stop offset="66%%" stop-color="%s" stop-opacity="1"/> <stop offset="100%%" stop-color="%s" stop-opacity="0.1"/> </radialGradient> </defs> <g class="pdim txt txtend">]], bright, bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig,dim,bright,dimmer,dimOrig,bright,bright,dimmer,dimmer, dimmerOrig,dimmer, 
                         resolutionWidth, resolutionHeight, dim,dim,dim,dim,dim,brightOrig,dim,dimOrig, dimmerOrig, dimOrig, dimOrig, dimmerOrig)
             
             -- These never change, set and store it on startup because that's a lot of calculations that we don't want to do every frame
@@ -3843,9 +3748,9 @@ VERSION_NUMBER = 1.5204
             local roll = adjustedRoll
             local originalRoll = roll
             local originalPitch = pitch
-            local throt = mfloor(unit.getThrottle())
+            local throt = mfloor(u.getThrottle())
             local spd = velMag * 3.6
-            local flightValue = unit.getAxisCommandValue(0)
+            local flightValue = u.getAxisCommandValue(0)
             local pvpBoundaryX = ConvertResolutionX(1770)
             local pvpBoundaryY = ConvertResolutionY(310)
             if AtmoSpeedAssist and throttleMode then
@@ -3966,7 +3871,7 @@ VERSION_NUMBER = 1.5204
             if brkDist < 0 then brkDist = 0 end
             brakeValue = round((brakeValue / (coreMass * gravConstant)),2).."g"
             local maxThrust = Nav:maxForceForward()
-            gravity = core.g()
+            gravity = c.g()
             if gravity > 0.1 then
                 reqThrust = coreMass * gravity
                 reqThrust = round((reqThrust / (coreMass * gravConstant)),2).."g"
@@ -3975,8 +3880,8 @@ VERSION_NUMBER = 1.5204
             end
             maxThrust = round((maxThrust / (coreMass * gravConstant)),2).."g"
     
-            local accel = (vec3(core.getWorldAcceleration()):len() / 9.80665)
-            gravity =  core.g()
+            local accel = (vec3(c.getWorldAcceleration()):len() / 9.80665)
+            gravity =  c.g()
             newContent[#newContent + 1] = [[<g class="dim txt txtend size14">]]
             if isRemote() == 1 and not RemoteHud then
                 xg = ConvertResolutionX(1120)
@@ -4038,7 +3943,7 @@ VERSION_NUMBER = 1.5204
             local brkDist, brkTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, brakeValue)
             brakeValue = round((brakeValue / (coreMass * gravConstant)),2).." g"
             local maxThrust = Nav:maxForceForward()
-            gravity = core.g()
+            gravity = c.g()
             if gravity > 0.1 then
                 reqThrust = coreMass * gravity
                 reqThrust = round((reqThrust / (coreMass * gravConstant)),2).." g"
@@ -4090,7 +3995,7 @@ VERSION_NUMBER = 1.5204
                 end
             end
             if msgTimer ~= 0 then
-                unit.setTimer("msgTick", msgTimer)
+                u.setTimer("msgTick", msgTimer)
                 msgTimer = 0
             end
         end
@@ -4155,7 +4060,7 @@ VERSION_NUMBER = 1.5204
     
         function Hud.DrawShield()
             local shieldState = (shield_1.getState() == 1) and "Shield Active" or "Shield Disabled"
-            local pvpTime = core.getPvPTimer()
+            local pvpTime = c.getPvPTimer()
             local resistances = shield_1.getResistances()
             local resistString = "A: "..(10+resistances[1]*100).."% / E: "..(10+resistances[2]*100).."% / K:"..(10+resistances[3]*100).."% / T: "..(10+resistances[4]*100).."%"
             local x, y = shieldX -60, shieldY+30
@@ -4321,12 +4226,12 @@ VERSION_NUMBER = 1.5204
                 local halfResolutionX = round(resolutionWidth / 2,0)
                 local halfResolutionY = round(resolutionHeight / 2,0)
             local newContent = {}
-            --local t0 = system.getTime()
+            --local t0 = s.getTime()
             HUD.HUDPrologue(newContent)
             if showHud then
-                --local t0 = system.getTime()
+                --local t0 = s.getTime()
                 HUD.UpdateHud(newContent) -- sets up Content for us
-                --_logCompute.addValue(system.getTime() - t0)
+                --_logCompute.addValue(s.getTime() - t0)
             else
                 if AlwaysVSpd then HUD.DrawVerticalSpeed(newContent, coreAltitude) end
                 HUD.DrawWarnings(newContent)
@@ -4364,9 +4269,9 @@ VERSION_NUMBER = 1.5204
                         newContent[#newContent + 1] = "</body>"
                         Animating = true
                         newContent[#newContent + 1] = [[</svg></body>]] -- Uh what.. okay...
-                        unit.setTimer("animateTick", 0.5)
+                        u.setTimer("animateTick", 0.5)
                         local content = table.concat(newContent, "")
-                        system.setScreen(content)
+                        s.setScreen(content)
                     elseif Animated then
                         local collapsedContent = table.concat(newContent, "")
                         newContent = {}
@@ -4608,7 +4513,7 @@ VERSION_NUMBER = 1.5204
                     local p = getPlanet(position)
                     local gravity = p.gravity
                     if safe then
-                        gravity = unit.getClosestPlanetInfluence()
+                        gravity = u.getClosestPlanetInfluence()
                     end
                     local newLocation = {
                         position = position,
@@ -4664,7 +4569,7 @@ VERSION_NUMBER = 1.5204
                     adjustAutopilotTargetIndex()
                 else
                     local location = SavedLocations[index]
-                    location.gravity = unit.getClosestPlanetInfluence()
+                    location.gravity = u.getClosestPlanetInfluence()
                     location.position = worldPos
                     location.safe = true
                 end
@@ -4830,7 +4735,7 @@ VERSION_NUMBER = 1.5204
                 if dontSet then 
                     return waypoint
                 else
-                    system.setWaypoint(waypoint) 
+                    s.setWaypoint(waypoint) 
                     return true
                 end
             end
@@ -4929,8 +4834,8 @@ VERSION_NUMBER = 1.5204
                     end
                     vector = vec3(vector):normalize()
                     local targetVec = (vec3() - vector)
-                    local yawAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationRight()) * autopilotStrength
-                    local pitchAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationUp()) * autopilotStrength
+                    local yawAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationRight()) * autopilotStrength
+                    local pitchAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationUp()) * autopilotStrength
                     if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
                     if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
                     -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
@@ -4967,8 +4872,8 @@ VERSION_NUMBER = 1.5204
                     end
                     vector = vec3(vector):normalize()
                     local targetVec = (constructForward - vector)
-                    local yawAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationRight()) * autopilotStrength
-                    local pitchAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationUp()) * autopilotStrength
+                    local yawAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationRight()) * autopilotStrength
+                    local pitchAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationUp()) * autopilotStrength
                     if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
                     if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
                     -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
@@ -4995,7 +4900,7 @@ VERSION_NUMBER = 1.5204
             
             inAtmo = (atmosphere() > 0)
             atmosDensity = atmosphere()
-            coreAltitude = core.getAltitude()
+            coreAltitude = c.getAltitude()
             abvGndDet = AboveGroundLevel()
             time = systime()
             lastApTickTime = time
@@ -5015,25 +4920,25 @@ VERSION_NUMBER = 1.5204
             local up = worldVertical * -1
 
             stalling = inAtmo and currentYaw < -YawStallAngle or currentYaw > YawStallAngle or currentPitch < -PitchStallAngle or currentPitch > PitchStallAngle
-            local deltaX = system.getMouseDeltaX()
-            local deltaY = system.getMouseDeltaY()
+            local deltaX = s.getMouseDeltaX()
+            local deltaY = s.getMouseDeltaY()
 
             if InvertMouse and not holdingShift then deltaY = -deltaY end
             yawInput2 = 0
             rollInput2 = 0
             pitchInput2 = 0
             sys = galaxyReference[0]
-            planet = sys:closestBody(core.getConstructWorldPos())
+            planet = sys:closestBody(c.getConstructWorldPos())
             kepPlanet = Kep(planet)
-            orbit = kepPlanet:orbitalParameters(core.getConstructWorldPos(), constructVelocity)
+            orbit = kepPlanet:orbitalParameters(c.getConstructWorldPos(), constructVelocity)
             if coreAltitude == 0 then
                 coreAltitude = (worldPos - planet.center):len() - planet.radius
             end
-            nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
+            nearPlanet = u.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
 
-            local gravity = planet:getGravity(core.getConstructWorldPos()):len() * coreMass
+            local gravity = planet:getGravity(c.getConstructWorldPos()):len() * coreMass
             targetRoll = 0
-            maxKinematicUp = core.getMaxKinematicsParametersAlongAxis("ground", core.getConstructOrientationUp())[1]
+            maxKinematicUp = c.getMaxKinematicsParametersAlongAxis("ground", c.getConstructOrientationUp())[1]
 
             if sysIsVwLock() == 0 then
                 if isRemote() == 1 and holdingShift then
@@ -5051,7 +4956,7 @@ VERSION_NUMBER = 1.5204
                 simulatedY = uclamp(simulatedY + deltaY,-resolutionHeight/2,resolutionHeight/2)
                 distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
                 if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
-                    local dx,dy = deltaX, deltaY
+                    local dx,dy = 1,1
                     if SelectedTab == "SCOPE" then
                         dx,dy = (scopeFOV/90),(scopeFOV/90)
                     end
@@ -5435,7 +5340,7 @@ VERSION_NUMBER = 1.5204
 
             if Autopilot and atmosDensity == 0 and not spaceLand then
                 local function finishAutopilot(msg, orbit)
-                    system.print(msg)
+                    s.print(msg)
                     BrakeIsOn = false
                     AutopilotBraking = false
                     Autopilot = false
@@ -5547,7 +5452,7 @@ VERSION_NUMBER = 1.5204
                 
                 -- We do this in tenthSecond already.
                 --sysUpData(widgetDistanceText, '{"label": "distance", "value": "' ..
-                --    displayText.. '", "unit":"' .. displayUnit .. '"}')
+                --    displayText.. '", "u":"' .. displayUnit .. '"}')
                 local aligned = true -- It shouldn't be used if the following condition isn't met, but just in case
 
                 local projectedAltitude = (autopilotTargetPlanet.center -
@@ -5666,7 +5571,7 @@ VERSION_NUMBER = 1.5204
                         PlayerThrottle = round(AutopilotInterplanetaryThrottle,2)
                         apThrottleSet = true
                     end
-                    local throttle = unit.getThrottle()
+                    local throttle = u.getThrottle()
                     if AtmoSpeedAssist then throttle = PlayerThrottle end
                     -- If we're within warmup/8 seconds of needing to brake, cut throttle to handle warmdowns
                     -- Note that warmup/8 is kindof an arbitrary guess.  But it shouldn't matter that much.  
@@ -5674,7 +5579,7 @@ VERSION_NUMBER = 1.5204
                     -- We need the travel time, the one we compute elsewhere includes estimates on acceleration
                     -- Also it doesn't account for velocity not being in the correct direction, this should
                     local timeUntilBrake = 99999 -- Default in case accel and velocity are both 0 
-                    local accel = -(vec3(core.getWorldAcceleration()):dot(constructVelocity:normalize()))
+                    local accel = -(vec3(c.getWorldAcceleration()):dot(constructVelocity:normalize()))
                     local velAlongTarget = uclamp(constructVelocity:dot((targetCoords - worldPos):normalize()),0,velMag)
                     if velAlongTarget > 0 or accel > 0 then -- (otherwise divide by 0 errors)
                         timeUntilBrake = Kinematic.computeTravelTime(velAlongTarget, accel, AutopilotDistance-brakeDistance)
@@ -5817,7 +5722,7 @@ VERSION_NUMBER = 1.5204
                         end
                         AutopilotBraking = true
                     end
-                    local throttle = unit.getThrottle()
+                    local throttle = u.getThrottle()
                     if AtmoSpeedAssist then throttle = PlayerThrottle end
                     if throttle > 0 then
                         AutopilotAccelerating = true
@@ -5882,7 +5787,7 @@ VERSION_NUMBER = 1.5204
                 -- Keep brake engaged at all times unless: 
                 -- Ship is aligned with the target on yaw (roll and pitch are locked to 0)
                 -- and ship's speed is below like 5-10m/s
-                local pos = worldPos + vec3(unit.getMasterPlayerRelativePosition()) -- Is this related to core forward or nah?
+                local pos = worldPos + vec3(u.getMasterPlayerRelativePosition()) -- Is this related to c forward or nah?
                 local distancePos = (pos - worldPos)
                 -- local distance = distancePos:len()
                 -- distance needs to be calculated using only construct forward and right
@@ -5938,7 +5843,7 @@ VERSION_NUMBER = 1.5204
                 end
 
                 local hSpd = constructForward:project_on_plane(worldVertical):normalize():dot(constructVelocity)
-                local airFrictionVec = vec3(core.getWorldAirFrictionAcceleration())
+                local airFrictionVec = vec3(c.getWorldAirFrictionAcceleration())
                 --local airFriction = msqrt(airFrictionVec:len() - airFrictionVec:project_on(up):len()) * coreMass
                 local airFriction = airFrictionVec:len()*coreMass -- Actually it probably increases over duration as we drop in atmo... 
                 -- Assume it will halve over our duration, if not sqrt.  We'll try sqrt because it's underestimating atm
@@ -5976,7 +5881,7 @@ VERSION_NUMBER = 1.5204
 
                 -- Consider: 100m below target, but 30m/s vspeed.  We should pitch down.  
                 -- Or 100m above and -30m/s vspeed.  So (Hold-Core) - vspd
-                -- Scenario 1: Hold-core = -100.  Scen2: Hold-core = 100
+                -- Scenario 1: Hold-c = -100.  Scen2: Hold-c = 100
                 -- 1: 100-30 = 70     2: -100--30 = -70
 
                 local altDiff = (HoldAltitude - coreAltitude) - vSpd -- Maybe a multiplier for vSpd here...
@@ -6562,7 +6467,7 @@ VERSION_NUMBER = 1.5204
             TargetSet = false -- No matter what
             -- Toggle Autopilot, as long as the target isn't None
             if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
-                if 0.5 * Nav:maxForceForward() / core.g() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
+                if 0.5 * Nav:maxForceForward() / c.g() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
                 if #apRoute>0 and not finalLand then 
                     AutopilotTargetIndex = apRoute[1]
                     ATLAS.UpdateAutopilotTarget()
@@ -7081,9 +6986,9 @@ VERSION_NUMBER = 1.5204
                 if AltIsOn and holdingShift then 
                     local onboard = ""
                     for i=1, #passengers do
-                        onboard = onboard.."| Name: "..system.getPlayerName(passengers[i]).." Mass: "..round(core.getBoardedPlayerMass(passengers[i])/1000,1).."t "
+                        onboard = onboard.."| Name: "..s.getPlayerName(passengers[i]).." Mass: "..round(c.getBoardedPlayerMass(passengers[i])/1000,1).."t "
                     end
-                    system.print("Onboard: "..onboard)
+                    s.print("Onboard: "..onboard)
                     return
                 end
                 ATLAS.adjustAutopilotTargetIndex()
@@ -7091,7 +6996,7 @@ VERSION_NUMBER = 1.5204
                 toggleView = false
                 if AltIsOn and holdingShift then 
                     for i=1, #passengers do
-                        core.forceDeboard(passengers[i])
+                        c.forceDeboard(passengers[i])
                     end
                     msgText = "Deboarded All Passengers"
                     return
@@ -7102,8 +7007,8 @@ VERSION_NUMBER = 1.5204
                     UnitHidden = not UnitHidden
                     if not UnitHidden then
                         play("wid","DH")
-                        unit.show()
-                        core.show()
+                        u.show()
+                        c.show()
                         if atmofueltank_size > 0 then
                             _autoconf.displayCategoryPanel(atmofueltank, atmofueltank_size,
                                 "Atmo Fuel", "fuel_container")
@@ -7119,17 +7024,17 @@ VERSION_NUMBER = 1.5204
                                 "Rocket Fuel", "fuel_container")
                             rocketfuelPanelID = _autoconf.panels[_autoconf.panels_size]
                         end
-                        parentingPanelId = system.createWidgetPanel("Docking")
-                        parentingWidgetId = system.createWidget(parentingPanelId,"parenting")
-                        system.addDataToWidget(unit.getDataId(),parentingWidgetId)
-                        coreCombatStressPanelId = system.createWidgetPanel("Core combat stress")
-                        coreCombatStressgWidgetId = system.createWidget(coreCombatStressPanelId,"core_stress")
-                        system.addDataToWidget(core.getDataId(),coreCombatStressgWidgetId)
+                        parentingPanelId = s.createWidgetPanel("Docking")
+                        parentingWidgetId = s.createWidget(parentingPanelId,"parenting")
+                        s.addDataToWidget(u.getDataId(),parentingWidgetId)
+                        coreCombatStressPanelId = s.createWidgetPanel("Core combat stress")
+                        coreCombatStressgWidgetId = s.createWidget(coreCombatStressPanelId,"core_stress")
+                        s.addDataToWidget(c.getDataId(),coreCombatStressgWidgetId)
                         if shield_1 ~= nil then shield_1.show() end
                     else
                         play("hud","DH")
-                        unit.hide()
-                        core.hide()
+                        u.hide()
+                        c.hide()
                         if fuelPanelID ~= nil then
                             sysDestWid(fuelPanelID)
                             fuelPanelID = nil
@@ -7157,9 +7062,9 @@ VERSION_NUMBER = 1.5204
                 if AltIsOn and holdingShift then 
                     local onboard = ""
                     for i=1, #ships do
-                        onboard = onboard.."| ID: "..ships[i].." Mass: "..round(core.getDockedConstructMass(ships[i])/1000,1).."t "
+                        onboard = onboard.."| ID: "..ships[i].." Mass: "..round(c.getDockedConstructMass(ships[i])/1000,1).."t "
                     end
-                    system.print("Docked Ships: "..onboard)
+                    s.print("Docked Ships: "..onboard)
                     return
                 end
                 if hideHudOnToggleWidgets then
@@ -7174,7 +7079,7 @@ VERSION_NUMBER = 1.5204
                 toggleView = false      
                 if AltIsOn and holdingShift then 
                     for i=1, #ships do
-                        core.forceUndock(ships[i])
+                        c.forceUndock(ships[i])
                     end
                     msgText = "Undocked all ships"
                     return
@@ -7243,7 +7148,7 @@ VERSION_NUMBER = 1.5204
                     navCom:resetCommand(axisCommandId.lateral)
                     navCom:resetCommand(axisCommandId.vertical)
                     AP.cmdThrottle(0)
-                    unit.setTimer("tagTick",0.1)
+                    u.setTimer("tagTick",0.1)
                 elseif gyro ~= nil then
                     gyro.toggle()
                     gyroIsOn = gyro.getState() == 1
@@ -7547,7 +7452,7 @@ VERSION_NUMBER = 1.5204
             end
             if command == "/help" or command == "/commands" then
                 for str in string.gmatch(commandhelp, "([^\n]+)") do
-                    system.print(str)
+                    s.print(str)
                 end
                 return   
             elseif command == "/setname" then 
@@ -7602,14 +7507,14 @@ VERSION_NUMBER = 1.5204
                     for k, v in pairs(saveableVariables()) do
                         if type(_G[v]) == "boolean" then
                             if _G[v] == true then
-                                system.print(v.." true")
+                                s.print(v.." true")
                             else
-                                system.print(v.." false")
+                                s.print(v.." false")
                             end
                         elseif _G[v] == nil then
-                            system.print(v.." nil")
+                            s.print(v.." nil")
                         else
-                            system.print(v.." ".._G[v])
+                            s.print(v.." ".._G[v])
                         end
                     end
                     return
@@ -7652,7 +7557,7 @@ VERSION_NUMBER = 1.5204
     
             elseif command == "/iphWP" then
                 if AutopilotTargetIndex > 0 then
-                    system.print(AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords, true)) 
+                    s.print(AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords, true)) 
                     msgText = "::pos waypoint shown in lua chat"
                 else
                     msgText = "No target selected in IPH"
@@ -7716,7 +7621,7 @@ VERSION_NUMBER = 1.5204
                     end
                     LastVersionUpdate = VERSION_NUMBER
                 else
-                    msgText = "No databank found. Attach one to control unit and rerun \nthe autoconfigure to save preferences and locations"
+                    msgText = "No databank found. Attach one to control u and rerun \nthe autoconfigure to save preferences and locations"
                 end
             
                 if (LastStartTime + 180) < time then -- Variables to reset if out of seat (and not on hud) for more than 3 min
@@ -7756,20 +7661,20 @@ VERSION_NUMBER = 1.5204
                     return vanillaMaxVolume            
                 end
 
-                local eleName = core.getElementNameById
+                local eleName = c.getElementNameById
                 local checkTanks = (fuelX ~= 0 and fuelY ~= 0)
-                for k in pairs(elementsID) do --Look for space engines, landing gear, fuel tanks if not slotted and core size
-                    local type = core.getElementTypeById(elementsID[k])
+                for k in pairs(elementsID) do --Look for space engines, landing gear, fuel tanks if not slotted and c size
+                    local type = c.getElementTypeById(elementsID[k])
                     if stringmatch(type, '^.*Atmospheric Engine$') then
-                        if stringmatch(tostring(core.getElementTagsById(elementsID[k])), '^.*vertical.*$') and core.getElementForwardById(elementsID[k])[3]>0 then
+                        if stringmatch(tostring(c.getElementTagsById(elementsID[k])), '^.*vertical.*$') and c.getElementForwardById(elementsID[k])[3]>0 then
                             UpVertAtmoEngine = true
                         end
                     end
 
                     if stringmatch(type, '^.*Space Engine$') then
                         SpaceEngines = true
-                        if stringmatch(tostring(core.getElementTagsById(elementsID[k])), '^.*vertical.*$') then
-                            local enrot = core.getElementForwardById(elementsID[k])
+                        if stringmatch(tostring(c.getElementTagsById(elementsID[k])), '^.*vertical.*$') then
+                            local enrot = c.getElementForwardById(elementsID[k])
                             if enrot[3] < 0 then
                                 SpaceEngineVertUp = true
                             else
@@ -7901,9 +7806,9 @@ VERSION_NUMBER = 1.5204
                 end
                 -- unfreeze the player if he is remote controlling the construct
                 if isRemote() == 1 and RemoteFreeze then
-                    system.freeze(1)
+                    s.freeze(1)
                 else
-                    system.freeze(0)
+                    s.freeze(0)
                 end
                 if hasGear then
                     GearExtended = (Nav.control.isAnyLandingGearExtended() == 1)
@@ -7929,7 +7834,7 @@ VERSION_NUMBER = 1.5204
             
                 -- Store their max kinematic parameters in ship-up direction for use in brake-landing
                 if inAtmo and abvGndDet ~= -1 then 
-                    maxKinematicUp = core.getMaxKinematicsParametersAlongAxis("ground", core.getConstructOrientationUp())[1]
+                    maxKinematicUp = c.getMaxKinematicsParametersAlongAxis("ground", c.getConstructOrientationUp())[1]
                 end
             
                 WasInAtmo = inAtmo
@@ -8053,20 +7958,20 @@ VERSION_NUMBER = 1.5204
         
             coroutine.yield()
  
-            unit.hide()
-            system.showScreen(1)
-            system.showHelper(0)
+            u.hide()
+            s.showScreen(1)
+            s.showHelper(0)
             -- That was a lot of work with dirty strings and json.  Clean up
             collectgarbage("collect")
             -- Start timers
             coroutine.yield()
 
-            unit.setTimer("apTick", apTickRate)
-            unit.setTimer("radarTick", apTickRate)
-            unit.setTimer("hudTick", hudTickRate)
-            unit.setTimer("oneSecond", 1)
-            unit.setTimer("tenthSecond", 1/10)
-            unit.setTimer("fiveSecond", 5) 
+            u.setTimer("apTick", apTickRate)
+            u.setTimer("radarTick", apTickRate)
+            u.setTimer("hudTick", hudTickRate)
+            u.setTimer("oneSecond", 1)
+            u.setTimer("tenthSecond", 1/10)
+            u.setTimer("fiveSecond", 5) 
 
             play("start","SU")
         end)
@@ -8081,7 +7986,7 @@ VERSION_NUMBER = 1.5204
         if warpdrive ~= nil then
             warpdrive.hide()
         end
-        core.hide()
+        c.hide()
         Nav.control.switchOffHeadlights()
         -- Open door and extend ramp if available
         if door and (atmosDensity > 0 or (atmosDensity == 0 and coreAltitude < 10000)) then
@@ -8108,7 +8013,7 @@ VERSION_NUMBER = 1.5204
         play("stop","SU")
         --[[ --EliasVilld Log Code for printing timing checks.
         for _,s in pairs(Logs.getLogs()) do
-            system.print(s)
+            s.print(s)
         end
         --]]
     end
@@ -8123,45 +8028,45 @@ VERSION_NUMBER = 1.5204
                 play("rdrCon","RC")
                 contactTimer = time
             end
-            unit.stopTimer("contact")
+            u.stopTimer("contact")
         elseif timerId == "tenthSecond" then -- Timer executed ever tenth of a second
             -- Local Functions for tenthSecond
 
                 local function SetupInterplanetaryPanel() -- Interplanetary helper
-                    local sysCrData = system.createData
-                    local sysCrWid = system.createWidget
-                    panelInterplanetary = system.createWidgetPanel("Interplanetary Helper")
+                    local sysCrData = s.createData
+                    local sysCrWid = s.createWidget
+                    panelInterplanetary = s.createWidgetPanel("Interplanetary Helper")
                 
                     interplanetaryHeader = sysCrWid(panelInterplanetary, "value")
-                    interplanetaryHeaderText = sysCrData('{"label": "Target Planet", "value": "N/A", "unit":""}')
+                    interplanetaryHeaderText = sysCrData('{"label": "Target Planet", "value": "N/A", "u":""}')
                     sysAddData(interplanetaryHeaderText, interplanetaryHeader)
                 
                     widgetDistance = sysCrWid(panelInterplanetary, "value")
-                    widgetDistanceText = sysCrData('{"label": "distance", "value": "N/A", "unit":""}')
+                    widgetDistanceText = sysCrData('{"label": "distance", "value": "N/A", "u":""}')
                     sysAddData(widgetDistanceText, widgetDistance)
                 
                     widgetTravelTime = sysCrWid(panelInterplanetary, "value")
-                    widgetTravelTimeText = sysCrData('{"label": "Travel Time", "value": "N/A", "unit":""}')
+                    widgetTravelTimeText = sysCrData('{"label": "Travel Time", "value": "N/A", "u":""}')
                     sysAddData(widgetTravelTimeText, widgetTravelTime)
                 
                     widgetMaxMass = sysCrWid(panelInterplanetary, "value")
-                    widgetMaxMassText = sysCrData('{"label": "Maximum Mass", "value": "N/A", "unit":""}')
+                    widgetMaxMassText = sysCrData('{"label": "Maximum Mass", "value": "N/A", "u":""}')
                     sysAddData(widgetMaxMassText, widgetMaxMass)
                 
                     widgetTargetOrbit = sysCrWid(panelInterplanetary, "value")
-                    widgetTargetOrbitText = sysCrData('{"label": "Target Altitude", "value": "N/A", "unit":""}')
+                    widgetTargetOrbitText = sysCrData('{"label": "Target Altitude", "value": "N/A", "u":""}')
                     sysAddData(widgetTargetOrbitText, widgetTargetOrbit)
                 
                     widgetCurBrakeDistance = sysCrWid(panelInterplanetary, "value")
-                    widgetCurBrakeDistanceText = sysCrData('{"label": "Cur Brake distance", "value": "N/A", "unit":""}')
+                    widgetCurBrakeDistanceText = sysCrData('{"label": "Cur Brake distance", "value": "N/A", "u":""}')
                     widgetCurBrakeTime = sysCrWid(panelInterplanetary, "value")
-                    widgetCurBrakeTimeText = sysCrData('{"label": "Cur Brake Time", "value": "N/A", "unit":""}')
+                    widgetCurBrakeTimeText = sysCrData('{"label": "Cur Brake Time", "value": "N/A", "u":""}')
                     widgetMaxBrakeDistance = sysCrWid(panelInterplanetary, "value")
-                    widgetMaxBrakeDistanceText = sysCrData('{"label": "Max Brake distance", "value": "N/A", "unit":""}')
+                    widgetMaxBrakeDistanceText = sysCrData('{"label": "Max Brake distance", "value": "N/A", "u":""}')
                     widgetMaxBrakeTime = sysCrWid(panelInterplanetary, "value")
-                    widgetMaxBrakeTimeText = sysCrData('{"label": "Max Brake Time", "value": "N/A", "unit":""}')
+                    widgetMaxBrakeTimeText = sysCrData('{"label": "Max Brake Time", "value": "N/A", "u":""}')
                     widgetTrajectoryAltitude = sysCrWid(panelInterplanetary, "value")
-                    widgetTrajectoryAltitudeText = sysCrData('{"label": "Projected Altitude", "value": "N/A", "unit":""}')
+                    widgetTrajectoryAltitudeText = sysCrData('{"label": "Projected Altitude", "value": "N/A", "u":""}')
                     if not inAtmo then
                         sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
                         sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime)
@@ -8183,7 +8088,7 @@ VERSION_NUMBER = 1.5204
                         end
                     end
                     local speed = velMag
-                    local throttle = unit.getThrottle()/100
+                    local throttle = u.getThrottle()/100
                     if AtmoSpeedAssist then throttle = PlayerThrottle end
                     local accelDistance, accelTime =
                         Kinematic.computeDistanceAndTime(velMag, MaxGameVelocity, -- From currently velocity to max
@@ -8232,12 +8137,12 @@ VERSION_NUMBER = 1.5204
                 end
                 local function RefreshLastMaxBrake(gravity, force)
                     if gravity == nil then
-                        gravity = core.g()
+                        gravity = c.g()
                     end
                     gravity = round(gravity, 5) -- round to avoid insignificant updates
                     if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
                         local speed = coreVelocity:len()
-                        local maxBrake = jdecode(unit.getData()).maxBrake 
+                        local maxBrake = jdecode(u.getData()).maxBrake 
                         if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
                             maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
                             maxBrake = maxBrake / atmosDensity
@@ -8275,7 +8180,7 @@ VERSION_NUMBER = 1.5204
                         :len())
                     planetMaxMass = planetMaxMass > 1000000 and round(planetMaxMass / 1000000,2).." kTons" or round(planetMaxMass / 1000, 2).." Tons"
                     sysUpData(interplanetaryHeaderText,
-                        '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "unit":""}')
+                        '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "u":""}')
                     travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
                     if customLocation and not Autopilot then -- If in autopilot, keep this displaying properly
                         distance = (worldPos - CustomTarget.position):len()
@@ -8293,28 +8198,28 @@ VERSION_NUMBER = 1.5204
                     sysUpData(widgetDistanceText, '{"label": "distance", "value": "' .. displayText
                         .. '"}')
                     sysUpData(widgetTravelTimeText, '{"label": "Travel Time", "value": "' ..
-                        FormatTimeString(travelTime) .. '", "unit":""}')
+                        FormatTimeString(travelTime) .. '", "u":""}')
                     displayText = getDistanceDisplayString(brakeDistance)
                     sysUpData(widgetCurBrakeDistanceText, '{"label": "Cur Brake distance", "value": "' ..
                         displayText.. '"}')
                     sysUpData(widgetCurBrakeTimeText, '{"label": "Cur Brake Time", "value": "' ..
-                        FormatTimeString(brakeTime) .. '", "unit":""}')
+                        FormatTimeString(brakeTime) .. '", "u":""}')
                     displayText = getDistanceDisplayString(maxBrakeDistance)
                     sysUpData(widgetMaxBrakeDistanceText, '{"label": "Max Brake distance", "value": "' ..
                         displayText.. '"}')
                     sysUpData(widgetMaxBrakeTimeText, '{"label": "Max Brake Time", "value": "' ..
-                        FormatTimeString(maxBrakeTime) .. '", "unit":""}')
+                        FormatTimeString(maxBrakeTime) .. '", "u":""}')
                     sysUpData(widgetMaxMassText, '{"label": "Max Brake Mass", "value": "' ..
-                        stringf("%s", planetMaxMass ) .. '", "unit":""}')
+                        stringf("%s", planetMaxMass ) .. '", "u":""}')
                     displayText = getDistanceDisplayString(AutopilotTargetOrbit)
                     sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
                     displayText .. '"}')
                     if atmosDensity > 0 and not WasInAtmo then
-                        system.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
-                        system.removeDataFromWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
-                        system.removeDataFromWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
-                        system.removeDataFromWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
-                        system.removeDataFromWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
+                        s.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
+                        s.removeDataFromWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
+                        s.removeDataFromWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
+                        s.removeDataFromWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
+                        s.removeDataFromWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
                         WasInAtmo = true
                         if not throttleMode and AtmoSpeedAssist and (AltitudeHold or Reentry or finalLand) then
                             -- If they're reentering atmo from cruise, and have atmo speed Assist
@@ -8364,7 +8269,7 @@ VERSION_NUMBER = 1.5204
                     local disabledElements = 0
                     local colorMod = 0
                     local color = ""
-                    local eleHp = core.getElementHitPointsById
+                    local eleHp = c.getElementHitPointsById
     
                     for k in pairs(elementsID) do
                         local hp = 0
@@ -8380,30 +8285,30 @@ VERSION_NUMBER = 1.5204
                             end
                             -- Thanks to Jerico for the help and code starter for arrow markers!
                             if repairArrows and #markers == 0 then
-                                position = vec3(core.getElementPositionById(elementsID[k]))
+                                position = vec3(c.getElementPositionById(elementsID[k]))
                                 local x = position.x 
                                 local y = position.y 
                                 local z = position.z 
-                                table.insert(markers, core.spawnArrowSticker(x, y, z + 1, "down"))
-                                table.insert(markers, core.spawnArrowSticker(x, y, z + 1, "down"))
-                                core.rotateSticker(markers[2], 0, 0, 90)
-                                table.insert(markers, core.spawnArrowSticker(x + 1, y, z, "north"))
-                                table.insert(markers, core.spawnArrowSticker(x + 1, y, z, "north"))
-                                core.rotateSticker(markers[4], 90, 90, 0)
-                                table.insert(markers, core.spawnArrowSticker(x - 1, y, z, "south"))
-                                table.insert(markers, core.spawnArrowSticker(x - 1, y, z, "south"))
-                                core.rotateSticker(markers[6], 90, -90, 0)
-                                table.insert(markers, core.spawnArrowSticker(x, y - 1, z, "east"))
-                                table.insert(markers, core.spawnArrowSticker(x, y - 1, z, "east"))
-                                core.rotateSticker(markers[8], 90, 0, 90)
-                                table.insert(markers, core.spawnArrowSticker(x, y + 1, z, "west"))
-                                table.insert(markers, core.spawnArrowSticker(x, y + 1, z, "west"))
-                                core.rotateSticker(markers[10], -90, 0, 90)
+                                table.insert(markers, c.spawnArrowSticker(x, y, z + 1, "down"))
+                                table.insert(markers, c.spawnArrowSticker(x, y, z + 1, "down"))
+                                c.rotateSticker(markers[2], 0, 0, 90)
+                                table.insert(markers, c.spawnArrowSticker(x + 1, y, z, "north"))
+                                table.insert(markers, c.spawnArrowSticker(x + 1, y, z, "north"))
+                                c.rotateSticker(markers[4], 90, 90, 0)
+                                table.insert(markers, c.spawnArrowSticker(x - 1, y, z, "south"))
+                                table.insert(markers, c.spawnArrowSticker(x - 1, y, z, "south"))
+                                c.rotateSticker(markers[6], 90, -90, 0)
+                                table.insert(markers, c.spawnArrowSticker(x, y - 1, z, "east"))
+                                table.insert(markers, c.spawnArrowSticker(x, y - 1, z, "east"))
+                                c.rotateSticker(markers[8], 90, 0, 90)
+                                table.insert(markers, c.spawnArrowSticker(x, y + 1, z, "west"))
+                                table.insert(markers, c.spawnArrowSticker(x, y + 1, z, "west"))
+                                c.rotateSticker(markers[10], -90, 0, 90)
                                 table.insert(markers, elementsID[k])
                             end
                         elseif repairArrows and #markers > 0 and markers[11] == elementsID[k] then
                             for j in pairs(markers) do
-                                core.deleteSticker(markers[j])
+                                c.deleteSticker(markers[j])
                             end
                             markers = {}
                         end
@@ -8435,8 +8340,8 @@ VERSION_NUMBER = 1.5204
                     end
                 end    
 
-            passengers = core.getPlayersOnBoard()
-            ships = core.getDockedConstructs()
+            passengers = c.getPlayersOnBoard()
+            ships = c.getDockedConstructs()
             updateWeapons()
             -- Update odometer output string
             local newContent = {}
@@ -8482,7 +8387,7 @@ VERSION_NUMBER = 1.5204
                 for i=1,#AtlasOrdered do    
                     if AtlasOrdered[i].name == myAutopilotTarget then
                         AutopilotTargetIndex = i
-                        system.print("Index = "..AutopilotTargetIndex.." "..AtlasOrdered[i].name)          
+                        s.print("Index = "..AutopilotTargetIndex.." "..AtlasOrdered[i].name)          
                         ATLAS.UpdateAutopilotTarget()
                         dbHud_1.setStringValue("SPBAutopilotTargetName", "SatNavNotChanged")
                         break            
@@ -8494,14 +8399,14 @@ VERSION_NUMBER = 1.5204
             local newContent = {}
             HUD.DisplayMessage(newContent, "empty")
             msgText = "empty"
-            unit.stopTimer("msgTick")
+            u.stopTimer("msgTick")
             msgTimer = 3
         elseif timerId == "animateTick" then -- Timer for animation
             Animated = true
             Animating = false
             simulatedX = 0
             simulatedY = 0
-            unit.stopTimer("animateTick")
+            u.stopTimer("animateTick")
         elseif timerId == "hudTick" then -- Timer for all hud updates not called elsewhere
             HUD.hudtick()
         elseif timerId == "apTick" then -- Timer for all autopilot functions
@@ -8516,7 +8421,7 @@ VERSION_NUMBER = 1.5204
             else UseExtra = "Off"
             end
             msgText = "Extra Engine Tags: "..UseExtra 
-            unit.stopTimer("tagTick")
+            u.stopTimer("tagTick")
         end
     end
 
@@ -8528,22 +8433,22 @@ VERSION_NUMBER = 1.5204
                 local axisWorldDirection = vec3()
             
                 if (commandAxis == axisCommandId.longitudinal) then
-                    axisCRefDirection = vec3(core.getConstructOrientationForward())
+                    axisCRefDirection = vec3(c.getConstructOrientationForward())
                     axisWorldDirection = constructForward
                 elseif (commandAxis == axisCommandId.vertical) then
-                    axisCRefDirection = vec3(core.getConstructOrientationUp())
+                    axisCRefDirection = vec3(c.getConstructOrientationUp())
                     axisWorldDirection = constructUp
                 elseif (commandAxis == axisCommandId.lateral) then
-                    axisCRefDirection = vec3(core.getConstructOrientationRight())
+                    axisCRefDirection = vec3(c.getConstructOrientationRight())
                     axisWorldDirection = constructRight
                 else
                     return vec3()
                 end
             
-                local gravityAcceleration = vec3(core.getWorldGravity())
+                local gravityAcceleration = vec3(c.getWorldGravity())
                 local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
             
-                local airResistanceAcceleration = vec3(core.getWorldAirFrictionAcceleration())
+                local airResistanceAcceleration = vec3(c.getWorldAirFrictionAcceleration())
                 local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
             
 
@@ -8562,8 +8467,8 @@ VERSION_NUMBER = 1.5204
                 local finalAcceleration = (accelerationCommand - airResistanceAccelerationCommand - gravityAccelerationCommand) * axisWorldDirection  -- Try to compensate air friction
             
                 -- The hell are these? Uncommented recently just in case they were important
-                --system.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
-                --system.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
+                --s.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
+                --s.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
             
                 return finalAcceleration
             end
@@ -8574,22 +8479,22 @@ VERSION_NUMBER = 1.5204
                 local axisWorldDirection = vec3()
             
                 if (commandAxis == axisCommandId.longitudinal) then
-                    axisCRefDirection = vec3(core.getConstructOrientationForward())
+                    axisCRefDirection = vec3(c.getConstructOrientationForward())
                     axisWorldDirection = constructForward
                 elseif (commandAxis == axisCommandId.vertical) then
-                    axisCRefDirection = vec3(core.getConstructOrientationUp())
+                    axisCRefDirection = vec3(c.getConstructOrientationUp())
                     axisWorldDirection = constructUp
                 elseif (commandAxis == axisCommandId.lateral) then
-                    axisCRefDirection = vec3(core.getConstructOrientationRight())
+                    axisCRefDirection = vec3(c.getConstructOrientationRight())
                     axisWorldDirection = constructRight
                 else
                     return vec3()
                 end
             
-                local gravityAcceleration = vec3(core.getWorldGravity())
+                local gravityAcceleration = vec3(c.getWorldGravity())
                 local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
             
-                local airResistanceAcceleration = vec3(core.getWorldAirFrictionAcceleration())
+                local airResistanceAcceleration = vec3(c.getWorldAirFrictionAcceleration())
                 local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
             
                 local currentAxisSpeedMS = coreVelocity:dot(axisCRefDirection)
@@ -8607,8 +8512,8 @@ VERSION_NUMBER = 1.5204
                 local finalAcceleration = (accelerationCommand - airResistanceAccelerationCommand - gravityAccelerationCommand) * axisWorldDirection  -- Try to compensate air friction
             
                 -- The hell are these? Uncommented recently just in case they were important
-                --system.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
-                --system.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
+                --s.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
+                --s.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
             
                 return finalAcceleration
             end
@@ -8651,24 +8556,24 @@ VERSION_NUMBER = 1.5204
         brakeFlatFactor = math.max(brakeFlatFactor, 0.01)
         autoRollFactor = math.max(autoRollFactor, 0.01)
         -- final inputs
-        local finalPitchInput = uclamp(pitchInput + pitchInput2 + system.getControlDeviceForwardInput(),-1,1)
-        local finalRollInput = uclamp(rollInput + rollInput2 + system.getControlDeviceYawInput(),-1,1)
-        local finalYawInput = uclamp((yawInput + yawInput2) - system.getControlDeviceLeftRightInput(),-1,1)
+        local finalPitchInput = uclamp(pitchInput + pitchInput2 + s.getControlDeviceForwardInput(),-1,1)
+        local finalRollInput = uclamp(rollInput + rollInput2 + s.getControlDeviceYawInput(),-1,1)
+        local finalYawInput = uclamp((yawInput + yawInput2) - s.getControlDeviceLeftRightInput(),-1,1)
         local finalBrakeInput = brakeInput
 
         -- Axis
-        worldVertical = vec3(core.getWorldVertical()) -- along gravity
+        worldVertical = vec3(c.getWorldVertical()) -- along gravity
         if worldVertical == nil or worldVertical:len() == 0 then
             worldVertical = (planet.center - worldPos):normalize() -- I think also along gravity hopefully?
         end
 
-        constructUp = vec3(core.getConstructWorldOrientationUp())
-        constructForward = vec3(core.getConstructWorldOrientationForward())
-        constructRight = vec3(core.getConstructWorldOrientationRight())
-        constructVelocity = vec3(core.getWorldVelocity())
-        coreVelocity = vec3(core.getVelocity())
-        worldPos = vec3(core.getConstructWorldPos())
-        coreMass =  core.getConstructMass()
+        constructUp = vec3(c.getConstructWorldOrientationUp())
+        constructForward = vec3(c.getConstructWorldOrientationForward())
+        constructRight = vec3(c.getConstructWorldOrientationRight())
+        constructVelocity = vec3(c.getWorldVelocity())
+        coreVelocity = vec3(c.getVelocity())
+        worldPos = vec3(c.getConstructWorldPos())
+        coreMass =  c.getConstructMass()
         velMag = vec3(constructVelocity):len()
         vSpd = -worldVertical:dot(constructVelocity)
         adjustedRoll = getRoll(worldVertical, constructForward, constructRight) 
@@ -8682,7 +8587,7 @@ VERSION_NUMBER = 1.5204
         local currentRollDegSign = utils.sign(adjustedRoll)
     
         -- Rotation
-        local constructAngularVelocity = vec3(core.getWorldAngularVelocity())
+        local constructAngularVelocity = vec3(c.getWorldAngularVelocity())
         local targetAngularVelocity =
             finalPitchInput * pitchSpeedFactor * constructRight + finalRollInput * rollSpeedFactor * constructForward +
                 finalYawInput * yawSpeedFactor * constructUp
@@ -8714,7 +8619,7 @@ VERSION_NUMBER = 1.5204
         local keepCollinearity = 1 -- for easier reading
         local dontKeepCollinearity = 0 -- for easier reading
         local tolerancePercentToSkipOtherPriorities = 1 -- if we are within this tolerance (in%), we don't go to the next priorities
-        local wheel = system.getMouseWheel()
+        local wheel = s.getMouseWheel()
 
         if wheel > 0 then
             AP.changeSpd()
@@ -8860,7 +8765,7 @@ VERSION_NUMBER = 1.5204
                 navCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle) -- Use PlayerThrottle always.
             end
 
-            local targetSpeed = unit.getAxisCommandValue(0)
+            local targetSpeed = u.getAxisCommandValue(0)
 
             if not throttleMode then -- Use a PID to brake past targetSpeed
                 if (brakePID == nil) then
@@ -8957,7 +8862,7 @@ VERSION_NUMBER = 1.5204
 
         -- Rotation
         local angularAcceleration = torqueFactor * (targetAngularVelocity - constructAngularVelocity)
-        local airAcceleration = vec3(core.getWorldAirFrictionAngularAcceleration())
+        local airAcceleration = vec3(c.getWorldAirFrictionAngularAcceleration())
         angularAcceleration = angularAcceleration - airAcceleration -- Try to compensate air friction
         
         Nav:setEngineTorqueCommand('torque', angularAcceleration, keepCollinearity, 'airfoil', '', '',
@@ -8979,7 +8884,7 @@ VERSION_NUMBER = 1.5204
                     Nav:toggleBoosters()
                 end
             else -- Atmosphere Rocket Boost Assist Not in Cruise Control by Azraeil
-                local throttle = unit.getThrottle()
+                local throttle = u.getThrottle()
                 if AtmoSpeedAssist then throttle = PlayerThrottle*100 end
                 local targetSpeed = (throttle/100)
                 if atmosphere == 0 then
@@ -9011,7 +8916,7 @@ VERSION_NUMBER = 1.5204
             local cont = coroutine.status (beginSetup)
             if cont == "suspended" then 
                 local value, done = coroutine.resume(beginSetup)
-                if done then system.print("ERROR STARTUP: "..done) end
+                if done then s.print("ERROR STARTUP: "..done) end
             elseif cont == "dead" then
                 SetupComplete = true
             end
@@ -9019,7 +8924,7 @@ VERSION_NUMBER = 1.5204
         if SetupComplete then
             Nav:update()
             if not Animating and content ~= LastContent then
-                system.setScreen(content) 
+                s.setScreen(content) 
             end
             LastContent = content
         end
@@ -9043,7 +8948,7 @@ VERSION_NUMBER = 1.5204
 
     function script.onEnter(id)
         if radar_1 and not inAtmo and not notPvPZone then 
-            unit.setTimer("contact",0.1) 
+            u.setTimer("contact",0.1) 
         end
     end
 
