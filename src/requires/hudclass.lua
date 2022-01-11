@@ -1,4 +1,4 @@
-function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, hover, shield_1,
+function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1,
     mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
     navCom, sysDestWid, sysIsVwLock, msqrt, round, svgText)
 
@@ -127,7 +127,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                     local name = string.sub(tankTable[i][tankName], 1, 12)
                     local slottedIndex = 0
                     for j = 1, slottedTanks do
-                        if tankTable[i][tankName] == jdecode(unit[slottedTankType .. "_" .. j].getData()).name then
+                        if tankTable[i][tankName] == jdecode(u[slottedTankType .. "_" .. j].getData()).name then
                             slottedIndex = j
                             break
                         end
@@ -140,9 +140,9 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                         local fuelMassLast
                         local fuelMass = 0
                         if slottedIndex ~= 0 then
-                            fuelPercentTable[i] = jdecode(unit[slottedTankType .. "_" .. slottedIndex].getData())
+                            fuelPercentTable[i] = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
                                                     .percentage
-                            fuelTimeLeftTable[i] = jdecode(unit[slottedTankType .. "_" .. slottedIndex].getData())
+                            fuelTimeLeftTable[i] = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
                                                     .timeLeft
                             if fuelTimeLeftTable[i] == "n/a" then
                                 fuelTimeLeftTable[i] = 0
@@ -657,11 +657,11 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                 y2 = 65
             end            
             local label = "CRUISE"
-            local unit = "km/h"
+            local u = "km/h"
             local value = flightValue
             if (flightStyle == "TRAVEL" or flightStyle == "AUTOPILOT") then
                 label = "THROT"
-                unit = "%"
+                u = "%"
                 value = throt
                 local throtclass = "dim"
                 if throt < 0 then
@@ -675,7 +675,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                     throtPosX-10, throtPosY+50, throtPosX-15, throtPosY+53, throtPosX-15, throtPosY+47)
             end
             newContent[#newContent + 1] = svgText(throtPosX+10, y1, label , "pbright txtstart")
-            newContent[#newContent + 1] = svgText(throtPosX+10, y2, stringf("%.0f %s", value, unit), "pbright txtstart")
+            newContent[#newContent + 1] = svgText(throtPosX+10, y2, stringf("%.0f %s", value, u), "pbright txtstart")
             if inAtmo and AtmoSpeedAssist and throttleMode and ThrottleLimited then
                 -- Display a marker for where the AP throttle is putting it, calculatedThrottle
         
@@ -716,7 +716,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
 
             newContent[#newContent + 1] = svgText(ConvertResolutionX(1900), ConvertResolutionY(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
             newContent[#newContent + 1] = [[<g class="warnings">]]
-            if unit.isMouseControlActivated() == 1 then
+            if u.isMouseControlActivated() == 1 then
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(550), "Warning: Invalid Control Scheme Detected", "warnings")
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(600), "Keyboard Scheme must be selected", "warnings")
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(650), "Set your preferred scheme in Lua Parameters instead", "warnings")
@@ -1347,7 +1347,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                         end
                     end
                     -- Draw a 'You Are Here' - face edition
-                    local pos = vec3(core.getConstructWorldPos())
+                    local pos = vec3(c.getConstructWorldPos())
                     local x = orbitMapX + orbitMapSize + pos.x / xRatio
                     local y = orbitMapY + orbitMapSize*1.5/2 + pos.y / yRatio
                     GalaxyMapHTML = GalaxyMapHTML .. '<circle cx="' .. x .. '" cy="' .. y ..
@@ -1436,7 +1436,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                     --if nearestDistance < 0 then nearestDistance = targetDistance - v.radius end
                     --if v.name == "Teoma" then p(x .. "," .. y .. " - " .. xAngle .. ", " .. yAngle) end
 
-                    -- Seems useful to give the distance to the atmo, land, etc instead of to the core
+                    -- Seems useful to give the distance to the atmo, land, etc instead of to the c
                     -- But it looks weird and I can't really label what it is, it'd take up too much space
                     local distance = getDistanceDisplayString(targetDistance,1)
                     local displayString = v.name
@@ -2369,9 +2369,9 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         local roll = adjustedRoll
         local originalRoll = roll
         local originalPitch = pitch
-        local throt = mfloor(unit.getThrottle())
+        local throt = mfloor(u.getThrottle())
         local spd = velMag * 3.6
-        local flightValue = unit.getAxisCommandValue(0)
+        local flightValue = u.getAxisCommandValue(0)
         local pvpBoundaryX = ConvertResolutionX(1770)
         local pvpBoundaryY = ConvertResolutionY(310)
         if AtmoSpeedAssist and throttleMode then
@@ -2492,7 +2492,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         if brkDist < 0 then brkDist = 0 end
         brakeValue = round((brakeValue / (coreMass * gravConstant)),2).."g"
         local maxThrust = Nav:maxForceForward()
-        gravity = core.g()
+        gravity = c.g()
         if gravity > 0.1 then
             reqThrust = coreMass * gravity
             reqThrust = round((reqThrust / (coreMass * gravConstant)),2).."g"
@@ -2501,8 +2501,8 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         end
         maxThrust = round((maxThrust / (coreMass * gravConstant)),2).."g"
 
-        local accel = (vec3(core.getWorldAcceleration()):len() / 9.80665)
-        gravity =  core.g()
+        local accel = (vec3(c.getWorldAcceleration()):len() / 9.80665)
+        gravity =  c.g()
         newContent[#newContent + 1] = [[<g class="dim txt txtend size14">]]
         if isRemote() == 1 and not RemoteHud then
             xg = ConvertResolutionX(1120)
@@ -2564,7 +2564,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
         local brkDist, brkTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, brakeValue)
         brakeValue = round((brakeValue / (coreMass * gravConstant)),2).." g"
         local maxThrust = Nav:maxForceForward()
-        gravity = core.g()
+        gravity = c.g()
         if gravity > 0.1 then
             reqThrust = coreMass * gravity
             reqThrust = round((reqThrust / (coreMass * gravConstant)),2).." g"
@@ -2616,7 +2616,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             end
         end
         if msgTimer ~= 0 then
-            unit.setTimer("msgTick", msgTimer)
+            u.setTimer("msgTick", msgTimer)
             msgTimer = 0
         end
     end
@@ -2681,7 +2681,7 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
 
     function Hud.DrawShield()
         local shieldState = (shield_1.getState() == 1) and "Shield Active" or "Shield Disabled"
-        local pvpTime = core.getPvPTimer()
+        local pvpTime = c.getPvPTimer()
         local resistances = shield_1.getResistances()
         local resistString = "A: "..(10+resistances[1]*100).."% / E: "..(10+resistances[2]*100).."% / K:"..(10+resistances[3]*100).."% / T: "..(10+resistances[4]*100).."%"
         local x, y = shieldX -60, shieldY+30
@@ -2847,12 +2847,12 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
             local halfResolutionX = round(resolutionWidth / 2,0)
             local halfResolutionY = round(resolutionHeight / 2,0)
         local newContent = {}
-        --local t0 = system.getTime()
+        --local t0 = s.getTime()
         HUD.HUDPrologue(newContent)
         if showHud then
-            --local t0 = system.getTime()
+            --local t0 = s.getTime()
             HUD.UpdateHud(newContent) -- sets up Content for us
-            --_logCompute.addValue(system.getTime() - t0)
+            --_logCompute.addValue(s.getTime() - t0)
         else
             if AlwaysVSpd then HUD.DrawVerticalSpeed(newContent, coreAltitude) end
             HUD.DrawWarnings(newContent)
@@ -2890,9 +2890,9 @@ function HudClass(Nav, core, unit, system, atlas, radar_1, radar_2, antigrav, ho
                     newContent[#newContent + 1] = "</body>"
                     Animating = true
                     newContent[#newContent + 1] = [[</svg></body>]] -- Uh what.. okay...
-                    unit.setTimer("animateTick", 0.5)
+                    u.setTimer("animateTick", 0.5)
                     local content = table.concat(newContent, "")
-                    system.setScreen(content)
+                    s.setScreen(content)
                 elseif Animated then
                     local collapsedContent = table.concat(newContent, "")
                     newContent = {}

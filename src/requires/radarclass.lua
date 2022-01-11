@@ -1,4 +1,4 @@
-function RadarClass(core, system, library, radar_1, radar_2, 
+function RadarClass(c, s, library, radar_1, radar_2, 
     mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag) -- Everything related to radar but draw data passed to HUD Class.
     local Radar = {}
     -- Radar Class locals
@@ -44,9 +44,9 @@ function RadarClass(core, system, library, radar_1, radar_2,
 
             local function getTrueWorldPos()
                 local function getLocalToWorldConverter()
-                    local v1 = core.getConstructWorldOrientationRight()
-                    local v2 = core.getConstructWorldOrientationForward()
-                    local v3 = core.getConstructWorldOrientationUp()
+                    local v1 = c.getConstructWorldOrientationRight()
+                    local v2 = c.getConstructWorldOrientationForward()
+                    local v3 = c.getConstructWorldOrientationUp()
                     local v1t = library.systemResolution3(v1, v2, v3, {1,0,0})
                     local v2t = library.systemResolution3(v1, v2, v3, {0,1,0})
                     local v3t = library.systemResolution3(v1, v2, v3, {0,0,1})
@@ -55,8 +55,8 @@ function RadarClass(core, system, library, radar_1, radar_2,
                     end
                 end
                 local cal = getLocalToWorldConverter()
-                local cWorldPos = core.getConstructWorldPos()
-                local pos = core.getElementPositionById(1)
+                local cWorldPos = c.getConstructWorldPos()
+                local pos = c.getElementPositionById(1)
                 local offsetPosition = {pos[1] , pos[2] , pos[3] }
                 local adj = cal(offsetPosition)
                 local adjPos = {cWorldPos[1] - adj[1], cWorldPos[2] - adj[2], cWorldPos[3] - adj[3]}
@@ -187,7 +187,7 @@ function RadarClass(core, system, library, radar_1, radar_2,
         local cont = coroutine.status (UpdateRadarCoroutine)
         if cont == "suspended" then 
             local value, done = coroutine.resume(UpdateRadarCoroutine)
-            if done then system.print("ERROR UPDATE RADAR: "..done) end
+            if done then s.print("ERROR UPDATE RADAR: "..done) end
         elseif cont == "dead" then
             UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
             local value, done = coroutine.resume(UpdateRadarCoroutine)

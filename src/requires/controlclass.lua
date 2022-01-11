@@ -1,4 +1,4 @@
-function ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav, shield_1, dbHud_2,
+function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2,
     isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp)
     local Control = {}
     local UnitHidden = true
@@ -179,9 +179,9 @@ function ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav,
             if AltIsOn and holdingShift then 
                 local onboard = ""
                 for i=1, #passengers do
-                    onboard = onboard.."| Name: "..system.getPlayerName(passengers[i]).." Mass: "..round(core.getBoardedPlayerMass(passengers[i])/1000,1).."t "
+                    onboard = onboard.."| Name: "..s.getPlayerName(passengers[i]).." Mass: "..round(c.getBoardedPlayerMass(passengers[i])/1000,1).."t "
                 end
-                system.print("Onboard: "..onboard)
+                s.print("Onboard: "..onboard)
                 return
             end
             ATLAS.adjustAutopilotTargetIndex()
@@ -189,7 +189,7 @@ function ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav,
             toggleView = false
             if AltIsOn and holdingShift then 
                 for i=1, #passengers do
-                    core.forceDeboard(passengers[i])
+                    c.forceDeboard(passengers[i])
                 end
                 msgText = "Deboarded All Passengers"
                 return
@@ -200,8 +200,8 @@ function ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav,
                 UnitHidden = not UnitHidden
                 if not UnitHidden then
                     play("wid","DH")
-                    unit.show()
-                    core.show()
+                    u.show()
+                    c.show()
                     if atmofueltank_size > 0 then
                         _autoconf.displayCategoryPanel(atmofueltank, atmofueltank_size,
                             "Atmo Fuel", "fuel_container")
@@ -217,17 +217,17 @@ function ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav,
                             "Rocket Fuel", "fuel_container")
                         rocketfuelPanelID = _autoconf.panels[_autoconf.panels_size]
                     end
-                    parentingPanelId = system.createWidgetPanel("Docking")
-                    parentingWidgetId = system.createWidget(parentingPanelId,"parenting")
-                    system.addDataToWidget(unit.getDataId(),parentingWidgetId)
-                    coreCombatStressPanelId = system.createWidgetPanel("Core combat stress")
-                    coreCombatStressgWidgetId = system.createWidget(coreCombatStressPanelId,"core_stress")
-                    system.addDataToWidget(core.getDataId(),coreCombatStressgWidgetId)
+                    parentingPanelId = s.createWidgetPanel("Docking")
+                    parentingWidgetId = s.createWidget(parentingPanelId,"parenting")
+                    s.addDataToWidget(u.getDataId(),parentingWidgetId)
+                    coreCombatStressPanelId = s.createWidgetPanel("Core combat stress")
+                    coreCombatStressgWidgetId = s.createWidget(coreCombatStressPanelId,"core_stress")
+                    s.addDataToWidget(c.getDataId(),coreCombatStressgWidgetId)
                     if shield_1 ~= nil then shield_1.show() end
                 else
                     play("hud","DH")
-                    unit.hide()
-                    core.hide()
+                    u.hide()
+                    c.hide()
                     if fuelPanelID ~= nil then
                         sysDestWid(fuelPanelID)
                         fuelPanelID = nil
@@ -255,9 +255,9 @@ function ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav,
             if AltIsOn and holdingShift then 
                 local onboard = ""
                 for i=1, #ships do
-                    onboard = onboard.."| ID: "..ships[i].." Mass: "..round(core.getDockedConstructMass(ships[i])/1000,1).."t "
+                    onboard = onboard.."| ID: "..ships[i].." Mass: "..round(c.getDockedConstructMass(ships[i])/1000,1).."t "
                 end
-                system.print("Docked Ships: "..onboard)
+                s.print("Docked Ships: "..onboard)
                 return
             end
             if hideHudOnToggleWidgets then
@@ -272,7 +272,7 @@ function ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav,
             toggleView = false      
             if AltIsOn and holdingShift then 
                 for i=1, #ships do
-                    core.forceUndock(ships[i])
+                    c.forceUndock(ships[i])
                 end
                 msgText = "Undocked all ships"
                 return
@@ -341,7 +341,7 @@ function ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav,
                 navCom:resetCommand(axisCommandId.lateral)
                 navCom:resetCommand(axisCommandId.vertical)
                 AP.cmdThrottle(0)
-                unit.setTimer("tagTick",0.1)
+                u.setTimer("tagTick",0.1)
             elseif gyro ~= nil then
                 gyro.toggle()
                 gyroIsOn = gyro.getState() == 1
@@ -645,7 +645,7 @@ function ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav,
         end
         if command == "/help" or command == "/commands" then
             for str in string.gmatch(commandhelp, "([^\n]+)") do
-                system.print(str)
+                s.print(str)
             end
             return   
         elseif command == "/setname" then 
@@ -700,14 +700,14 @@ function ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav,
                 for k, v in pairs(saveableVariables()) do
                     if type(_G[v]) == "boolean" then
                         if _G[v] == true then
-                            system.print(v.." true")
+                            s.print(v.." true")
                         else
-                            system.print(v.." false")
+                            s.print(v.." false")
                         end
                     elseif _G[v] == nil then
-                        system.print(v.." nil")
+                        s.print(v.." nil")
                     else
-                        system.print(v.." ".._G[v])
+                        s.print(v.." ".._G[v])
                     end
                 end
                 return
@@ -750,7 +750,7 @@ function ControlClass(Nav, core, unit, system, atlas, vBooster, hover, antigrav,
 
         elseif command == "/iphWP" then
             if AutopilotTargetIndex > 0 then
-                system.print(AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords, true)) 
+                s.print(AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords, true)) 
                 msgText = "::pos waypoint shown in lua chat"
             else
                 msgText = "No target selected in IPH"
