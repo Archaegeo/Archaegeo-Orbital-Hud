@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 0.705 (Changed version numbers on Standalone to reflect version number in Modular)
+- Fix: Standalone will not unload from seat when exit game or away from ship
+- Fix: Mousewheel throttle control
+- Fix: Virtual Joystick not working if not in SCOPE mode.
+- Removed LastVersionUpdate support (developer use)
+- Removed Prograde marker from SCOPE view (code saving)
+
 Version 1.504
 - New Featue: Route support - Load, Clear, Save 1 route.
 To Setup:  Select a custom wp in IPH.  Press ALT-SHIFT-8 to add it to route.  Keep selecting custom wps and adding to route.
