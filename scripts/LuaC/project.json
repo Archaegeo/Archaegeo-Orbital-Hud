@@ -1,0 +1,94 @@
+{
+  "name": "archHudLuaC",
+  "description": "A better way to compile modular",
+  "sourcePath": "src",
+  "outputPath": "out",
+  "builds": {
+    "main": {
+      "name": "main",
+      "slots": {}
+    },
+    "archHUD": {
+      "name": "archHUD",
+      "slots": {
+        "core": {
+          "name": "core",
+          "type": "core",
+          "class": "CoreUnit"
+        },
+        "radar": {
+          "name": "radar",
+          "type": "radar",
+          "class": "RadarPVPUnit",
+          "select": "manual"
+        },
+        "antigrav": {
+          "name": "antigrav",
+          "type": "antigravityGenerator"
+        },
+        "warpdrive": {
+          "name": "warpdrive",
+          "type": "warpDrive"
+        },
+        "dbHud": {
+          "name": "dbHud",
+          "type": "databank"
+        },
+        "telemeter": {
+          "name": "telemeter",
+          "type": null
+        },
+        "vBooster": {
+          "name": "vBooster",
+          "type": null
+        },
+        "hover": {
+          "name": "hover",
+          "type": null
+        },
+        "door": {
+          "name": "door",
+          "type": null
+        },
+        "switch": {
+          "name": "switch",
+          "type": null
+        },
+        "forcefield": {
+          "name": "forcefield",
+          "type": null
+        },
+        "atmofueltank": {
+          "name": "atmofueltank",
+          "type": "fuelContainer"
+        },
+        "spacefueltank": {
+          "name": "spacefueltank",
+          "type": "fuelContainer"
+        },
+        "rocketfueltank": {
+          "name": "rocketfueltank",
+          "type": "fuelContainer"
+        },
+        "shield": {
+          "name": "shield",
+          "type": "shield"
+        }
+      },
+      "compress": false,
+      "noEvents": true,
+      "noHelpers": true
+    },
+    "test": {
+      "name": "test",
+      "slots": {}
+    }
+  },
+  "targets": {
+    "development": {
+      "name": "development",
+      "handleErrors": false,
+      "minify": false
+    }
+  }
+}
