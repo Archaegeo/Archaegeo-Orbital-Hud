@@ -1,7 +1,8 @@
-function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, antigrav,
+function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
     mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
     navCom, sysUpData, sysIsVwLock, msqrt, round) 
-    
+ 
+
     local ap = {}
         local function GetAutopilotBrakeDistanceAndTime(speed)
             -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
@@ -137,7 +138,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
             if dontSet then 
                 return waypoint
             else
-                system.setWaypoint(waypoint) 
+                s.setWaypoint(waypoint) 
                 return true
             end
         end
@@ -203,8 +204,8 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
                 end
                 vector = vec3(vector):normalize()
                 local targetVec = (vec3() - vector)
-                local yawAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationRight()) * autopilotStrength
-                local pitchAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationUp()) * autopilotStrength
+                local yawAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationRight()) * autopilotStrength
+                local pitchAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationUp()) * autopilotStrength
                 if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
                 if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
                 -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
@@ -241,8 +242,8 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
                 end
                 vector = vec3(vector):normalize()
                 local targetVec = (constructForward - vector)
-                local yawAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationRight()) * autopilotStrength
-                local pitchAmount = -getMagnitudeInDirection(targetVec, core.getConstructWorldOrientationUp()) * autopilotStrength
+                local yawAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationRight()) * autopilotStrength
+                local pitchAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationUp()) * autopilotStrength
                 if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
                 if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
                 -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
@@ -269,7 +270,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
         
         inAtmo = (atmosphere() > 0)
         atmosDensity = atmosphere()
-        coreAltitude = core.getAltitude()
+        coreAltitude = c.getAltitude()
         abvGndDet = AboveGroundLevel()
         time = systime()
         lastApTickTime = time
@@ -289,25 +290,25 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
         local up = worldVertical * -1
 
         stalling = inAtmo and currentYaw < -YawStallAngle or currentYaw > YawStallAngle or currentPitch < -PitchStallAngle or currentPitch > PitchStallAngle
-        local deltaX = system.getMouseDeltaX()
-        local deltaY = system.getMouseDeltaY()
+        local deltaX = s.getMouseDeltaX()
+        local deltaY = s.getMouseDeltaY()
 
         if InvertMouse and not holdingShift then deltaY = -deltaY end
         yawInput2 = 0
         rollInput2 = 0
         pitchInput2 = 0
         sys = galaxyReference[0]
-        planet = sys:closestBody(core.getConstructWorldPos())
+        planet = sys:closestBody(c.getConstructWorldPos())
         kepPlanet = Kep(planet)
-        orbit = kepPlanet:orbitalParameters(core.getConstructWorldPos(), constructVelocity)
+        orbit = kepPlanet:orbitalParameters(c.getConstructWorldPos(), constructVelocity)
         if coreAltitude == 0 then
             coreAltitude = (worldPos - planet.center):len() - planet.radius
         end
-        nearPlanet = unit.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
+        nearPlanet = u.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
 
-        local gravity = planet:getGravity(core.getConstructWorldPos()):len() * coreMass
+        local gravity = planet:getGravity(c.getConstructWorldPos()):len() * coreMass
         targetRoll = 0
-        maxKinematicUp = core.getMaxKinematicsParametersAlongAxis("ground", core.getConstructOrientationUp())[1]
+        maxKinematicUp = c.getMaxKinematicsParametersAlongAxis("ground", c.getConstructOrientationUp())[1]
 
         if sysIsVwLock() == 0 then
             if isRemote() == 1 and holdingShift then
@@ -325,7 +326,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
             simulatedY = uclamp(simulatedY + deltaY,-resolutionHeight/2,resolutionHeight/2)
             distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
             if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
-                local dx,dy = deltaX, deltaY
+                local dx,dy = 1,1
                 if SelectedTab == "SCOPE" then
                     dx,dy = (scopeFOV/90),(scopeFOV/90)
                 end
@@ -709,7 +710,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
 
         if Autopilot and atmosDensity == 0 and not spaceLand then
             local function finishAutopilot(msg, orbit)
-                system.print(msg)
+                s.print(msg)
                 BrakeIsOn = false
                 AutopilotBraking = false
                 Autopilot = false
@@ -821,7 +822,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
             
             -- We do this in tenthSecond already.
             --sysUpData(widgetDistanceText, '{"label": "distance", "value": "' ..
-            --    displayText.. '", "unit":"' .. displayUnit .. '"}')
+            --    displayText.. '", "u":"' .. displayUnit .. '"}')
             local aligned = true -- It shouldn't be used if the following condition isn't met, but just in case
 
             local projectedAltitude = (autopilotTargetPlanet.center -
@@ -940,7 +941,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
                     PlayerThrottle = round(AutopilotInterplanetaryThrottle,2)
                     apThrottleSet = true
                 end
-                local throttle = unit.getThrottle()
+                local throttle = u.getThrottle()
                 if AtmoSpeedAssist then throttle = PlayerThrottle end
                 -- If we're within warmup/8 seconds of needing to brake, cut throttle to handle warmdowns
                 -- Note that warmup/8 is kindof an arbitrary guess.  But it shouldn't matter that much.  
@@ -948,7 +949,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
                 -- We need the travel time, the one we compute elsewhere includes estimates on acceleration
                 -- Also it doesn't account for velocity not being in the correct direction, this should
                 local timeUntilBrake = 99999 -- Default in case accel and velocity are both 0 
-                local accel = -(vec3(core.getWorldAcceleration()):dot(constructVelocity:normalize()))
+                local accel = -(vec3(c.getWorldAcceleration()):dot(constructVelocity:normalize()))
                 local velAlongTarget = uclamp(constructVelocity:dot((targetCoords - worldPos):normalize()),0,velMag)
                 if velAlongTarget > 0 or accel > 0 then -- (otherwise divide by 0 errors)
                     timeUntilBrake = Kinematic.computeTravelTime(velAlongTarget, accel, AutopilotDistance-brakeDistance)
@@ -1091,7 +1092,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
                     end
                     AutopilotBraking = true
                 end
-                local throttle = unit.getThrottle()
+                local throttle = u.getThrottle()
                 if AtmoSpeedAssist then throttle = PlayerThrottle end
                 if throttle > 0 then
                     AutopilotAccelerating = true
@@ -1156,7 +1157,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
             -- Keep brake engaged at all times unless: 
             -- Ship is aligned with the target on yaw (roll and pitch are locked to 0)
             -- and ship's speed is below like 5-10m/s
-            local pos = worldPos + vec3(unit.getMasterPlayerRelativePosition()) -- Is this related to core forward or nah?
+            local pos = worldPos + vec3(u.getMasterPlayerRelativePosition()) -- Is this related to c forward or nah?
             local distancePos = (pos - worldPos)
             -- local distance = distancePos:len()
             -- distance needs to be calculated using only construct forward and right
@@ -1212,7 +1213,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
             end
 
             local hSpd = constructForward:project_on_plane(worldVertical):normalize():dot(constructVelocity)
-            local airFrictionVec = vec3(core.getWorldAirFrictionAcceleration())
+            local airFrictionVec = vec3(c.getWorldAirFrictionAcceleration())
             --local airFriction = msqrt(airFrictionVec:len() - airFrictionVec:project_on(up):len()) * coreMass
             local airFriction = airFrictionVec:len()*coreMass -- Actually it probably increases over duration as we drop in atmo... 
             -- Assume it will halve over our duration, if not sqrt.  We'll try sqrt because it's underestimating atm
@@ -1250,7 +1251,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
 
             -- Consider: 100m below target, but 30m/s vspeed.  We should pitch down.  
             -- Or 100m above and -30m/s vspeed.  So (Hold-Core) - vspd
-            -- Scenario 1: Hold-core = -100.  Scen2: Hold-core = 100
+            -- Scenario 1: Hold-c = -100.  Scen2: Hold-c = 100
             -- 1: 100-30 = 70     2: -100--30 = -70
 
             local altDiff = (HoldAltitude - coreAltitude) - vSpd -- Maybe a multiplier for vSpd here...
@@ -1836,7 +1837,7 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
         TargetSet = false -- No matter what
         -- Toggle Autopilot, as long as the target isn't None
         if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
-            if 0.5 * Nav:maxForceForward() / core.g() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
+            if 0.5 * Nav:maxForceForward() / c.g() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
             if #apRoute>0 and not finalLand then 
                 AutopilotTargetIndex = apRoute[1]
                 ATLAS.UpdateAutopilotTarget()
@@ -1930,23 +1931,26 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
         end
     end
 
-    function ap.routeWP(getRoute, clear, load)
-        if load then 
-            if load == 1 then 
-                apRoute = saveRoute 
+    function ap.routeWP(getRoute, clear, loadit)
+        if loadit then 
+            if loadit == 1 then 
+                apRoute = {}
+                apRoute = addTable(apRoute,saveRoute)
                 if #apRoute>0 then 
                     msgText = "Route Loaded" 
                 else
                     msgText = "No Saved Route found on Databank"
                 end
             return apRoute 
-            else 
-                saveRoute = apRoute msgText = "Route Saved" return 
+            else
+                saveRoute = {} 
+                saveRoute = addTable(saveRoute, apRoute) msgText = "Route Saved" SaveDataBank() return 
             end
         end
         if getRoute then return apRoute end
         if clear then 
             apRoute = {}
+            msgText = "Current Route Cleared"
         else
             apRoute[#apRoute+1]=AutopilotTargetIndex
             msgText = "Added "..CustomTarget.name.." to route. "
@@ -2165,6 +2169,38 @@ function APClass(Nav, core, unit, system, atlas, vBooster, hover, telemeter_1, a
                 play("aggOn","AG")
                 antigrav.activate()
                 antigrav.show()
+            end
+        end
+    end
+
+    function ap.changeSpd(down)
+        local mult=1
+        if down then mult = -1 end
+        if not holdingShift then
+            if AtmoSpeedAssist and not AltIsOn and mousePause then
+                local currentPlayerThrot = PlayerThrottle
+                PlayerThrottle = round(uclamp(PlayerThrottle + mult*speedChangeLarge/100, -1, 1),2)
+                if PlayerThrottle >= 0 and currentPlayerThrot < 0 then 
+                    PlayerThrottle = 0 
+                    mousePause = false
+                end
+            elseif AltIsOn then
+                if atmosDensity > 0 or Reentry then
+                    adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
+                elseif Autopilot then
+                    MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 8333.00)
+                end
+            else
+                navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge)
+            end
+        else
+            if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
+                apScrollIndex = apScrollIndex+1*mult*-1
+                if apScrollIndex > #AtlasOrdered then apScrollIndex = 1 end
+                if apScrollIndex < 1 then apScrollIndex = #AtlasOrdered end
+            else
+                if not down then mult = 1 else mult = nil end
+                ATLAS.adjustAutopilotTargetIndex(mult)
             end
         end
     end

@@ -1,5 +1,14 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.705 (Changed version numbers on Standalone to 0.705 to reflect version number in Modular)
+- Fix: Standalone will not unload from seat when exit game or away from ship
+- Fix: Mousewheel throttle control
+- Fix: Virtual Joystick not working if not in SCOPE mode.
+- Removed LastVersionUpdate support (developer use)
+NOTE: Throughout code, system, core, and unit have been replaced by s, c and u for space saving in Standalone and consistency in Modular.
+
+
+
 Version 1.704 - AP Route Support
 - New Featue: Route support - Load, Clear, Save 1 route.
 To Setup:  Select a custom wp in IPH.  Press ALT-SHIFT-8 to add it to route.  Keep selecting custom wps and adding to route.
@@ -7,7 +16,8 @@ To Save: Click Save Route button
 To Clear: Click Clear Route button
 To Load Saved route: Clock Load Route button
 To Use: Hit Alt-4 to begin route.  If two points are on same planet and more than 50k apart it will try to low orbit hop.
-Ship will begin route and will only stop or land at final point.
+Ship will begin route and will only stop or land at final point.  IPH will update to show leg of route you are on.
+Holding SHIFT with a loaded route will display the route or remaining legs if already in progress.
 NOTE: If a route is loaded, alt-4 (and AP Button) will ignore IPH selected target and perform the route instead.
 NOTE: Route is based off of IPH index position of wp when route created, if you add or remove (not update) custom wp's, 
     route could become invalid.
