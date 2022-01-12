@@ -7499,14 +7499,14 @@ VERSION_NUMBER = 0.706
                     for k, v in pairs(saveableVariables()) do
                         if type(v.get()) == "boolean" then
                             if v.get() == true then
-                                s.print(v.." true")
+                                s.print(k.." true")
                             else
-                                s.print(v.." false")
+                                s.print(k.." false")
                             end
                         elseif v.get() == nil then
-                            s.print(v.." nil")
+                            s.print(k.." nil")
                         else
-                            s.print(v.." "..v.get())
+                            s.print(k.." "..v.get())
                         end
                     end
                     return
