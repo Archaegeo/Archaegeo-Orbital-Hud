@@ -2174,7 +2174,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
     end
 
     function ap.changeSpd(down)
-        p("HERE2")
         local mult=1
         if down then mult = -1 end
         if not holdingShift then

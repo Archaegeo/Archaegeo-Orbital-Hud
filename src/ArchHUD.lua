@@ -14,7 +14,7 @@ require("autoconf/custom/archhud/radarclass")
 require("autoconf/custom/archhud/controlclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.705
+VERSION_NUMBER = 1.706
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -264,8 +264,8 @@ VERSION_NUMBER = 1.705
     end
 
     function addTable(table1, table2) -- Function to add two tables together
-        for i = 1, #table2 do
-            table1[#table1 + 1 ] = table2[i]
+        for k,v in pairs(table2) do
+            table1[k] = v
         end
         return table1
     end
@@ -355,9 +355,9 @@ VERSION_NUMBER = 1.705
     function SaveDataBank(copy) -- Save values to the databank.
         local function writeData(dataList)
             for k, v in pairs(dataList) do
-                dbHud_1.setStringValue(v, jencode(_G[v]))
+                dbHud_1.setStringValue(k, jencode(v.get()))
                 if copy and dbHud_2 then
-                    dbHud_2.setStringValue(v, jencode(_G[v]))
+                    dbHud_2.setStringValue(k, jencode(v.get()))
                 end
             end
         end
@@ -1294,10 +1294,10 @@ VERSION_NUMBER = 1.705
                 local function processVariableList(varList)
                     local hasKey = dbHud_1.hasKey
                     for k, v in pairs(varList) do
-                        if hasKey(v) then
-                            local result = jdecode(dbHud_1.getStringValue(v))
+                        if hasKey(k) then
+                            local result = jdecode(dbHud_1.getStringValue(k))
                             if result ~= nil then
-                                _G[v] = result
+                                v.set(result)
                                 valuesAreSet = true
                             end
                         end
@@ -1756,35 +1756,35 @@ VERSION_NUMBER = 1.705
                     panelInterplanetary = s.createWidgetPanel("Interplanetary Helper")
                 
                     interplanetaryHeader = sysCrWid(panelInterplanetary, "value")
-                    interplanetaryHeaderText = sysCrData('{"label": "Target Planet", "value": "N/A", "u":""}')
+                    interplanetaryHeaderText = sysCrData('{"label": "Target Planet", "value": "N/A", "unit":""}')
                     sysAddData(interplanetaryHeaderText, interplanetaryHeader)
                 
                     widgetDistance = sysCrWid(panelInterplanetary, "value")
-                    widgetDistanceText = sysCrData('{"label": "distance", "value": "N/A", "u":""}')
+                    widgetDistanceText = sysCrData('{"label": "distance", "value": "N/A", "unit":""}')
                     sysAddData(widgetDistanceText, widgetDistance)
                 
                     widgetTravelTime = sysCrWid(panelInterplanetary, "value")
-                    widgetTravelTimeText = sysCrData('{"label": "Travel Time", "value": "N/A", "u":""}')
+                    widgetTravelTimeText = sysCrData('{"label": "Travel Time", "value": "N/A", "unit":""}')
                     sysAddData(widgetTravelTimeText, widgetTravelTime)
                 
                     widgetMaxMass = sysCrWid(panelInterplanetary, "value")
-                    widgetMaxMassText = sysCrData('{"label": "Maximum Mass", "value": "N/A", "u":""}')
+                    widgetMaxMassText = sysCrData('{"label": "Maximum Mass", "value": "N/A", "unit":""}')
                     sysAddData(widgetMaxMassText, widgetMaxMass)
                 
                     widgetTargetOrbit = sysCrWid(panelInterplanetary, "value")
-                    widgetTargetOrbitText = sysCrData('{"label": "Target Altitude", "value": "N/A", "u":""}')
+                    widgetTargetOrbitText = sysCrData('{"label": "Target Altitude", "value": "N/A", "unit":""}')
                     sysAddData(widgetTargetOrbitText, widgetTargetOrbit)
                 
                     widgetCurBrakeDistance = sysCrWid(panelInterplanetary, "value")
-                    widgetCurBrakeDistanceText = sysCrData('{"label": "Cur Brake distance", "value": "N/A", "u":""}')
+                    widgetCurBrakeDistanceText = sysCrData('{"label": "Cur Brake distance", "value": "N/A", "unit":""}')
                     widgetCurBrakeTime = sysCrWid(panelInterplanetary, "value")
-                    widgetCurBrakeTimeText = sysCrData('{"label": "Cur Brake Time", "value": "N/A", "u":""}')
+                    widgetCurBrakeTimeText = sysCrData('{"label": "Cur Brake Time", "value": "N/A", "unit":""}')
                     widgetMaxBrakeDistance = sysCrWid(panelInterplanetary, "value")
-                    widgetMaxBrakeDistanceText = sysCrData('{"label": "Max Brake distance", "value": "N/A", "u":""}')
+                    widgetMaxBrakeDistanceText = sysCrData('{"label": "Max Brake distance", "value": "N/A", "unit":""}')
                     widgetMaxBrakeTime = sysCrWid(panelInterplanetary, "value")
-                    widgetMaxBrakeTimeText = sysCrData('{"label": "Max Brake Time", "value": "N/A", "u":""}')
+                    widgetMaxBrakeTimeText = sysCrData('{"label": "Max Brake Time", "value": "N/A", "unit":""}')
                     widgetTrajectoryAltitude = sysCrWid(panelInterplanetary, "value")
-                    widgetTrajectoryAltitudeText = sysCrData('{"label": "Projected Altitude", "value": "N/A", "u":""}')
+                    widgetTrajectoryAltitudeText = sysCrData('{"label": "Projected Altitude", "value": "N/A", "unit":""}')
                     if not inAtmo then
                         sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
                         sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime)
@@ -1898,7 +1898,7 @@ VERSION_NUMBER = 1.705
                         :len())
                     planetMaxMass = planetMaxMass > 1000000 and round(planetMaxMass / 1000000,2).." kTons" or round(planetMaxMass / 1000, 2).." Tons"
                     sysUpData(interplanetaryHeaderText,
-                        '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "u":""}')
+                        '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "unit":""}')
                     travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
                     if customLocation and not Autopilot then -- If in autopilot, keep this displaying properly
                         distance = (worldPos - CustomTarget.position):len()
@@ -1916,19 +1916,19 @@ VERSION_NUMBER = 1.705
                     sysUpData(widgetDistanceText, '{"label": "distance", "value": "' .. displayText
                         .. '"}')
                     sysUpData(widgetTravelTimeText, '{"label": "Travel Time", "value": "' ..
-                        FormatTimeString(travelTime) .. '", "u":""}')
+                        FormatTimeString(travelTime) .. '", "unit":""}')
                     displayText = getDistanceDisplayString(brakeDistance)
                     sysUpData(widgetCurBrakeDistanceText, '{"label": "Cur Brake distance", "value": "' ..
                         displayText.. '"}')
                     sysUpData(widgetCurBrakeTimeText, '{"label": "Cur Brake Time", "value": "' ..
-                        FormatTimeString(brakeTime) .. '", "u":""}')
+                        FormatTimeString(brakeTime) .. '", "unit":""}')
                     displayText = getDistanceDisplayString(maxBrakeDistance)
                     sysUpData(widgetMaxBrakeDistanceText, '{"label": "Max Brake distance", "value": "' ..
                         displayText.. '"}')
                     sysUpData(widgetMaxBrakeTimeText, '{"label": "Max Brake Time", "value": "' ..
-                        FormatTimeString(maxBrakeTime) .. '", "u":""}')
+                        FormatTimeString(maxBrakeTime) .. '", "unit":""}')
                     sysUpData(widgetMaxMassText, '{"label": "Max Brake Mass", "value": "' ..
-                        stringf("%s", planetMaxMass ) .. '", "u":""}')
+                        stringf("%s", planetMaxMass ) .. '", "unit":""}')
                     displayText = getDistanceDisplayString(AutopilotTargetOrbit)
                     sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
                     displayText .. '"}')
@@ -2358,7 +2358,6 @@ VERSION_NUMBER = 1.705
         local wheel = s.getMouseWheel()
 
         if wheel > 0 then
-            p("HERE1")
             AP.changeSpd()
         elseif wheel < 0 then
             AP.changeSpd(true)
