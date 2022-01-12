@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.705
+VERSION_NUMBER = 0.706
 
 -- User variables, visable via Edit Lua Parameters. Must be global to work with databank s as set up due to using _G assignment
     useTheseSettings = false
@@ -2479,7 +2479,7 @@ VERSION_NUMBER = 0.705
     
             local function DisplayRoute(newContent)
                 local checkRoute = AP.routeWP(true)
-                if #checkRoute==0 then return end
+                if not checkRoute or #checkRoute==0 then return end
                 local x = ConvertResolutionX(750)
                 local y = ConvertResolutionY(360)
                 if Autopilot or VectorToTarget then
@@ -2759,21 +2759,7 @@ VERSION_NUMBER = 0.705
                                                         orbitMapY + orbitMapSize*1.5 / 2 + pad, planet.radius / scale)
                         newContent[#newContent + 1] = '</g>' -- The rest doesn't really need clipping hopefully
                         local planetsize = math.floor(planet.radius / scale + 0.5)
-                        local imageLink = image_links.Generic_Moon
-                        if image_links[planet.name] then
-                            imageLink = image_links[planet.name]
-                        end
-                        -- SVG image doesn't seem to work at all...
-                        --newContent[#newContent + 1] = [[<image x="100" y="100" width="200" height="200" href="http://assets.prod.novaquark.com/20368/5a01dd8c-3cf8-4151-99a2-83b22f1e7249.png" />]]
-                        --stringf([[<image x="%d" y="%d" width="%d" height="%d" href="%s" />]],
-                                                        -- This html works but breaks everything... 
-                                                        --'<img style="position:absolute;top:%dpx;left:%dpx;" width="%dpx" height="%dpx" src="%s">',
-                                                        --math.floor((orbitMapX + orbitMapSize + pad) - planetsize/2),
-                                                        --math.floor(orbitMapY + orbitMapSize*1.5 / 2 + pad - planetsize/2), planetsize, planetsize, "https://"..imageLink)
-                        -- Draw it inside the planet red and clipped, if any part of it is inside the planet
-                            
-                        
-                
+
                         x = orbitMapX + orbitMapSize + pad*4 + rx -- Aligning left makes us need more padding... for some reason... 
                         y = orbitMapY + orbitMapSize*1.5 / 2 + 5 + pad
     
@@ -6564,9 +6550,9 @@ VERSION_NUMBER = 0.705
             end
         end
 
-        function ap.routeWP(getRoute, clear, load)
-            if load then 
-                if load == 1 then 
+        function ap.routeWP(getRoute, clear, loadit)
+            if loadit then 
+                if loadit == 1 then 
                     apRoute = {}
                     apRoute = addTable(apRoute,saveRoute) 
                     if #apRoute>0 then 
