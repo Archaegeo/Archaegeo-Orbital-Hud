@@ -10,7 +10,7 @@ script = {}  -- wrappable container for all the code. Different than normal DU L
 
 VERSION_NUMBER = 0.706
 
--- User variables, visable via Edit Lua Parameters. Must be global to work with databank s as set up due to using _G assignment
+-- User variables, visable via Edit Lua Parameters. Must be global to work with databank system
     useTheseSettings = false
     userControlScheme = "virtual joystick"
     soundFolder = "archHUD"
@@ -119,7 +119,7 @@ VERSION_NUMBER = 0.706
     ExtraLateralTags = "none"
     ExtraVerticalTags = "none"
 
--- Auto Variable declarations that store status of ship. Must be global because they get saved/read to Databank due to using _G assignment
+-- Auto Variable declarations that store status of ship. Must be global because they get saved/read to databank system
     BrakeToggleStatus = BrakeToggleDefault
     VertTakeOffEngine = false 
     BrakeIsOn = false
@@ -414,7 +414,7 @@ VERSION_NUMBER = 0.706
             return self
         end
     --]]
-    --[[
+    --
     function p(msg)
         s.print(time..": "..msg)
     end
@@ -434,12 +434,15 @@ VERSION_NUMBER = 0.706
     end
 
     local function addTable(table1, table2) -- Function to add two tables together
+
         for k,v in pairs(table2) do
-            table1[k] = v
+            if type(k)=="string" then
+                table1[k] = v
+            else
+                table1[#table1 + 1 ] = table2[k]
+            end
         end
-        --for i = 1, #table2 do
-        --    table1[#table1 + 1 ] = table2[i]
-        --end
+
         return table1
     end
 
@@ -1508,7 +1511,7 @@ VERSION_NUMBER = 0.706
         local MapYRatio = nil
         local YouAreHere = nil
         local showSettings = false
-        local settingsVariables = {}
+        local settingsVariables = "none"
         local pipeMessage = ""
     
         --Local Huds Functions
@@ -3289,7 +3292,7 @@ VERSION_NUMBER = 0.706
                     settingsVariables = saveableVariables(whichVar)
                     showHud = false 
                 else
-                    settingsVariables = {}
+                    settingsVariables = "none"
                     showHud = true
                 end
             end
@@ -3309,17 +3312,17 @@ VERSION_NUMBER = 0.706
             end
     
             local function SettingsButtons()
-                local function ToggleBoolean(v)
+                local function ToggleBoolean(v,k)
     
-                    _G[v] = not _G[v]
-                    if _G[v] then 
-                        msgText = v.." set to true"
+                    v.set(not v.get())
+                    if v.get() then 
+                        msgText = k.." set to true"
                     else
-                        msgText = v.." set to false"
+                        msgText = k.." set to false"
                     end
-                    if v == "showHud" then
-                        oldShowHud = _G[v]
-                    elseif v == "BrakeToggleDefault" then 
+                    if k == "showHud" then
+                        oldShowHud = v.get()
+                    elseif k == "BrakeToggleDefault" then 
                         BrakeToggleStatus = BrakeToggleDefault
                     end
                 end
@@ -3329,10 +3332,10 @@ VERSION_NUMBER = 0.706
                 local y = resolutionHeight / 2 - 400
                 local cnt = 0
                 for k, v in pairs(saveableVariables("boolean")) do
-                    if type(_G[v]) == "boolean" then
-                        MakeButton(v, v, buttonWidth, buttonHeight, x, y,
-                            function() return _G[v] end, 
-                            function() ToggleBoolean(v) end,
+                    if type(v.get()) == "boolean" then
+                        MakeButton(k, k, buttonWidth, buttonHeight, x, y,
+                            function() return v.get() end, 
+                            function() ToggleBoolean(v,k) end,
                             function() return true end, true) 
                         y = y + buttonHeight + 20
                         if cnt == 9 then 
@@ -4004,21 +4007,21 @@ VERSION_NUMBER = 0.706
         end
     
         function Hud.DrawSettings(newContent)
-            if #settingsVariables > 0  then
-                local x = ConvertResolutionX(640)
-                local y = ConvertResolutionY(200)
-                newContent[#newContent + 1] = [[<g class="pbright txtvspd txtstart">]]
-                for k, v in pairs(settingsVariables) do
-                    newContent[#newContent + 1] = svgText(x, y, v..": ".._G[v])
-                    y = y + 20
-                    if k%12 == 0 then
-                        x = x + ConvertResolutionX(350)
-                        y = ConvertResolutionY(200)
-                    end
+            local x = ConvertResolutionX(640)
+            local y = ConvertResolutionY(200)
+            newContent[#newContent + 1] = [[<g class="pbright txtvspd txtstart">]]
+            local count=0
+            for k, v in pairs(settingsVariables) do
+                count=count+1
+                newContent[#newContent + 1] = svgText(x, y, k..": "..v.get())
+                y = y + 20
+                if count%12 == 0 then
+                    x = x + ConvertResolutionX(350)
+                    y = ConvertResolutionY(200)
                 end
-                newContent[#newContent + 1] = svgText(ConvertResolutionX(640), ConvertResolutionY(200)+260, "To Change: In Lua Chat, enter /G VariableName Value")
-                newContent[#newContent + 1] = "</g>"
             end
+            newContent[#newContent + 1] = svgText(ConvertResolutionX(640), ConvertResolutionY(200)+260, "To Change: In Lua Chat, enter /G VariableName Value")
+            newContent[#newContent + 1] = "</g>"
             return newContent
         end
     
@@ -4225,7 +4228,7 @@ VERSION_NUMBER = 0.706
                 if AlwaysVSpd then HUD.DrawVerticalSpeed(newContent, coreAltitude) end
                 HUD.DrawWarnings(newContent)
             end
-            if showSettings and settingsVariables ~= {} then 
+            if showSettings and settingsVariables ~= "none" then 
                 HUD.DrawSettings(newContent) 
             end
     
@@ -8347,7 +8350,7 @@ VERSION_NUMBER = 0.706
             if myAutopilotTarget ~= nil and myAutopilotTarget ~= "" and myAutopilotTarget ~= "SatNavNotChanged" then
                 local result = jdecode(dbHud_1.getStringValue("SavedLocations"))
                 if result ~= nil then
-                    _G["SavedLocations"] = result        
+                    SavedLocations = result        
                     local index = -1        
                     local newLocation        
                     for k, v in pairs(SavedLocations) do        
