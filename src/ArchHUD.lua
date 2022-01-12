@@ -432,9 +432,12 @@ VERSION_NUMBER = 1.5204
     end
 
     local function addTable(table1, table2) -- Function to add two tables together
-        for i = 1, #table2 do
-            table1[#table1 + 1 ] = table2[i]
+        for k,v in pairs(table2) do
+            table1[k] = v
         end
+        --for i = 1, #table2 do
+        --    table1[#table1 + 1 ] = table2[i]
+        --end
         return table1
     end
 
