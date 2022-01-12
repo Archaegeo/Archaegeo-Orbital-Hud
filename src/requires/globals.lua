@@ -1,6 +1,6 @@
 -- These values are a default set for 1920x1080 ResolutionX and Y settings.
 
--- User variables. Must be global to work with databank system as set up due to using _G assignment
+-- User variables. Must be global to work with databank system
     useTheseSettings = false --export:  Change this to true to override databank saved settings
     userControlScheme = "virtual joystick" --export: (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard". This can be set by holding SHIFT and clicking the button in lower left of main Control buttons view.
     soundFolder = "archHUD" --export: (Default: "archHUD") Set to the name of the folder with sound files in it. Must be changed from archHUD to prevent other scripts making your PC play sounds.
@@ -41,7 +41,7 @@
         voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end}, DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end}}
 
     -- Ship Handling variables
-        -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank.
+        -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank system
 
         YawStallAngle = 35 --export: (Default: 35) Angle at which the ship stalls when yawing, determine by experimentation. Higher allows faster AP Bank turns.
         PitchStallAngle = 35 --export: (Default: 35) Angle at which the ship stalls when pitching, determine by experimentation.
@@ -73,7 +73,7 @@
 
 
     -- HUD Postioning variables
-        -- NOTE: savableVariablesHud below must contain any HUD Postioning variables that needs to be saved/loaded from databank.
+        -- NOTE: savableVariablesHud below must contain any HUD Postioning variables that needs to be saved/loaded from databank system
 
         ResolutionX = 1920 --export: (Default: 1920) Does not need to be set to same as game resolution. You can set 1920 on a 2560 to get larger resolution
         ResolutionY = 1080 --export: (Default: 1080) Does not need to be set to same as game resolution. You can set 1080 on a 1440 to get larger resolution
@@ -108,7 +108,7 @@
         OrbitMapSize={set=function (i)OrbitMapSize=i end,get=function() return OrbitMapSize end}, OrbitMapX={set=function (i)OrbitMapX=i end,get=function() return OrbitMapX end}, OrbitMapY={set=function (i)OrbitMapY=i end,get=function() return OrbitMapY end}, soundVolume={set=function (i)soundVolume=i end,get=function() return soundVolume end}}
 
     -- Ship flight physics variables - Change with care, can have large effects on ships performance.
-        -- NOTE: savableVariablesPhysics below must contain any Ship flight physics variables that needs to be saved/loaded from databank.
+        -- NOTE: savableVariablesPhysics below must contain any Ship flight physics variables that needs to be saved/loaded from databank system
 
         speedChangeLarge = 5 --export: (Default: 5) The speed change that occurs when you tap speed up/down, default is 5 (25% throttle change).
         speedChangeSmall = 1 --export: (Default: 1) the speed change that occurs while you hold speed up/down, default is 1 (5% throttle change).
@@ -136,8 +136,7 @@
         apTickRate={set=function (i)apTickRate=i end,get=function() return apTickRate end},  hudTickRate={set=function (i)hudTickRate=i end,get=function() return hudTickRate end}, ExtraLongitudeTags={set=function (i)ExtraLongitudeTags=i end,get=function() return ExtraLongitudeTags end}, ExtraLateralTags={set=function (i)ExtraLateralTags=i end,get=function() return ExtraLateralTags end}, ExtraVerticalTags={set=function (i)ExtraVerticalTags=i end,get=function() return ExtraVerticalTags end}}
 
     -- Auto Variable declarations that store status of ship on databank. Do not edit directly here unless you know what you are doing, these change as ship flies.
-    -- NOTE: autoVariables below must contain any variable that needs to be saved/loaded from databank.
-
+    -- NOTE: autoVariables below must contain any variable that needs to be saved/loaded from databank system
         BrakeToggleStatus = BrakeToggleDefault
         VertTakeOffEngine = false 
         BrakeIsOn = false

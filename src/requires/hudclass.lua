@@ -11,7 +11,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     local MapYRatio = nil
     local YouAreHere = nil
     local showSettings = false
-    local settingsVariables = {}
+    local settingsVariables = "none"
     local pipeMessage = ""
 
     --Local Huds Functions
@@ -983,7 +983,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
 
         local function DisplayRoute(newContent)
             local checkRoute = AP.routeWP(true)
-            if #checkRoute==0 then return end
+            if not checkRoute or #checkRoute==0 then return end
             local x = ConvertResolutionX(750)
             local y = ConvertResolutionY(360)
             if Autopilot or VectorToTarget then
@@ -1793,7 +1793,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 settingsVariables = saveableVariables(whichVar)
                 showHud = false 
             else
-                settingsVariables = {}
+                settingsVariables = "none"
                 showHud = true
             end
         end
@@ -1813,17 +1813,17 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         end
 
         local function SettingsButtons()
-            local function ToggleBoolean(v)
+            local function ToggleBoolean(v,k)
 
-                _G[v] = not _G[v]
-                if _G[v] then 
-                    msgText = v.." set to true"
+                v.set(not v.get())
+                if v.get() then 
+                    msgText = k.." set to true"
                 else
-                    msgText = v.." set to false"
+                    msgText = k.." set to false"
                 end
-                if v == "showHud" then
-                    oldShowHud = _G[v]
-                elseif v == "BrakeToggleDefault" then 
+                if k == "showHud" then
+                    oldShowHud = v.get()
+                elseif k == "BrakeToggleDefault" then 
                     BrakeToggleStatus = BrakeToggleDefault
                 end
             end
@@ -1833,10 +1833,10 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local y = resolutionHeight / 2 - 400
             local cnt = 0
             for k, v in pairs(saveableVariables("boolean")) do
-                if type(_G[v]) == "boolean" then
-                    MakeButton(v, v, buttonWidth, buttonHeight, x, y,
-                        function() return _G[v] end, 
-                        function() ToggleBoolean(v) end,
+                if type(v.get()) == "boolean" then
+                    MakeButton(k, k, buttonWidth, buttonHeight, x, y,
+                        function() return v.get() end, 
+                        function() ToggleBoolean(v,k) end,
                         function() return true end, true) 
                     y = y + buttonHeight + 20
                     if cnt == 9 then 
@@ -2508,21 +2508,21 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     end
 
     function Hud.DrawSettings(newContent)
-        if #settingsVariables > 0  then
-            local x = ConvertResolutionX(640)
-            local y = ConvertResolutionY(200)
-            newContent[#newContent + 1] = [[<g class="pbright txtvspd txtstart">]]
-            for k, v in pairs(settingsVariables) do
-                newContent[#newContent + 1] = svgText(x, y, v..": ".._G[v])
-                y = y + 20
-                if k%12 == 0 then
-                    x = x + ConvertResolutionX(350)
-                    y = ConvertResolutionY(200)
-                end
+        local x = ConvertResolutionX(640)
+        local y = ConvertResolutionY(200)
+        newContent[#newContent + 1] = [[<g class="pbright txtvspd txtstart">]]
+        local count=0
+        for k, v in pairs(settingsVariables) do
+            count=count+1
+            newContent[#newContent + 1] = svgText(x, y, k..": "..v.get())
+            y = y + 20
+            if count%12 == 0 then
+                x = x + ConvertResolutionX(350)
+                y = ConvertResolutionY(200)
             end
-            newContent[#newContent + 1] = svgText(ConvertResolutionX(640), ConvertResolutionY(200)+260, "To Change: In Lua Chat, enter /G VariableName Value")
-            newContent[#newContent + 1] = "</g>"
         end
+        newContent[#newContent + 1] = svgText(ConvertResolutionX(640), ConvertResolutionY(200)+260, "To Change: In Lua Chat, enter /G VariableName Value")
+        newContent[#newContent + 1] = "</g>"
         return newContent
     end
 
@@ -2729,7 +2729,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             if AlwaysVSpd then HUD.DrawVerticalSpeed(newContent, coreAltitude) end
             HUD.DrawWarnings(newContent)
         end
-        if showSettings and settingsVariables ~= {} then 
+        if showSettings and settingsVariables ~= "none" then  
             HUD.DrawSettings(newContent) 
         end
 

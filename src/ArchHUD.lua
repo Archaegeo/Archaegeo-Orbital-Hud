@@ -265,7 +265,11 @@ VERSION_NUMBER = 1.706
 
     function addTable(table1, table2) -- Function to add two tables together
         for k,v in pairs(table2) do
-            table1[k] = v
+            if type(k)=="string" then
+                table1[k] = v
+            else
+                table1[#table1 + 1 ] = table2[k]
+            end
         end
         return table1
     end
@@ -2094,7 +2098,7 @@ VERSION_NUMBER = 1.706
             if myAutopilotTarget ~= nil and myAutopilotTarget ~= "" and myAutopilotTarget ~= "SatNavNotChanged" then
                 local result = jdecode(dbHud_1.getStringValue("SavedLocations"))
                 if result ~= nil then
-                    _G["SavedLocations"] = result        
+                    SavedLocations = result        
                     local index = -1        
                     local newLocation        
                     for k, v in pairs(SavedLocations) do        
