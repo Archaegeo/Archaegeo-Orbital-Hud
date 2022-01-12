@@ -65,24 +65,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             end
             return flightStyle
         end
-        local image_links = {
-            Generic_Moon = "assets.prod.novaquark.com/20368/f410e727-9d4d-4eab-98bf-22994b3fbdcf.png",
-            Sun = "assets.prod.novaquark.com/20368/0936494e-9b3d-4d60-9ea0-d93a3f3e29cd.png",
-            Alioth = "assets.prod.novaquark.com/20368/954f3adb-3369-4ea9-854d-a14606334152.png",
-            Alioth_bis = "assets.prod.novaquark.com/20368/b83225ed-fb96-404c-8c91-86ac15dfbbec.png",
-            Sanctuary = "assets.prod.novaquark.com/20368/1a70dbff-24bc-44cb-905c-6d375d9613b8.png",
-            Feli = "assets.prod.novaquark.com/20368/da91066c-b3fd-41f4-8c01-26131b0a7841.png",
-            Ion = "assets.prod.novaquark.com/20368/91d10712-dc51-4b73-9fc0-6f07d96605a6.png",
-            Madis = "assets.prod.novaquark.com/20368/46d57ef4-40ee-46ca-8cc5-5aee1504bbfe.png",
-            Jago = "assets.prod.novaquark.com/20368/7fca8389-6b70-4198-a9c3-4875d15edb38.png",
-            Lacobus = "assets.prod.novaquark.com/20368/cb67a6a4-933c-4688-a637-898c89eb5b94.png",
-            Sicari = "assets.prod.novaquark.com/20368/f6e2f801-075f-4ccd-ab94-46d060517e8f.png",
-            Sinnen = "assets.prod.novaquark.com/20368/54a99084-7c2b-461b-ab1f-ae4229b3b821.png",
-            Symeon = "assets.prod.novaquark.com/20368/97940324-f194-4e03-808d-d71733ad545a.png",
-            Talemai = "assets.prod.novaquark.com/20368/f68628d9-3245-4d76-968e-ad9c63a19c19.png",
-            Teoma = "assets.prod.novaquark.com/20368/5a01dd8c-3cf8-4151-99a2-83b22f1e7249.png",
-            Thades = "assets.prod.novaquark.com/20368/59f997a2-bcca-45cf-aa35-26e0e41ed5c1.png",
-        }
         local radarMessage = ""
         local tankMessage = ""
         local shieldMessage = ""
@@ -1280,20 +1262,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                                                     orbitMapY + orbitMapSize*1.5 / 2 + pad, planet.radius / scale)
                     newContent[#newContent + 1] = '</g>' -- The rest doesn't really need clipping hopefully
                     local planetsize = math.floor(planet.radius / scale + 0.5)
-                    local imageLink = image_links.Generic_Moon
-                    if image_links[planet.name] then
-                        imageLink = image_links[planet.name]
-                    end
-                    -- SVG image doesn't seem to work at all...
-                    --newContent[#newContent + 1] = [[<image x="100" y="100" width="200" height="200" href="http://assets.prod.novaquark.com/20368/5a01dd8c-3cf8-4151-99a2-83b22f1e7249.png" />]]
-                    --stringf([[<image x="%d" y="%d" width="%d" height="%d" href="%s" />]],
-                                                    -- This html works but breaks everything... 
-                                                    --'<img style="position:absolute;top:%dpx;left:%dpx;" width="%dpx" height="%dpx" src="%s">',
-                                                    --math.floor((orbitMapX + orbitMapSize + pad) - planetsize/2),
-                                                    --math.floor(orbitMapY + orbitMapSize*1.5 / 2 + pad - planetsize/2), planetsize, planetsize, "https://"..imageLink)
-                    -- Draw it inside the planet red and clipped, if any part of it is inside the planet
-                        
-                    
             
                     x = orbitMapX + orbitMapSize + pad*4 + rx -- Aligning left makes us need more padding... for some reason... 
                     y = orbitMapY + orbitMapSize*1.5 / 2 + 5 + pad
@@ -1933,13 +1901,13 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
            
             local function getAPEnableName(index)
                 local checkRoute = AP.routeWP(true)
-                if #checkRoute > 0 then return "Engage Route: "..getAPName(checkRoute[1]) end
+                if checkRoute and #checkRoute > 0 then return "Engage Route: "..getAPName(checkRoute[1]) end
                 return "Engage Autopilot: " .. getAPName(index)
             end
 
             local function getAPDisableName(index)
                 local checkRoute = AP.routeWP(true)
-                if #checkRoute > 0 then return "Next Route Point: "..getAPName(checkRoute[1]) end
+                if checkRoute and #checkRoute > 0 then return "Next Route Point: "..getAPName(checkRoute[1]) end
                 return "Disable Autopilot: " .. getAPName(index)
             end   
 
@@ -2023,7 +1991,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local i
             local function getAtlasIndexFromAddition(add)
                 local checkRoute = AP.routeWP(true)
-                if #checkRoute > 0 then return checkRoute[1] end
+                if checkRoute and #checkRoute > 0 then return checkRoute[1] end
                 local index = apScrollIndex + add
                 if index > #AtlasOrdered then
                     index = index-#AtlasOrdered-1

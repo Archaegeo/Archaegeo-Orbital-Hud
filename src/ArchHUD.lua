@@ -14,7 +14,7 @@ require("autoconf/custom/archhud/radarclass")
 require("autoconf/custom/archhud/controlclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.705
+VERSION_NUMBER = 1.706
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -355,9 +355,9 @@ VERSION_NUMBER = 1.705
     function SaveDataBank(copy) -- Save values to the databank.
         local function writeData(dataList)
             for k, v in pairs(dataList) do
-                dbHud_1.setStringValue(v, jencode(_G[v]))
+                dbHud_1.setStringValue(k, jencode(v.get()))
                 if copy and dbHud_2 then
-                    dbHud_2.setStringValue(v, jencode(_G[v]))
+                    dbHud_2.setStringValue(k, jencode(v.get()))
                 end
             end
         end
@@ -1294,10 +1294,10 @@ VERSION_NUMBER = 1.705
                 local function processVariableList(varList)
                     local hasKey = dbHud_1.hasKey
                     for k, v in pairs(varList) do
-                        if hasKey(v) then
-                            local result = jdecode(dbHud_1.getStringValue(v))
+                        if hasKey(k) then
+                            local result = jdecode(dbHud_1.getStringValue(k))
                             if result ~= nil then
-                                _G[v] = result
+                                v.set(result)
                                 valuesAreSet = true
                             end
                         end
