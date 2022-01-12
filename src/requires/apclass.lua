@@ -1715,7 +1715,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
             end
         end
 
-        if antigrav ~= nil and (antigrav and not ExternalAGG and coreAltitude < 200000) then
+        if antigrav ~= nil and (antigrav and not ExternalAGG and (AGGAltitudeLimit == 0 or coreAltitude < AGGAltitudeLimit)) then
                 if AntigravTargetAltitude == nil or AntigravTargetAltitude < 1000 then AntigravTargetAltitude = 1000 end
                 if desiredBaseAltitude ~= AntigravTargetAltitude then
                     desiredBaseAltitude = AntigravTargetAltitude

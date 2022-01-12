@@ -7,7 +7,7 @@
     -- True/False variables
         -- NOTE: saveableVariablesBoolean below must contain any True/False variables that needs to be saved/loaded from databank.
         saveableVariablesBoolean = {"userControlScheme", "soundFolder", "freeLookToggle", "BrakeToggleDefault", "RemoteFreeze", "brightHud", "RemoteHud", "VanillaRockets",
-        "InvertMouse", "autoRollPreference", "ExternalAGG", "UseSatNav", "ShouldCheckDamage", 
+        "InvertMouse", "autoRollPreference", "ExternalAGG", "AGGAltitudeLimit", "UseSatNav", "ShouldCheckDamage", 
         "CalculateBrakeLandingSpeed", "AtmoSpeedAssist", "ForceAlignment", "DisplayDeadZone", "showHud", "hideHudOnToggleWidgets", 
         "ShiftShowsRemoteButtons", "SetWaypointOnExit", "AlwaysVSpd", "BarFuelDisplay", 
         "voices", "alerts", "CollisionSystem", "AutoShieldToggle", "PreventPvP", "DisplayOdometer"}
@@ -20,6 +20,7 @@
         InvertMouse = false --export: (Default: false) If true, then when controlling flight mouse Y axis is inverted (pushing up noses plane down) Does not affect selecting buttons or camera.
         autoRollPreference = false --export: (Default: false) [Only in atmosphere] - When the pilot stops rolling, flight model will try to get back to horizontal (no roll)
         ExternalAGG = false --export: (Default: false) Toggle On if using an external AGG system. If on will prevent this HUD from doing anything with AGG.
+		AGGAltitudeLimit = 200000 --export: (Default: 200000) Defines the altitude limit at which the AGG should start to be updated. If set to 0, the AGG will always be updated when necessary.
         UseSatNav = false --export: (Default: false) Toggle on if using Trog SatNav script. This will provide SatNav support.
         ShouldCheckDamage = true --export: (Default: true) Whether or not damage checks are performed. Disable for performance improvement on very large ships or if using external Damage Report and you do not want the built in info.
         CalculateBrakeLandingSpeed = false --export: (Default: false) Whether BrakeLanding speed at non-waypoints should be calculated (faster) or use the brakeLandingRate user setting (safer).  Set to true for faster, not as safe, brake landing
