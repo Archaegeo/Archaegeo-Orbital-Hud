@@ -37,41 +37,6 @@ REM we later modify this into WrapFile once we know a version to give for the na
 
 REM Slots - if you want to change slot config, edit this
 SET "SLOTS=core:class=CoreUnit radar:class=RadarPVPUnit,select=manual,type=radar antigrav:class=AntiGravityGeneratorUnit warpdrive:class=WarpDriveUnit gyro:class=GyroUnit weapon:class=WeaponUnit,select=manual dbHud:class=databank,select=manual telemeter:class=TelemeterUnit,select=manual vBooster:class=VerticalBooster hover:class=Hovercraft door:class=DoorUnit,select=manual switch:class=ManualSwitchUnit,select=manual forcefield:class=ForceFieldUnit,select=manual atmofueltank:class=AtmoFuelContainer,select=manual spacefueltank:class=SpaceFuelContainer,select=manual rocketfueltank:class=RocketFuelContainer,select=manual shield:class=ShieldGeneratorUnit,select=manual"
-
-
-REM setup a few functions
-:strlen
-if [%1] EQU [] goto end
-REM This prevents it from executing if we didn't actually call it
-:loop
-	if [%1] EQU [] goto end
-	set _len=0
-	set _str=%1
-	set _subs=%_str%
-
-	:getlen		
-		if not defined _subs (
-			set /a _len-=2
-			exit /B 0
-		)
-		REM remove first letter until empty
-		set _subs=%_subs:~1%
-		set /a _len+=1
-		goto getlen
-
-
-:runbackspace
-set /a loopEx=0
-set len=%_len%
-set "content="
-:startbackspace
-set "content=%content%%BS% %BS%"
-set /a loopEx+=1
-IF %loopEx% LSS %len% goto startbackspace
-set /p "=%content%" <NUL
-exit /B 0
-:end
-
     
 
 REM Make directories if they don't exist.  These cover all the important ones
@@ -133,66 +98,6 @@ IF NOT EXIST "%NPM_BIN_PATH%luamin" (
 ) else echo %EchoPrefix%Luamin Detected
 
 
-echo %EchoPrefix%Checking required scripts
-REM Check existence and/or download wrap.lua, project.json, repl.bat, and the lua binaries
-REM We cancel first in case there was a leftover one from the user cancelling in mid download
-bitsadmin /reset >NUL
-bitsadmin /create /download ScriptDownloads >NUL
-REM Setup the container in case there will be any downloads, so we can add to them
-SET anyDownloads=0
-IF NOT EXIST "%WRAP_PATH%" (
-	echo %EchoPrefix%Downloading wrap.lua
-	bitsadmin /addfile ScriptDownloads "%GITHUB_BASE%scripts/wrap.lua" "%WRAP_PATH%" >NUL
-	SET anyDownloads=1
-)
-IF NOT EXIST "%LuaCDir%project.json" (
-	echo %EchoPrefix%Downloading LuaC project file
-	bitsadmin /addfile ScriptDownloads "%GITHUB_BASE%scripts/LuaC/project.json" "%LuaCDir%project.json" >NUL
-	SET anyDownloads=1
-)
-IF NOT EXIST "%REPL%" (
-	echo %EchoPrefix%Downloading replace tool
-	bitsadmin /addfile ScriptDownloads "%GITHUB_BASE%scripts/download/repl.bat" "%REPL%" >NUL
-	SET anyDownloads=1
-)
-IF NOT EXIST "%LUA_PATH%" (
-	echo %EchoPrefix%Downloading Lua Binaries ^(1/2^)
-	bitsadmin /addfile ScriptDownloads "%GITHUB_BASE%scripts/download/Lua/lua53.exe" "%LUA_PATH%" >NUL
-	echo %EchoPrefix%Downloading Lua Binaries ^(2/2^)
-	bitsadmin /addfile ScriptDownloads "%GITHUB_BASE%scripts/download/Lua/lua53.dll" "%ScriptDir%Lua\lua53.dll" >NUL
-	SET anyDownloads=1
-)
-IF %anyDownloads%==1 (
-	bitsadmin /resume ScriptDownloads >NUL
-	for /f %%a in ('"prompt $H&for %%b in (1) do rem"') do set "BS=%%a"
-	set /p "=%EchoPrefix%Beginning Downloads" <NUL
-	CALL :strlen "Beginning Downloads"
-	REM sets string length to %_len%, which runbackspace uses
-)
-:checkDownloads
-IF %anyDownloads%==1 (
-	REM backspaces %_len% times
-	CALL :runbackspace
-	FOR /F "USEBACKQ tokens=3,4,5,6,7,8,9,10 delims= " %%A IN (`bitsadmin /info ScriptDownloads /verbose ^| find "PRIORITY"`) DO (
-		set /p "=%%A %%B%%C%%D %%E %%F%%G%%H" <NUL
-		CALL :strlen "%%A %%B%%C%%D %%E %%F%%G%%H"
-	)
-	
-	bitsadmin /info ScriptDownloads /verbose | find "STATE: TRANSFERRED" >NUL && (
-		bitsadmin /complete ScriptDownloads >NUL
-		CALL :runbackspace
-		echo Download Complete
-		GOTO afterDownloads
-	)
-	bitsadmin /info ScriptDownloads /verbose | find "STATE: SUSPENDED" >NUL && (
-		bitsadmin /cancel ScriptDownloads >NUL
-		echo ERROR: Downloads could not be completed - exiting
-		pause
-		exit
-	)
-	GOTO checkDownloads
-)
-:afterDownloads
 echo %EchoPrefix%All scripts ready
 
 REM Setup complete, time to compile.  Copy the source files to the LuaC directory so that it can merge them

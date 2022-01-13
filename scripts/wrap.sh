@@ -117,6 +117,8 @@ rm $WORK_DIR/*
 RELEASEDIR="${ROOTDIR}/release"
 rm -rf "${RELEASEDIR}"
 mkdir -p "${RELEASEDIR}/archhud/Modules"
+mkdir -p "${RELEASEDIR}/archhud/scripts/Lua"
+mkdir "${RELEASEDIR}/archhud/scripts/LuaC"
 
 # Copy in conf file
 cp "${ROOTDIR}/ArchHUD.conf" "${RELEASEDIR}"
@@ -131,6 +133,11 @@ mv "${RELEASEDIR}/archhud/Modules/custom" "${RELEASEDIR}/archhud/Modules/example
 # And make a custom one again so they know where to put them (TODO: Rename to 'plugins'? 'ActivePlugins' or 'InstalledPlugins'?)
 mkdir "${RELEASEDIR}/archhud/Modules/custom"
 # Copy scripts they need to compile it...?  Well.  We can make the batch file do that, if they choose to compile it.  
+# Nope, windows is stupid and they false positive it
+cp -R "${ROOTDIR}/scripts/Lua" "${RELEASEDIR}/archhud/scripts/"
+cp -R "${ROOTDIR}/scripts/LuaC" "${RELEASEDIR}/archhud/scripts/"
+cp "${ROOTDIR}/scripts/wrap.lua" "${RELEASEDIR}/archhud/scripts/wrap.lua"
+cp "${ROOTDIR}/scripts/repl.bat" "${RELEASEDIR}/archhud/scripts/repl.bat"
 
 #I guess lastly, zip it up.  
 if ! which zip 1> /dev/null; then
