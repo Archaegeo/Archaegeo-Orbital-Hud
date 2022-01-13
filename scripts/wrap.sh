@@ -47,6 +47,7 @@ $LUAC build # --project="${ROOTDIR}/scripts/LuaC/project.json" # This couldn't f
 # Pretend this is now the source file
 LUA_SRC="${ROOTDIR}/scripts/LuaC/out/release/ArchHUD.lua"
 cd "${ROOTDIR}"
+rm -rf $CLUA_SRC_DIR #Clean up
 
 # Extract the exports because the minifier will eat them.
 grep "\-- \?export:" $LUA_SRC | sed -e 's/^[ \t]*/        /' -e 's/-- export:/--export:/' > $WORK_DIR/ArchHUD.exports
