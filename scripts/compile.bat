@@ -50,7 +50,8 @@ WHERE npm >NUL
 IF %ERRORLEVEL% NEQ 0 ( 
 	echo %EchoPrefix%Performing first time setup for npm - You should see an install window with progress.  If you see this more than once, something is wrong with the install - install the latest version of npm yourself, and/or contact Dimencia#0614 on Discord
 	start /wait msiexec.exe /i "https://nodejs.org/dist/v16.13.2/node-v16.13.2-x86.msi" /passive /norestart
-	echo %EchoPrefix%npm installed.  Restart the batch file in a new window to continue
+	SET "PATH=%ProgramFiles%\nodejs\;%ProgramFiles(x86)%\nodejs\;%PATH%"
+	echo %EchoPrefix%npm installed
 	pause
 	exit
 )
@@ -70,7 +71,8 @@ REM and we're probably safe as long as they're NPM version 6+
 IF %npmV1% LSS 6 (
 	echo %EchoPrefix%Updating NPM to required version 6+ - You should see an install window with progress
 	start /wait msiexec.exe /i "https://nodejs.org/dist/v16.13.2/node-v16.13.2-x86.msi" /norestart
-	echo %EchoPrefix%npm installed.  Restart the batch file in a new window to continue
+	SET "PATH=%ProgramFiles%\nodejs\;%ProgramFiles(x86)%\nodejs\;%PATH%"
+	echo %EchoPrefix%npm installed
 	pause
 	exit
 )

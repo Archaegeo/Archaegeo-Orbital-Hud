@@ -114,6 +114,7 @@ echo "Compiled v$VERSION_NUMBER at ${CONF_DST}"
 rm $WORK_DIR/*
 
 # Setup release
+LUA_SRC=${2:-$ROOTDIR/src/ArchHUD.lua} # Point back at our real source and not the merged one
 RELEASEDIR="${ROOTDIR}/release"
 rm -rf "${RELEASEDIR}"
 mkdir -p "${RELEASEDIR}/archhud/Modules"
