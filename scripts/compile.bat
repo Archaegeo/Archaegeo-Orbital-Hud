@@ -156,7 +156,7 @@ echo %EchoPrefix%Minifying extracted file to %MiniFile%
 REM remove old minified file if it exists
 del "%MiniFile%" 1>NUL 2>NUL
 REM Note: No quotes around this %extractFile% because it's being piped and they get captured
-echo %ExtractFile% | "%npmPath%luamin" --file > "%MiniFile%"
+echo %ExtractFile% | "%NPM_BIN_PATH%luamin" --file > "%MiniFile%"
 
 
 echo %EchoPrefix%Adding exports back to the minified file
