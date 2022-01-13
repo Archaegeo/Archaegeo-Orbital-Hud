@@ -117,7 +117,6 @@ rm $WORK_DIR/*
 RELEASEDIR="${ROOTDIR}/release"
 rm -rf "${RELEASEDIR}"
 mkdir -p "${RELEASEDIR}/archhud/Modules"
-mkdir -p "${RELEASEDIR}/archhud/scripts"
 
 # Copy in conf file
 cp "${ROOTDIR}/ArchHUD.conf" "${RELEASEDIR}"
