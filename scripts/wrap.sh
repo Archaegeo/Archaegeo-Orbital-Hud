@@ -9,10 +9,18 @@ ROOTDIR="$(dirname $DIR)"
 # Detect luamin binary, preferably use the local luamin, otherwise default to the global luamin
 LUAMIN="${ROOTDIR}/scripts/node_modules/.bin/luamin"
 if ! which $LUAMIN 1> /dev/null; then
-    LUAMIN="luamin"
+    npm install --save https://github.com/Dimencia/luamin/tarball/master
 fi
 if ! which $LUAMIN 1> /dev/null; then
-    echo "ERROR: Need luamin in PATH (run \`npm install\` from the scripts/ folder)"; exit 1
+    echo "ERROR: Luamin install apparently failed, try again or install it yourself to scripts folder without -g"; exit 1
+fi
+
+LUAC="${ROOTDIR}/scripts/node_modules/.bin/du-lua"
+if ! which $LUAC 1> /dev/null; then
+    npm install @wolfe-labs/du-luac
+fi
+if ! which $LUAC 1> /dev/null; then
+    echo "ERROR: LuaC install apparently failed, try again or install it yourself to scripts folder without -g"; exit 1
 fi
 
 # Parse args, or use defaults
@@ -24,6 +32,21 @@ CONF_DST=${3:-$ROOTDIR/ArchHUD.conf}
 # Make a fresh work dir
 WORK_DIR=${ROOTDIR}/scripts/work
 (rm -rf $WORK_DIR/* || true) && mkdir -p $WORK_DIR
+
+# Copy files to LuaC src in the appropriate structure
+CLUA_SRC_DIR="${ROOTDIR}/scripts/LuaC/src"
+rm -rf $CLUA_SRC_DIR
+mkdir -p "${CLUA_SRC_DIR}/autoconf/custom/archhud/custom"
+cp "${LUA_SRC}" "${CLUA_SRC_DIR}"
+# Copy recursively (-a) require files and the custom folder with it
+cp -a "${ROOTDIR}/src/requires/." "${CLUA_SRC_DIR}/autoconf/custom/archhud"
+
+# Run LuaC to merge
+cd "${ROOTDIR}/scripts/LuaC"
+$LUAC build # --project="${ROOTDIR}/scripts/LuaC/project.json" # This couldn't find the source file even when explicitly specified
+# Pretend this is now the source file
+LUA_SRC="${ROOTDIR}/scripts/LuaC/out/release/ArchHUD.lua"
+cd "${ROOTDIR}"
 
 # Extract the exports because the minifier will eat them.
 grep "\-- \?export:" $LUA_SRC | sed -e 's/^[ \t]*/        /' -e 's/-- export:/--export:/' > $WORK_DIR/ArchHUD.exports
@@ -86,3 +109,34 @@ echo "$VERSION_NUMBER" > ${ROOTDIR}/ArchHUD.conf.version
 echo "Compiled v$VERSION_NUMBER at ${CONF_DST}"
 
 rm $WORK_DIR/*
+
+# Setup release
+RELEASEDIR="${ROOTDIR}/release"
+rm -rf "${RELEASEDIR}"
+mkdir -p "${RELEASEDIR}/archhud/Modules"
+mkdir -p "${RELEASEDIR}/archhud/scripts"
+
+# Copy in conf file
+cp "${ROOTDIR}/ArchHUD.conf" "${RELEASEDIR}"
+# Copy main lua file into main archhud folder where compile is
+cp "${LUA_SRC}" "${RELEASEDIR}/archhud"
+# Copy compile.bat in
+cp "${ROOTDIR}/scripts/compile.bat" "${RELEASEDIR}/archhud"
+# Copy recursively (-a) require files and the custom folder with it
+cp -a "${ROOTDIR}/src/requires/." "${RELEASEDIR}/archhud/Modules"
+# Rename custom folder so they know what they are, and so when they update, they don't replace their real plugins
+mv "${RELEASEDIR}/archhud/Modules/custom" "${RELEASEDIR}/archhud/Modules/examples"
+# And make a custom one again so they know where to put them (TODO: Rename to 'plugins'? 'ActivePlugins' or 'InstalledPlugins'?)
+mkdir "${RELEASEDIR}/archhud/Modules/custom"
+# Copy scripts they need to compile it...?  Well.  We can make the batch file do that, if they choose to compile it.  
+
+#I guess lastly, zip it up.  
+if ! which zip 1> /dev/null; then
+    echo "WARNING: Build successful, but could not zip folder - zip not installed.  Try `sudo apt install zip`"; exit
+else
+    rm -f "${ROOTDIR}/ArchHUD.zip"
+    cd "${RELEASEDIR}" #zip is kinda dumb so if I'm not in here, it adds the intervening folders to the zip
+    zip -r "${ROOTDIR}/ArchHUD.zip" "ArchHUD.conf" "archhud"
+    rm -rf "${RELEASEDIR}"  #Should we clear this after?  It's a lot that probably shouldn't go on github
+fi
+echo "Zipped and ready at ArchHUD.zip"

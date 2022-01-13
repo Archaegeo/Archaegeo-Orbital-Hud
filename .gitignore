@@ -5,6 +5,8 @@ ArchHUD.extracted.lua
 ArchHUD.conf.version
 scripts/node_modules/**
 scripts/work/**
+scripts/package-lock.json
+scripts/package.json
 src/du
 src/du/**
 log.txt
