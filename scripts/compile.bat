@@ -22,10 +22,6 @@ SET "LUA_PATH=%ScriptDir%Lua\lua53.exe"
 SET "WRAP_PATH=%ScriptDir%wrap.lua"
 
 
-REM where to download script files from if you don't have them
-SET "GITHUB_BASE=https://raw.githubusercontent.com/Dimencia/Archaegeo-Orbital-Hud/master/"
-
-
 REM setup files we will use.  One file to hold the merged lua, one to hold exports from it (and later have the minified file added to it), one to hold the merged lua with exports extracted, one to hold the minified file, and one for the conf
 SET "MergedFile=%LuaCOutputDir%%FILENAME%"
 SET "ExportsFile=%WorkDir%exports.lua"
@@ -37,7 +33,7 @@ REM we later modify this into WrapFile once we know a version to give for the na
 
 REM Slots - if you want to change slot config, edit this
 SET "SLOTS=core:class=CoreUnit radar:class=RadarPVPUnit,select=manual,type=radar antigrav:class=AntiGravityGeneratorUnit warpdrive:class=WarpDriveUnit gyro:class=GyroUnit weapon:class=WeaponUnit,select=manual dbHud:class=databank,select=manual telemeter:class=TelemeterUnit,select=manual vBooster:class=VerticalBooster hover:class=Hovercraft door:class=DoorUnit,select=manual switch:class=ManualSwitchUnit,select=manual forcefield:class=ForceFieldUnit,select=manual atmofueltank:class=AtmoFuelContainer,select=manual spacefueltank:class=SpaceFuelContainer,select=manual rocketfueltank:class=RocketFuelContainer,select=manual shield:class=ShieldGeneratorUnit,select=manual"
-    
+
 
 REM Make directories if they don't exist.  These cover all the important ones
 mkdir "%NPM_BASE_PATH%" 1>NUL 2>NUL
@@ -54,8 +50,8 @@ WHERE npm >NUL
 IF %ERRORLEVEL% NEQ 0 ( 
 	echo %EchoPrefix%Performing first time setup for npm - You should see an install window with progress.  If you see this more than once, something is wrong with the install - install the latest version of npm yourself, and/or contact Dimencia#0614 on Discord
 	start /wait msiexec.exe /i "https://nodejs.org/dist/v16.13.2/node-v16.13.2-x86.msi" /passive /norestart
-	echo %EchoPrefix%Restarting install in new CMD window to accept the new path vars
-	start cmd /c "%ROOTDIR%compile.bat"
+	echo %EchoPrefix%npm installed.  Restart the batch file in a new window to continue
+	pause
 	exit
 )
 
@@ -74,8 +70,8 @@ REM and we're probably safe as long as they're NPM version 6+
 IF %npmV1% LSS 6 (
 	echo %EchoPrefix%Updating NPM to required version 6+ - You should see an install window with progress
 	start /wait msiexec.exe /i "https://nodejs.org/dist/v16.13.2/node-v16.13.2-x86.msi" /norestart
-	echo %EchoPrefix%Restarting install in new CMD window to accept the new path vars
-	start cmd /c "%ROOTDIR%compile.bat"
+	echo %EchoPrefix%npm installed.  Restart the batch file in a new window to continue
+	pause
 	exit
 )
 
