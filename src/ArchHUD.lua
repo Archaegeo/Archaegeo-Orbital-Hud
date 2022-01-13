@@ -1,5 +1,6 @@
 require 'src.slots'
-require("autoconf/custom/archhud/globals")
+xpcall(function() require("autoconf/custom/archhud/globals")  end, function(err) require("Modules/globals")  end)
+
 
 local s=system
 local c=core
@@ -8,10 +9,10 @@ local u=unit
 local Nav = Navigator.new(s, c, u)
 local atlas = require("atlas")
 
-require("autoconf/custom/archhud/hudclass")
-require("autoconf/custom/archhud/apclass")
-require("autoconf/custom/archhud/radarclass")
-require("autoconf/custom/archhud/controlclass")
+xpcall(function() require("autoconf/custom/archhud/hudclass")  end, function(err) require("Modules/hudclass")  end)
+xpcall(function() require("autoconf/custom/archhud/apclass")  end, function(err) require("Modules/apclass")  end)
+xpcall(function() require("autoconf/custom/archhud/radarclass")  end, function(err) require("Modules/radarclass")  end)
+xpcall(function() require("autoconf/custom/archhud/controlclass")  end, function(err) require("Modules/controlclass")  end)
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
 VERSION_NUMBER = 1.7061

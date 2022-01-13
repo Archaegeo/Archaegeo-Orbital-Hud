@@ -36,10 +36,12 @@ WORK_DIR=${ROOTDIR}/scripts/work
 # Copy files to LuaC src in the appropriate structure
 CLUA_SRC_DIR="${ROOTDIR}/scripts/LuaC/src"
 rm -rf $CLUA_SRC_DIR
-mkdir -p "${CLUA_SRC_DIR}/autoconf/custom/archhud/custom"
+#mkdir -p "${CLUA_SRC_DIR}/autoconf/custom/archhud/custom"
+mkdir -p "${CLUA_SRC_DIR}/Modules"
 cp "${LUA_SRC}" "${CLUA_SRC_DIR}"
 # Copy recursively (-a) require files and the custom folder with it
-cp -a "${ROOTDIR}/src/requires/." "${CLUA_SRC_DIR}/autoconf/custom/archhud"
+#cp -a "${ROOTDIR}/src/requires/." "${CLUA_SRC_DIR}/autoconf/custom/archhud"
+cp -a "${ROOTDIR}/src/requires/." "${CLUA_SRC_DIR}/Modules"
 
 # Run LuaC to merge
 cd "${ROOTDIR}/scripts/LuaC"
