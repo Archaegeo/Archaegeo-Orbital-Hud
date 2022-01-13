@@ -1,6 +1,13 @@
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
+local s=system
+local c=core
+local u=unit
+
+local Nav = Navigator.new(s, c, u)
+local atlas = require("atlas")
+
 -- function localizations for improved performance when used frequently or in loops.
 local mabs = math.abs
 local mfloor = math.floor
