@@ -441,7 +441,7 @@
     end
 
 
-    function Kinematics(Nav, c, u, s, msqrt) -- Part of Jaylebreak's flight files, modified slightly for hud
+    function Kinematics(Nav, c, u, s, msqrt, mabs) -- Part of Jaylebreak's flight files, modified slightly for hud
 
         local Kinematic = {} -- just a namespace
         local C = 30000000 / 3600

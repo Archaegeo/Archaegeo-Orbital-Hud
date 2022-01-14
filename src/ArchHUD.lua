@@ -722,7 +722,7 @@ VERSION_NUMBER = 1.706
                 PlanetaryReference = PlanetRef(Nav, c, u, s, stringf, uclamp)
                 galaxyReference = PlanetaryReference(atlasCopy)
                 -- Setup Modular Classes
-                Kinematic = Kinematics(Nav, c, u, s, msqrt)
+                Kinematic = Kinematics(Nav, c, u, s, msqrt, mabs)
                 Kep = Keplers(Nav, c, u, s, msqrt)
 
                 ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt)
