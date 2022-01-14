@@ -1931,9 +1931,9 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
         end
     end
 
-    function ap.routeWP(getRoute, clear, load)
-        if load then 
-            if load == 1 then 
+    function ap.routeWP(getRoute, clear, loadit)
+        if loadit then 
+            if loadit == 1 then 
                 apRoute = {}
                 apRoute = addTable(apRoute,saveRoute)
                 if #apRoute>0 then 
@@ -2174,7 +2174,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
     end
 
     function ap.changeSpd(down)
-        p("HERE2")
         local mult=1
         if down then mult = -1 end
         if not holdingShift then

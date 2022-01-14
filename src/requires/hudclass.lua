@@ -11,7 +11,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     local MapYRatio = nil
     local YouAreHere = nil
     local showSettings = false
-    local settingsVariables = {}
+    local settingsVariables = "none"
     local pipeMessage = ""
 
     --Local Huds Functions
@@ -65,24 +65,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             end
             return flightStyle
         end
-        local image_links = {
-            Generic_Moon = "assets.prod.novaquark.com/20368/f410e727-9d4d-4eab-98bf-22994b3fbdcf.png",
-            Sun = "assets.prod.novaquark.com/20368/0936494e-9b3d-4d60-9ea0-d93a3f3e29cd.png",
-            Alioth = "assets.prod.novaquark.com/20368/954f3adb-3369-4ea9-854d-a14606334152.png",
-            Alioth_bis = "assets.prod.novaquark.com/20368/b83225ed-fb96-404c-8c91-86ac15dfbbec.png",
-            Sanctuary = "assets.prod.novaquark.com/20368/1a70dbff-24bc-44cb-905c-6d375d9613b8.png",
-            Feli = "assets.prod.novaquark.com/20368/da91066c-b3fd-41f4-8c01-26131b0a7841.png",
-            Ion = "assets.prod.novaquark.com/20368/91d10712-dc51-4b73-9fc0-6f07d96605a6.png",
-            Madis = "assets.prod.novaquark.com/20368/46d57ef4-40ee-46ca-8cc5-5aee1504bbfe.png",
-            Jago = "assets.prod.novaquark.com/20368/7fca8389-6b70-4198-a9c3-4875d15edb38.png",
-            Lacobus = "assets.prod.novaquark.com/20368/cb67a6a4-933c-4688-a637-898c89eb5b94.png",
-            Sicari = "assets.prod.novaquark.com/20368/f6e2f801-075f-4ccd-ab94-46d060517e8f.png",
-            Sinnen = "assets.prod.novaquark.com/20368/54a99084-7c2b-461b-ab1f-ae4229b3b821.png",
-            Symeon = "assets.prod.novaquark.com/20368/97940324-f194-4e03-808d-d71733ad545a.png",
-            Talemai = "assets.prod.novaquark.com/20368/f68628d9-3245-4d76-968e-ad9c63a19c19.png",
-            Teoma = "assets.prod.novaquark.com/20368/5a01dd8c-3cf8-4151-99a2-83b22f1e7249.png",
-            Thades = "assets.prod.novaquark.com/20368/59f997a2-bcca-45cf-aa35-26e0e41ed5c1.png",
-        }
+
         local radarMessage = ""
         local tankMessage = ""
         local shieldMessage = ""
@@ -1000,7 +983,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
 
         local function DisplayRoute(newContent)
             local checkRoute = AP.routeWP(true)
-            if #checkRoute==0 then return end
+            if not checkRoute or #checkRoute==0 then return end
             local x = ConvertResolutionX(750)
             local y = ConvertResolutionY(360)
             if Autopilot or VectorToTarget then
@@ -1021,11 +1004,12 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local helpAtmoGround = {"Alt-4: AutoTakeoff to Target"}
             local helpAtmoAir = { "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", 
                                 "Alt-Q/E: Hard Bankroll left/right till released", "Alt-S: 180 deg bank turn"}
-            local helpSpace = {"Alt-6: Orbit at current altitude", "Alt-6-6: Orbit at LowOrbitHeight over atmosphere"}
-            local helpGeneral = {"", "------------------ALWAYS--------------------", "Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-3: Toggle Vanilla Widget view", 
-                                "Alt-4: Autopilot to IPH target", "Alt-5: Lock Pitch at current pitch","Alt-7: Toggle Collision System on and off", "Alt-8: Toggle ground stabilization (underwater flight)",
-                                "CTRL: Toggle Brakes on and off. Cancels active AP", "LAlt: Tap to shift freelook on and off", 
-                                "Shift: Hold while not in freelook to see Buttons", "Type /commands or /help in lua chat to see text commands"}
+            local helpSpace = {"Alt-6: Orbit at current altitude", "Alt-6-6: Orbit at LowOrbitHeight over atmosphere","G: Raise or lower landing gear"}
+            local helpGeneral = {"", "------------------ALWAYS--------------------", "Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-Shift 1: Show passengers on board","Alt-Shift-2: Deboard passengers",
+                                "Alt-3: Toggle Vanilla Widget view", "Alt-4: Autopilot to IPH target", "Alt-Shift-3: Show docked ships","Alt-Shift-4: Undock all ships",
+                                "Alt-5: Lock Pitch at current pitch","Alt-Shift-5: Lock pitch at preset pitch","Alt-7: Toggle Collision System on and off", "Alt-8: Toggle ground stabilization (underwater flight)",
+                                "B: Toggle rocket boost on/off","CTRL: Toggle Brakes on and off. Cancels active AP", "LAlt: Tap to shift freelook on and off", 
+                                "Shift: Hold while not in freelook to see Buttons", "L: Toggle lights on and off", "Type /commands or /help in lua chat to see text commands"}
             table.insert(help, "--------------DYNAMIC-----------------")
             if inAtmo then 
                 if abvGndDet ~= -1 then
@@ -1063,9 +1047,12 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             else
                 addTable(help, helpSpace)
                 if shield_1 then
-                    table.insert(help,"Alt-Shift-5: Toggle shield off and on")
                     table.insert(help,"Alt-Shift-6: Vent shields")
+                    table.insert(help,"Alt-Shift-7: Toggle shied off/on")
                 end
+            end
+            if CustomTarget ~= nil then
+                table.insert(help, "Alt-Shift-8: Add current IPH target to Route")
             end
             if gyro then
                 table.insert(help,"Alt-9: Activate Gyroscope")
@@ -1280,21 +1267,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                                                     orbitMapY + orbitMapSize*1.5 / 2 + pad, planet.radius / scale)
                     newContent[#newContent + 1] = '</g>' -- The rest doesn't really need clipping hopefully
                     local planetsize = math.floor(planet.radius / scale + 0.5)
-                    local imageLink = image_links.Generic_Moon
-                    if image_links[planet.name] then
-                        imageLink = image_links[planet.name]
-                    end
-                    -- SVG image doesn't seem to work at all...
-                    --newContent[#newContent + 1] = [[<image x="100" y="100" width="200" height="200" href="http://assets.prod.novaquark.com/20368/5a01dd8c-3cf8-4151-99a2-83b22f1e7249.png" />]]
-                    --stringf([[<image x="%d" y="%d" width="%d" height="%d" href="%s" />]],
-                                                    -- This html works but breaks everything... 
-                                                    --'<img style="position:absolute;top:%dpx;left:%dpx;" width="%dpx" height="%dpx" src="%s">',
-                                                    --math.floor((orbitMapX + orbitMapSize + pad) - planetsize/2),
-                                                    --math.floor(orbitMapY + orbitMapSize*1.5 / 2 + pad - planetsize/2), planetsize, planetsize, "https://"..imageLink)
-                    -- Draw it inside the planet red and clipped, if any part of it is inside the planet
-                        
-                    
-            
+
                     x = orbitMapX + orbitMapSize + pad*4 + rx -- Aligning left makes us need more padding... for some reason... 
                     y = orbitMapY + orbitMapSize*1.5 / 2 + 5 + pad
 
@@ -1824,7 +1797,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 settingsVariables = saveableVariables(whichVar)
                 showHud = false 
             else
-                settingsVariables = {}
+                settingsVariables = "none"
                 showHud = true
             end
         end
@@ -1844,17 +1817,17 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         end
 
         local function SettingsButtons()
-            local function ToggleBoolean(v)
+            local function ToggleBoolean(v,k)
 
-                _G[v] = not _G[v]
-                if _G[v] then 
-                    msgText = v.." set to true"
+                v.set(not v.get())
+                if v.get() then 
+                    msgText = k.." set to true"
                 else
-                    msgText = v.." set to false"
+                    msgText = k.." set to false"
                 end
-                if v == "showHud" then
-                    oldShowHud = _G[v]
-                elseif v == "BrakeToggleDefault" then 
+                if k == "showHud" then
+                    oldShowHud = v.get()
+                elseif k == "BrakeToggleDefault" then 
                     BrakeToggleStatus = BrakeToggleDefault
                 end
             end
@@ -1864,10 +1837,10 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local y = resolutionHeight / 2 - 400
             local cnt = 0
             for k, v in pairs(saveableVariables("boolean")) do
-                if type(_G[v]) == "boolean" then
-                    MakeButton(v, v, buttonWidth, buttonHeight, x, y,
-                        function() return _G[v] end, 
-                        function() ToggleBoolean(v) end,
+                if type(v.get()) == "boolean" then
+                    MakeButton(k, k, buttonWidth, buttonHeight, x, y,
+                        function() return v.get() end, 
+                        function() ToggleBoolean(v,k) end,
                         function() return true end, true) 
                     y = y + buttonHeight + 20
                     if cnt == 9 then 
@@ -1933,13 +1906,13 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
            
             local function getAPEnableName(index)
                 local checkRoute = AP.routeWP(true)
-                if #checkRoute > 0 then return "Engage Route: "..getAPName(checkRoute[1]) end
+                if checkRoute and #checkRoute > 0 then return "Engage Route: "..getAPName(checkRoute[1]) end
                 return "Engage Autopilot: " .. getAPName(index)
             end
 
             local function getAPDisableName(index)
                 local checkRoute = AP.routeWP(true)
-                if #checkRoute > 0 then return "Next Route Point: "..getAPName(checkRoute[1]) end
+                if checkRoute and #checkRoute > 0 then return "Next Route Point: "..getAPName(checkRoute[1]) end
                 return "Disable Autopilot: " .. getAPName(index)
             end   
 
@@ -2023,7 +1996,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local i
             local function getAtlasIndexFromAddition(add)
                 local checkRoute = AP.routeWP(true)
-                if #checkRoute > 0 then return checkRoute[1] end
+                if checkRoute and #checkRoute > 0 then return checkRoute[1] end
                 local index = apScrollIndex + add
                 if index > #AtlasOrdered then
                     index = index-#AtlasOrdered-1
@@ -2236,105 +2209,8 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         -- so that "fill:none" gets applied
         local crx = ConvertResolutionX
         local cry = ConvertResolutionY
-        newContent[#newContent + 1] = stringf([[
-            <head>
-                <style>
-                    body {margin: 0}
-                    svg {position:absolute;top:0;left:0;font-family:Montserrat;} 
-                    .txt {font-size:10px;font-weight:bold;}
-                    .txttick {font-size:12px;font-weight:bold;}
-                    .txtbig {font-size:14px;font-weight:bold;}
-                    .altsm {font-size:16px;font-weight:normal;}
-                    .altbig {font-size:21px;font-weight:normal;}
-                    .line {stroke-width:2px;fill:none;stroke:%s}
-                    .linethick {stroke-width:3px;fill:none}
-                    .linethin {stroke-width:1px;fill:none}
-                    .warnings {font-size:26px;fill:red;text-anchor:middle;font-family:Bank;}
-                    .warn {fill:orange; font-size:24px}
-                    .crit {fill:darkred;font-size:28px}
-                    .bright {fill:%s;stroke:%s}
-                    text.bright {stroke:black; stroke-width:10px;paint-order:stroke;}
-                    .pbright {fill:%s;stroke:%s}
-                    text.pbright {stroke:black; stroke-width:10px;paint-order:stroke;}
-                    .dim {fill:%s;stroke:%s}
-                    text.dim {stroke:black; stroke-width:10px;paint-order:stroke;}
-                    .pdim {fill:%s;stroke:%s}
-                    text.pdim {stroke:black; stroke-width:10px;paint-order:stroke;}
-                    .red {fill:red;stroke:red}
-                    text.red {stroke:black; stroke-width:10px;paint-order:stroke;}
-                    .orange {fill:orange;stroke:orange}
-                    text.orange {stroke:black; stroke-width:10px;paint-order:stroke;}
-                    .redout {fill:none;stroke:red}
-                    .op30 {opacity:0.3}
-                    .op10 {opacity:0.1}
-                    .txtstart {text-anchor:start}
-                    .txtend {text-anchor:end}
-                    .txtmid {text-anchor:middle}
-                    .txtvspd {font-family:sans-serif;font-weight:normal}
-                    .txtvspdval {font-size:20px}
-                    .txtfuel {font-size:11px;font-weight:bold}
-                    .txtorb {font-size:12px}
-                    .txtorbbig {font-size:18px}
-                    .hudver {font-size:10px;font-weight:bold;fill:red;text-anchor:end;font-family:Bank}
-                    .msg {font-size:40px;fill:red;text-anchor:middle;font-weight:normal}
-                    .cursor {stroke:white}
-                    text { stroke:black; stroke-width:10px;paint-order:stroke;}
-                    .dimstroke {stroke:%s}
-                    .brightstroke {stroke:%s}
-                    .indicatorText {font-size:20px;fill:white}
-                    .size14 {font-size:14px}
-                    .size20 {font-size:20px}
-                    .topButton {fill:%s;opacity:0.5;stroke-width:2;stroke:%s}
-                    .topButtonActive {fill:url(#RadialGradientCenter);opacity:0.8;stroke-width:2;stroke:%s}
-                    .topButton text {font-size:13px; fill: %s; opacity:1; stroke-width:20px}
-                    .topButtonActive text {font-size:13px;fill:%s; stroke-width:0px; opacity:1}
-                    .indicatorFont {font-size:20px;font-family:Bank}
-                    .dimmer {stroke: %s;}
-                    .pdimfill {fill: %s;}
-                    .dimfill {fill: %s;}
-                </style>
-            </head>
-            <body>
-                <svg height="100%%" width="100%%" viewBox="0 0 %d %d">
-                    <defs>
-                        <radialGradient id="RadialGradientCenterTop" cx="0.5" cy="0" r="1">
-                            <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/>
-                            <stop offset="100%%" stop-color="black" stop-opacity="0"/>
-                        </radialGradient>
-                        <radialGradient id="RadialGradientRightTop" cx="1" cy="0" r="1">
-                            <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/>
-                            <stop offset="200%%" stop-color="black" stop-opacity="0"/>
-                        </radialGradient>
-                        <radialGradient id="ThinRightTopGradient" cx="1" cy="0" r="1">
-                            <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/>
-                            <stop offset="200%%" stop-color="black" stop-opacity="0"/>
-                        </radialGradient>
-                        <radialGradient id="RadialGradientLeftTop" cx="0" cy="0" r="1">
-                            <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/>
-                            <stop offset="200%%" stop-color="black" stop-opacity="0"/>
-                        </radialGradient>
-                        <radialGradient id="ThinLeftTopGradient" cx="0" cy="0" r="1">
-                            <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/>
-                            <stop offset="200%%" stop-color="black" stop-opacity="0"/>
-                        </radialGradient>
-                        <radialGradient id="RadialGradientCenter" cx="0.5" cy="0.5" r="1">
-                            <stop offset="0%%" stop-color="%s" stop-opacity="0.8"/>
-                            <stop offset="100%%" stop-color="%s" stop-opacity="0.5"/>
-                        </radialGradient>
-                        <radialGradient id="RadialPlanetCenter" cx="0.5" cy="0.5" r="0.5">
-                            <stop offset="0%%" stop-color="%s" stop-opacity="1"/>
-                            <stop offset="100%%" stop-color="%s" stop-opacity="1"/>
-                        </radialGradient>
-                        <radialGradient id="RadialAtmo" cx="0.5" cy="0.5" r="0.5">
-                            <stop offset="0%%" stop-color="%s" stop-opacity="1"/>
-                            <stop offset="66%%" stop-color="%s" stop-opacity="1"/>
-                            <stop offset="100%%" stop-color="%s" stop-opacity="0.1"/>
-                        </radialGradient>                            
-                    </defs>
-                    <g class="pdim txt txtend">
-                    
-                ]], bright, bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig,dim,bright,dimmer,dimOrig,bright,bright,dimmer,dimmer, dimmerOrig,dimmer, 
-                    resolutionWidth, resolutionHeight, dim,dim,dim,dim,dim,brightOrig,dim,dimOrig, dimmerOrig, dimOrig, dimOrig, dimmerOrig)
+            newContent[#newContent + 1] = stringf([[ <head> <style>body{margin: 0}svg{position:absolute;top:0;left:0;font-family:Montserrat;}.txt{font-size:10px;font-weight:bold;}.txttick{font-size:12px;font-weight:bold;}.txtbig{font-size:14px;font-weight:bold;}.altsm{font-size:16px;font-weight:normal;}.altbig{font-size:21px;font-weight:normal;}.line{stroke-width:2px;fill:none;stroke:%s}.linethick{stroke-width:3px;fill:none}.linethin{stroke-width:1px;fill:none}.warnings{font-size:26px;fill:red;text-anchor:middle;font-family:Bank;}.warn{fill:orange; font-size:24px}.crit{fill:darkred;font-size:28px}.bright{fill:%s;stroke:%s}text.bright{stroke:black; stroke-width:10px;paint-order:stroke;}.pbright{fill:%s;stroke:%s}text.pbright{stroke:black; stroke-width:10px;paint-order:stroke;}.dim{fill:%s;stroke:%s}text.dim{stroke:black; stroke-width:10px;paint-order:stroke;}.pdim{fill:%s;stroke:%s}text.pdim{stroke:black; stroke-width:10px;paint-order:stroke;}.red{fill:red;stroke:red}text.red{stroke:black; stroke-width:10px;paint-order:stroke;}.orange{fill:orange;stroke:orange}text.orange{stroke:black; stroke-width:10px;paint-order:stroke;}.redout{fill:none;stroke:red}.op30{opacity:0.3}.op10{opacity:0.1}.txtstart{text-anchor:start}.txtend{text-anchor:end}.txtmid{text-anchor:middle}.txtvspd{font-family:sans-serif;font-weight:normal}.txtvspdval{font-size:20px}.txtfuel{font-size:11px;font-weight:bold}.txtorb{font-size:12px}.txtorbbig{font-size:18px}.hudver{font-size:10px;font-weight:bold;fill:red;text-anchor:end;font-family:Bank}.msg{font-size:40px;fill:red;text-anchor:middle;font-weight:normal}.cursor{stroke:white}text{stroke:black; stroke-width:10px;paint-order:stroke;}.dimstroke{stroke:%s}.brightstroke{stroke:%s}.indicatorText{font-size:20px;fill:white}.size14{font-size:14px}.size20{font-size:20px}.topButton{fill:%s;opacity:0.5;stroke-width:2;stroke:%s}.topButtonActive{fill:url(#RadialGradientCenter);opacity:0.8;stroke-width:2;stroke:%s}.topButton text{font-size:13px; fill: %s; opacity:1; stroke-width:20px}.topButtonActive text{font-size:13px;fill:%s; stroke-width:0px; opacity:1}.indicatorFont{font-size:20px;font-family:Bank}.dimmer{stroke: %s;}.pdimfill{fill: %s;}.dimfill{fill: %s;}</style> </head> <body> <svg height="100%%" width="100%%" viewBox="0 0 %d %d"> <defs> <radialGradient id="RadialGradientCenterTop" cx="0.5" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="100%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientRightTop" cx="1" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="ThinRightTopGradient" cx="1" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientLeftTop" cx="0" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="ThinLeftTopGradient" cx="0" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientCenter" cx="0.5" cy="0.5" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.8"/> <stop offset="100%%" stop-color="%s" stop-opacity="0.5"/> </radialGradient> <radialGradient id="RadialPlanetCenter" cx="0.5" cy="0.5" r="0.5"> <stop offset="0%%" stop-color="%s" stop-opacity="1"/> <stop offset="100%%" stop-color="%s" stop-opacity="1"/> </radialGradient> <radialGradient id="RadialAtmo" cx="0.5" cy="0.5" r="0.5"> <stop offset="0%%" stop-color="%s" stop-opacity="1"/> <stop offset="66%%" stop-color="%s" stop-opacity="1"/> <stop offset="100%%" stop-color="%s" stop-opacity="0.1"/> </radialGradient> </defs> <g class="pdim txt txtend">]], bright, bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig,dim,bright,dimmer,dimOrig,bright,bright,dimmer,dimmer, dimmerOrig,dimmer, resolutionWidth, resolutionHeight, dim,dim,dim,dim,dim,brightOrig,dim,dimOrig, dimmerOrig, dimOrig, dimOrig, dimmerOrig)
+
         
         -- These never change, set and store it on startup because that's a lot of calculations that we don't want to do every frame
         if not StaticPaths then
@@ -2636,21 +2512,21 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     end
 
     function Hud.DrawSettings(newContent)
-        if #settingsVariables > 0  then
-            local x = ConvertResolutionX(640)
-            local y = ConvertResolutionY(200)
-            newContent[#newContent + 1] = [[<g class="pbright txtvspd txtstart">]]
-            for k, v in pairs(settingsVariables) do
-                newContent[#newContent + 1] = svgText(x, y, v..": ".._G[v])
-                y = y + 20
-                if k%12 == 0 then
-                    x = x + ConvertResolutionX(350)
-                    y = ConvertResolutionY(200)
-                end
+        local x = ConvertResolutionX(640)
+        local y = ConvertResolutionY(200)
+        newContent[#newContent + 1] = [[<g class="pbright txtvspd txtstart">]]
+        local count=0
+        for k, v in pairs(settingsVariables) do
+            count=count+1
+            newContent[#newContent + 1] = svgText(x, y, k..": "..v.get())
+            y = y + 20
+            if count%12 == 0 then
+                x = x + ConvertResolutionX(350)
+                y = ConvertResolutionY(200)
             end
-            newContent[#newContent + 1] = svgText(ConvertResolutionX(640), ConvertResolutionY(200)+260, "To Change: In Lua Chat, enter /G VariableName Value")
-            newContent[#newContent + 1] = "</g>"
         end
+        newContent[#newContent + 1] = svgText(ConvertResolutionX(640), ConvertResolutionY(200)+260, "To Change: In Lua Chat, enter /G VariableName Value")
+        newContent[#newContent + 1] = "</g>"
         return newContent
     end
 
@@ -2857,7 +2733,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             if AlwaysVSpd then HUD.DrawVerticalSpeed(newContent, coreAltitude) end
             HUD.DrawWarnings(newContent)
         end
-        if showSettings and settingsVariables ~= {} then 
+        if showSettings and settingsVariables ~= "none" then  
             HUD.DrawSettings(newContent) 
         end
 

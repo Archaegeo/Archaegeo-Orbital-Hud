@@ -698,16 +698,16 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             end
             if arguement == "dump" then
                 for k, v in pairs(saveableVariables()) do
-                    if type(_G[v]) == "boolean" then
-                        if _G[v] == true then
-                            s.print(v.." true")
+                    if type(v.get()) == "boolean" then
+                        if v.get() == true then
+                            s.print(k.." true")
                         else
-                            s.print(v.." false")
+                            s.print(k.." false")
                         end
-                    elseif _G[v] == nil then
-                        s.print(v.." nil")
+                    elseif v.get() == nil then
+                        s.print(k.." nil")
                     else
-                        s.print(v.." ".._G[v])
+                        s.print(k.." "..v.get())
                     end
                 end
                 return
@@ -716,12 +716,12 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             local globalVariableName = string.sub(arguement,0, i-1)
             local newGlobalValue = string.sub(arguement,i+1)
             for k, v in pairs(saveableVariables()) do
-                if v == globalVariableName then
+                if k == globalVariableName then
                     msgText = "Variable "..globalVariableName.." changed to "..newGlobalValue
-                    local varType = type(_G[v])
+                    local varType = type(v.get())
                     if varType == "number" then
                         newGlobalValue = tonum(newGlobalValue)
-                        if v=="AtmoSpeedLimit" then adjustedAtmoSpeedLimit = newGlobalValue end
+                        if k=="AtmoSpeedLimit" then adjustedAtmoSpeedLimit = newGlobalValue end
                     elseif varType == "boolean" then
                         if string.lower(newGlobalValue) == "true" then
                             newGlobalValue = true
@@ -729,7 +729,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                             newGlobalValue = false
                         end
                     end
-                    _G[v] = newGlobalValue
+                    v.set(newGlobalValue)
                     return
                 end
             end

@@ -1,13 +1,18 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.706 - Refactor and final modular class definitions
+(Recopy all files, existing databank should function normally)
+- Moved JayleBrake functions and AtlasClass to atlasclass.lua modular file.
+- Refactor: User global variables now minimize shrinking Standalone by 15k minimized. NO END USER IMPACT
+    Scripters will notice the format in for databank stored globals in the list variables has changed.
+- Updated dynamic help
+
 Version 1.705 (Changed version numbers on Standalone to 0.705 to reflect version number in Modular)
 - Fix: Standalone will not unload from seat when exit game or away from ship
 - Fix: Mousewheel throttle control
 - Fix: Virtual Joystick not working if not in SCOPE mode.
 - Removed LastVersionUpdate support (developer use)
 NOTE: Throughout code, system, core, and unit have been replaced by s, c and u for space saving in Standalone and consistency in Modular.
-
-
 
 Version 1.704 - AP Route Support
 - New Featue: Route support - Load, Clear, Save 1 route.
