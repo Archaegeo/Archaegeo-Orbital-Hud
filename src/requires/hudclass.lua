@@ -1004,11 +1004,12 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local helpAtmoGround = {"Alt-4: AutoTakeoff to Target"}
             local helpAtmoAir = { "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", 
                                 "Alt-Q/E: Hard Bankroll left/right till released", "Alt-S: 180 deg bank turn"}
-            local helpSpace = {"Alt-6: Orbit at current altitude", "Alt-6-6: Orbit at LowOrbitHeight over atmosphere"}
-            local helpGeneral = {"", "------------------ALWAYS--------------------", "Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-3: Toggle Vanilla Widget view", 
-                                "Alt-4: Autopilot to IPH target", "Alt-5: Lock Pitch at current pitch","Alt-7: Toggle Collision System on and off", "Alt-8: Toggle ground stabilization (underwater flight)",
-                                "CTRL: Toggle Brakes on and off. Cancels active AP", "LAlt: Tap to shift freelook on and off", 
-                                "Shift: Hold while not in freelook to see Buttons", "Type /commands or /help in lua chat to see text commands"}
+            local helpSpace = {"Alt-6: Orbit at current altitude", "Alt-6-6: Orbit at LowOrbitHeight over atmosphere","G: Raise or lower landing gear"}
+            local helpGeneral = {"", "------------------ALWAYS--------------------", "Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-Shift 1: Show passengers on board","Alt-Shift-2: Deboard passengers",
+                                "Alt-3: Toggle Vanilla Widget view", "Alt-4: Autopilot to IPH target", "Alt-Shift-3: Show docked ships","Alt-Shift-4: Undock all ships",
+                                "Alt-5: Lock Pitch at current pitch","Alt-Shift-5: Lock pitch at preset pitch","Alt-7: Toggle Collision System on and off", "Alt-8: Toggle ground stabilization (underwater flight)",
+                                "B: Toggle rocket boost on/off","CTRL: Toggle Brakes on and off. Cancels active AP", "LAlt: Tap to shift freelook on and off", 
+                                "Shift: Hold while not in freelook to see Buttons", "L: Toggle lights on and off", "Type /commands or /help in lua chat to see text commands"}
             table.insert(help, "--------------DYNAMIC-----------------")
             if inAtmo then 
                 if abvGndDet ~= -1 then
@@ -1046,9 +1047,12 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             else
                 addTable(help, helpSpace)
                 if shield_1 then
-                    table.insert(help,"Alt-Shift-5: Toggle shield off and on")
                     table.insert(help,"Alt-Shift-6: Vent shields")
+                    table.insert(help,"Alt-Shift-7: Toggle shied off/on")
                 end
+            end
+            if CustomTarget ~= nil then
+                table.insert(help, "Alt-Shift-8: Add current IPH target to Route")
             end
             if gyro then
                 table.insert(help,"Alt-9: Activate Gyroscope")

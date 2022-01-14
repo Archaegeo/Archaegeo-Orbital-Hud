@@ -5,6 +5,7 @@ Version 1.706 - Refactor and final modular class definitions
 - Moved JayleBrake functions and AtlasClass to atlasclass.lua modular file.
 - Refactor: User global variables now minimize shrinking Standalone by 15k minimized. NO END USER IMPACT
     Scripters will notice the format in for databank stored globals in the list variables has changed.
+- Updated dynamic help
 
 Version 1.705 (Changed version numbers on Standalone to 0.705 to reflect version number in Modular)
 - Fix: Standalone will not unload from seat when exit game or away from ship
