@@ -280,4 +280,4 @@ function RadarClass(c, s, library, radar_1, radar_2,
     -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
     --for k,v in pairs(require("autoconf/custom/archhud/custom/customradarclass")) do Radar[k] = v end 
     return Radar
-end
+end 

@@ -1,6 +1,7 @@
 function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
     mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
-    navCom, sysUpData, sysIsVwLock, msqrt, round) 
+    navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq,
+    getDistanceDisplayString, FormatTimeString, SaveDataBank)  
  
 
     local ap = {}
@@ -44,6 +45,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
     local OrbitTargetPlanet = nil
     local OrbitTicks = 0
     local apRoute = {}
+    local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in. Also used in hudclass
 
     function ap.GetAutopilotBrakeDistanceAndTime(speed)
         return GetAutopilotBrakeDistanceAndTime(speed)
@@ -1954,7 +1956,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
         else
             apRoute[#apRoute+1]=AutopilotTargetIndex
             msgText = "Added "..CustomTarget.name.." to route. "
-            p("Added "..CustomTarget.name.." to route. Total Route: "..json.encode(apRoute))
         end
         return apRoute
     end

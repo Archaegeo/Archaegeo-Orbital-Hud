@@ -1,12 +1,13 @@
 function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2,
-    isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp)
+    isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables)
     local Control = {}
     local UnitHidden = true
     local holdAltitudeButtonModifier = 5
     local antiGravButtonModifier = 5
     local currentHoldAltModifier = holdAltitudeButtonModifier
     local currentAggModifier = antiGravButtonModifier
-
+    local clearAllCheck = time
+ 
     function Control.startControl(action)
         -- Local function for onActionStart items in more than one
             local function groundAltStart(down)

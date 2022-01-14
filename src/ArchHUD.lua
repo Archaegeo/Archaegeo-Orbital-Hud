@@ -1,5 +1,4 @@
 require 'src.slots'
-require("autoconf/custom/archhud/globals")
 
 local s=system
 local c=core
@@ -8,6 +7,7 @@ local u=unit
 local Nav = Navigator.new(s, c, u)
 local atlas = require("atlas")
 
+local globalDeclare=require("autoconf/custom/archhud/globals")
 require("autoconf/custom/archhud/hudclass")
 require("autoconf/custom/archhud/apclass")
 require("autoconf/custom/archhud/radarclass")
@@ -15,7 +15,7 @@ require("autoconf/custom/archhud/controlclass")
 require("autoconf/custom/archhud/atlasclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.706
+VERSION_NUMBER = 1.707
 
 -- function localizations for improved performance when used frequently or in loops.
     local mabs = math.abs
@@ -40,132 +40,19 @@ VERSION_NUMBER = 1.706
     local msqrt = math.sqrt
     local tonum = tonumber
 
-    local function round(num, numDecimalPlaces) -- rounds variable num to numDecimalPlaces
-        local mult = 10 ^ (numDecimalPlaces or 0)
-        return mfloor(num * mult + 0.5) / mult
-    end
--- Variables that we declare local outside script because they will be treated as global but get local effectiveness
-    time = systime()
-    clearAllCheck = systime()
+-- Variables that need to be Global and are declared in globals.lua due to use across multple modules where there values can change.
+globalDeclare(s, c, u, systime, mfloor, atmosphere)
+-- Variables we declare local outside script because they will be treated as global but get local effectiveness and are passed to modules
     local coreHalfDiag = 13
-    PrimaryR = SafeR
-    PrimaryB = SafeB
-    PrimaryG = SafeG
-    PlayerThrottle = 0
-    brakeInput2 = 0
-    ThrottleLimited = false
-    calculatedThrottle = 0
-    WasInCruise = false
-    apThrottleSet = false -- Do not save this, because when they re-enter, throttle won't be set anymore
-    minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in
-    reentryMode = false
-    hasGear = false
-    pitchInput = 0
-    pitchInput2 = 0
-    yawInput2 = 0
-    rollInput = 0
-    yawInput = 0
-    brakeInput = 0
-    rollInput2 = 0
-    followMode = false 
-    holdingShift = false
-    msgText = "empty"
-
-    isBoosting = false -- Dodgin's Don't Die Rocket Govenor
-    brakeDistance = 0
-    brakeTime = 0
     local maxBrakeDistance = 0
     local maxBrakeTime = 0
-    autopilotTargetPlanet = nil
-    totalDistanceTrip = 0
-    flightTime = 0
-    upAmount = 0
-    simulatedX = 0
-    simulatedY = 0        
-    msgTimer = 3
-    distance = 0
-    lastOdometerOutput = ""
-    spaceLand = false
-    spaceLaunch = false
-    finalLand = false
-    abvGndDet = -1
     local myAutopilotTarget=""
-    inAtmo = (atmosphere() > 0)
-    atmosDensity = atmosphere()
-    coreAltitude = c.getAltitude()
     local elementsID = c.getElementIdList()
-    lastTravelTime = systime()
-    coreMass = c.getConstructMass()
-    mousePause = false
-    gyroIsOn = nil
-    rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
-    rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..   mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]
     local markers = {}
-    damageMessage = ""
-
-    resolutionWidth = ResolutionX
-    resolutionHeight = ResolutionY
-    atmoTanks = {}
-    spaceTanks = {}
-    rocketTanks = {}
     local eleTotalMaxHp = 0
-    repairArrows = false
     local PlanetaryReference = nil
-    galaxyReference = nil
-    Kinematic = nil
-    maxKinematicUp = nil
-    Kep = nil
-    HUD = nil
-    ATLAS = nil
-    AP = nil
-    RADAR = nil
-    CONTROL = nil
-    Animating = false
-    Animated = false
-    autoRoll = autoRollPreference
     local targetGroundAltitude = LandingGearGroundHeight -- So it can tell if one loaded or not
-    stalling = false
-    targetRoll = 0
-    adjustedAtmoSpeedLimit = AtmoSpeedLimit
-    VtPitch = 0
-    orbitMsg = nil
-    orbitalParams = { VectorToTarget = false } 
-    OrbitTargetOrbit = 0
-    OrbitAchieved = false
     local SpaceEngineVertUp = false
-    SpaceEngineVertDn = false
-    SpaceEngines = false
-    constructUp = vec3(c.getConstructWorldOrientationUp())
-    constructForward = vec3(c.getConstructWorldOrientationForward())
-    constructRight = vec3(c.getConstructWorldOrientationRight())
-    coreVelocity = vec3(c.getVelocity())
-    constructVelocity = vec3(c.getWorldVelocity())
-    velMag = vec3(constructVelocity):len()
-    worldVertical = vec3(c.getWorldVertical())
-    vSpd = -worldVertical:dot(constructVelocity)
-    worldPos = vec3(c.getConstructWorldPos())
-    UpVertAtmoEngine = false
-    antigravOn = false
-    setCruiseSpeed = nil
-    throttleMode = true
-    adjustedPitch = 0
-    adjustedRoll = 0
-    AtlasOrdered = {}
-    notPvPZone = false
-    pvpDist = 50000
-    ReversalIsOn = nil
-    contacts = {}
-    nearPlanet = u.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
-    collisionAlertStatus = false
-    collisionTarget = nil
-
-    apButtonsHovered = false
-    apScrollIndex = 0
-    passengers = nil
-    ships = nil
-    planetAtlas = {}
-    scopeFOV = 90
-    oldShowHud = showHud
 
 -- Function Definitions that are used in more than one areause 
     --[[    -- EliasVilld Log Code - To use uncomment all Elias sections and put the two lines below around code to be measured.
@@ -245,13 +132,16 @@ VERSION_NUMBER = 1.706
             return self
         end
     --]]
-    --
+    --[[
     function p(msg)
         s.print(time..": "..msg)
     end
     --]]
-
-    function play(sound, ID, type)
+    local function round(num, numDecimalPlaces) -- rounds variable num to numDecimalPlaces
+        local mult = 10 ^ (numDecimalPlaces or 0)
+        return mfloor(num * mult + 0.5) / mult
+    end
+    local function play(sound, ID, type)
         if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
         if type ~= nil then
             if type == 2 then
@@ -264,7 +154,7 @@ VERSION_NUMBER = 1.706
         end
     end
 
-    function addTable(table1, table2) -- Function to add two tables together
+    local function addTable(table1, table2) -- Function to add two tables together
         for k,v in pairs(table2) do
             if type(k)=="string" then
                 table1[k] = v
@@ -275,7 +165,7 @@ VERSION_NUMBER = 1.706
         return table1
     end
 
-    function saveableVariables(subset) -- returns saveable variables by catagory
+    local function saveableVariables(subset) -- returns saveable variables by catagory
         local returnSet = {}
             -- Complete list of user variables above, must be in saveableVariables to be stored on databank
 
@@ -302,7 +192,7 @@ VERSION_NUMBER = 1.706
         return stringf([[<text class="%s" x=%s y=%s style="%s">%s</text>]], class,x, y, style, text)
     end
 
-    function float_eq(a, b) -- float equation
+    local function float_eq(a, b) -- float equation
         if a == 0 then
             return mabs(b) < 1e-09
         end
@@ -312,7 +202,7 @@ VERSION_NUMBER = 1.706
         return mabs(a - b) < math.max(mabs(a), mabs(b)) * epsilon
     end
 
-    function getDistanceDisplayString(distance, places) -- Turn a distance into a string to a number of places
+    local function getDistanceDisplayString(distance, places) -- Turn a distance into a string to a number of places
         local su = distance > 100000
         if places == nil then places = 1 end
         if su then
@@ -326,7 +216,7 @@ VERSION_NUMBER = 1.706
         end
     end
 
-    function FormatTimeString(seconds) -- Format a time string for display
+    local function FormatTimeString(seconds) -- Format a time string for display
         local minutes = 0
         local hours = 0
         local days = 0
@@ -355,7 +245,7 @@ VERSION_NUMBER = 1.706
         end
     end
 
-    function SaveDataBank(copy) -- Save values to the databank.
+    local function SaveDataBank(copy) -- Save values to the databank.
         local function writeData(dataList)
             for k, v in pairs(dataList) do
                 dbHud_1.setStringValue(k, jencode(v.get()))
@@ -719,13 +609,13 @@ VERSION_NUMBER = 1.706
                         end
                     end
                 end
-                PlanetaryReference = PlanetRef(Nav, c, u, s, stringf, uclamp)
+                PlanetaryReference = PlanetRef(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
                 galaxyReference = PlanetaryReference(atlasCopy)
                 -- Setup Modular Classes
                 Kinematic = Kinematics(Nav, c, u, s, msqrt, mabs)
-                Kep = Keplers(Nav, c, u, s, msqrt)
+                Kep = Keplers(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
 
-                ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt)
+                ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play)
             end
         
         SetupComplete = false
@@ -751,7 +641,8 @@ VERSION_NUMBER = 1.706
 
             AP = APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
                 mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
-                navCom, sysUpData, sysIsVwLock, msqrt, round)
+                navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq, 
+                getDistanceDisplayString, FormatTimeString, SaveDataBank)
             SetupChecks() -- All the if-thens to set up for particular ship.  Specifically override these with the saved variables if available
           
             coroutine.yield() -- Just to make sure
@@ -759,12 +650,10 @@ VERSION_NUMBER = 1.706
             atlasSetup()
             RADAR = RadarClass(c, s, library, radar_1, radar_2, 
                 mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag)
-            HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1,
-                mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
-                navCom, sysDestWid, sysIsVwLock, msqrt, round, svgText)
+            HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, navCom, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables, getDistanceDisplayString, FormatTimeString)
             HUD.ButtonSetup()
             CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2,
-                isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp)
+                isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables)
             coroutine.yield()
  
             u.hide()

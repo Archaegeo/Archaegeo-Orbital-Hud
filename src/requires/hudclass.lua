@@ -1,6 +1,8 @@
 function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1,
     mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
-    navCom, sysDestWid, sysIsVwLock, msqrt, round, svgText)
+    navCom, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
+    getDistanceDisplayString, FormatTimeString)
+
 
     local gravConstant = 9.80665
     local Buttons = {}
@@ -13,6 +15,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     local showSettings = false
     local settingsVariables = "none"
     local pipeMessage = ""
+    local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in. Also used in apclass
 
     --Local Huds Functions
         -- safezone() variables
@@ -2841,4 +2844,4 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     --for k,v in pairs(require("autoconf/custom/archhud/custom/customhudclass")) do Hud[k] = v end 
     return Hud
 end
- 
+  
