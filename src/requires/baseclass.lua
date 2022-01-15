@@ -1225,5 +1225,29 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         collectgarbage("collect")
     end
 
+    function program.controlStart(action)
+        CONTROL.startControl(action)
+    end
+
+    function program.controlStop(action)
+        CONTROL.stopControl(action)
+    end
+
+    function program.controlLoop(action)
+        CONTROL.loopControl(action)
+    end
+
+    function program.onInputText(text)
+        CONTROL.inputTextControl(text)
+    end
+
+    function program.onEnter(id)
+        RADAR.onEnter(id)
+    end
+
+    function program.radarLeave(id)
+        RADAR.onLeave(id)
+    end
+
     return program
 end

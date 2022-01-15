@@ -70,27 +70,27 @@ end
     end
 
     function script.onActionStart(action)
-        CONTROL.startControl(action)
+        PROGRAM.controlStart(action)
     end
 
     function script.onActionStop(action)
-        CONTROL.stopControl(action)
+        PROGRAM.controlStop(action)
     end
 
     function script.onActionLoop(action)
-        CONTROL.loopControl(action)
+        PROGRAM.controlLoop(action)
     end
 
     function script.onInputText(text)
-        CONTROL.inputTextControl(text)
+        PROGRAM.controlInput(text)
     end
 
     function script.onEnter(id)
-        RADAR.onEnter(id)
+        PROGRAM.radarEnter(id)
     end
 
     function script.onLeave(id)
-        RADAR.onLeave(id)
+        PROGRAM.radarLeave(id)
     end
 
 -- Execute Script
