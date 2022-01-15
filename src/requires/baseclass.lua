@@ -1241,7 +1241,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         CONTROL.inputTextControl(text)
     end
 
-    function program.onEnter(id)
+    function program.radarEnter(id)
         RADAR.onEnter(id)
     end
 

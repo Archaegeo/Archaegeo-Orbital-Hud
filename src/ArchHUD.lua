@@ -21,7 +21,7 @@ VERSION_NUMBER = 1.707
 
 globalDeclare(s, c, u, s.getTime, math.floor, u.getAtmosphereDensity) -- Variables that need to be Global and are declared in globals.lua due to use across multple modules where there values can change.
 
---[[
+--
 function p(msg)
     s.print(time..": "..msg)
 end
