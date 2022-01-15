@@ -1249,5 +1249,30 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         RADAR.onLeave(id)
     end
 
+    function program.onTick(timerId)
+        if timerId == "tenthSecond" then -- Timer executed ever tenth of a second
+            AP.TenthTick()
+            HUD.TenthTick()
+        elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
+            PROGRAM.OneSecondTick()
+        elseif timerId == "fiveSecond" then -- Timer executed every 5 seconds (SatNav only stuff for now)
+            AP.SatNavTick()
+        elseif timerId == "msgTick" then -- Timer executed whenever msgText is applied somwehere
+            HUD.MsgTick()
+        elseif timerId == "animateTick" then -- Timer for animation
+            HUD.AnimateTick()
+        elseif timerId == "hudTick" then -- Timer for all hud updates not called elsewhere
+            HUD.hudtick()
+        elseif timerId == "apTick" then -- Timer for all autopilot functions
+            AP.APTick()
+        elseif timerId == "radarTick" then
+            RADAR.UpdateRadar()
+        elseif timerId == "tagTick" then
+            CONTROL.tagTick()
+        elseif timerId == "contact" then
+            RADAR.ContactTick()
+        end
+    end
+
     return program
 end
