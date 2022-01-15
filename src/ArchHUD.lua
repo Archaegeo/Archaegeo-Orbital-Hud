@@ -1236,7 +1236,7 @@ VERSION_NUMBER = 1.707
     end
 
 -- Execute Script
-    PROGRAM = programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield_1,
+    PROGRAM = programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield_1, gyro, 
         mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq, 
         getDistanceDisplayString, FormatTimeString, SaveDataBank, stringf, tonum, sysAddData, jdecode, eleMass, sysDestWid, svgText, saveableVariables, sysLockVw, stringmatch, elementsID, eleMaxHp, eleTotalMaxHp)
     script.onStart() 

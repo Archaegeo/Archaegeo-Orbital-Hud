@@ -2,6 +2,7 @@
 
 Version 1.707 - Continue modularization cleanup.
 - Addition of baseclass.lua that handles startup and shutdown functions.
+- Fixed gyro support in controlclass.lua
 
 Version 1.706 - Refactor and final modular class definitions
 (Recopy all files, existing databank should function normally)
