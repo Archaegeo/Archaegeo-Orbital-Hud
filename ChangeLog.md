@@ -1,7 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.707 - Continue modularization cleanup.
-- Addition of baseclass.lua that handles startup and shutdown functions.
+Version 1.707 - Finish MAJOR Refactor of ArchHUD.lua
+- All code removed from ArchHUD.lua into various modular files.
 - Fixed gyro support in controlclass.lua
 
 Version 1.706 - Refactor and final modular class definitions

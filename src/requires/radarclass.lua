@@ -1,5 +1,5 @@
-function RadarClass(c, s, library, radar_1, radar_2, 
-    mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag) -- Everything related to radar but draw data passed to HUD Class.
+function RadarClass(c, s, u, library, radar_1, radar_2, 
+    mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) -- Everything related to radar but draw data passed to HUD Class.
     local Radar = {}
     -- Radar Class locals
 
@@ -271,6 +271,32 @@ function RadarClass(c, s, library, radar_1, radar_2,
             peris = 0
         end
     end
+
+    function Radar.ContactTick()
+        if not contactTimer then contactTimer = 0 end
+        if time > contactTimer+10 then
+            msgText = "Radar Contact" 
+            play("rdrCon","RC")
+            contactTimer = time
+        end
+        u.stopTimer("contact")
+    end
+
+    function Radar.onEnter(id)
+        if radar_1 and not inAtmo and not notPvPZone then 
+            u.setTimer("contact",0.1) 
+        end
+    end
+
+    function Radar.onLeave(id)
+        if radar_1 and CollisionSystem then 
+            if #contacts > 650 then 
+                id = tostring(id)
+                contacts[id] = nil 
+            end
+        end
+    end
+
     radars[1]=nil
     if radar_1 then
         radars[1] = radar_1

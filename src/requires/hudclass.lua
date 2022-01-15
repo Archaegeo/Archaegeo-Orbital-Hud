@@ -2813,7 +2813,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         if shield_1 then HUD.DrawShield() end
     end
 
-    function Hud.OneSecond(newContent)
+    function Hud.OneSecondTick(newContent)
         local function updateDistance()
             local curTime = systime()
             local spd = velMag
@@ -2834,6 +2834,22 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         HUD.ExtraData(newContent)
     end
 
+    function Hud.AnimateTick()
+        Animated = true
+        Animating = false
+        simulatedX = 0
+        simulatedY = 0
+        u.stopTimer("animateTick")
+    end
+
+    function Hud.MsgTick()
+        -- This is used to clear a message on screen after a short period of time and then stop itself
+        local newContent = {}
+        HUD.DisplayMessage(newContent, "empty")
+        msgText = "empty"
+        u.stopTimer("msgTick")
+        msgTimer = 3
+    end
     function Hud.ButtonSetup()
         SettingsButtons()
         ControlsButtons() -- Set up all the pushable buttons.

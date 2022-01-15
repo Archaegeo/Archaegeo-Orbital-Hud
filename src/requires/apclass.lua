@@ -1,7 +1,7 @@
-function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
+function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1,
     mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
     navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq,
-    getDistanceDisplayString, FormatTimeString, SaveDataBank)  
+    getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)  
  
 
     local ap = {}
@@ -46,6 +46,10 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
     local OrbitTicks = 0
     local apRoute = {}
     local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in. Also used in hudclass
+    local lastMaxBrakeAtG = nil
+    local maxBrakeDistance = 0
+    local maxBrakeTime = 0
+    local myAutopilotTarget=""
 
     function ap.GetAutopilotBrakeDistanceAndTime(speed)
         return GetAutopilotBrakeDistanceAndTime(speed)
@@ -2202,6 +2206,279 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
             else
                 if not down then mult = 1 else mult = nil end
                 ATLAS.adjustAutopilotTargetIndex(mult)
+            end
+        end
+    end
+
+    function ap.TenthTick()
+
+        -- Local Functions for tenthSecond
+            local function SetupInterplanetaryPanel() -- Interplanetary helper
+                local sysCrData = s.createData
+                local sysCrWid = s.createWidget
+                panelInterplanetary = s.createWidgetPanel("Interplanetary Helper")
+            
+                interplanetaryHeader = sysCrWid(panelInterplanetary, "value")
+                interplanetaryHeaderText = sysCrData('{"label": "Target Planet", "value": "N/A", "unit":""}')
+                sysAddData(interplanetaryHeaderText, interplanetaryHeader)
+            
+                widgetDistance = sysCrWid(panelInterplanetary, "value")
+                widgetDistanceText = sysCrData('{"label": "distance", "value": "N/A", "unit":""}')
+                sysAddData(widgetDistanceText, widgetDistance)
+            
+                widgetTravelTime = sysCrWid(panelInterplanetary, "value")
+                widgetTravelTimeText = sysCrData('{"label": "Travel Time", "value": "N/A", "unit":""}')
+                sysAddData(widgetTravelTimeText, widgetTravelTime)
+            
+                widgetMaxMass = sysCrWid(panelInterplanetary, "value")
+                widgetMaxMassText = sysCrData('{"label": "Maximum Mass", "value": "N/A", "unit":""}')
+                sysAddData(widgetMaxMassText, widgetMaxMass)
+            
+                widgetTargetOrbit = sysCrWid(panelInterplanetary, "value")
+                widgetTargetOrbitText = sysCrData('{"label": "Target Altitude", "value": "N/A", "unit":""}')
+                sysAddData(widgetTargetOrbitText, widgetTargetOrbit)
+            
+                widgetCurBrakeDistance = sysCrWid(panelInterplanetary, "value")
+                widgetCurBrakeDistanceText = sysCrData('{"label": "Cur Brake distance", "value": "N/A", "unit":""}')
+                widgetCurBrakeTime = sysCrWid(panelInterplanetary, "value")
+                widgetCurBrakeTimeText = sysCrData('{"label": "Cur Brake Time", "value": "N/A", "unit":""}')
+                widgetMaxBrakeDistance = sysCrWid(panelInterplanetary, "value")
+                widgetMaxBrakeDistanceText = sysCrData('{"label": "Max Brake distance", "value": "N/A", "unit":""}')
+                widgetMaxBrakeTime = sysCrWid(panelInterplanetary, "value")
+                widgetMaxBrakeTimeText = sysCrData('{"label": "Max Brake Time", "value": "N/A", "unit":""}')
+                widgetTrajectoryAltitude = sysCrWid(panelInterplanetary, "value")
+                widgetTrajectoryAltitudeText = sysCrData('{"label": "Projected Altitude", "value": "N/A", "unit":""}')
+                if not inAtmo then
+                    sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
+                    sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime)
+                    sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
+                    sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
+                    sysAddData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
+                end
+            end                    
+            local function HideInterplanetaryPanel()
+                sysDestWid(panelInterplanetary)
+                panelInterplanetary = nil
+            end 
+            local function GetAutopilotTravelTime()
+                if not Autopilot then
+                    if CustomTarget == nil or CustomTarget.planetname ~= planet.name then
+                        AutopilotDistance = (autopilotTargetPlanet.center - worldPos):len() -- This updates elsewhere if we're already piloting
+                    else
+                        AutopilotDistance = (CustomTarget.position - worldPos):len()
+                    end
+                end
+                local speed = velMag
+                local throttle = u.getThrottle()/100
+                if AtmoSpeedAssist then throttle = PlayerThrottle end
+                local accelDistance, accelTime =
+                    Kinematic.computeDistanceAndTime(velMag, MaxGameVelocity, -- From currently velocity to max
+                        coreMass, Nav:maxForceForward()*throttle, warmup, -- T50?  Assume none, negligible for this
+                        0) -- Brake thrust, none for this
+                -- accelDistance now has the amount of distance for which we will be accelerating
+                -- Then we need the distance we'd brake from full speed
+                -- Note that for some nearby moons etc, it may never reach full speed though.
+                local brakeDistance, brakeTime
+                if not TurnBurn then
+                    brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
+                else
+                    brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
+                end
+                local _, curBrakeTime
+                if not TurnBurn and speed > 0 then -- Will this cause problems?  Was spamming something in here was giving 0 speed and 0 accel
+                    _, curBrakeTime = AP.GetAutopilotBrakeDistanceAndTime(speed)
+                else
+                    _, curBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(speed)
+                end
+                local cruiseDistance = 0
+                local cruiseTime = 0
+                -- So, time is in seconds
+                -- If cruising or braking, use real cruise/brake values
+                if AutopilotCruising or (not Autopilot and speed > 5) then -- If already cruising, use current speed
+                    cruiseTime = Kinematic.computeTravelTime(speed, 0, AutopilotDistance)
+                elseif brakeDistance + accelDistance < AutopilotDistance then
+                    -- Add any remaining distance
+                    cruiseDistance = AutopilotDistance - (brakeDistance + accelDistance)
+                    cruiseTime = Kinematic.computeTravelTime(8333.0556, 0, cruiseDistance)
+                else
+                    local accelRatio = (AutopilotDistance - brakeDistance) / accelDistance
+                    accelDistance = AutopilotDistance - brakeDistance -- Accel until we brake
+                    
+                    accelTime = accelTime * accelRatio
+                end
+                if CustomTarget ~= nil and CustomTarget.planetname == planet.name and not Autopilot then
+                    return cruiseTime
+                elseif AutopilotBraking then
+                    return curBrakeTime
+                elseif AutopilotCruising then
+                    return cruiseTime + curBrakeTime
+                else -- If not cruising or braking, assume we'll get to max speed
+                    return accelTime + brakeTime + cruiseTime
+                end
+            end
+            local function RefreshLastMaxBrake(gravity, force)
+                if gravity == nil then
+                    gravity = c.g()
+                end
+                gravity = round(gravity, 5) -- round to avoid insignificant updates
+                if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
+                    local speed = coreVelocity:len()
+                    local maxBrake = jdecode(u.getData()).maxBrake 
+                    if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
+                        maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
+                        maxBrake = maxBrake / atmosDensity
+                        if atmosDensity > 0.10 then 
+                            if LastMaxBrakeInAtmo then
+                                LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
+                            else
+                                LastMaxBrakeInAtmo = maxBrake 
+                            end
+                        end -- Now that we're calculating actual brake values, we want this updated
+                    end
+                    if maxBrake ~= nil and maxBrake > 0 then
+                        LastMaxBrake = maxBrake
+                    end
+                    lastMaxBrakeAtG = gravity
+                end
+            end
+        RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
+        if setCruiseSpeed ~= nil then
+            if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
+                AP.cmdCruise(setCruiseSpeed)
+            else
+                setCruiseSpeed = nil
+            end
+        end
+        if AutopilotTargetName ~= "None" then
+            if panelInterplanetary == nil then
+                SetupInterplanetaryPanel()
+            end
+            if AutopilotTargetName ~= nil then
+                local customLocation = CustomTarget ~= nil
+                local planetMaxMass = 0.5 * LastMaxBrakeInAtmo /
+                    (autopilotTargetPlanet:getGravity(
+                    autopilotTargetPlanet.center + (vec3(0, 0, 1) * autopilotTargetPlanet.radius))
+                    :len())
+                planetMaxMass = planetMaxMass > 1000000 and round(planetMaxMass / 1000000,2).." kTons" or round(planetMaxMass / 1000, 2).." Tons"
+                sysUpData(interplanetaryHeaderText,
+                    '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "unit":""}')
+                travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
+                if customLocation and not Autopilot then -- If in autopilot, keep this displaying properly
+                    distance = (worldPos - CustomTarget.position):len()
+                else
+                    distance = (AutopilotTargetCoords - worldPos):len() -- Don't show our weird variations
+                end
+                if not TurnBurn then
+                    brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(velMag)
+                    maxBrakeDistance, maxBrakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
+                else
+                    brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(velMag)
+                    maxBrakeDistance, maxBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
+                end
+                local displayText = getDistanceDisplayString(distance)
+                sysUpData(widgetDistanceText, '{"label": "distance", "value": "' .. displayText
+                    .. '"}')
+                sysUpData(widgetTravelTimeText, '{"label": "Travel Time", "value": "' ..
+                    FormatTimeString(travelTime) .. '", "unit":""}')
+                displayText = getDistanceDisplayString(brakeDistance)
+                sysUpData(widgetCurBrakeDistanceText, '{"label": "Cur Brake distance", "value": "' ..
+                    displayText.. '"}')
+                sysUpData(widgetCurBrakeTimeText, '{"label": "Cur Brake Time", "value": "' ..
+                    FormatTimeString(brakeTime) .. '", "unit":""}')
+                displayText = getDistanceDisplayString(maxBrakeDistance)
+                sysUpData(widgetMaxBrakeDistanceText, '{"label": "Max Brake distance", "value": "' ..
+                    displayText.. '"}')
+                sysUpData(widgetMaxBrakeTimeText, '{"label": "Max Brake Time", "value": "' ..
+                    FormatTimeString(maxBrakeTime) .. '", "unit":""}')
+                sysUpData(widgetMaxMassText, '{"label": "Max Brake Mass", "value": "' ..
+                    stringf("%s", planetMaxMass ) .. '", "unit":""}')
+                displayText = getDistanceDisplayString(AutopilotTargetOrbit)
+                sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
+                displayText .. '"}')
+                if atmosDensity > 0 and not WasInAtmo then
+                    s.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
+                    s.removeDataFromWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
+                    s.removeDataFromWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
+                    s.removeDataFromWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
+                    s.removeDataFromWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
+                    WasInAtmo = true
+                    if not throttleMode and AtmoSpeedAssist and (AltitudeHold or Reentry or finalLand) then
+                        -- If they're reentering atmo from cruise, and have atmo speed Assist
+                        -- Put them in throttle mode at 100%
+                        AP.cmdThrottle(1)
+                        BrakeIsOn = false
+                        WasInCruise = false -- And override the thing that would reset it, in this case
+                    end
+                end
+                if atmosDensity == 0 and WasInAtmo then
+                    if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) == 1 then
+                        sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
+                    if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) == 1 then
+                        sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
+                    if sysUpData(widgetCurBrakeTimeText, widgetCurBrakeTime) == 1 then
+                        sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime) end
+                    if sysUpData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) == 1 then
+                        sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
+                    if sysUpData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) == 1 then
+                        sysAddData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
+                    WasInAtmo = false
+                end
+            end
+        else
+            HideInterplanetaryPanel()
+        end
+        if warpdrive ~= nil then
+            if jdecode(warpdrive.getData()).destination ~= "Unknown" and jdecode(warpdrive.getData()).distance > 400000 then
+                warpdrive.show()
+                showWarpWidget = true
+            else
+                warpdrive.hide()
+                showWarpWidget = false
+            end
+        end
+    end
+
+    function ap.SatNavTick()
+        if not UseSatNav then return end
+        -- Support for SatNav by Trog
+        myAutopilotTarget = dbHud_1.getStringValue("SPBAutopilotTargetName")
+        if myAutopilotTarget ~= nil and myAutopilotTarget ~= "" and myAutopilotTarget ~= "SatNavNotChanged" then
+            local result = jdecode(dbHud_1.getStringValue("SavedLocations"))
+            if result ~= nil then
+                SavedLocations = result        
+                local index = -1        
+                local newLocation        
+                for k, v in pairs(SavedLocations) do        
+                    if v.name and v.name == "SatNav Location" then                   
+                        index = k                
+                        break                
+                    end            
+                end        
+                if index ~= -1 then       
+                    newLocation = SavedLocations[index]            
+                    index = -1            
+                    for k, v in pairs(atlas[0]) do           
+                        if v.name and v.name == "SatNav Location" then               
+                            index = k                    
+                            break                  
+                        end                
+                    end            
+                    if index > -1 then           
+                        atlas[0][index] = newLocation                
+                    end            
+                    ATLAS.UpdateAtlasLocationsList()           
+                    msgText = newLocation.name .. " position updated"            
+                end       
+            end
+
+            for i=1,#AtlasOrdered do    
+                if AtlasOrdered[i].name == myAutopilotTarget then
+                    AutopilotTargetIndex = i
+                    s.print("Index = "..AutopilotTargetIndex.." "..AtlasOrdered[i].name)          
+                    ATLAS.UpdateAutopilotTarget()
+                    dbHud_1.setStringValue("SPBAutopilotTargetName", "SatNavNotChanged")
+                    break            
+                end     
             end
         end
     end

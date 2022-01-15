@@ -758,6 +758,17 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             end
         end
     end
+
+    function Control.tagTick()
+        if UseExtra == "Off" then UseExtra = "All"
+        elseif UseExtra == "All" then UseExtra = "Longitude"
+        elseif UseExtra == "Longitude" then UseExtra = "Lateral"
+        elseif UseExtra == "Lateral" then UseExtra = "Vertical"
+        else UseExtra = "Off"
+        end
+        msgText = "Extra Engine Tags: "..UseExtra 
+        u.stopTimer("tagTick")
+    end
     -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
     --for k,v in pairs(require("autoconf/custom/archhud/custom/customcontrolclass")) do Control[k] = v end 
     return Control
