@@ -3346,7 +3346,7 @@ __wrap_lua__stopOnError = false
 __wrap_lua__rethrowErrorAlways = false
 __wrap_lua__rethrowErrorIfStopped = true
 __wrap_lua__printError = true
-__wrap_lua__showErrorOnScreens = true
+__wrap_lua__showErrorOnScreens = false
 
 function __wrap_lua__error (message)
   if __wrap_lua__stopped then return end
