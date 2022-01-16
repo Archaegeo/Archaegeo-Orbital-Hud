@@ -1,7 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.707 - Finish MAJOR Refactor of ArchHUD.lua
-- All code removed from ArchHUD.lua into various modular files.
+- All code removed from ArchHUD.lua into the various modular files.  ArchHUD.lua is 8kb now and just handles the initial structure and loading of requires.
+This requires a replacement of all require files.
 - Fixed gyro support in controlclass.lua
 
 Version 1.706 - Refactor and final modular class definitions

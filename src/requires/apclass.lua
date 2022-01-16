@@ -168,7 +168,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                         apRoute = {}
                         AP.cmdThrottle(0)
                         if AltitudeHold then AP.ToggleAltitudeHold() end
-                        if LockPitch then ToggleLockPitch() end
+                        if LockPitch then AP.ToggleLockPitch() end
                         msgText = "Autopilot Cancelled due to possible collision"
                         if VectorToTarget or Autopilot then 
                             AP.ToggleAutopilot()
