@@ -312,8 +312,8 @@ VERSION_NUMBER = 0.707
             scopeFOV = 90
             oldShowHud = showHud
         end
-
-        function p(msg)
+    --[[
+    function p(msg)
         s.print(time..": "..msg)
     end
     --]]
@@ -1231,7 +1231,7 @@ VERSION_NUMBER = 0.707
         return Atlas
     end
     -- ArchHUD classes  
-    function RadarClass(c, s, u, library, radar_1, radar_2, 
+    local function RadarClass(c, s, u, library, radar_1, radar_2, 
         mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) -- Everything related to radar but draw data passed to HUD Class.
         local Radar = {}
         -- Radar Class locals
