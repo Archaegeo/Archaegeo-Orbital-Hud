@@ -403,7 +403,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             if spaceLand then 
                 BrakeIsOn = false -- wtf how does this keep turning on, and why does it matter if we're in cruise?
                 local aligned = false
-                if CustomTarget and spaceLand ~= 1 then
+                if CustomTarget and spaceLand == true then
                     aligned = AlignToWorldVector(CustomTarget.position-worldPos,0.1) 
                 else
                     aligned = AlignToWorldVector(vec3(constructVelocity),0.01) 
@@ -415,8 +415,8 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                         -- Try to force it to get full speed toward target, so it goes straight to throttle and all is well
                         BrakeIsOn = false
                         ProgradeIsOn = false
-                        reentryMode = true
-                        if spaceLand ~= 1 then finalLand = true end
+                        if spaceLand ~= 2 then reentryMode = true end
+                        if spaceLand == true then finalLand = true end
                         spaceLand = false
                         Autopilot = false
                         --autoRoll = autoRollPreference   
@@ -440,7 +440,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
 
         if not ProgradeIsOn and spaceLand and not IntoOrbit then 
             if atmosDensity == 0 then 
-                reentryMode = true
+                if spaceLand ~= 2 then reentryMode = true end
                 AP.BeginReentry()
                 spaceLand = false
                 finalLand = true
@@ -1310,7 +1310,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                         WasInCruise = false
                         AP.cmdThrottle(1)
                     end
-                elseif throttleMode and not freeFallHeight and not inAtmo then 
+                elseif (throttleMode or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= ReentrySpeed) and not freeFallHeight and not inAtmo then 
                     AP.cmdCruise(ReentrySpeed, true) 
                 end
                 if throttleMode then
@@ -1325,10 +1325,12 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if vSpd > 0 then BrakeIsOn = true end
                 if not reentryMode then
                     targetPitch = -80
-                    if atmosDensity > 0.02 then
-                        msgText = "PARACHUTE DEPLOYED"
+                    if coreAltitude < (planet.surfaceMaxAltitude+(planet.atmosphereThickness-planet.surfaceMaxAltitude)*0.2) then
+                        msgText = "PARACHUTE DEPLOYED at "..round(coreAltitude,0)
                         Reentry = false
                         BrakeLanding = true
+                        StrongBrakes = true
+                        AP.cmdThrottle(0)
                         targetPitch = 0
                         autoRoll = autoRollPreference
                     end

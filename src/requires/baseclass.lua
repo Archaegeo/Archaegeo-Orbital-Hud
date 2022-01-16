@@ -1239,7 +1239,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         CONTROL.loopControl(action)
     end
 
-    function program.onInputText(text)
+    function program.controlInput(text)
         CONTROL.inputTextControl(text)
     end
 
