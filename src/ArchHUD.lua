@@ -3647,7 +3647,7 @@ VERSION_NUMBER = 0.707
                     function() return Reentry end, function() spaceLand = 1 gradeToggle(1) end, function() return (planet.hasAtmosphere and not inAtmo) end )
                 y = y + buttonHeight + 20
                 MakeButton("Parachute Re-Entry", "Cancel Parachute Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
-                    function() return Reentry end, AP.BeginReentry, function() return (planet.hasAtmosphere and not inAtmo) end )
+                    function() return Reentry end, function() spaceLand = 2 gradeToggle(1) end, function() return (planet.hasAtmosphere and not inAtmo) end )
                 y = y + buttonHeight + 20
                 MakeButton("Engage Follow Mode", "Disable Follow Mode", buttonWidth, buttonHeight, x, y, function()
                     return followMode
@@ -4984,7 +4984,6 @@ VERSION_NUMBER = 0.707
                         speedLimitBreaking  = true
                 elseif not AtmoSpeedAssist and speedLimitBreaking then
                     if velMag < (adjustedAtmoSpeedLimit / 3.6) then
-                        p("HERE1")
                         BrakeIsOn = false
                         speedLimitBreaking = false
                     end
@@ -5001,7 +5000,7 @@ VERSION_NUMBER = 0.707
                 if spaceLand then 
                     BrakeIsOn = false -- wtf how does this keep turning on, and why does it matter if we're in cruise?
                     local aligned = false
-                    if CustomTarget and spaceLand ~= 1 then
+                    if CustomTarget and spaceLand == true then
                         aligned = AlignToWorldVector(CustomTarget.position-worldPos,0.1) 
                     else
                         aligned = AlignToWorldVector(vec3(constructVelocity),0.01) 
@@ -5013,8 +5012,8 @@ VERSION_NUMBER = 0.707
                             -- Try to force it to get full speed toward target, so it goes straight to throttle and all is well
                             BrakeIsOn = false
                             ProgradeIsOn = false
-                            reentryMode = true
-                            if spaceLand ~= 1 then finalLand = true end
+                            if spaceLand ~= 2 then reentryMode = true end
+                            if spaceLand == true then finalLand = true end
                             spaceLand = false
                             Autopilot = false
                             --autoRoll = autoRollPreference   
@@ -5038,7 +5037,7 @@ VERSION_NUMBER = 0.707
     
             if not ProgradeIsOn and spaceLand and not IntoOrbit then 
                 if atmosDensity == 0 then 
-                    reentryMode = true
+                    if spaceLand ~= 2 then reentryMode = true end
                     AP.BeginReentry()
                     spaceLand = false
                     finalLand = true
@@ -5908,7 +5907,7 @@ VERSION_NUMBER = 0.707
                             WasInCruise = false
                             AP.cmdThrottle(1)
                         end
-                    elseif throttleMode and not freeFallHeight and not inAtmo then 
+                    elseif (throttleMode or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= ReentrySpeed) and not freeFallHeight and not inAtmo then 
                         AP.cmdCruise(ReentrySpeed, true) 
                     end
                     if throttleMode then
@@ -5923,10 +5922,12 @@ VERSION_NUMBER = 0.707
                     if vSpd > 0 then BrakeIsOn = true end
                     if not reentryMode then
                         targetPitch = -80
-                        if atmosDensity > 0.02 then
-                            msgText = "PARACHUTE DEPLOYED"
+                        if coreAltitude < (planet.surfaceMaxAltitude+(planet.atmosphereThickness-planet.surfaceMaxAltitude)*0.2) then
+                            msgText = "PARACHUTE DEPLOYED at "..round(coreAltitude,1)
                             Reentry = false
                             BrakeLanding = true
+                            StrongBrakes = true
+                            AP.cmdThrottle(0)
                             targetPitch = 0
                             autoRoll = autoRollPreference
                         end
@@ -8911,7 +8912,7 @@ VERSION_NUMBER = 0.707
             CONTROL.loopControl(action)
         end
     
-        function program.onInputText(text)
+        function program.controlInput(text)
             CONTROL.inputTextControl(text)
         end
     
