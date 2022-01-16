@@ -1,10 +1,9 @@
--- AtlasClass
+-- AtlasClass 
 
 
 -- Planet Info - https://gitlab.com/JayleBreak/dualuniverse/-/tree/master/DUflightfiles/autoconf/custom with modifications to support HUD, vanilla JayleBreak will not work anymore
-    function PlanetRef(Nav, c, u, s, stringf, uclamp)
-        local tonum = tonumber
-        local msqrt = math.sqrt
+    function PlanetRef(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
+
         --[[                    START OF LOCAL IMPLEMENTATION DETAILS             ]]--
         -- Type checks
 
@@ -539,9 +538,9 @@
         return Kinematic
     end
 
-    function Keplers(Nav, c, u, s, msqrt) -- Part of Jaylebreak's flight files, modified slightly for hud
+    function Keplers(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq) -- Part of Jaylebreak's flight files, modified slightly for hud
         local vec3 = require('cpml.vec3')
-        local PlanetRef = PlanetRef(Nav, c, u, s)
+        local PlanetRef = PlanetRef(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
         local function isString(s)
             return type(s) == 'string'
         end
@@ -659,7 +658,7 @@
     end 
 
 -- ArchHUD AtlasOrdering
-    function AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt) -- Atlas and Interplanetary functions including Update Autopilot Target
+    function AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play) -- Atlas and Interplanetary functions including Update Autopilot Target
 
         -- Atlas functions
             local function getPlanet(position)

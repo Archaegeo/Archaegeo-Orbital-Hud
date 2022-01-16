@@ -1,6 +1,7 @@
-function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
+function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1,
     mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
-    navCom, sysUpData, sysIsVwLock, msqrt, round) 
+    navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq,
+    getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)  
  
 
     local ap = {}
@@ -44,6 +45,10 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
     local OrbitTargetPlanet = nil
     local OrbitTicks = 0
     local apRoute = {}
+    local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in. Also used in hudclass
+    local lastMaxBrakeAtG = nil
+
+    local myAutopilotTarget=""
 
     function ap.GetAutopilotBrakeDistanceAndTime(speed)
         return GetAutopilotBrakeDistanceAndTime(speed)
@@ -162,7 +167,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
                         apRoute = {}
                         AP.cmdThrottle(0)
                         if AltitudeHold then AP.ToggleAltitudeHold() end
-                        if LockPitch then ToggleLockPitch() end
+                        if LockPitch then AP.ToggleLockPitch() end
                         msgText = "Autopilot Cancelled due to possible collision"
                         if VectorToTarget or Autopilot then 
                             AP.ToggleAutopilot()
@@ -398,7 +403,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
             if spaceLand then 
                 BrakeIsOn = false -- wtf how does this keep turning on, and why does it matter if we're in cruise?
                 local aligned = false
-                if CustomTarget and spaceLand ~= 1 then
+                if CustomTarget and spaceLand == true then
                     aligned = AlignToWorldVector(CustomTarget.position-worldPos,0.1) 
                 else
                     aligned = AlignToWorldVector(vec3(constructVelocity),0.01) 
@@ -410,8 +415,8 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
                         -- Try to force it to get full speed toward target, so it goes straight to throttle and all is well
                         BrakeIsOn = false
                         ProgradeIsOn = false
-                        reentryMode = true
-                        if spaceLand ~= 1 then finalLand = true end
+                        if spaceLand ~= 2 then reentryMode = true end
+                        if spaceLand == true then finalLand = true end
                         spaceLand = false
                         Autopilot = false
                         --autoRoll = autoRollPreference   
@@ -435,7 +440,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
 
         if not ProgradeIsOn and spaceLand and not IntoOrbit then 
             if atmosDensity == 0 then 
-                reentryMode = true
+                if spaceLand ~= 2 then reentryMode = true end
                 AP.BeginReentry()
                 spaceLand = false
                 finalLand = true
@@ -1305,7 +1310,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
                         WasInCruise = false
                         AP.cmdThrottle(1)
                     end
-                elseif throttleMode and not freeFallHeight and not inAtmo then 
+                elseif (throttleMode or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= ReentrySpeed) and not freeFallHeight and not inAtmo then 
                     AP.cmdCruise(ReentrySpeed, true) 
                 end
                 if throttleMode then
@@ -1320,10 +1325,12 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
                 if vSpd > 0 then BrakeIsOn = true end
                 if not reentryMode then
                     targetPitch = -80
-                    if atmosDensity > 0.02 then
-                        msgText = "PARACHUTE DEPLOYED"
+                    if coreAltitude < (planet.surfaceMaxAltitude+(planet.atmosphereThickness-planet.surfaceMaxAltitude)*0.2) then
+                        msgText = "PARACHUTE DEPLOYED at "..round(coreAltitude,0)
                         Reentry = false
                         BrakeLanding = true
+                        StrongBrakes = true
+                        AP.cmdThrottle(0)
                         targetPitch = 0
                         autoRoll = autoRollPreference
                     end
@@ -1954,7 +1961,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
         else
             apRoute[#apRoute+1]=AutopilotTargetIndex
             msgText = "Added "..CustomTarget.name.." to route. "
-            p("Added "..CustomTarget.name.." to route. Total Route: "..json.encode(apRoute))
         end
         return apRoute
     end
@@ -2201,6 +2207,87 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav,
             else
                 if not down then mult = 1 else mult = nil end
                 ATLAS.adjustAutopilotTargetIndex(mult)
+            end
+        end
+    end
+
+    function ap.TenthTick()
+            local function RefreshLastMaxBrake(gravity, force)
+                if gravity == nil then
+                    gravity = c.g()
+                end
+                gravity = round(gravity, 5) -- round to avoid insignificant updates
+                if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
+                    local speed = coreVelocity:len()
+                    local maxBrake = jdecode(u.getData()).maxBrake 
+                    if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
+                        maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
+                        maxBrake = maxBrake / atmosDensity
+                        if atmosDensity > 0.10 then 
+                            if LastMaxBrakeInAtmo then
+                                LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
+                            else
+                                LastMaxBrakeInAtmo = maxBrake 
+                            end
+                        end -- Now that we're calculating actual brake values, we want this updated
+                    end
+                    if maxBrake ~= nil and maxBrake > 0 then
+                        LastMaxBrake = maxBrake
+                    end
+                    lastMaxBrakeAtG = gravity
+                end
+            end
+        RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
+        if setCruiseSpeed ~= nil then
+            if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
+                AP.cmdCruise(setCruiseSpeed)
+            else
+                setCruiseSpeed = nil
+            end
+        end
+    end
+
+    function ap.SatNavTick()
+        if not UseSatNav then return end
+        -- Support for SatNav by Trog
+        myAutopilotTarget = dbHud_1.getStringValue("SPBAutopilotTargetName")
+        if myAutopilotTarget ~= nil and myAutopilotTarget ~= "" and myAutopilotTarget ~= "SatNavNotChanged" then
+            local result = jdecode(dbHud_1.getStringValue("SavedLocations"))
+            if result ~= nil then
+                SavedLocations = result        
+                local index = -1        
+                local newLocation        
+                for k, v in pairs(SavedLocations) do        
+                    if v.name and v.name == "SatNav Location" then                   
+                        index = k                
+                        break                
+                    end            
+                end        
+                if index ~= -1 then       
+                    newLocation = SavedLocations[index]            
+                    index = -1            
+                    for k, v in pairs(atlas[0]) do           
+                        if v.name and v.name == "SatNav Location" then               
+                            index = k                    
+                            break                  
+                        end                
+                    end            
+                    if index > -1 then           
+                        atlas[0][index] = newLocation                
+                    end            
+                    ATLAS.UpdateAtlasLocationsList()           
+                    msgText = newLocation.name .. " position updated"            
+                end       
+            end
+
+            for i=1,#AtlasOrdered do    
+                if AtlasOrdered[i].name == myAutopilotTarget then
+                    AutopilotTargetIndex = i
+                    s.print("Index = "..AutopilotTargetIndex.." "..AtlasOrdered[i].name)          
+                    ATLAS.UpdateAutopilotTarget()
+                    dbHud_1.setStringValue("SPBAutopilotTargetName", "SatNavNotChanged")
+                    break            
+                end     
             end
         end
     end

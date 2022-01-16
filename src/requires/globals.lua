@@ -1,4 +1,4 @@
--- These values are a default set for 1920x1080 ResolutionX and Y settings.
+-- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
     useTheseSettings = false --  Change this to true to override databank saved settings
@@ -188,3 +188,118 @@
         AutopilotTargetIndex={set=function (i)AutopilotTargetIndex=i end,get=function() return AutopilotTargetIndex end}, TotalDistanceTravelled={set=function (i)TotalDistanceTravelled=i end,get=function() return TotalDistanceTravelled end},
         TotalFlightTime={set=function (i)TotalFlightTime=i end,get=function() return TotalFlightTime end}, SavedLocations={set=function (i)SavedLocations=i end,get=function() return SavedLocations end}, VectorToTarget={set=function (i)VectorToTarget=i end,get=function() return VectorToTarget end}, LocationIndex={set=function (i)LocationIndex=i end,get=function() return LocationIndex end}, LastMaxBrake={set=function (i)LastMaxBrake=i end,get=function() return LastMaxBrake end}, 
         LockPitch={set=function (i)LockPitch=i end,get=function() return LockPitch end}, LastMaxBrakeInAtmo={set=function (i)LastMaxBrakeInAtmo=i end,get=function() return LastMaxBrakeInAtmo end}, AntigravTargetAltitude={set=function (i)AntigravTargetAltitude=i end,get=function() return AntigravTargetAltitude end}, LastStartTime={set=function (i)LastStartTime=i end,get=function() return LastStartTime end}, iphCondition={set=function (i)iphCondition=i end,get=function() return iphCondition end}, stablized={set=function (i)stablized=i end,get=function() return stablized end}, UseExtra={set=function (i)UseExtra=i end,get=function() return UseExtra end}, SelectedTab={set=function (i)SelectedTab=i end,get=function() return SelectedTab end}, saveRoute={set=function (i)saveRoute=i end,get=function() return saveRoute end}}
+
+-- Unsaved Globals
+local function globalDeclare(s, c, u, systime, mfloor, atmosphere)
+    time = systime()
+    PrimaryR = SafeR
+    PrimaryB = SafeB
+    PrimaryG = SafeG
+    PlayerThrottle = 0
+    brakeInput2 = 0
+    ThrottleLimited = false
+    calculatedThrottle = 0
+    WasInCruise = false
+    apThrottleSet = false -- Do not save this, because when they re-enter, throttle won't be set anymore
+    reentryMode = false
+    hasGear = false
+    pitchInput = 0
+    pitchInput2 = 0
+    yawInput2 = 0
+    rollInput = 0
+    yawInput = 0
+    brakeInput = 0
+    rollInput2 = 0
+    followMode = false 
+    holdingShift = false
+    followMode = false 
+    holdingShift = false
+    msgText = "empty"
+    isBoosting = false -- Dodgin's Don't Die Rocket Govenor
+    brakeDistance = 0
+    brakeTime = 0
+    autopilotTargetPlanet = nil
+    totalDistanceTrip = 0
+    flightTime = 0
+    upAmount = 0
+    simulatedX = 0
+    simulatedY = 0        
+    msgTimer = 3
+    distance = 0
+    lastOdometerOutput = ""
+    spaceLand = false
+    spaceLaunch = false
+    finalLand = false
+    abvGndDet = -1
+    inAtmo = (atmosphere() > 0)
+    atmosDensity = atmosphere()
+    coreAltitude = c.getAltitude()
+    lastTravelTime = systime()
+    coreMass = c.getConstructMass()
+    mousePause = false
+    gyroIsOn = nil
+    rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
+    rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..   mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]
+    damageMessage = ""
+    resolutionWidth = ResolutionX
+    resolutionHeight = ResolutionY
+    atmoTanks = {}
+    spaceTanks = {}
+    rocketTanks = {}
+    repairArrows = false
+    galaxyReference = nil
+    Kinematic = nil
+    maxKinematicUp = nil
+    Kep = nil
+    HUD = nil
+    ATLAS = nil
+    AP = nil
+    RADAR = nil
+    CONTROL = nil
+    Animating = false
+    Animated = false
+    autoRoll = autoRollPreference
+    stalling = false
+    targetRoll = 0
+    adjustedAtmoSpeedLimit = AtmoSpeedLimit
+    VtPitch = 0
+    orbitMsg = nil
+    orbitalParams = { VectorToTarget = false } 
+    OrbitTargetOrbit = 0
+    OrbitAchieved = false
+    SpaceEngineVertDn = false
+    SpaceEngines = false
+    constructUp = vec3(c.getConstructWorldOrientationUp())
+    constructForward = vec3(c.getConstructWorldOrientationForward())
+    constructRight = vec3(c.getConstructWorldOrientationRight())
+    coreVelocity = vec3(c.getVelocity())
+    constructVelocity = vec3(c.getWorldVelocity())
+    velMag = vec3(constructVelocity):len()
+    worldVertical = vec3(c.getWorldVertical())
+    vSpd = -worldVertical:dot(constructVelocity)
+    worldPos = vec3(c.getConstructWorldPos())
+    UpVertAtmoEngine = false
+    antigravOn = false
+    setCruiseSpeed = nil
+    throttleMode = true
+    adjustedPitch = 0
+    adjustedRoll = 0
+    AtlasOrdered = {}
+    notPvPZone = false
+    pvpDist = 50000
+    ReversalIsOn = nil
+    contacts = {}
+    nearPlanet = u.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
+    collisionAlertStatus = false
+    collisionTarget = nil
+
+    apButtonsHovered = false
+    apScrollIndex = 0
+    passengers = nil
+    ships = nil
+    planetAtlas = {}
+    scopeFOV = 90
+    oldShowHud = showHud
+end
+
+return globalDeclare

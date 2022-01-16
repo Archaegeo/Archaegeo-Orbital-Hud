@@ -1,5 +1,13 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.707 - Finish MAJOR Refactor of ArchHUD.lua
+- All code removed from ArchHUD.lua into the various modular files.  ArchHUD.lua is 8kb now and just handles the initial structure and loading of requires.
+This requires a replacement of all require files.
+- Fixed gyro support in controlclass.lua
+- Fixed/Improved: Glide Re-Entry and Parachute Re-Entry
+Glide re-entry works like normal.  Parachute re-entry works again and pops the chute at an altitude equal to
+(planet.surfaceMaxAltitude+(planet.atmosphereThickness-planet.surfaceMaxAltitude)*0.2), bring your brown pants.
+
 Version 1.706 - Refactor and final modular class definitions
 (Recopy all files, existing databank should function normally)
 - Moved JayleBrake functions and AtlasClass to atlasclass.lua modular file.

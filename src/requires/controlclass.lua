@@ -1,12 +1,13 @@
-function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2,
-    isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp)
+function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro,
+    isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables)
     local Control = {}
     local UnitHidden = true
     local holdAltitudeButtonModifier = 5
     local antiGravButtonModifier = 5
     local currentHoldAltModifier = holdAltitudeButtonModifier
     local currentAggModifier = antiGravButtonModifier
-
+    local clearAllCheck = time
+ 
     function Control.startControl(action)
         -- Local function for onActionStart items in more than one
             local function groundAltStart(down)
@@ -756,6 +757,17 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                 msgText = "No target selected in IPH"
             end
         end
+    end
+
+    function Control.tagTick()
+        if UseExtra == "Off" then UseExtra = "All"
+        elseif UseExtra == "All" then UseExtra = "Longitude"
+        elseif UseExtra == "Longitude" then UseExtra = "Lateral"
+        elseif UseExtra == "Lateral" then UseExtra = "Vertical"
+        else UseExtra = "Off"
+        end
+        msgText = "Extra Engine Tags: "..UseExtra 
+        u.stopTimer("tagTick")
     end
     -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
     --for k,v in pairs(require("autoconf/custom/archhud/custom/customcontrolclass")) do Control[k] = v end 

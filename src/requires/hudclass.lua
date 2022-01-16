@@ -1,6 +1,8 @@
-function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1,
+function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive,
     mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
-    navCom, sysDestWid, sysIsVwLock, msqrt, round, svgText)
+    navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
+    getDistanceDisplayString, FormatTimeString)
+
 
     local gravConstant = 9.80665
     local Buttons = {}
@@ -13,6 +15,9 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     local showSettings = false
     local settingsVariables = "none"
     local pipeMessage = ""
+    local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in. Also used in apclass
+    local maxBrakeDistance = 0
+    local maxBrakeTime = 0
 
     --Local Huds Functions
         -- safezone() variables
@@ -2100,7 +2105,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 function() return Reentry end, function() spaceLand = 1 gradeToggle(1) end, function() return (planet.hasAtmosphere and not inAtmo) end )
             y = y + buttonHeight + 20
             MakeButton("Parachute Re-Entry", "Cancel Parachute Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
-                function() return Reentry end, AP.BeginReentry, function() return (planet.hasAtmosphere and not inAtmo) end )
+                function() return Reentry end, function() spaceLand = 2 gradeToggle(1) end, function() return (planet.hasAtmosphere and not inAtmo) end )
             y = y + buttonHeight + 20
             MakeButton("Engage Follow Mode", "Disable Follow Mode", buttonWidth, buttonHeight, x, y, function()
                 return followMode
@@ -2806,11 +2811,202 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     end
 
     function Hud.TenthTick()
+        -- Local Functions for tenthSecond
+            local function SetupInterplanetaryPanel() -- Interplanetary helper
+                local sysCrData = s.createData
+                local sysCrWid = s.createWidget
+                panelInterplanetary = s.createWidgetPanel("Interplanetary Helper")
+            
+                interplanetaryHeader = sysCrWid(panelInterplanetary, "value")
+                interplanetaryHeaderText = sysCrData('{"label": "Target Planet", "value": "N/A", "unit":""}')
+                sysAddData(interplanetaryHeaderText, interplanetaryHeader)
+            
+                widgetDistance = sysCrWid(panelInterplanetary, "value")
+                widgetDistanceText = sysCrData('{"label": "distance", "value": "N/A", "unit":""}')
+                sysAddData(widgetDistanceText, widgetDistance)
+            
+                widgetTravelTime = sysCrWid(panelInterplanetary, "value")
+                widgetTravelTimeText = sysCrData('{"label": "Travel Time", "value": "N/A", "unit":""}')
+                sysAddData(widgetTravelTimeText, widgetTravelTime)
+            
+                widgetMaxMass = sysCrWid(panelInterplanetary, "value")
+                widgetMaxMassText = sysCrData('{"label": "Maximum Mass", "value": "N/A", "unit":""}')
+                sysAddData(widgetMaxMassText, widgetMaxMass)
+            
+                widgetTargetOrbit = sysCrWid(panelInterplanetary, "value")
+                widgetTargetOrbitText = sysCrData('{"label": "Target Altitude", "value": "N/A", "unit":""}')
+                sysAddData(widgetTargetOrbitText, widgetTargetOrbit)
+            
+                widgetCurBrakeDistance = sysCrWid(panelInterplanetary, "value")
+                widgetCurBrakeDistanceText = sysCrData('{"label": "Cur Brake distance", "value": "N/A", "unit":""}')
+                widgetCurBrakeTime = sysCrWid(panelInterplanetary, "value")
+                widgetCurBrakeTimeText = sysCrData('{"label": "Cur Brake Time", "value": "N/A", "unit":""}')
+                widgetMaxBrakeDistance = sysCrWid(panelInterplanetary, "value")
+                widgetMaxBrakeDistanceText = sysCrData('{"label": "Max Brake distance", "value": "N/A", "unit":""}')
+                widgetMaxBrakeTime = sysCrWid(panelInterplanetary, "value")
+                widgetMaxBrakeTimeText = sysCrData('{"label": "Max Brake Time", "value": "N/A", "unit":""}')
+                widgetTrajectoryAltitude = sysCrWid(panelInterplanetary, "value")
+                widgetTrajectoryAltitudeText = sysCrData('{"label": "Projected Altitude", "value": "N/A", "unit":""}')
+                if not inAtmo then
+                    sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
+                    sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime)
+                    sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
+                    sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
+                    sysAddData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
+                end
+            end                    
+            local function HideInterplanetaryPanel()
+                sysDestWid(panelInterplanetary)
+                panelInterplanetary = nil
+            end 
+            local function GetAutopilotTravelTime()
+                if not Autopilot then
+                    if CustomTarget == nil or CustomTarget.planetname ~= planet.name then
+                        AutopilotDistance = (autopilotTargetPlanet.center - worldPos):len() -- This updates elsewhere if we're already piloting
+                    else
+                        AutopilotDistance = (CustomTarget.position - worldPos):len()
+                    end
+                end
+                local speed = velMag
+                local throttle = u.getThrottle()/100
+                if AtmoSpeedAssist then throttle = PlayerThrottle end
+                local accelDistance, accelTime =
+                    Kinematic.computeDistanceAndTime(velMag, MaxGameVelocity, -- From currently velocity to max
+                        coreMass, Nav:maxForceForward()*throttle, warmup, -- T50?  Assume none, negligible for this
+                        0) -- Brake thrust, none for this
+                -- accelDistance now has the amount of distance for which we will be accelerating
+                -- Then we need the distance we'd brake from full speed
+                -- Note that for some nearby moons etc, it may never reach full speed though.
+                local brakeDistance, brakeTime
+                if not TurnBurn then
+                    brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
+                else
+                    brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
+                end
+                local _, curBrakeTime
+                if not TurnBurn and speed > 0 then -- Will this cause problems?  Was spamming something in here was giving 0 speed and 0 accel
+                    _, curBrakeTime = AP.GetAutopilotBrakeDistanceAndTime(speed)
+                else
+                    _, curBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(speed)
+                end
+                local cruiseDistance = 0
+                local cruiseTime = 0
+                -- So, time is in seconds
+                -- If cruising or braking, use real cruise/brake values
+                if AutopilotCruising or (not Autopilot and speed > 5) then -- If already cruising, use current speed
+                    cruiseTime = Kinematic.computeTravelTime(speed, 0, AutopilotDistance)
+                elseif brakeDistance + accelDistance < AutopilotDistance then
+                    -- Add any remaining distance
+                    cruiseDistance = AutopilotDistance - (brakeDistance + accelDistance)
+                    cruiseTime = Kinematic.computeTravelTime(8333.0556, 0, cruiseDistance)
+                else
+                    local accelRatio = (AutopilotDistance - brakeDistance) / accelDistance
+                    accelDistance = AutopilotDistance - brakeDistance -- Accel until we brake
+                    
+                    accelTime = accelTime * accelRatio
+                end
+                if CustomTarget ~= nil and CustomTarget.planetname == planet.name and not Autopilot then
+                    return cruiseTime
+                elseif AutopilotBraking then
+                    return curBrakeTime
+                elseif AutopilotCruising then
+                    return cruiseTime + curBrakeTime
+                else -- If not cruising or braking, assume we'll get to max speed
+                    return accelTime + brakeTime + cruiseTime
+                end
+            end
         HUD.DrawTanks()
         if shield_1 then HUD.DrawShield() end
+        if AutopilotTargetName ~= "None" then
+            if panelInterplanetary == nil then
+                SetupInterplanetaryPanel()
+            end
+            if AutopilotTargetName ~= nil then
+                local customLocation = CustomTarget ~= nil
+                local planetMaxMass = 0.5 * LastMaxBrakeInAtmo /
+                    (autopilotTargetPlanet:getGravity(
+                    autopilotTargetPlanet.center + (vec3(0, 0, 1) * autopilotTargetPlanet.radius))
+                    :len())
+                planetMaxMass = planetMaxMass > 1000000 and round(planetMaxMass / 1000000,2).." kTons" or round(planetMaxMass / 1000, 2).." Tons"
+                sysUpData(interplanetaryHeaderText,
+                    '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "unit":""}')
+                travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
+                if customLocation and not Autopilot then -- If in autopilot, keep this displaying properly
+                    distance = (worldPos - CustomTarget.position):len()
+                else
+                    distance = (AutopilotTargetCoords - worldPos):len() -- Don't show our weird variations
+                end
+                if not TurnBurn then
+                    brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(velMag)
+                    maxBrakeDistance, maxBrakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
+                else
+                    brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(velMag)
+                    maxBrakeDistance, maxBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
+                end
+                local displayText = getDistanceDisplayString(distance)
+                sysUpData(widgetDistanceText, '{"label": "distance", "value": "' .. displayText
+                    .. '"}')
+                sysUpData(widgetTravelTimeText, '{"label": "Travel Time", "value": "' ..
+                    FormatTimeString(travelTime) .. '", "unit":""}')
+                displayText = getDistanceDisplayString(brakeDistance)
+                sysUpData(widgetCurBrakeDistanceText, '{"label": "Cur Brake distance", "value": "' ..
+                    displayText.. '"}')
+                sysUpData(widgetCurBrakeTimeText, '{"label": "Cur Brake Time", "value": "' ..
+                    FormatTimeString(brakeTime) .. '", "unit":""}')
+                displayText = getDistanceDisplayString(maxBrakeDistance)
+                sysUpData(widgetMaxBrakeDistanceText, '{"label": "Max Brake distance", "value": "' ..
+                    displayText.. '"}')
+                sysUpData(widgetMaxBrakeTimeText, '{"label": "Max Brake Time", "value": "' ..
+                    FormatTimeString(maxBrakeTime) .. '", "unit":""}')
+                sysUpData(widgetMaxMassText, '{"label": "Max Brake Mass", "value": "' ..
+                    stringf("%s", planetMaxMass ) .. '", "unit":""}')
+                displayText = getDistanceDisplayString(AutopilotTargetOrbit)
+                sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
+                displayText .. '"}')
+                if atmosDensity > 0 and not WasInAtmo then
+                    s.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
+                    s.removeDataFromWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
+                    s.removeDataFromWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
+                    s.removeDataFromWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
+                    s.removeDataFromWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
+                    WasInAtmo = true
+                    if not throttleMode and AtmoSpeedAssist and (AltitudeHold or Reentry or finalLand) then
+                        -- If they're reentering atmo from cruise, and have atmo speed Assist
+                        -- Put them in throttle mode at 100%
+                        AP.cmdThrottle(1)
+                        BrakeIsOn = false
+                        WasInCruise = false -- And override the thing that would reset it, in this case
+                    end
+                end
+                if atmosDensity == 0 and WasInAtmo then
+                    if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) == 1 then
+                        sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
+                    if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) == 1 then
+                        sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
+                    if sysUpData(widgetCurBrakeTimeText, widgetCurBrakeTime) == 1 then
+                        sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime) end
+                    if sysUpData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) == 1 then
+                        sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
+                    if sysUpData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) == 1 then
+                        sysAddData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
+                    WasInAtmo = false
+                end
+            end
+        else
+            HideInterplanetaryPanel()
+        end
+        if warpdrive ~= nil then
+            if jdecode(warpdrive.getData()).destination ~= "Unknown" and jdecode(warpdrive.getData()).distance > 400000 then
+                warpdrive.show()
+                showWarpWidget = true
+            else
+                warpdrive.hide()
+                showWarpWidget = false
+            end
+        end
     end
 
-    function Hud.OneSecond(newContent)
+    function Hud.OneSecondTick(newContent)
         local function updateDistance()
             local curTime = systime()
             local spd = velMag
@@ -2831,6 +3027,22 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         HUD.ExtraData(newContent)
     end
 
+    function Hud.AnimateTick()
+        Animated = true
+        Animating = false
+        simulatedX = 0
+        simulatedY = 0
+        u.stopTimer("animateTick")
+    end
+
+    function Hud.MsgTick()
+        -- This is used to clear a message on screen after a short period of time and then stop itself
+        local newContent = {}
+        HUD.DisplayMessage(newContent, "empty")
+        msgText = "empty"
+        u.stopTimer("msgTick")
+        msgTimer = 3
+    end
     function Hud.ButtonSetup()
         SettingsButtons()
         ControlsButtons() -- Set up all the pushable buttons.
@@ -2841,4 +3053,4 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     --for k,v in pairs(require("autoconf/custom/archhud/custom/customhudclass")) do Hud[k] = v end 
     return Hud
 end
- 
+  
