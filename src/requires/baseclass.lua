@@ -540,8 +540,10 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             atlasSetup()
             RADAR = RadarClass(c, s, u, library, radar_1, radar_2, 
             mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play)
-            HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, navCom, sysDestWid,
-                sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables, getDistanceDisplayString, FormatTimeString)
+            HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive,
+            mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
+            navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
+            getDistanceDisplayString, FormatTimeString)
             HUD.ButtonSetup()
             CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro,
                 isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables)
