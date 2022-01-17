@@ -121,8 +121,8 @@ VERSION_NUMBER = 0.7071
     -- Ship flight physics variables - Change with care, can have large effects on ships performance.
         -- NOTE: savableVariablesPhysics below must contain any Ship flight physics variables that needs to be saved/loaded from databank system
 
-        speedChangeLarge = 5 -- (Default: 5) The speed change that occurs when you tap speed up/down, default is 5 (25% throttle change).
-        speedChangeSmall = 1 -- (Default: 1) the speed change that occurs while you hold speed up/down, default is 1 (5% throttle change).
+        speedChangeLarge = 5 -- (Default: 5) The speed change that occurs when you tap speed up/down or mousewheel, default is 5%
+        speedChangeSmall = 1 -- (Default: 1) the speed change that occurs while you hold speed up/down, default is 1%
         MouseXSensitivity = 0.003 -- (Default: 0.003) For virtual joystick only
         MouseYSensitivity = 0.003 -- (Default: 0.003) For virtual joystick only
         autoRollFactor = 2 -- (Default: 2) [Only in atmosphere] When autoRoll is engaged, this factor will increase to strength of the roll back to 0
@@ -4883,7 +4883,16 @@ VERSION_NUMBER = 0.7071
             if antigrav then
                 antigravOn = (antigrav.getState() == 1)
             end
-            
+            local wheel = s.getMouseWheel()
+    
+            if wheel > 0 then
+                AP.changeSpd()
+            elseif wheel < 0 then
+                AP.changeSpd(true)
+            else
+                mousePause = true
+            end
+    
             local MousePitchFactor = 1 -- Mouse control only
             local MouseYawFactor = 1 -- Mouse control only
             local deltaTick = time - lastApTickTime
@@ -5922,8 +5931,8 @@ VERSION_NUMBER = 0.7071
                     if vSpd > 0 then BrakeIsOn = true end
                     if not reentryMode then
                         targetPitch = -80
-                        if coreAltitude < (planet.surfaceMaxAltitude+(planet.atmosphereThickness-planet.surfaceMaxAltitude)*0.2) then
-                            msgText = "PARACHUTE DEPLOYED at "..round(coreAltitude,1)
+                        if coreAltitude < (planet.surfaceMaxAltitude+(planet.atmosphereThickness-planet.surfaceMaxAltitude)*0.25) then
+                            msgText = "PARACHUTE DEPLOYED at "..round(coreAltitude,0)
                             Reentry = false
                             BrakeLanding = true
                             StrongBrakes = true
@@ -8372,16 +8381,6 @@ VERSION_NUMBER = 0.7071
     
             throttleMode = (navCom:getAxisCommandType(0) == axisCommandType.byThrottle)
     
-            if throttleMode and WasInCruise then
-                -- Not in cruise, but was last tick
-                AP.cmdThrottle(0)
-                WasInCruise = false
-            elseif not throttleMode and not WasInCruise then
-                -- Is in cruise, but wasn't last tick
-                PlayerThrottle = 0 -- Reset this here too, because, why not
-                WasInCruise = true
-            end
-    
             -- validate params
             pitchSpeedFactor = math.max(pitchSpeedFactor, 0.01)
             yawSpeedFactor = math.max(yawSpeedFactor, 0.01)
@@ -8454,15 +8453,6 @@ VERSION_NUMBER = 0.7071
             local keepCollinearity = 1 -- for easier reading
             local dontKeepCollinearity = 0 -- for easier reading
             local tolerancePercentToSkipOtherPriorities = 1 -- if we are within this tolerance (in%), we don't go to the next priorities
-            local wheel = s.getMouseWheel()
-    
-            if wheel > 0 then
-                AP.changeSpd()
-            elseif wheel < 0 then
-                AP.changeSpd(true)
-            else
-                mousePause = true
-            end
     
             brakeInput2 = 0
     
@@ -8486,7 +8476,15 @@ VERSION_NUMBER = 0.7071
                 -- Along with a message like, "Atmospheric Speed Limit Reached - Press Something to Disable Temporarily"
                 -- But of course, don't throttle up for them.  Only down. 
     
-    
+                if throttleMode and WasInCruise then
+                    -- Not in cruise, but was last tick
+                    AP.cmdThrottle(0)
+                    WasInCruise = false
+                elseif not throttleMode and not WasInCruise then
+                    -- Is in cruise, but wasn't last tick
+                    PlayerThrottle = 0 -- Reset this here too, because, why not
+                    WasInCruise = true
+                end
                 
     
                 if (throttlePID == nil) then
