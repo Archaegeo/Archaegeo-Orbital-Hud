@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.7071 
+(update baseclass.lua and controlclass.lua)
+- FIX: /copydatabank command not working.
+
 Version 0.707 - Finish MAJOR Refactor of ArchHUD.lua
 - Mirror code in Modular version.  All control code is in classes now.
 - Fixed gyro support in controlclass.lua

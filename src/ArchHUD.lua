@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.707
+VERSION_NUMBER = 0.7071
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
     -- User variables. Must be global to work with databank system
@@ -6897,7 +6897,7 @@ VERSION_NUMBER = 0.707
         return ap
     end
     local function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro,
-        isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables)
+        isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
         local Control = {}
         local UnitHidden = true
         local holdAltitudeButtonModifier = 5
@@ -8219,7 +8219,7 @@ VERSION_NUMBER = 0.707
                 getDistanceDisplayString, FormatTimeString)
                 HUD.ButtonSetup()
                 CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro,
-                    isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables)
+                    isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
                 coroutine.yield()
         
                 u.hide()
