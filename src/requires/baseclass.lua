@@ -546,7 +546,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             getDistanceDisplayString, FormatTimeString)
             HUD.ButtonSetup()
             CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro,
-                isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables)
+                isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
             coroutine.yield()
     
             u.hide()

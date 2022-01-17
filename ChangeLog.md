@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.7071 
+(update baseclass.lua and controlclass.lua)
+- FIX: /copydatabank command not working.
+
 Version 1.707 - Finish MAJOR Refactor of ArchHUD.lua
 - All code removed from ArchHUD.lua into the various modular files.  ArchHUD.lua is 8kb now and just handles the initial structure and loading of requires.
 This requires a replacement of all require files.
