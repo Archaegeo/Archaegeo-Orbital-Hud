@@ -286,7 +286,16 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         if antigrav then
             antigravOn = (antigrav.getState() == 1)
         end
-        
+        local wheel = s.getMouseWheel()
+
+        if wheel > 0 then
+            AP.changeSpd()
+        elseif wheel < 0 then
+            AP.changeSpd(true)
+        else
+            mousePause = true
+        end
+
         local MousePitchFactor = 1 -- Mouse control only
         local MouseYawFactor = 1 -- Mouse control only
         local deltaTick = time - lastApTickTime
@@ -1325,7 +1334,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if vSpd > 0 then BrakeIsOn = true end
                 if not reentryMode then
                     targetPitch = -80
-                    if coreAltitude < (planet.surfaceMaxAltitude+(planet.atmosphereThickness-planet.surfaceMaxAltitude)*0.2) then
+                    if coreAltitude < (planet.surfaceMaxAltitude+(planet.atmosphereThickness-planet.surfaceMaxAltitude)*0.25) then
                         msgText = "PARACHUTE DEPLOYED at "..round(coreAltitude,0)
                         Reentry = false
                         BrakeLanding = true

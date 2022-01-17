@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.7071 
+- FIX: Fixed mouse speed control to be more reliable.
+`speedChangeLarge` = 5 -- (Default: 5) The speed change that occurs when you tap speed up/down(R/T) or mousewheel, default is 5%
+`speedChangeSmall` = 1 -- (Default: 1) the speed change that occurs while you hold speed up/down(R/T), default is 1%
+- FIX: /copydatabank command not working.
+- CHANGE: Parachute "deploy" at slightly higher height on parachute re-entry.
+
 Version 1.707 - Finish MAJOR Refactor of ArchHUD.lua
 - All code removed from ArchHUD.lua into the various modular files.  ArchHUD.lua is 8kb now and just handles the initial structure and loading of requires.
 This requires a replacement of all require files.

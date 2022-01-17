@@ -110,8 +110,8 @@
     -- Ship flight physics variables - Change with care, can have large effects on ships performance.
         -- NOTE: savableVariablesPhysics below must contain any Ship flight physics variables that needs to be saved/loaded from databank system
 
-        speedChangeLarge = 5 -- (Default: 5) The speed change that occurs when you tap speed up/down, default is 5 (25% throttle change).
-        speedChangeSmall = 1 -- (Default: 1) the speed change that occurs while you hold speed up/down, default is 1 (5% throttle change).
+        speedChangeLarge = 5 -- (Default: 5) The speed change that occurs when you tap speed up/down or mousewheel, default is 5%
+        speedChangeSmall = 1 -- (Default: 1) the speed change that occurs while you hold speed up/down, default is 1%
         MouseXSensitivity = 0.003 -- (Default: 0.003) For virtual joystick only
         MouseYSensitivity = 0.003 -- (Default: 0.003) For virtual joystick only
         autoRollFactor = 2 -- (Default: 2) [Only in atmosphere] When autoRoll is engaged, this factor will increase to strength of the roll back to 0
