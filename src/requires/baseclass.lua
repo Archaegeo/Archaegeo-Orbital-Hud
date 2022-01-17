@@ -794,7 +794,15 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             -- Along with a message like, "Atmospheric Speed Limit Reached - Press Something to Disable Temporarily"
             -- But of course, don't throttle up for them.  Only down. 
 
-
+            if throttleMode and WasInCruise then
+                -- Not in cruise, but was last tick
+                AP.cmdThrottle(0)
+                WasInCruise = false
+            elseif not throttleMode and not WasInCruise then
+                -- Is in cruise, but wasn't last tick
+                PlayerThrottle = 0 -- Reset this here too, because, why not
+                WasInCruise = true
+            end
             
 
             if (throttlePID == nil) then

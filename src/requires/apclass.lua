@@ -296,16 +296,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             mousePause = true
         end
 
-        if throttleMode and WasInCruise then
-            -- Not in cruise, but was last tick
-            AP.cmdThrottle(0)
-            WasInCruise = false
-        elseif not throttleMode and not WasInCruise then
-            -- Is in cruise, but wasn't last tick
-            PlayerThrottle = 0 -- Reset this here too, because, why not
-            WasInCruise = true
-        end
-        
         local MousePitchFactor = 1 -- Mouse control only
         local MouseYawFactor = 1 -- Mouse control only
         local deltaTick = time - lastApTickTime
