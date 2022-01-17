@@ -699,16 +699,6 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
 
         throttleMode = (navCom:getAxisCommandType(0) == axisCommandType.byThrottle)
 
-        if throttleMode and WasInCruise then
-            -- Not in cruise, but was last tick
-            AP.cmdThrottle(0)
-            WasInCruise = false
-        elseif not throttleMode and not WasInCruise then
-            -- Is in cruise, but wasn't last tick
-            PlayerThrottle = 0 -- Reset this here too, because, why not
-            WasInCruise = true
-        end
-
         -- validate params
         pitchSpeedFactor = math.max(pitchSpeedFactor, 0.01)
         yawSpeedFactor = math.max(yawSpeedFactor, 0.01)
@@ -781,15 +771,6 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         local keepCollinearity = 1 -- for easier reading
         local dontKeepCollinearity = 0 -- for easier reading
         local tolerancePercentToSkipOtherPriorities = 1 -- if we are within this tolerance (in%), we don't go to the next priorities
-        local wheel = s.getMouseWheel()
-
-        if wheel > 0 then
-            AP.changeSpd()
-        elseif wheel < 0 then
-            AP.changeSpd(true)
-        else
-            mousePause = true
-        end
 
         brakeInput2 = 0
 
