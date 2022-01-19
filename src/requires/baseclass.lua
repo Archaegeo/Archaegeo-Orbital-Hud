@@ -580,6 +580,22 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         end
         if SetupComplete then
             Nav:update()
+            if inAtmo and AtmoSpeedAssist and throttleMode then
+                if throttleMode and WasInCruise then
+                    -- Not in cruise, but was last tick
+                    AP.cmdThrottle(0)
+                    WasInCruise = false
+                elseif not throttleMode and not WasInCruise then
+                    -- Is in cruise, but wasn't last tick
+                    PlayerThrottle = 0 -- Reset this here too, because, why not
+                    WasInCruise = true
+                end
+            end
+            if ThrottleValue then
+                navCom:setThrottleCommand(axisCommandId.longitudinal, ThrottleValue)
+                ThrottleValue = nil
+            end
+            
             if not Animating and content ~= LastContent then
                 s.setScreen(content) 
             end
@@ -794,19 +810,10 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             -- Along with a message like, "Atmospheric Speed Limit Reached - Press Something to Disable Temporarily"
             -- But of course, don't throttle up for them.  Only down. 
 
-            if throttleMode and WasInCruise then
-                -- Not in cruise, but was last tick
-                AP.cmdThrottle(0)
-                WasInCruise = false
-            elseif not throttleMode and not WasInCruise then
-                -- Is in cruise, but wasn't last tick
-                PlayerThrottle = 0 -- Reset this here too, because, why not
-                WasInCruise = true
-            end
-            
+
 
             if (throttlePID == nil) then
-                throttlePID = pid.new(0.5, 0, 1) -- First param, higher means less range in which to PID to a proper value
+                throttlePID = pid.new(0.1, 0, 1) -- First param, higher means less range in which to PID to a proper value
                 -- IE 1 there means it tries to get within 1m/s of target, 0.5 there means it tries to get within 5m/s of target
                 -- The smaller the value, the further the end-speed is from the target, but also the sooner it starts reducing throttle
                 -- It is also the same as taking the result * (firstParam), it's a direct scalar
@@ -824,12 +831,14 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             throttlePID:inject(adjustedAtmoSpeedLimit/3.6 - constructVelocity:dot(constructForward))
             local pidGet = throttlePID:get()
             calculatedThrottle = uclamp(pidGet,-1,1)
-            if calculatedThrottle < PlayerThrottle and (atmosDensity > 0.005) then -- We can limit throttle all the way to 0.05% probably
-                ThrottleLimited = true
-                navCom:setThrottleCommand(axisCommandId.longitudinal, uclamp(calculatedThrottle,0.01,1))
-            else
-                ThrottleLimited = false
-                navCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle)
+            if not ThrottleValue then 
+                if calculatedThrottle < PlayerThrottle and (atmosDensity > 0.005) then -- We can limit throttle all the way to 0.05% probably
+                    ThrottleLimited = true
+                    ThrottleValue = uclamp(calculatedThrottle,0.01,1)
+                else
+                    ThrottleLimited = false
+                    ThrottleValue = PlayerThrottle
+                end
             end
 
             
@@ -846,8 +855,8 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             --    brakeInput2 = brakeInput2 + mabs(calculatedThrottle)
             --end
             if brakeInput2 > 0 then
-                if ThrottleLimited and calculatedThrottle == 0.01 then
-                    navCom:setThrottleCommand(axisCommandId.longitudinal, 0) -- We clamped it to >0 before but, if braking and it was at that clamp, 0 is good.
+                if ThrottleLimited and calculatedThrottle == 0.01 and not ThrottleValue then
+                    ThrottleValue = 0 -- We clamped it to >0 before but, if braking and it was at that clamp, 0 is good.
                 end
             else -- For display purposes, keep calculatedThrottle positive in this case
                 calculatedThrottle = uclamp(calculatedThrottle,0.01,1)
@@ -913,7 +922,9 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         else
             --PlayerThrottle = 0
             if AtmoSpeedAssist then
-                navCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle) -- Use PlayerThrottle always.
+                if not ThrottleValue then
+                    ThrottleValue = PlayerThrottle -- Use PlayerThrottle always.
+                end
             end
 
             local targetSpeed = u.getAxisCommandValue(0)

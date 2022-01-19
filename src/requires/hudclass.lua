@@ -90,6 +90,10 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local fuelPercentS = {}
             local fuelTimeLeft = {}
             local fuelPercent = {}
+            local fuelUsed = {}
+            fuelUsed["atmofueltank"],fuelUsed["spacefueltank"],fuelUsed["rocketfueltank"] = 0,0,0
+
+            local tankY = 0
         
         local function DrawTank(x, nameSearchPrefix, nameReplacePrefix, tankTable, fuelTimeLeftTable,
             fuelPercentTable)
@@ -127,6 +131,14 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                         
                         local fuelMassLast
                         local fuelMass = 0
+
+                        fuelMass = (eleMass(tankTable[i][tankID]) - tankTable[i][tankMassEmpty])
+                        fuelMassLast = tankTable[i][tankLastMass]
+                        if fuelMassLast > fuelMass then 
+                            tankTable[i][tankLastTime] = curTime 
+                            fuelUsed[slottedTankType] = fuelUsed[slottedTankType]+(fuelMassLast - fuelMass) 
+                        end
+                        tankTable[i][tankLastMass] = fuelMass
                         if slottedIndex ~= 0 then
                             fuelPercentTable[i] = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
                                                     .percentage
@@ -136,9 +148,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                                 fuelTimeLeftTable[i] = 0
                             end
                         else
-                            fuelMass = (eleMass(tankTable[i][tankID]) - tankTable[i][tankMassEmpty])
                             fuelPercentTable[i] = mfloor(0.5 + fuelMass * 100 / tankTable[i][tankMaxVol])
-                            fuelMassLast = tankTable[i][tankLastMass]
                             if fuelMassLast <= fuelMass then
                                 fuelTimeLeftTable[i] = 0
                             else
@@ -146,8 +156,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                                                         0.5 + fuelMass /
                                                             ((fuelMassLast - fuelMass) / (curTime - tankTable[i][tankLastTime])))
                             end
-                            tankTable[i][tankLastMass] = fuelMass
-                            tankTable[i][tankLastTime] = curTime
                         end
                     end
                     if name == nameSearchPrefix then
@@ -206,6 +214,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                     end
                 end
             end
+
             tankY = y1
         end
 
@@ -1129,7 +1138,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
 
             local targetHeight = orbitMapSize*1.5
             if SelectedTab == "INFO" then
-                targetHeight = 25*7
+                targetHeight = 25*9
             end
 
             if SelectedTab ~= "HIDE" then
@@ -2075,6 +2084,9 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             buttonWidth = 300
             local x = 0
             local y = resolutionHeight / 2 - 150
+            MakeButton("Enable Check Damage", "Disable Check Damage", buttonWidth, buttonHeight, x, y - buttonHeight - 20, function()
+                return ShouldCheckDamage
+            end, function() ShouldCheckDamage = not ShouldCheckDamage end)
             MakeButton("View Settings", "View Settings", buttonWidth, buttonHeight, x, y, function() return true end, ToggleButtons)
             y = y + buttonHeight + 20
             MakeButton("Enable Turn and Burn", "Disable Turn and Burn", buttonWidth, buttonHeight, x, y, function()
@@ -2433,7 +2445,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         end
         newContent[#newContent + 1] = "</g>"
     end
-
+    local mod = 1 - (ContainerOptimization*0.05+FuelTankOptimization*0.05)
     function Hud.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
         if SelectedTab ~= "INFO" then return newContent end
         local gravity 
@@ -2472,9 +2484,13 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 newContent[#newContent + 1] = svgText(midX, startY+height*4, stringf("Max Thrust Mass: %s", (maxMass)))
                 newContent[#newContent + 1] = svgText(startX, startY+height*5, stringf("Req Thrust: %s", reqThrust )) 
             else
-                newContent[#newContent + 1] = svgText(midX, startY+height*5, "Max Mass: n/a") 
-                newContent[#newContent + 1] = svgText(startX, startY+height*6, "Req Thrust: n/a") 
+                newContent[#newContent + 1] = svgText(midX, startY+height*4, "Max Mass: n/a") 
+                newContent[#newContent + 1] = svgText(startX, startY+height*5, "Req Thrust: n/a") 
             end
+
+            newContent[#newContent + 1] = svgText(midX, startY+height*5, stringf("Atmo Fuel Used: %.1f L", fuelUsed["atmofueltank"]/(4*mod)))
+            newContent[#newContent + 1] = svgText(startX, startY+height*6, stringf("Space Fuel Used: %.1f L", fuelUsed["spacefueltank"]/(6*mod)))
+            newContent[#newContent + 1] = svgText(midX, startY+height*6, stringf("Rocket Fuel Used: %.1f L", fuelUsed["rocketfueltank"]/(0.8*mod)))
         end
         newContent[#newContent + 1] = "</g></g>"
         return newContent
@@ -2536,13 +2552,12 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     end
 
         -- DrawRadarInfo() variables
-        local perisPanelID
+
         local radarX = ConvertResolutionX(1770)
         local radarY = ConvertResolutionY(350)
         local friendy = ConvertResolutionY(15)
         local friendx = ConvertResolutionX(1370)
         local msg, where
-        local peris = 0
 
     function Hud.DrawRadarInfo()
         radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY)
