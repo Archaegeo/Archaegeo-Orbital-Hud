@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.7071
+VERSION_NUMBER = 0.708
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
     -- User variables. Must be global to work with databank system
@@ -28,7 +28,7 @@ VERSION_NUMBER = 0.7071
         autoRollPreference = false -- (Default: false) [Only in atmosphere] - When the pilot stops rolling, flight model will try to get back to horizontal (no roll)
         ExternalAGG = false -- (Default: false) Toggle On if using an external AGG system. If on will prevent this HUD from doing anything with AGG.
         UseSatNav = false -- (Default: false) Toggle on if using Trog SatNav script. This will provide SatNav support.
-        ShouldCheckDamage = true -- (Default: true) Whether or not damage checks are performed. Disable for performance improvement on very large ships or if using external Damage Report and you do not want the built in info.
+        ShouldCheckDamage = false -- (Default: false) Whether or not damage checks are performed. Disable for performance improvement on very large ships or if using external Damage Report and you do not want the built in info.
         CalculateBrakeLandingSpeed = false -- (Default: false) Whether BrakeLanding speed at non-waypoints should be calculated (faster) or use the brakeLandingRate user setting (safer).  Set to true for faster, not as safe, brake landing
         AtmoSpeedAssist = true -- (Default: true) Whether or not atmospheric speeds should be limited to a maximum of AtmoSpeedLimit (Hud built in speed limiter)
         ForceAlignment = false -- (Default: false) Whether velocity vector alignment should be forced when in Altitude Hold (needed for ships that drift alignment in altitude hold mode due to poor inertial matrix)
@@ -311,6 +311,7 @@ VERSION_NUMBER = 0.7071
             planetAtlas = {}
             scopeFOV = 90
             oldShowHud = showHud
+            ThrottleValue = nil
         end
     --[[
     function p(msg)
@@ -1247,6 +1248,8 @@ VERSION_NUMBER = 0.7071
             local radars = {}
             local rType = "Atmo"
             local UpdateRadarCoroutine
+            local perisPanelID
+            local peris = 0
     
         local function UpdateRadarRoutine()
             -- UpdateRadarRoutine Locals
@@ -1539,7 +1542,7 @@ VERSION_NUMBER = 0.7071
         -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
         --for k,v in pairs(require("autoconf/custom/archhud/custom/customradarclass")) do Radar[k] = v end 
         return Radar
-    end 
+    end  
     local function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive,
         mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
         navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
@@ -1632,6 +1635,10 @@ VERSION_NUMBER = 0.7071
                 local fuelPercentS = {}
                 local fuelTimeLeft = {}
                 local fuelPercent = {}
+                local fuelUsed = {}
+                fuelUsed["atmofueltank"],fuelUsed["spacefueltank"],fuelUsed["rocketfueltank"] = 0,0,0
+    
+                local tankY = 0
             
             local function DrawTank(x, nameSearchPrefix, nameReplacePrefix, tankTable, fuelTimeLeftTable,
                 fuelPercentTable)
@@ -1669,6 +1676,14 @@ VERSION_NUMBER = 0.7071
                             
                             local fuelMassLast
                             local fuelMass = 0
+    
+                            fuelMass = (eleMass(tankTable[i][tankID]) - tankTable[i][tankMassEmpty])
+                            fuelMassLast = tankTable[i][tankLastMass]
+                            if fuelMassLast > fuelMass then 
+                                tankTable[i][tankLastTime] = curTime 
+                                fuelUsed[slottedTankType] = fuelUsed[slottedTankType]+(fuelMassLast - fuelMass) 
+                            end
+                            tankTable[i][tankLastMass] = fuelMass
                             if slottedIndex ~= 0 then
                                 fuelPercentTable[i] = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
                                                         .percentage
@@ -1678,9 +1693,7 @@ VERSION_NUMBER = 0.7071
                                     fuelTimeLeftTable[i] = 0
                                 end
                             else
-                                fuelMass = (eleMass(tankTable[i][tankID]) - tankTable[i][tankMassEmpty])
                                 fuelPercentTable[i] = mfloor(0.5 + fuelMass * 100 / tankTable[i][tankMaxVol])
-                                fuelMassLast = tankTable[i][tankLastMass]
                                 if fuelMassLast <= fuelMass then
                                     fuelTimeLeftTable[i] = 0
                                 else
@@ -1688,8 +1701,6 @@ VERSION_NUMBER = 0.7071
                                                             0.5 + fuelMass /
                                                                 ((fuelMassLast - fuelMass) / (curTime - tankTable[i][tankLastTime])))
                                 end
-                                tankTable[i][tankLastMass] = fuelMass
-                                tankTable[i][tankLastTime] = curTime
                             end
                         end
                         if name == nameSearchPrefix then
@@ -1748,6 +1759,7 @@ VERSION_NUMBER = 0.7071
                         end
                     end
                 end
+    
                 tankY = y1
             end
     
@@ -2671,7 +2683,7 @@ VERSION_NUMBER = 0.7071
     
                 local targetHeight = orbitMapSize*1.5
                 if SelectedTab == "INFO" then
-                    targetHeight = 25*7
+                    targetHeight = 25*9
                 end
     
                 if SelectedTab ~= "HIDE" then
@@ -3617,6 +3629,9 @@ VERSION_NUMBER = 0.7071
                 buttonWidth = 300
                 local x = 0
                 local y = resolutionHeight / 2 - 150
+                MakeButton("Enable Check Damage", "Disable Check Damage", buttonWidth, buttonHeight, x, y - buttonHeight - 20, function()
+                    return ShouldCheckDamage
+                end, function() ShouldCheckDamage = not ShouldCheckDamage end)
                 MakeButton("View Settings", "View Settings", buttonWidth, buttonHeight, x, y, function() return true end, ToggleButtons)
                 y = y + buttonHeight + 20
                 MakeButton("Enable Turn and Burn", "Disable Turn and Burn", buttonWidth, buttonHeight, x, y, function()
@@ -3975,7 +3990,7 @@ VERSION_NUMBER = 0.7071
             end
             newContent[#newContent + 1] = "</g>"
         end
-    
+        local mod = 1 - (ContainerOptimization*0.05+FuelTankOptimization*0.05)
         function Hud.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
             if SelectedTab ~= "INFO" then return newContent end
             local gravity 
@@ -4014,9 +4029,13 @@ VERSION_NUMBER = 0.7071
                     newContent[#newContent + 1] = svgText(midX, startY+height*4, stringf("Max Thrust Mass: %s", (maxMass)))
                     newContent[#newContent + 1] = svgText(startX, startY+height*5, stringf("Req Thrust: %s", reqThrust )) 
                 else
-                    newContent[#newContent + 1] = svgText(midX, startY+height*5, "Max Mass: n/a") 
-                    newContent[#newContent + 1] = svgText(startX, startY+height*6, "Req Thrust: n/a") 
+                    newContent[#newContent + 1] = svgText(midX, startY+height*4, "Max Mass: n/a") 
+                    newContent[#newContent + 1] = svgText(startX, startY+height*5, "Req Thrust: n/a") 
                 end
+    
+                newContent[#newContent + 1] = svgText(midX, startY+height*5, stringf("Atmo Fuel Used: %.1f L", fuelUsed["atmofueltank"]/(4*mod)))
+                newContent[#newContent + 1] = svgText(startX, startY+height*6, stringf("Space Fuel Used: %.1f L", fuelUsed["spacefueltank"]/(6*mod)))
+                newContent[#newContent + 1] = svgText(midX, startY+height*6, stringf("Rocket Fuel Used: %.1f L", fuelUsed["rocketfueltank"]/(0.8*mod)))
             end
             newContent[#newContent + 1] = "</g></g>"
             return newContent
@@ -4078,13 +4097,12 @@ VERSION_NUMBER = 0.7071
         end
     
             -- DrawRadarInfo() variables
-            local perisPanelID
+    
             local radarX = ConvertResolutionX(1770)
             local radarY = ConvertResolutionY(350)
             local friendy = ConvertResolutionY(15)
             local friendx = ConvertResolutionX(1370)
             local msg, where
-            local peris = 0
     
         function Hud.DrawRadarInfo()
             radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY)
@@ -8262,6 +8280,22 @@ VERSION_NUMBER = 0.7071
             end
             if SetupComplete then
                 Nav:update()
+                if inAtmo and AtmoSpeedAssist and throttleMode then
+                    if throttleMode and WasInCruise then
+                        -- Not in cruise, but was last tick
+                        AP.cmdThrottle(0)
+                        WasInCruise = false
+                    elseif not throttleMode and not WasInCruise then
+                        -- Is in cruise, but wasn't last tick
+                        PlayerThrottle = 0 -- Reset this here too, because, why not
+                        WasInCruise = true
+                    end
+                end
+                if ThrottleValue then
+                    navCom:setThrottleCommand(axisCommandId.longitudinal, ThrottleValue)
+                    ThrottleValue = nil
+                end
+                
                 if not Animating and content ~= LastContent then
                     s.setScreen(content) 
                 end
@@ -8476,19 +8510,10 @@ VERSION_NUMBER = 0.7071
                 -- Along with a message like, "Atmospheric Speed Limit Reached - Press Something to Disable Temporarily"
                 -- But of course, don't throttle up for them.  Only down. 
     
-                if throttleMode and WasInCruise then
-                    -- Not in cruise, but was last tick
-                    AP.cmdThrottle(0)
-                    WasInCruise = false
-                elseif not throttleMode and not WasInCruise then
-                    -- Is in cruise, but wasn't last tick
-                    PlayerThrottle = 0 -- Reset this here too, because, why not
-                    WasInCruise = true
-                end
-                
+    
     
                 if (throttlePID == nil) then
-                    throttlePID = pid.new(0.5, 0, 1) -- First param, higher means less range in which to PID to a proper value
+                    throttlePID = pid.new(0.1, 0, 1) -- First param, higher means less range in which to PID to a proper value
                     -- IE 1 there means it tries to get within 1m/s of target, 0.5 there means it tries to get within 5m/s of target
                     -- The smaller the value, the further the end-speed is from the target, but also the sooner it starts reducing throttle
                     -- It is also the same as taking the result * (firstParam), it's a direct scalar
@@ -8506,12 +8531,14 @@ VERSION_NUMBER = 0.7071
                 throttlePID:inject(adjustedAtmoSpeedLimit/3.6 - constructVelocity:dot(constructForward))
                 local pidGet = throttlePID:get()
                 calculatedThrottle = uclamp(pidGet,-1,1)
-                if calculatedThrottle < PlayerThrottle and (atmosDensity > 0.005) then -- We can limit throttle all the way to 0.05% probably
-                    ThrottleLimited = true
-                    navCom:setThrottleCommand(axisCommandId.longitudinal, uclamp(calculatedThrottle,0.01,1))
-                else
-                    ThrottleLimited = false
-                    navCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle)
+                if not ThrottleValue then 
+                    if calculatedThrottle < PlayerThrottle and (atmosDensity > 0.005) then -- We can limit throttle all the way to 0.05% probably
+                        ThrottleLimited = true
+                        ThrottleValue = uclamp(calculatedThrottle,0.01,1)
+                    else
+                        ThrottleLimited = false
+                        ThrottleValue = PlayerThrottle
+                    end
                 end
     
                 
@@ -8528,8 +8555,8 @@ VERSION_NUMBER = 0.7071
                 --    brakeInput2 = brakeInput2 + mabs(calculatedThrottle)
                 --end
                 if brakeInput2 > 0 then
-                    if ThrottleLimited and calculatedThrottle == 0.01 then
-                        navCom:setThrottleCommand(axisCommandId.longitudinal, 0) -- We clamped it to >0 before but, if braking and it was at that clamp, 0 is good.
+                    if ThrottleLimited and calculatedThrottle == 0.01 and not ThrottleValue then
+                        ThrottleValue = 0 -- We clamped it to >0 before but, if braking and it was at that clamp, 0 is good.
                     end
                 else -- For display purposes, keep calculatedThrottle positive in this case
                     calculatedThrottle = uclamp(calculatedThrottle,0.01,1)
@@ -8595,7 +8622,9 @@ VERSION_NUMBER = 0.7071
             else
                 --PlayerThrottle = 0
                 if AtmoSpeedAssist then
-                    navCom:setThrottleCommand(axisCommandId.longitudinal, PlayerThrottle) -- Use PlayerThrottle always.
+                    if not ThrottleValue then
+                        ThrottleValue = PlayerThrottle -- Use PlayerThrottle always.
+                    end
                 end
     
                 local targetSpeed = u.getAxisCommandValue(0)
