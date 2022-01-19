@@ -14,6 +14,8 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
         local radars = {}
         local rType = "Atmo"
         local UpdateRadarCoroutine
+        local perisPanelID
+        local peris = 0
 
     local function UpdateRadarRoutine()
         -- UpdateRadarRoutine Locals

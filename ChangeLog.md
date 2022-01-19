@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.708 - New Feature, Major Fix.
+- FEATURE: INFO panel now shows amount of atmo, space, and rocket fuel used during current flight session.
+NOTE: To be accurate `ContainerOptimization` and `FuelTankOptimization` settings must be set to values of person who placed tanks.
+- CHANGE: Added `ShouldCheckDamage` button to Control panel above Settings button.
+- CHANGE: `ShouldCheckDamage` now defaults to false.  Recommend turning to false unless you are flying a smaller ship (<2-300 elements) or if you suspect you have damage.
+- FIX (MAJOR): Fixed issue with ArchHUD flooding logfile with warnings about `setAxisCommandValue` being used in flush.
+
 Version 1.7071 
 - FIX: Fixed mouse speed control to be more reliable.
 `speedChangeLarge` = 5 -- (Default: 5) The speed change that occurs when you tap speed up/down(R/T) or mousewheel, default is 5%

@@ -16,7 +16,7 @@ require("autoconf/custom/archhud/atlasclass")
 require("autoconf/custom/archhud/baseclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.7071
+VERSION_NUMBER = 1.708
 
 
 globalDeclare(s, c, u, s.getTime, math.floor, u.getAtmosphereDensity) -- Variables that need to be Global and are declared in globals.lua due to use across multple modules where there values can change.
