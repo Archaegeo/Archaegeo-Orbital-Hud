@@ -77,9 +77,11 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         local function SaveDataBank(copy) -- Save values to the databank.
             local function writeData(dataList)
                 for k, v in pairs(dataList) do
-                    dbHud_1.setStringValue(k, jencode(v.get()))
-                    if copy and dbHud_2 then
-                        dbHud_2.setStringValue(k, jencode(v.get()))
+                    if not PrivateLocations or (PrivateLocations and k ~= "SavedLocations") then 
+                        dbHud_1.setStringValue(k, jencode(v.get()))
+                        if copy and dbHud_2 then
+                            dbHud_2.setStringValue(k, jencode(v.get()))
+                        end
                     end
                 end
             end
@@ -227,7 +229,9 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                     end
                     antigrav.setBaseAltitude(AntigravTargetAltitude)
                 end
-
+                if pcall(require, "autoconf/custom/archhud/privatelocations") then
+                    SavedLocations = require("autoconf/custom/archhud/privatelocations")
+                end
                 VectorStatus = "Proceeding to Waypoint"
             end
 
@@ -1105,12 +1109,9 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             button.activate()
         end
         if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
+        local mod = 1 - (ContainerOptimization*0.05+FuelTankOptimization*0.05)
+        s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank"))
         play("stop","SU")
-        --[[ --EliasVilld Log Code for printing timing checks.
-        for _,s in pairs(Logs.getLogs()) do
-            s.print(s)
-        end
-        --]]
     end
 
     function program.OneSecondTick()

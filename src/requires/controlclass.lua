@@ -751,8 +751,10 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
 
         elseif command == "/iphWP" then
             if AutopilotTargetIndex > 0 then
-                s.print(AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords, true)) 
-                msgText = "::pos waypoint shown in lua chat"
+                s.print(AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords, true))
+                s.print(json.encode(AutopilotTargetCoords)) 
+                s.logInfo("PRIVATELOCATIONS:"..json.encode(SavedLocations))
+                msgText = "::pos waypoint shown in lua chat and written to logfile"
             else
                 msgText = "No target selected in IPH"
             end
