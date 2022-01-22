@@ -1,7 +1,7 @@
-function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive,
+function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
     mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
     navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
-    getDistanceDisplayString, FormatTimeString)
+    getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
 
 
     local gravConstant = 9.80665
@@ -18,6 +18,8 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in. Also used in apclass
     local maxBrakeDistance = 0
     local maxBrakeTime = 0
+    local damageMessage = ""
+    local WeaponPanelID = nil
 
     --Local Huds Functions
         -- safezone() variables
@@ -3034,7 +3036,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         end
     end
 
-    function Hud.OneSecondTick(newContent)
+    function Hud.OneSecondTick()
         local function updateDistance()
             local curTime = systime()
             local spd = velMag
@@ -3049,10 +3051,100 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             TotalFlightTime = TotalFlightTime + elapsedTime
             lastTravelTime = curTime
         end
+        local function CheckDamage(newContent)
 
+            local percentDam = 0
+            damageMessage = ""
+            local maxShipHP = eleTotalMaxHp
+            local curShipHP = 0
+            local damagedElements = 0
+            local disabledElements = 0
+            local colorMod = 0
+            local color = ""
+            local eleHp = c.getElementHitPointsById
+            local eleMaxHp = c.getElementMaxHitPointsById
+            local markers = {}
+
+            for k in pairs(elementsID) do
+                local hp = 0
+                local mhp = 0
+                mhp = eleMaxHp(elementsID[k])
+                hp = eleHp(elementsID[k])
+                curShipHP = curShipHP + hp
+                if (hp < mhp) then
+                    if (hp == 0) then
+                        disabledElements = disabledElements + 1
+                    else
+                        damagedElements = damagedElements + 1
+                    end
+                    -- Thanks to Jerico for the help and code starter for arrow markers!
+                    if repairArrows and #markers == 0 then
+                        position = vec3(c.getElementPositionById(elementsID[k]))
+                        local x = position.x 
+                        local y = position.y 
+                        local z = position.z 
+                        table.insert(markers, c.spawnArrowSticker(x, y, z + 1, "down"))
+                        table.insert(markers, c.spawnArrowSticker(x, y, z + 1, "down"))
+                        c.rotateSticker(markers[2], 0, 0, 90)
+                        table.insert(markers, c.spawnArrowSticker(x + 1, y, z, "north"))
+                        table.insert(markers, c.spawnArrowSticker(x + 1, y, z, "north"))
+                        c.rotateSticker(markers[4], 90, 90, 0)
+                        table.insert(markers, c.spawnArrowSticker(x - 1, y, z, "south"))
+                        table.insert(markers, c.spawnArrowSticker(x - 1, y, z, "south"))
+                        c.rotateSticker(markers[6], 90, -90, 0)
+                        table.insert(markers, c.spawnArrowSticker(x, y - 1, z, "east"))
+                        table.insert(markers, c.spawnArrowSticker(x, y - 1, z, "east"))
+                        c.rotateSticker(markers[8], 90, 0, 90)
+                        table.insert(markers, c.spawnArrowSticker(x, y + 1, z, "west"))
+                        table.insert(markers, c.spawnArrowSticker(x, y + 1, z, "west"))
+                        c.rotateSticker(markers[10], -90, 0, 90)
+                        table.insert(markers, elementsID[k])
+                    end
+                elseif repairArrows and #markers > 0 and markers[11] == elementsID[k] then
+                    for j in pairs(markers) do
+                        c.deleteSticker(markers[j])
+                    end
+                    markers = {}
+                end
+            end
+            percentDam = mfloor((curShipHP / maxShipHP)*100)
+            if percentDam < 100 then
+                newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
+                colorMod = mfloor(percentDam * 2.55)
+                color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
+                if percentDam < 100 then
+                    newContent[#newContent + 1] = svgText("50%", 1035, "Elemental Integrity: "..percentDam.."%", "txtbig txtmid","fill:"..color )
+                    if (disabledElements > 0) then
+                        newContent[#newContent + 1] = svgText("50%",1055, "Disabled Modules: "..disabledElements.." Damaged Modules: "..damagedElements, "txtbig txtmid","fill:"..color)
+                    elseif damagedElements > 0 then
+                        newContent[#newContent + 1] = svgText("50%", 1055, "Damaged Modules: "..damagedElements, "txtbig txtmid", "fill:" .. color)
+                    end
+                end
+            end
+        end
+        local function updateWeapons()
+            if weapon then
+                if  WeaponPanelID==nil and (radarPanelID ~= nil or GearExtended)  then
+                    _autoconf.displayCategoryPanel(weapon, weapon_size, "Weapons", "weapon", true)
+                    WeaponPanelID = _autoconf.panels[_autoconf.panels_size]
+                elseif WeaponPanelID ~= nil and radarPanelID == nil and not GearExtended then
+                    sysDestWid(WeaponPanelID)
+                    WeaponPanelID = nil
+                end
+            end
+        end
+        passengers = c.getPlayersOnBoard()
+        ships = c.getDockedConstructs()  
+        local newContent = {}
         updateDistance()
+        if ShouldCheckDamage then
+            CheckDamage(newContent)
+        end
+        updateWeapons()
         HUD.UpdatePipe()
         HUD.ExtraData(newContent)
+        lastOdometerOutput = table.concat(newContent, "")
+        collectgarbage("collect")
     end
 
     function Hud.AnimateTick()

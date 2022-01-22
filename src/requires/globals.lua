@@ -242,8 +242,7 @@ local function globalDeclare(s, c, u, systime, mfloor, atmosphere)
     gyroIsOn = nil
     rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
     rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..   mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]
-    damageMessage = ""
-    resolutionWidth = ResolutionX
+     resolutionWidth = ResolutionX
     resolutionHeight = ResolutionY
     atmoTanks = {}
     spaceTanks = {}
@@ -303,6 +302,7 @@ local function globalDeclare(s, c, u, systime, mfloor, atmosphere)
     scopeFOV = 90
     oldShowHud = showHud
     ThrottleValue = nil
+    radarPanelID = nil
 end
 
 return globalDeclare
