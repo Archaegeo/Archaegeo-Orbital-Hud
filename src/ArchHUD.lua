@@ -7787,15 +7787,6 @@ VERSION_NUMBER = 0.710
                 if AutopilotTargetIndex > 0 then
                     s.print(AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords, true))
                     s.print(json.encode(AutopilotTargetCoords))
-                    local saveStr = "SavedLocations = {"
-                    for k,v in pairs(SavedLocations) do
-                        saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."} "..
-                                            "name = \""..v.name.."\" planetname = \""..v.planetname.."\" gravity = "..v.gravity.." save = "
-                        if v.safe then saveStr = saveStr.."true}" else saveStr = saveStr.."false}" end
-                    end
-                    saveStr = saveStr.."}"
-                    s.logInfo("PRIVATELOCATIONS:"..saveStr)
-                    if screenHud_1 then s.print("HERE1") screenHud_1.setCenteredText(saveStr) end
                     msgText = "::pos waypoint shown in lua chat in local and world format"
                 else
                     msgText = "No target selected in IPH"
