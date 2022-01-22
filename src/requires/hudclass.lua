@@ -1,7 +1,7 @@
-function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive,
+function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
     mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
     navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
-    getDistanceDisplayString, FormatTimeString)
+    getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
 
 
     local gravConstant = 9.80665
@@ -18,6 +18,8 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in. Also used in apclass
     local maxBrakeDistance = 0
     local maxBrakeTime = 0
+    local damageMessage = ""
+    local WeaponPanelID = nil
 
     --Local Huds Functions
         -- safezone() variables
@@ -3060,6 +3062,8 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local colorMod = 0
             local color = ""
             local eleHp = c.getElementHitPointsById
+            local eleMaxHp = c.getElementMaxHitPointsById
+            local markers = {}
 
             for k in pairs(elementsID) do
                 local hp = 0

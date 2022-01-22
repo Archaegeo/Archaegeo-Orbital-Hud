@@ -28,7 +28,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         local targetGroundAltitude = LandingGearGroundHeight -- So it can tell if one loaded or not
         local coreHalfDiag = 13
         local elementsID = c.getElementIdList()
-        local markers = {}
+
         local eleTotalMaxHp = 0
 
         local function float_eq(a, b) -- float equation
@@ -544,10 +544,10 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             atlasSetup()
             RADAR = RadarClass(c, s, u, library, radar_1, radar_2, 
             mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play)
-            HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive,
+            HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
             mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
             navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
-            getDistanceDisplayString, FormatTimeString)
+            getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
             HUD.ButtonSetup()
             CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro, screenHud_1,
                 isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
