@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.709
+VERSION_NUMBER = 0.710
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
     -- User variables. Must be global to work with databank system
@@ -253,7 +253,6 @@ VERSION_NUMBER = 0.709
             gyroIsOn = nil
             rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
             rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..   mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]
-            damageMessage = ""
             resolutionWidth = ResolutionX
             resolutionHeight = ResolutionY
             atmoTanks = {}
@@ -314,6 +313,7 @@ VERSION_NUMBER = 0.709
             scopeFOV = 90
             oldShowHud = showHud
             ThrottleValue = nil
+            radarPanelID = nil
         end
  
     --[[ timestamped print function for debugging
@@ -1546,10 +1546,10 @@ VERSION_NUMBER = 0.709
         --for k,v in pairs(require("autoconf/custom/archhud/custom/customradarclass")) do Radar[k] = v end 
         return Radar
     end  
-    local function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive,
+    local function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
         mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
         navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
-        getDistanceDisplayString, FormatTimeString)
+        getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
     
     
         local gravConstant = 9.80665
@@ -1566,6 +1566,8 @@ VERSION_NUMBER = 0.709
         local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in. Also used in apclass
         local maxBrakeDistance = 0
         local maxBrakeTime = 0
+        local damageMessage = ""
+        local WeaponPanelID = nil
     
         --Local Huds Functions
             -- safezone() variables
@@ -4582,7 +4584,7 @@ VERSION_NUMBER = 0.709
             end
         end
     
-        function Hud.OneSecondTick(newContent)
+        function Hud.OneSecondTick()
             local function updateDistance()
                 local curTime = systime()
                 local spd = velMag
@@ -4597,10 +4599,100 @@ VERSION_NUMBER = 0.709
                 TotalFlightTime = TotalFlightTime + elapsedTime
                 lastTravelTime = curTime
             end
+            local function CheckDamage(newContent)
     
+                local percentDam = 0
+                damageMessage = ""
+                local maxShipHP = eleTotalMaxHp
+                local curShipHP = 0
+                local damagedElements = 0
+                local disabledElements = 0
+                local colorMod = 0
+                local color = ""
+                local eleHp = c.getElementHitPointsById
+                local eleMaxHp = c.getElementMaxHitPointsById
+                local markers = {}
+    
+                for k in pairs(elementsID) do
+                    local hp = 0
+                    local mhp = 0
+                    mhp = eleMaxHp(elementsID[k])
+                    hp = eleHp(elementsID[k])
+                    curShipHP = curShipHP + hp
+                    if (hp < mhp) then
+                        if (hp == 0) then
+                            disabledElements = disabledElements + 1
+                        else
+                            damagedElements = damagedElements + 1
+                        end
+                        -- Thanks to Jerico for the help and code starter for arrow markers!
+                        if repairArrows and #markers == 0 then
+                            position = vec3(c.getElementPositionById(elementsID[k]))
+                            local x = position.x 
+                            local y = position.y 
+                            local z = position.z 
+                            table.insert(markers, c.spawnArrowSticker(x, y, z + 1, "down"))
+                            table.insert(markers, c.spawnArrowSticker(x, y, z + 1, "down"))
+                            c.rotateSticker(markers[2], 0, 0, 90)
+                            table.insert(markers, c.spawnArrowSticker(x + 1, y, z, "north"))
+                            table.insert(markers, c.spawnArrowSticker(x + 1, y, z, "north"))
+                            c.rotateSticker(markers[4], 90, 90, 0)
+                            table.insert(markers, c.spawnArrowSticker(x - 1, y, z, "south"))
+                            table.insert(markers, c.spawnArrowSticker(x - 1, y, z, "south"))
+                            c.rotateSticker(markers[6], 90, -90, 0)
+                            table.insert(markers, c.spawnArrowSticker(x, y - 1, z, "east"))
+                            table.insert(markers, c.spawnArrowSticker(x, y - 1, z, "east"))
+                            c.rotateSticker(markers[8], 90, 0, 90)
+                            table.insert(markers, c.spawnArrowSticker(x, y + 1, z, "west"))
+                            table.insert(markers, c.spawnArrowSticker(x, y + 1, z, "west"))
+                            c.rotateSticker(markers[10], -90, 0, 90)
+                            table.insert(markers, elementsID[k])
+                        end
+                    elseif repairArrows and #markers > 0 and markers[11] == elementsID[k] then
+                        for j in pairs(markers) do
+                            c.deleteSticker(markers[j])
+                        end
+                        markers = {}
+                    end
+                end
+                percentDam = mfloor((curShipHP / maxShipHP)*100)
+                if percentDam < 100 then
+                    newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
+                    colorMod = mfloor(percentDam * 2.55)
+                    color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
+                    if percentDam < 100 then
+                        newContent[#newContent + 1] = svgText("50%", 1035, "Elemental Integrity: "..percentDam.."%", "txtbig txtmid","fill:"..color )
+                        if (disabledElements > 0) then
+                            newContent[#newContent + 1] = svgText("50%",1055, "Disabled Modules: "..disabledElements.." Damaged Modules: "..damagedElements, "txtbig txtmid","fill:"..color)
+                        elseif damagedElements > 0 then
+                            newContent[#newContent + 1] = svgText("50%", 1055, "Damaged Modules: "..damagedElements, "txtbig txtmid", "fill:" .. color)
+                        end
+                    end
+                end
+            end
+            local function updateWeapons()
+                if weapon then
+                    if  WeaponPanelID==nil and (radarPanelID ~= nil or GearExtended)  then
+                        _autoconf.displayCategoryPanel(weapon, weapon_size, "Weapons", "weapon", true)
+                        WeaponPanelID = _autoconf.panels[_autoconf.panels_size]
+                    elseif WeaponPanelID ~= nil and radarPanelID == nil and not GearExtended then
+                        sysDestWid(WeaponPanelID)
+                        WeaponPanelID = nil
+                    end
+                end
+            end
+            passengers = c.getPlayersOnBoard()
+            ships = c.getDockedConstructs()  
+            local newContent = {}
             updateDistance()
+            if ShouldCheckDamage then
+                CheckDamage(newContent)
+            end
+            updateWeapons()
             HUD.UpdatePipe()
             HUD.ExtraData(newContent)
+            lastOdometerOutput = table.concat(newContent, "")
+            collectgarbage("collect")
         end
     
         function Hud.AnimateTick()
@@ -6939,7 +7031,7 @@ VERSION_NUMBER = 0.709
     
         return ap
     end
-    local function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro,
+    local function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro, screenHud_1,
         isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
         local Control = {}
         local UnitHidden = true
@@ -7578,7 +7670,8 @@ VERSION_NUMBER = 0.709
                     "/copydatabank - copies dbHud databank to a blank databank\n"..
                     "/iphWP - displays current IPH target's ::pos waypoint in lua chat\n"..
                     "/resist 0.15, 0.15, 0.15, 0.15 - Sets shield resistance distribution of the floating 60% extra available, usable once per minute\n"..
-                    "/deletewp - Deletes current selected custom wp"
+                    "/deletewp - Deletes current selected custom wp\n"..
+                    "/createPrivate - dumps all custom waypoints to logfile and a screen if present for cut and paste to privatelocations.lua"
             i = string.find(text, " ")
             command = text
             if i ~= nil then
@@ -7693,11 +7786,34 @@ VERSION_NUMBER = 0.709
             elseif command == "/iphWP" then
                 if AutopilotTargetIndex > 0 then
                     s.print(AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords, true))
-                    s.print(json.encode(AutopilotTargetCoords)) 
-                    s.logInfo("PRIVATELOCATIONS:"..json.encode(SavedLocations))
-                    msgText = "::pos waypoint shown in lua chat and written to logfile"
+                    s.print(json.encode(AutopilotTargetCoords))
+                    local saveStr = "SavedLocations = {"
+                    for k,v in pairs(SavedLocations) do
+                        saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."} "..
+                                            "name = \""..v.name.."\" planetname = \""..v.planetname.."\" gravity = "..v.gravity.." save = "
+                        if v.safe then saveStr = saveStr.."true}" else saveStr = saveStr.."false}" end
+                    end
+                    saveStr = saveStr.."}"
+                    s.logInfo("PRIVATELOCATIONS:"..saveStr)
+                    if screenHud_1 then s.print("HERE1") screenHud_1.setCenteredText(saveStr) end
+                    msgText = "::pos waypoint shown in lua chat in local and world format"
                 else
                     msgText = "No target selected in IPH"
+                end
+            elseif command == "/createPrivate" then
+                if #SavedLocations > 0 then
+                    local saveStr = "SavedLocations = {"
+                    for k,v in pairs(SavedLocations) do
+                        saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."}, "..
+                                            "name = '"..v.name.."', planetname = '"..v.planetname.."', gravity = "..v.gravity..", save = "
+                        if v.safe then saveStr = saveStr.."true}," else saveStr = saveStr.."false}," end
+                    end
+                    saveStr = saveStr.."} return SavedLocations"
+                    s.logInfo("PRIVATELOCATIONS:"..saveStr)
+                    if screenHud_1 then screenHud_1.setHTML(saveStr) end
+                    msgText = "privatelocations.lua created in logfile and on attached screen if present"
+                else
+                    msgText = "No Custom Locations to save"
                 end
             end
         end
@@ -7716,7 +7832,7 @@ VERSION_NUMBER = 0.709
         --for k,v in pairs(require("autoconf/custom/archhud/custom/customcontrolclass")) do Control[k] = v end 
         return Control
     end
-    local function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield_1, gyro, warpdrive, weapon)
+    local function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield_1, gyro, warpdrive, weapon, screenHud_1)
     
         -- Local variables and functions
             local program = {}
@@ -7746,7 +7862,6 @@ VERSION_NUMBER = 0.709
             local targetGroundAltitude = LandingGearGroundHeight -- So it can tell if one loaded or not
             local coreHalfDiag = 13
             local elementsID = c.getElementIdList()
-            local markers = {}
             local eleTotalMaxHp = 0
     
             local function float_eq(a, b) -- float equation
@@ -8228,7 +8343,7 @@ VERSION_NUMBER = 0.709
     
                     ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play)
                 end
-            
+    
             SetupComplete = false
     
             beginSetup = coroutine.create(function()
@@ -8262,12 +8377,12 @@ VERSION_NUMBER = 0.709
                 atlasSetup()
                 RADAR = RadarClass(c, s, u, library, radar_1, radar_2, 
                 mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play)
-                HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive,
+                HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
                 mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
                 navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
-                getDistanceDisplayString, FormatTimeString)
+                getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
                 HUD.ButtonSetup()
-                CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro,
+                CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro, screenHud_1,
                     isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
                 coroutine.yield()
         
@@ -8832,120 +8947,6 @@ VERSION_NUMBER = 0.709
             play("stop","SU")
         end
     
-        function program.OneSecondTick()
-                -- Local Functions for oneSecond
-    
-                local function CheckDamage(newContent)
-    
-                    local percentDam = 0
-                    damageMessage = ""
-                    local maxShipHP = eleTotalMaxHp
-                    local curShipHP = 0
-                    local damagedElements = 0
-                    local disabledElements = 0
-                    local colorMod = 0
-                    local color = ""
-                    local eleHp = c.getElementHitPointsById
-    
-                    for k in pairs(elementsID) do
-                        local hp = 0
-                        local mhp = 0
-                        mhp = eleMaxHp(elementsID[k])
-                        hp = eleHp(elementsID[k])
-                        curShipHP = curShipHP + hp
-                        if (hp < mhp) then
-                            if (hp == 0) then
-                                disabledElements = disabledElements + 1
-                            else
-                                damagedElements = damagedElements + 1
-                            end
-                            -- Thanks to Jerico for the help and code starter for arrow markers!
-                            if repairArrows and #markers == 0 then
-                                position = vec3(c.getElementPositionById(elementsID[k]))
-                                local x = position.x 
-                                local y = position.y 
-                                local z = position.z 
-                                table.insert(markers, c.spawnArrowSticker(x, y, z + 1, "down"))
-                                table.insert(markers, c.spawnArrowSticker(x, y, z + 1, "down"))
-                                c.rotateSticker(markers[2], 0, 0, 90)
-                                table.insert(markers, c.spawnArrowSticker(x + 1, y, z, "north"))
-                                table.insert(markers, c.spawnArrowSticker(x + 1, y, z, "north"))
-                                c.rotateSticker(markers[4], 90, 90, 0)
-                                table.insert(markers, c.spawnArrowSticker(x - 1, y, z, "south"))
-                                table.insert(markers, c.spawnArrowSticker(x - 1, y, z, "south"))
-                                c.rotateSticker(markers[6], 90, -90, 0)
-                                table.insert(markers, c.spawnArrowSticker(x, y - 1, z, "east"))
-                                table.insert(markers, c.spawnArrowSticker(x, y - 1, z, "east"))
-                                c.rotateSticker(markers[8], 90, 0, 90)
-                                table.insert(markers, c.spawnArrowSticker(x, y + 1, z, "west"))
-                                table.insert(markers, c.spawnArrowSticker(x, y + 1, z, "west"))
-                                c.rotateSticker(markers[10], -90, 0, 90)
-                                table.insert(markers, elementsID[k])
-                            end
-                        elseif repairArrows and #markers > 0 and markers[11] == elementsID[k] then
-                            for j in pairs(markers) do
-                                c.deleteSticker(markers[j])
-                            end
-                            markers = {}
-                        end
-                    end
-                    percentDam = mfloor((curShipHP / maxShipHP)*100)
-                    if percentDam < 100 then
-                        newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
-                        colorMod = mfloor(percentDam * 2.55)
-                        color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
-                        if percentDam < 100 then
-                            newContent[#newContent + 1] = svgText("50%", 1035, "Elemental Integrity: "..percentDam.."%", "txtbig txtmid","fill:"..color )
-                            if (disabledElements > 0) then
-                                newContent[#newContent + 1] = svgText("50%",1055, "Disabled Modules: "..disabledElements.." Damaged Modules: "..damagedElements, "txtbig txtmid","fill:"..color)
-                            elseif damagedElements > 0 then
-                                newContent[#newContent + 1] = svgText("50%", 1055, "Damaged Modules: "..damagedElements, "txtbig txtmid", "fill:" .. color)
-                            end
-                        end
-                    end
-                end
-                local function updateWeapons()
-                    if weapon then
-                        if  WeaponPanelID==nil and (radarPanelID ~= nil or GearExtended)  then
-                            _autoconf.displayCategoryPanel(weapon, weapon_size, "Weapons", "weapon", true)
-                            WeaponPanelID = _autoconf.panels[_autoconf.panels_size]
-                        elseif WeaponPanelID ~= nil and radarPanelID == nil and not GearExtended then
-                            sysDestWid(WeaponPanelID)
-                            WeaponPanelID = nil
-                        end
-                    end
-                end    
-                local function updateDistance()
-                    local curTime = systime()
-                    local spd = velMag
-                    local elapsedTime = curTime - lastTravelTime
-                    if (spd > 1.38889) then
-                        spd = spd / 1000
-                        local newDistance = spd * (curTime - lastTravelTime)
-                        TotalDistanceTravelled = TotalDistanceTravelled + newDistance
-                        totalDistanceTrip = totalDistanceTrip + newDistance
-                    end
-                    flightTime = flightTime + elapsedTime
-                    TotalFlightTime = TotalFlightTime + elapsedTime
-                    lastTravelTime = curTime
-                end
-    
-            updateDistance()
-    
-            passengers = c.getPlayersOnBoard()
-            ships = c.getDockedConstructs()
-            updateWeapons()
-            -- Update odometer output string
-            local newContent = {}
-            HUD.OneSecondTick(newContent)
-    
-            if ShouldCheckDamage then
-                CheckDamage(newContent)
-            end
-            lastOdometerOutput = table.concat(newContent, "")
-            collectgarbage("collect")
-        end
-    
         function program.controlStart(action)
             CONTROL.startControl(action)
         end
@@ -8975,7 +8976,7 @@ VERSION_NUMBER = 0.709
                 AP.TenthTick()
                 HUD.TenthTick()
             elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
-                PROGRAM.OneSecondTick()
+                HUD.OneSecondTick()
             elseif timerId == "fiveSecond" then -- Timer executed every 5 seconds (SatNav only stuff for now)
                 AP.SatNavTick()
             elseif timerId == "msgTick" then -- Timer executed whenever msgText is applied somwehere
@@ -9043,5 +9044,5 @@ VERSION_NUMBER = 0.709
     end
 -- Execute Script
     globalDeclare(s, c, u, s.getTime, math.floor, u.getAtmosphereDensity)
-    PROGRAM = programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield_1, gyro, warpdrive, weapon)
+    PROGRAM = programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield_1, gyro, warpdrive, weapon, screenHud_1)
     script.onStart()

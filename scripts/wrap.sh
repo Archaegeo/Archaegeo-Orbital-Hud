@@ -66,6 +66,7 @@ SLOTS=(
     spacefueltank:class=SpaceFuelContainer,select=manual
     rocketfueltank:class=RocketFuelContainer,select=manual
     shield:class=ShieldGeneratorUnit,select=manual
+    screenHud:class=ScreenUnit,select=manual
 )
 
 echo "Wrapping ..."
