@@ -1,4 +1,4 @@
-function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield_1, gyro, warpdrive, weapon)
+function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield_1, gyro, warpdrive, weapon, screenHud_1)
     
     -- Local variables and functions
         local program = {}
@@ -510,7 +510,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
 
                 ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play)
             end
-        
+
         SetupComplete = false
 
         beginSetup = coroutine.create(function()
@@ -549,7 +549,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
             getDistanceDisplayString, FormatTimeString)
             HUD.ButtonSetup()
-            CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro,
+            CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro, screenHud_1,
                 isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
             coroutine.yield()
     
@@ -1114,120 +1114,6 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         play("stop","SU")
     end
 
-    function program.OneSecondTick()
-            -- Local Functions for oneSecond
-
-            local function CheckDamage(newContent)
-
-                local percentDam = 0
-                damageMessage = ""
-                local maxShipHP = eleTotalMaxHp
-                local curShipHP = 0
-                local damagedElements = 0
-                local disabledElements = 0
-                local colorMod = 0
-                local color = ""
-                local eleHp = c.getElementHitPointsById
-
-                for k in pairs(elementsID) do
-                    local hp = 0
-                    local mhp = 0
-                    mhp = eleMaxHp(elementsID[k])
-                    hp = eleHp(elementsID[k])
-                    curShipHP = curShipHP + hp
-                    if (hp < mhp) then
-                        if (hp == 0) then
-                            disabledElements = disabledElements + 1
-                        else
-                            damagedElements = damagedElements + 1
-                        end
-                        -- Thanks to Jerico for the help and code starter for arrow markers!
-                        if repairArrows and #markers == 0 then
-                            position = vec3(c.getElementPositionById(elementsID[k]))
-                            local x = position.x 
-                            local y = position.y 
-                            local z = position.z 
-                            table.insert(markers, c.spawnArrowSticker(x, y, z + 1, "down"))
-                            table.insert(markers, c.spawnArrowSticker(x, y, z + 1, "down"))
-                            c.rotateSticker(markers[2], 0, 0, 90)
-                            table.insert(markers, c.spawnArrowSticker(x + 1, y, z, "north"))
-                            table.insert(markers, c.spawnArrowSticker(x + 1, y, z, "north"))
-                            c.rotateSticker(markers[4], 90, 90, 0)
-                            table.insert(markers, c.spawnArrowSticker(x - 1, y, z, "south"))
-                            table.insert(markers, c.spawnArrowSticker(x - 1, y, z, "south"))
-                            c.rotateSticker(markers[6], 90, -90, 0)
-                            table.insert(markers, c.spawnArrowSticker(x, y - 1, z, "east"))
-                            table.insert(markers, c.spawnArrowSticker(x, y - 1, z, "east"))
-                            c.rotateSticker(markers[8], 90, 0, 90)
-                            table.insert(markers, c.spawnArrowSticker(x, y + 1, z, "west"))
-                            table.insert(markers, c.spawnArrowSticker(x, y + 1, z, "west"))
-                            c.rotateSticker(markers[10], -90, 0, 90)
-                            table.insert(markers, elementsID[k])
-                        end
-                    elseif repairArrows and #markers > 0 and markers[11] == elementsID[k] then
-                        for j in pairs(markers) do
-                            c.deleteSticker(markers[j])
-                        end
-                        markers = {}
-                    end
-                end
-                percentDam = mfloor((curShipHP / maxShipHP)*100)
-                if percentDam < 100 then
-                    newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
-                    colorMod = mfloor(percentDam * 2.55)
-                    color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
-                    if percentDam < 100 then
-                        newContent[#newContent + 1] = svgText("50%", 1035, "Elemental Integrity: "..percentDam.."%", "txtbig txtmid","fill:"..color )
-                        if (disabledElements > 0) then
-                            newContent[#newContent + 1] = svgText("50%",1055, "Disabled Modules: "..disabledElements.." Damaged Modules: "..damagedElements, "txtbig txtmid","fill:"..color)
-                        elseif damagedElements > 0 then
-                            newContent[#newContent + 1] = svgText("50%", 1055, "Damaged Modules: "..damagedElements, "txtbig txtmid", "fill:" .. color)
-                        end
-                    end
-                end
-            end
-            local function updateWeapons()
-                if weapon then
-                    if  WeaponPanelID==nil and (radarPanelID ~= nil or GearExtended)  then
-                        _autoconf.displayCategoryPanel(weapon, weapon_size, "Weapons", "weapon", true)
-                        WeaponPanelID = _autoconf.panels[_autoconf.panels_size]
-                    elseif WeaponPanelID ~= nil and radarPanelID == nil and not GearExtended then
-                        sysDestWid(WeaponPanelID)
-                        WeaponPanelID = nil
-                    end
-                end
-            end    
-            local function updateDistance()
-                local curTime = systime()
-                local spd = velMag
-                local elapsedTime = curTime - lastTravelTime
-                if (spd > 1.38889) then
-                    spd = spd / 1000
-                    local newDistance = spd * (curTime - lastTravelTime)
-                    TotalDistanceTravelled = TotalDistanceTravelled + newDistance
-                    totalDistanceTrip = totalDistanceTrip + newDistance
-                end
-                flightTime = flightTime + elapsedTime
-                TotalFlightTime = TotalFlightTime + elapsedTime
-                lastTravelTime = curTime
-            end
-
-        updateDistance()
-
-        passengers = c.getPlayersOnBoard()
-        ships = c.getDockedConstructs()
-        updateWeapons()
-        -- Update odometer output string
-        local newContent = {}
-        HUD.OneSecondTick(newContent)
-
-        if ShouldCheckDamage then
-            CheckDamage(newContent)
-        end
-        lastOdometerOutput = table.concat(newContent, "")
-        collectgarbage("collect")
-    end
-
     function program.controlStart(action)
         CONTROL.startControl(action)
     end
@@ -1257,7 +1143,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             AP.TenthTick()
             HUD.TenthTick()
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
-            PROGRAM.OneSecondTick()
+            HUD.OneSecondTick()
         elseif timerId == "fiveSecond" then -- Timer executed every 5 seconds (SatNav only stuff for now)
             AP.SatNavTick()
         elseif timerId == "msgTick" then -- Timer executed whenever msgText is applied somwehere

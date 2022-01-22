@@ -1,5 +1,13 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.710 - Screen support
+- Added initial screen support, not required but if a screen is manually slotted it will be available in hud as screenHud_1
+- Added /createPrivate command.  If used will dump all customlocations to logfile (till Panacea) and screenHud_1 (if present)
+    in a format that can be cut and pasted into a privatelocations.lua file.  For screen, right click screen->advanced->edit
+    and copy the material in local text = "" to privatelocations.lua.  For Logfile, find PRIVATELOCATIONS: and copy everything
+    after that up to "<\message>" to privatelocations.lua.  See privatelocations.sample for example.
+- Moved more things into hudclass.lua that belong there out of baseclass.lua
+
 Version 1.709 - Feature - PrivateLocations (Modular version only)
 - (MODULAR ONLY) If privatelocations.lua exists in the require folder, they are loaded instead of locations on databank.
     USES:   1) Prevents theft of custom wp locations by aggressors who take your ship and use repair feature.

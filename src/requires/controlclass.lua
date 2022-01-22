@@ -1,4 +1,4 @@
-function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro,
+function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro, screenHud_1,
     isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
     local Control = {}
     local UnitHidden = true
@@ -637,7 +637,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                 "/copydatabank - copies dbHud databank to a blank databank\n"..
                 "/iphWP - displays current IPH target's ::pos waypoint in lua chat\n"..
                 "/resist 0.15, 0.15, 0.15, 0.15 - Sets shield resistance distribution of the floating 60% extra available, usable once per minute\n"..
-                "/deletewp - Deletes current selected custom wp"
+                "/deletewp - Deletes current selected custom wp\n"..
+                "/createPrivate - dumps all custom waypoints to logfile and a screen if present for cut and paste to privatelocations.lua"
         i = string.find(text, " ")
         command = text
         if i ~= nil then
@@ -752,11 +753,34 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
         elseif command == "/iphWP" then
             if AutopilotTargetIndex > 0 then
                 s.print(AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords, true))
-                s.print(json.encode(AutopilotTargetCoords)) 
-                s.logInfo("PRIVATELOCATIONS:"..json.encode(SavedLocations))
-                msgText = "::pos waypoint shown in lua chat and written to logfile"
+                s.print(json.encode(AutopilotTargetCoords))
+                local saveStr = "SavedLocations = {"
+                for k,v in pairs(SavedLocations) do
+                    saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."} "..
+                                        "name = \""..v.name.."\" planetname = \""..v.planetname.."\" gravity = "..v.gravity.." save = "
+                    if v.safe then saveStr = saveStr.."true}" else saveStr = saveStr.."false}" end
+                end
+                saveStr = saveStr.."}"
+                s.logInfo("PRIVATELOCATIONS:"..saveStr)
+                if screenHud_1 then s.print("HERE1") screenHud_1.setCenteredText(saveStr) end
+                msgText = "::pos waypoint shown in lua chat in local and world format"
             else
                 msgText = "No target selected in IPH"
+            end
+        elseif command == "/createPrivate" then
+            if #SavedLocations > 0 then
+                local saveStr = "SavedLocations = {"
+                for k,v in pairs(SavedLocations) do
+                    saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."}, "..
+                                        "name = '"..v.name.."', planetname = '"..v.planetname.."', gravity = "..v.gravity..", save = "
+                    if v.safe then saveStr = saveStr.."true}," else saveStr = saveStr.."false}," end
+                end
+                saveStr = saveStr.."} return SavedLocations"
+                s.logInfo("PRIVATELOCATIONS:"..saveStr)
+                if screenHud_1 then screenHud_1.setHTML(saveStr) end
+                msgText = "privatelocations.lua created in logfile and on attached screen if present"
+            else
+                msgText = "No Custom Locations to save"
             end
         end
     end
