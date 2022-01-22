@@ -1,5 +1,20 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 0.709 - Feature - PrivateLocations (Modular version only)
+- (MODULAR ONLY) If privatelocations.lua exists in the require folder, they are loaded instead of locations on databank.
+    USES:   1) Prevents theft of custom wp locations by aggressors who take your ship and use repair feature.
+            2) Use same locations on all ships using ArchHUD without copying databank by sharing privatelocations.lua file.
+            3) Share locations with others by giving them your privatelocations.lua file.
+    NOTE: X, Y, and Z must be in world coordinates.  See the privatelocations.sample file for examples.
+    NOTE: Using privatelocations does NOT overwrite your databank custom locations unless you turn off `PrivateLocations` before standing  up.
+- Modified /iphWP command to output both ::pos and world X, Y, Z to lua chat window and to logfile after word PRIVATELOCATION.
+    ** Logfile ability will go away with Panacea patch. ** 
+    (privatelocations.lua can be populated by copying the info in the logfile between [] after PRIVATELOCATIONS: including the {} and replacing
+        colons (:) with equal (=) and removing all quotes (") before an equal (=) (i.e. "postion": should be position =))
+- User variable: `PrivateLocations` - Default false.  If true, locations do not save to databank when you stand up.
+- Enhance: Fuel usage will print out to lua chat when you exit seat for easy of tracking.
+- If not flying in AtmoSpeedAssist, speedChangeLarge is divided by 10 to lower mousewheel throttle adjust rate.
+
 Version 0.708 - New Feature, Major Fix.
 
 - FEATURE: INFO panel now shows amount of atmo, space, and rocket fuel used during current flight session. NOTE: To be accurate ContainerOptimization and FuelTankOptimization settings must be set to values of person who placed tanks.

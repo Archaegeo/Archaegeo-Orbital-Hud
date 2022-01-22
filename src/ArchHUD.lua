@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.708
+VERSION_NUMBER = 0.709
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
     -- User variables. Must be global to work with databank system
@@ -45,11 +45,13 @@ VERSION_NUMBER = 0.708
         AutoShieldToggle = true -- (Default: true) If true, system will toggle Shield off in safe space and on in PvP space automagically.
         PreventPvP = true -- (Default: true) If true, system will stop you before crossing from safe to pvp space while in autopilot.
         DisplayOdometer = true -- (Default: true) If false the top odometer bar of information will be hidden.
+        PrivateLocations = false -- (Default: false) If true, personal locations are NOT saved to databank when standing up from seat
         saveableVariablesBoolean = {userControlScheme={set=function (i)userControlScheme=i end,get=function() return userControlScheme end}, soundFolder={set=function (i)soundFolder=i end,get=function() return soundFolder end}, freeLookToggle={set=function (i)freeLookToggle=i end,get=function() return freeLookToggle end}, BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}, RemoteFreeze={set=function (i)RemoteFreeze=i end,get=function() return RemoteFreeze end}, brightHud={set=function (i)brightHud=i end,get=function() return brightHud end}, RemoteHud={set=function (i)RemoteHud=i end,get=function() return RemoteHud end}, VanillaRockets={set=function (i)VanillaRockets=i end,get=function() return VanillaRockets end},
         InvertMouse={set=function (i)InvertMouse=i end,get=function() return InvertMouse end}, autoRollPreference={set=function (i)autoRollPreference=i end,get=function() return autoRollPreference end}, ExternalAGG={set=function (i)ExternalAGG=i end,get=function() return ExternalAGG end}, UseSatNav={set=function (i)UseSatNav=i end,get=function() return UseSatNav end}, ShouldCheckDamage={set=function (i)ShouldCheckDamage=i end,get=function() return ShouldCheckDamage end}, 
         CalculateBrakeLandingSpeed={set=function (i)CalculateBrakeLandingSpeed=i end,get=function() return CalculateBrakeLandingSpeed end}, AtmoSpeedAssist={set=function (i)AtmoSpeedAssist=i end,get=function() return AtmoSpeedAssist end}, ForceAlignment={set=function (i)ForceAlignment=i end,get=function() return ForceAlignment end}, DisplayDeadZone={set=function (i)DisplayDeadZone=i end,get=function() return DisplayDeadZone end}, showHud={set=function (i)showHud=i end,get=function() return showHud end}, hideHudOnToggleWidgets={set=function (i)hideHudOnToggleWidgets=i end,get=function() return hideHudOnToggleWidgets end}, 
         ShiftShowsRemoteButtons={set=function (i)ShiftShowsRemoteButtons=i end,get=function() return ShiftShowsRemoteButtons end}, SetWaypointOnExit={set=function (i)SetWaypointOnExit=i end,get=function() return SetWaypointOnExit end}, AlwaysVSpd={set=function (i)AlwaysVSpd=i end,get=function() return AlwaysVSpd end}, BarFuelDisplay={set=function (i)BarFuelDisplay=i end,get=function() return BarFuelDisplay end}, 
-        voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end}, DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end}}
+        voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end}, DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end},
+        PrivateLocations={set=function (i)PrivateLocations=i end,get=function() return PrivateLocations end}}
 
     -- Ship Handling variables
         -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank system
@@ -313,10 +315,11 @@ VERSION_NUMBER = 0.708
             oldShowHud = showHud
             ThrottleValue = nil
         end
-    --[[
-    function p(msg)
-        s.print(time..": "..msg)
-    end
+ 
+    --[[ timestamped print function for debugging
+        function p(msg)
+            s.print(time..": "..msg)
+        end
     --]]
 
 -- Class Definitions to organize code
@@ -3990,7 +3993,20 @@ VERSION_NUMBER = 0.708
             end
             newContent[#newContent + 1] = "</g>"
         end
+        
         local mod = 1 - (ContainerOptimization*0.05+FuelTankOptimization*0.05)
+        function Hud.FuelUsed(fuelType)
+            local used
+            if fuelType == "atmofueltank" then 
+                used = stringf("Atmo Fuel Used: %.1f L", fuelUsed[fuelType]/(4*mod))
+            elseif fuelType == "spacefueltank" then
+                used = stringf("Space Fuel Used: %.1f L", fuelUsed[fuelType]/(6*mod))
+            else
+                used = stringf("Rocket Fuel Used: %.1f L", fuelUsed[fuelType]/(0.8*mod))
+            end
+            return used
+        end
+    
         function Hud.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
             if SelectedTab ~= "INFO" then return newContent end
             local gravity 
@@ -4033,9 +4049,9 @@ VERSION_NUMBER = 0.708
                     newContent[#newContent + 1] = svgText(startX, startY+height*5, "Req Thrust: n/a") 
                 end
     
-                newContent[#newContent + 1] = svgText(midX, startY+height*5, stringf("Atmo Fuel Used: %.1f L", fuelUsed["atmofueltank"]/(4*mod)))
-                newContent[#newContent + 1] = svgText(startX, startY+height*6, stringf("Space Fuel Used: %.1f L", fuelUsed["spacefueltank"]/(6*mod)))
-                newContent[#newContent + 1] = svgText(midX, startY+height*6, stringf("Rocket Fuel Used: %.1f L", fuelUsed["rocketfueltank"]/(0.8*mod)))
+                newContent[#newContent + 1] = svgText(midX, startY+height*5, HUD.FuelUsed("atmofueltank"))
+                newContent[#newContent + 1] = svgText(startX, startY+height*6, HUD.FuelUsed("spacefueltank"))
+                newContent[#newContent + 1] = svgText(midX, startY+height*6, HUD.FuelUsed("rocketfueltank"))
             end
             newContent[#newContent + 1] = "</g></g>"
             return newContent
@@ -6821,7 +6837,7 @@ VERSION_NUMBER = 0.708
                         MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 8333.00)
                     end
                 else
-                    navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge)
+                    navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge/10)
                 end
             else
                 if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
@@ -7676,8 +7692,10 @@ VERSION_NUMBER = 0.708
     
             elseif command == "/iphWP" then
                 if AutopilotTargetIndex > 0 then
-                    s.print(AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords, true)) 
-                    msgText = "::pos waypoint shown in lua chat"
+                    s.print(AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords, true))
+                    s.print(json.encode(AutopilotTargetCoords)) 
+                    s.logInfo("PRIVATELOCATIONS:"..json.encode(SavedLocations))
+                    msgText = "::pos waypoint shown in lua chat and written to logfile"
                 else
                     msgText = "No target selected in IPH"
                 end
@@ -7777,9 +7795,11 @@ VERSION_NUMBER = 0.708
             local function SaveDataBank(copy) -- Save values to the databank.
                 local function writeData(dataList)
                     for k, v in pairs(dataList) do
-                        dbHud_1.setStringValue(k, jencode(v.get()))
-                        if copy and dbHud_2 then
-                            dbHud_2.setStringValue(k, jencode(v.get()))
+                        if not PrivateLocations or (PrivateLocations and k ~= "SavedLocations") then 
+                            dbHud_1.setStringValue(k, jencode(v.get()))
+                            if copy and dbHud_2 then
+                                dbHud_2.setStringValue(k, jencode(v.get()))
+                            end
                         end
                     end
                 end
@@ -7927,7 +7947,9 @@ VERSION_NUMBER = 0.708
                         end
                         antigrav.setBaseAltitude(AntigravTargetAltitude)
                     end
-    
+                    if pcall(require, "autoconf/custom/archhud/privatelocations") then
+                        SavedLocations = require("autoconf/custom/archhud/privatelocations")
+                    end
                     VectorStatus = "Proceeding to Waypoint"
                 end
     
@@ -8805,12 +8827,9 @@ VERSION_NUMBER = 0.708
                 button.activate()
             end
             if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
+            local mod = 1 - (ContainerOptimization*0.05+FuelTankOptimization*0.05)
+            s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank"))
             play("stop","SU")
-            --[[ --EliasVilld Log Code for printing timing checks.
-            for _,s in pairs(Logs.getLogs()) do
-                s.print(s)
-            end
-            --]]
         end
     
         function program.OneSecondTick()
