@@ -2445,7 +2445,20 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         end
         newContent[#newContent + 1] = "</g>"
     end
+    
     local mod = 1 - (ContainerOptimization*0.05+FuelTankOptimization*0.05)
+    function Hud.FuelUsed(fuelType)
+        local used
+        if fuelType == "atmofueltank" then 
+            used = stringf("Atmo Fuel Used: %.1f L", fuelUsed[fuelType]/(4*mod))
+        elseif fuelType == "spacefueltank" then
+            used = stringf("Space Fuel Used: %.1f L", fuelUsed[fuelType]/(6*mod))
+        else
+            used = stringf("Rocket Fuel Used: %.1f L", fuelUsed[fuelType]/(0.8*mod))
+        end
+        return used
+    end
+
     function Hud.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
         if SelectedTab ~= "INFO" then return newContent end
         local gravity 
@@ -2488,9 +2501,9 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 newContent[#newContent + 1] = svgText(startX, startY+height*5, "Req Thrust: n/a") 
             end
 
-            newContent[#newContent + 1] = svgText(midX, startY+height*5, stringf("Atmo Fuel Used: %.1f L", fuelUsed["atmofueltank"]/(4*mod)))
-            newContent[#newContent + 1] = svgText(startX, startY+height*6, stringf("Space Fuel Used: %.1f L", fuelUsed["spacefueltank"]/(6*mod)))
-            newContent[#newContent + 1] = svgText(midX, startY+height*6, stringf("Rocket Fuel Used: %.1f L", fuelUsed["rocketfueltank"]/(0.8*mod)))
+            newContent[#newContent + 1] = svgText(midX, startY+height*5, HUD.FuelUsed("atmofueltank"))
+            newContent[#newContent + 1] = svgText(startX, startY+height*6, HUD.FuelUsed("spacefueltank"))
+            newContent[#newContent + 1] = svgText(midX, startY+height*6, HUD.FuelUsed("rocketfueltank"))
         end
         newContent[#newContent + 1] = "</g></g>"
         return newContent

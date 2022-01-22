@@ -2206,7 +2206,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                     MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 8333.00)
                 end
             else
-                navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge)
+                navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge/10)
             end
         else
             if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then
