@@ -1,11 +1,26 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.711 - PrivateLocations and Databank together.
+- OVERHAUL: PrivateLocations
+    - If privatelocations.lua exists, both Private locations and databank locations are used.  Only databank locations are saved.
+    - Private locations have a * at the start of their name in the IPH. (any existing privatelocations.lua files will need * added to start of each name field)
+    - When adding a location with /addlocation name ::pos{} if name starts with * it is added to private locations.
+    - Locations added via the Save button will be added as databank locations.  You can then use /iphWP to get the ::pos and the /addlocation command to add it to private then Clear the databank entry.
+    - Use /setname to change names of private or databank locations. Private names should start with *.  Do not use /setname to try to change a databank to a private, use /addlocation as shown above.
+    - Use /createPrivate command to output privatelocations in a ready format to logfile or screenHud_1 to cut and paste into a privatelocations.lua
+    - Remember clearing a private location does not remove it from the privatelocations.lua file, you must use the /createPrivate command as shown in previous line.
+- REMOVED: `PrivateLocations` user setting
+- FIX: screenHud_1 is cleared when you sit down.  Be sure to clear it after standing if used for privatelocations so it doesnt save to repair snapshots.
+- FIX: When using AGG, hitting alt-spacebar or alt-c to change height will no longer turn off brakes. (AGG moves at same vSpeed brakes or not)
+- FIX: Remove outputting privatelocation from /iphWP.
+
 Version 1.710 - Screen support
 - Added initial screen support, not required but if a screen is manually slotted it will be available in hud as screenHud_1
 - Added /createPrivate command.  If used will dump all customlocations to logfile (till Panacea) and screenHud_1 (if present)
     in a format that can be cut and pasted into a privatelocations.lua file.  For screen, right click screen->advanced->edit
     and copy the material in local text = "" to privatelocations.lua.  For Logfile, find PRIVATELOCATIONS: and copy everything
     after that up to "<\message>" to privatelocations.lua.  See privatelocations.sample for example.
+NOTE: If privatelocations.lua exists, the custom saved locations in it will override databank custom saved locations when you sit down.
 - Moved more things into hudclass.lua that belong there out of baseclass.lua
 
 Version 1.709 - Feature - PrivateLocations (Modular version only)
