@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.710
+VERSION_NUMBER = 0.711
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
     -- User variables. Must be global to work with databank system
@@ -45,13 +45,11 @@ VERSION_NUMBER = 0.710
         AutoShieldToggle = true -- (Default: true) If true, system will toggle Shield off in safe space and on in PvP space automagically.
         PreventPvP = true -- (Default: true) If true, system will stop you before crossing from safe to pvp space while in autopilot.
         DisplayOdometer = true -- (Default: true) If false the top odometer bar of information will be hidden.
-        PrivateLocations = false -- (Default: false) If true, personal locations are NOT saved to databank when standing up from seat
         saveableVariablesBoolean = {userControlScheme={set=function (i)userControlScheme=i end,get=function() return userControlScheme end}, soundFolder={set=function (i)soundFolder=i end,get=function() return soundFolder end}, freeLookToggle={set=function (i)freeLookToggle=i end,get=function() return freeLookToggle end}, BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}, RemoteFreeze={set=function (i)RemoteFreeze=i end,get=function() return RemoteFreeze end}, brightHud={set=function (i)brightHud=i end,get=function() return brightHud end}, RemoteHud={set=function (i)RemoteHud=i end,get=function() return RemoteHud end}, VanillaRockets={set=function (i)VanillaRockets=i end,get=function() return VanillaRockets end},
         InvertMouse={set=function (i)InvertMouse=i end,get=function() return InvertMouse end}, autoRollPreference={set=function (i)autoRollPreference=i end,get=function() return autoRollPreference end}, ExternalAGG={set=function (i)ExternalAGG=i end,get=function() return ExternalAGG end}, UseSatNav={set=function (i)UseSatNav=i end,get=function() return UseSatNav end}, ShouldCheckDamage={set=function (i)ShouldCheckDamage=i end,get=function() return ShouldCheckDamage end}, 
         CalculateBrakeLandingSpeed={set=function (i)CalculateBrakeLandingSpeed=i end,get=function() return CalculateBrakeLandingSpeed end}, AtmoSpeedAssist={set=function (i)AtmoSpeedAssist=i end,get=function() return AtmoSpeedAssist end}, ForceAlignment={set=function (i)ForceAlignment=i end,get=function() return ForceAlignment end}, DisplayDeadZone={set=function (i)DisplayDeadZone=i end,get=function() return DisplayDeadZone end}, showHud={set=function (i)showHud=i end,get=function() return showHud end}, hideHudOnToggleWidgets={set=function (i)hideHudOnToggleWidgets=i end,get=function() return hideHudOnToggleWidgets end}, 
         ShiftShowsRemoteButtons={set=function (i)ShiftShowsRemoteButtons=i end,get=function() return ShiftShowsRemoteButtons end}, SetWaypointOnExit={set=function (i)SetWaypointOnExit=i end,get=function() return SetWaypointOnExit end}, AlwaysVSpd={set=function (i)AlwaysVSpd=i end,get=function() return AlwaysVSpd end}, BarFuelDisplay={set=function (i)BarFuelDisplay=i end,get=function() return BarFuelDisplay end}, 
-        voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end}, DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end},
-        PrivateLocations={set=function (i)PrivateLocations=i end,get=function() return PrivateLocations end}}
+        voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end}, DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end},}
 
     -- Ship Handling variables
         -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank system
@@ -314,6 +312,8 @@ VERSION_NUMBER = 0.710
             oldShowHud = showHud
             ThrottleValue = nil
             radarPanelID = nil
+            privatelocations = {}
+            customlocations = {}
         end
  
     --[[ timestamped print function for debugging
@@ -1106,9 +1106,10 @@ VERSION_NUMBER = 0.710
                     else
                         local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
                         local autopilotEntry = atlas[0][atlasIndex]
-                        if autopilotEntry ~= nil and autopilotEntry.name == "Space" or 
-                        (iphCondition == "Custom Only" and autopilotEntry.center) or
-                        (iphCondition == "No Moons" and string.find(autopilotEntry.name, "Moon") ~= nil)
+                        if autopilotEntry and 
+                          ((autopilotEntry ~= nil and autopilotEntry.name == "Space") or 
+                           (iphCondition == "Custom Only" and autopilotEntry.center) or
+                           (iphCondition == "No Moons" and string.find(autopilotEntry.name, "Moon") ~= nil))
                         then 
                             if up == nil then 
                                 adjustAutopilotTargetIndex()
@@ -1126,55 +1127,65 @@ VERSION_NUMBER = 0.710
             end
 
             local function ClearCurrentPosition()
-                local index = -1
-                index = findAtlasIndex(atlas[0])
-                if index > -1 then
-                    table.remove(atlas[0], index)
+                local function clearPosition(private)
+                    local positions
+                    if private then positions = privatelocations else positions = SavedLocations end
+                    local index = -1
+                    index = findAtlasIndex(atlas[0])
+                    if index > -1 then
+                        table.remove(atlas[0], index)
+                    end
+                    index = -1
+                    index = findAtlasIndex(positions)
+                    if index ~= -1 then
+                        msgText = CustomTarget.name .. " saved location cleared"
+                        table.remove(positions, index)
+                    end
+                    adjustAutopilotTargetIndex()
+                    UpdateAtlasLocationsList()
+                    return positions
                 end
-                -- And SavedLocations
-                index = -1
-                index = findAtlasIndex(SavedLocations)
-                if index ~= -1 then
-                    msgText = CustomTarget.name .. " saved location cleared"
-                    table.remove(SavedLocations, index)
-                end
-                adjustAutopilotTargetIndex()
-                UpdateAtlasLocationsList()
+                if string.sub(AutopilotTargetName,1,1)=="*" then privatelocations=clearPosition(true) else SavedLocations=clearPosition(false) end
             end
             
             local function AddNewLocation(name, position, temp, safe)
-                if dbHud_1 or temp then
+                local function addPosition(private)
+                    if private then positions = privatelocations else positions = SavedLocations end
+                    if dbHud_1 or temp or private then
         
-                    local p = getPlanet(position)
-                    local gravity = p.gravity
-                    if safe then
-                        gravity = u.getClosestPlanetInfluence()
-                    end
-                    local newLocation = {
-                        position = position,
-                        name = name,
-                        planetname = p.name,
-                        gravity = gravity,
-                        safe = safe, -- This indicates we can extreme land here, if this was a real positional waypoint
-                    }
-                    if not temp then 
-                        SavedLocations[#SavedLocations + 1] = newLocation
-                    else
-                        for k, v in pairs(atlas[0]) do
-                            if v.name and name == v.name then
-                                table.remove(atlas[0], k)
+                        local p = getPlanet(position)
+                        local gravity = p.gravity
+                        if safe then
+                            gravity = u.getClosestPlanetInfluence()
+                        end
+                        local newLocation = {
+                            position = position,
+                            name = name,
+                            planetname = p.name,
+                            gravity = gravity,
+                            safe = safe, -- This indicates we can extreme land here, if this was a real positional waypoint
+                        }
+                        if not temp then 
+                            positions[#positions + 1] = newLocation
+                        else
+                            for k, v in pairs(atlas[0]) do
+                                if v.name and name == v.name then
+                                    table.remove(atlas[0], k)
+                                end
                             end
                         end
+                        -- Nearest planet, gravity also important - if it's 0, we don't autopilot to the target planet, the target isn't near a planet.                      
+                        table.insert(atlas[0], newLocation)
+                        UpdateAtlasLocationsList()
+                        UpdateAutopilotTarget() -- This is safe and necessary to do right?
+                        -- Store atmosphere so we know whether the location is in space or not
+                        msgText = "Location saved as " .. name.."("..p.name..")"
+                        return positions
+                    else
+                        msgText = "Databank must be installed to save permanent locations"
                     end
-                    -- Nearest planet, gravity also important - if it's 0, we don't autopilot to the target planet, the target isn't near a planet.                      
-                    table.insert(atlas[0], newLocation)
-                    UpdateAtlasLocationsList()
-                    UpdateAutopilotTarget() -- This is safe and necessary to do right?
-                    -- Store atmosphere so we know whether the location is in space or not
-                    msgText = "Location saved as " .. name.."("..p.name..")"
-                else
-                    msgText = "Databank must be installed to save permanent locations"
                 end
+                if string.sub(name,1,1)=="*" then privatelocations=addPosition(true) else SavedLocations=addPosition(false) end
             end
 
         local Atlas = {}
@@ -1196,24 +1207,30 @@ VERSION_NUMBER = 0.710
         end
 
         function Atlas.UpdatePosition(newName) -- Update a saved location with new position
-            local index = findAtlasIndex(SavedLocations)
-            if index ~= -1 then
-                if newName ~= nil then
-                    SavedLocations[index].name = newName
-                    AutopilotTargetIndex = AutopilotTargetIndex - 1
-                    adjustAutopilotTargetIndex()
+            local function updatePosition(private)
+                local positions
+                if private then positions = privatelocations else positions = SavedLocations end
+                local index = findAtlasIndex(positions)
+                if index ~= -1 then
+                    if newName ~= nil then
+                        if private then newName = "*"..newName end
+                        positions[index].name = newName
+                        AutopilotTargetIndex = AutopilotTargetIndex - 1
+                        adjustAutopilotTargetIndex()
+                    else
+                        local location = positions[index]
+                        location.gravity = u.getClosestPlanetInfluence()
+                        location.position = worldPos
+                        location.safe = true
+                    end
+                    --UpdateAtlasLocationsList() -- Do we need these, if we only changed the name?  They are already done in AddNewLocation otherwise
+                    msgText = positions[index].name .. " position updated ("..positions[index].planetname..")"
+                    --UpdateAutopilotTarget()
                 else
-                    local location = SavedLocations[index]
-                    location.gravity = u.getClosestPlanetInfluence()
-                    location.position = worldPos
-                    location.safe = true
+                    msgText = "Name Not Found"
                 end
-                --UpdateAtlasLocationsList() -- Do we need these, if we only changed the name?  They are already done in AddNewLocation otherwise
-                msgText = SavedLocations[index].name .. " position updated ("..SavedLocations[index].planetname..")"
-                --UpdateAutopilotTarget()
-            else
-                msgText = "Name Not Found"
             end
+            if string.sub(AutopilotTargetName,1,1)=="*" then updatePosition(true) else updatePosition(false) end
         end
 
         function Atlas.AddNewLocation(name, position, temp, safe)
@@ -1225,7 +1242,7 @@ VERSION_NUMBER = 0.710
         end
 
         --Initial Setup
-        for k, v in pairs(SavedLocations) do
+        for k, v in pairs(customlocations) do
             table.insert(atlas[0], v)
         end
 
@@ -7596,10 +7613,10 @@ VERSION_NUMBER = 0.710
                                 HoldAltitude = AntigravTargetAltitude
                             end
                             currentAggModifier = uclamp(currentAggModifier * 1.05, antiGravButtonModifier, 50)
-                            BrakeIsOn = false
+                            --BrakeIsOn = false
                         else
                             AntigravTargetAltitude = desiredBaseAltitude + mult*100
-                            BrakeIsOn = false
+                           --BrakeIsOn = false
                         end
                     elseif AltitudeHold or VertTakeOff or IntoOrbit then
                         if IntoOrbit then
@@ -7792,19 +7809,19 @@ VERSION_NUMBER = 0.710
                     msgText = "No target selected in IPH"
                 end
             elseif command == "/createPrivate" then
-                if #SavedLocations > 0 then
-                    local saveStr = "SavedLocations = {"
-                    for k,v in pairs(SavedLocations) do
+                if #privatelocations > 0 then
+                    local saveStr = "privatelocations = {"
+                    for k,v in pairs(privatelocations) do
                         saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."}, "..
                                             "name = '"..v.name.."', planetname = '"..v.planetname.."', gravity = "..v.gravity..", save = "
                         if v.safe then saveStr = saveStr.."true}," else saveStr = saveStr.."false}," end
                     end
-                    saveStr = saveStr.."} return SavedLocations"
+                    saveStr = saveStr.."} return privatelocations"
                     s.logInfo("PRIVATELOCATIONS:"..saveStr)
                     if screenHud_1 then screenHud_1.setHTML(saveStr) end
                     msgText = "privatelocations.lua created in logfile and on attached screen if present"
                 else
-                    msgText = "No Custom Locations to save"
+                    msgText = "No private locations to save"
                 end
             end
         end
@@ -7853,6 +7870,7 @@ VERSION_NUMBER = 0.710
             local targetGroundAltitude = LandingGearGroundHeight -- So it can tell if one loaded or not
             local coreHalfDiag = 13
             local elementsID = c.getElementIdList()
+    
             local eleTotalMaxHp = 0
     
             local function float_eq(a, b) -- float equation
@@ -7901,11 +7919,9 @@ VERSION_NUMBER = 0.710
             local function SaveDataBank(copy) -- Save values to the databank.
                 local function writeData(dataList)
                     for k, v in pairs(dataList) do
-                        if not PrivateLocations or (PrivateLocations and k ~= "SavedLocations") then 
-                            dbHud_1.setStringValue(k, jencode(v.get()))
-                            if copy and dbHud_2 then
-                                dbHud_2.setStringValue(k, jencode(v.get()))
-                            end
+                        dbHud_1.setStringValue(k, jencode(v.get()))
+                        if copy and dbHud_2 then
+                            dbHud_2.setStringValue(k, jencode(v.get()))
                         end
                     end
                 end
@@ -8033,6 +8049,7 @@ VERSION_NUMBER = 0.710
                             end
                         end
                         LastVersionUpdate = VERSION_NUMBER
+                        if #SavedLocations>0 then customlocations = addTable(customlocations, SavedLocations) end
                     else
                         msgText = "No databank found. Attach one to control u and rerun \nthe autoconfigure to save preferences and locations"
                     end
@@ -8054,7 +8071,8 @@ VERSION_NUMBER = 0.710
                         antigrav.setBaseAltitude(AntigravTargetAltitude)
                     end
                     if pcall(require, "autoconf/custom/archhud/privatelocations") then
-                        SavedLocations = require("autoconf/custom/archhud/privatelocations")
+                        privatelocations = require("autoconf/custom/archhud/privatelocations")
+                        if #privatelocations>0 then customlocations = addTable(customlocations, privatelocations) end
                     end
                     VectorStatus = "Proceeding to Waypoint"
                 end
@@ -8376,10 +8394,10 @@ VERSION_NUMBER = 0.710
                 CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro, screenHud_1,
                     isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
                 coroutine.yield()
-        
                 u.hide()
                 s.showScreen(1)
                 s.showHelper(0)
+                if screenHud_1 then screenHud_1.clear() end
                 -- That was a lot of work with dirty strings and json.  Clean up
                 collectgarbage("collect")
                 -- Start timers
