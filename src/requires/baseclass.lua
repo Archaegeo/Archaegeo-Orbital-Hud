@@ -77,11 +77,9 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         local function SaveDataBank(copy) -- Save values to the databank.
             local function writeData(dataList)
                 for k, v in pairs(dataList) do
-                    if not PrivateLocations or (PrivateLocations and k ~= "SavedLocations") then 
-                        dbHud_1.setStringValue(k, jencode(v.get()))
-                        if copy and dbHud_2 then
-                            dbHud_2.setStringValue(k, jencode(v.get()))
-                        end
+                    dbHud_1.setStringValue(k, jencode(v.get()))
+                    if copy and dbHud_2 then
+                        dbHud_2.setStringValue(k, jencode(v.get()))
                     end
                 end
             end
@@ -209,6 +207,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                         end
                     end
                     LastVersionUpdate = VERSION_NUMBER
+                    if #SavedLocations>0 then customlocations = addTable(customlocations, SavedLocations) end
                 else
                     msgText = "No databank found. Attach one to control u and rerun \nthe autoconfigure to save preferences and locations"
                 end
@@ -230,7 +229,8 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                     antigrav.setBaseAltitude(AntigravTargetAltitude)
                 end
                 if pcall(require, "autoconf/custom/archhud/privatelocations") then
-                    SavedLocations = require("autoconf/custom/archhud/privatelocations")
+                    privatelocations = require("autoconf/custom/archhud/privatelocations")
+                    if #privatelocations>0 then customlocations = addTable(customlocations, privatelocations) end
                 end
                 VectorStatus = "Proceeding to Waypoint"
             end
@@ -552,10 +552,10 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro, screenHud_1,
                 isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
             coroutine.yield()
-    
             u.hide()
             s.showScreen(1)
             s.showHelper(0)
+            if screenHud_1 then screenHud_1.clear() end
             -- That was a lot of work with dirty strings and json.  Clean up
             collectgarbage("collect")
             -- Start timers

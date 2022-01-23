@@ -788,9 +788,10 @@
                     else
                         local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
                         local autopilotEntry = atlas[0][atlasIndex]
-                        if autopilotEntry ~= nil and autopilotEntry.name == "Space" or 
+                        if autopilotEntry and 
+                          ((autopilotEntry ~= nil and autopilotEntry.name == "Space") or 
                            (iphCondition == "Custom Only" and autopilotEntry.center) or
-                           (iphCondition == "No Moons" and string.find(autopilotEntry.name, "Moon") ~= nil)
+                           (iphCondition == "No Moons" and string.find(autopilotEntry.name, "Moon") ~= nil))
                         then 
                             if up == nil then 
                                 adjustAutopilotTargetIndex()
@@ -808,55 +809,65 @@
             end
 
             local function ClearCurrentPosition()
-                local index = -1
-                index = findAtlasIndex(atlas[0])
-                if index > -1 then
-                    table.remove(atlas[0], index)
+                local function clearPosition(private)
+                    local positions
+                    if private then positions = privatelocations else positions = SavedLocations end
+                    local index = -1
+                    index = findAtlasIndex(atlas[0])
+                    if index > -1 then
+                        table.remove(atlas[0], index)
+                    end
+                    index = -1
+                    index = findAtlasIndex(positions)
+                    if index ~= -1 then
+                        msgText = CustomTarget.name .. " saved location cleared"
+                        table.remove(positions, index)
+                    end
+                    adjustAutopilotTargetIndex()
+                    UpdateAtlasLocationsList()
+                    return positions
                 end
-                -- And SavedLocations
-                index = -1
-                index = findAtlasIndex(SavedLocations)
-                if index ~= -1 then
-                    msgText = CustomTarget.name .. " saved location cleared"
-                    table.remove(SavedLocations, index)
-                end
-                adjustAutopilotTargetIndex()
-                UpdateAtlasLocationsList()
+                if string.sub(AutopilotTargetName,1,1)=="*" then privatelocations=clearPosition(true) else SavedLocations=clearPosition(false) end
             end
             
             local function AddNewLocation(name, position, temp, safe)
-                if dbHud_1 or temp then
+                local function addPosition(private)
+                    if private then positions = privatelocations else positions = SavedLocations end
+                    if dbHud_1 or temp or private then
         
-                    local p = getPlanet(position)
-                    local gravity = p.gravity
-                    if safe then
-                        gravity = u.getClosestPlanetInfluence()
-                    end
-                    local newLocation = {
-                        position = position,
-                        name = name,
-                        planetname = p.name,
-                        gravity = gravity,
-                        safe = safe, -- This indicates we can extreme land here, if this was a real positional waypoint
-                    }
-                    if not temp then 
-                        SavedLocations[#SavedLocations + 1] = newLocation
-                    else
-                        for k, v in pairs(atlas[0]) do
-                            if v.name and name == v.name then
-                                table.remove(atlas[0], k)
+                        local p = getPlanet(position)
+                        local gravity = p.gravity
+                        if safe then
+                            gravity = u.getClosestPlanetInfluence()
+                        end
+                        local newLocation = {
+                            position = position,
+                            name = name,
+                            planetname = p.name,
+                            gravity = gravity,
+                            safe = safe, -- This indicates we can extreme land here, if this was a real positional waypoint
+                        }
+                        if not temp then 
+                            positions[#positions + 1] = newLocation
+                        else
+                            for k, v in pairs(atlas[0]) do
+                                if v.name and name == v.name then
+                                    table.remove(atlas[0], k)
+                                end
                             end
                         end
+                        -- Nearest planet, gravity also important - if it's 0, we don't autopilot to the target planet, the target isn't near a planet.                      
+                        table.insert(atlas[0], newLocation)
+                        UpdateAtlasLocationsList()
+                        UpdateAutopilotTarget() -- This is safe and necessary to do right?
+                        -- Store atmosphere so we know whether the location is in space or not
+                        msgText = "Location saved as " .. name.."("..p.name..")"
+                        return positions
+                    else
+                        msgText = "Databank must be installed to save permanent locations"
                     end
-                    -- Nearest planet, gravity also important - if it's 0, we don't autopilot to the target planet, the target isn't near a planet.                      
-                    table.insert(atlas[0], newLocation)
-                    UpdateAtlasLocationsList()
-                    UpdateAutopilotTarget() -- This is safe and necessary to do right?
-                    -- Store atmosphere so we know whether the location is in space or not
-                    msgText = "Location saved as " .. name.."("..p.name..")"
-                else
-                    msgText = "Databank must be installed to save permanent locations"
                 end
+                if string.sub(name,1,1)=="*" then privatelocations=addPosition(true) else SavedLocations=addPosition(false) end
             end
 
         local Atlas = {}
@@ -878,24 +889,30 @@
         end
 
         function Atlas.UpdatePosition(newName) -- Update a saved location with new position
-            local index = findAtlasIndex(SavedLocations)
-            if index ~= -1 then
-                if newName ~= nil then
-                    SavedLocations[index].name = newName
-                    AutopilotTargetIndex = AutopilotTargetIndex - 1
-                    adjustAutopilotTargetIndex()
+            local function updatePosition(private)
+                local positions
+                if private then positions = privatelocations else positions = SavedLocations end
+                local index = findAtlasIndex(positions)
+                if index ~= -1 then
+                    if newName ~= nil then
+                        if private then newName = "*"..newName end
+                        positions[index].name = newName
+                        AutopilotTargetIndex = AutopilotTargetIndex - 1
+                        adjustAutopilotTargetIndex()
+                    else
+                        local location = positions[index]
+                        location.gravity = u.getClosestPlanetInfluence()
+                        location.position = worldPos
+                        location.safe = true
+                    end
+                    --UpdateAtlasLocationsList() -- Do we need these, if we only changed the name?  They are already done in AddNewLocation otherwise
+                    msgText = positions[index].name .. " position updated ("..positions[index].planetname..")"
+                    --UpdateAutopilotTarget()
                 else
-                    local location = SavedLocations[index]
-                    location.gravity = u.getClosestPlanetInfluence()
-                    location.position = worldPos
-                    location.safe = true
+                    msgText = "Name Not Found"
                 end
-                --UpdateAtlasLocationsList() -- Do we need these, if we only changed the name?  They are already done in AddNewLocation otherwise
-                msgText = SavedLocations[index].name .. " position updated ("..SavedLocations[index].planetname..")"
-                --UpdateAutopilotTarget()
-            else
-                msgText = "Name Not Found"
             end
+            if string.sub(AutopilotTargetName,1,1)=="*" then updatePosition(true) else updatePosition(false) end
         end
 
         function Atlas.AddNewLocation(name, position, temp, safe)
@@ -907,7 +924,7 @@
         end
 
         --Initial Setup
-        for k, v in pairs(SavedLocations) do
+        for k, v in pairs(customlocations) do
             table.insert(atlas[0], v)
         end
 
