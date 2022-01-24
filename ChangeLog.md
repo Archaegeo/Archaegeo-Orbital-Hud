@@ -1,5 +1,17 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.712 - Landing Alignment and Last start
+- FEATURE: For any custom save point (private or databank) you can select it in IPH and hold shift to choose Save Heading button.
+    This will save the heading of your ship to the currently selected WP.  Anytime you AP to a waypoint with a saved heading
+    the ship will try to align to that heading after it finalizes braking as it begins landing.  
+    If a WP already has a heading, you will see a Clear Heading button instead.
+- FEATURE: When you hit Alt-4 to start an autopilot, LASTSTART is saved to your databank for ease of return to your starting point.
+    It remains in your databank SavedLocations until you clear it or use it. Select the LASTSTART waypoint and hit Alt-4 to go back 
+    to where you began your trip.  This will clear LASTSTART when you arrive. (Will not be created if flying a route)
+- FIX: Added fix during brake landing (after finalizing) for correcting horizontal drift by applying brakes on an AP landing..
+- FIX: Adjusted alignment requirements when arriving at a planet to be less strict before establishing orbit.
+- FIX: /createPrivate now adds line breaks to the log/screen dump to make a readable cut and paste for easy editing.
+
 Version 1.711 - PrivateLocations and Databank together.
 - OVERHAUL: PrivateLocations
     - If privatelocations.lua exists, both Private locations and databank locations are used.  Only databank locations are saved.

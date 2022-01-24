@@ -303,6 +303,7 @@ local function globalDeclare(s, c, u, systime, mfloor, atmosphere)
     radarPanelID = nil
     privatelocations = {}
     customlocations = {}
+    apBrk = false
 end
 
 return globalDeclare

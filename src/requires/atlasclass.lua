@@ -681,9 +681,10 @@
                 table.sort(AtlasOrdered, atlasCmp)
             end
             
-            local function findAtlasIndex(atlasList)
+            local function findAtlasIndex(atlasList, findme)
+                if not findme then findme = CustomTarget.name end
                 for k, v in pairs(atlasList) do
-                    if v.name and v.name == CustomTarget.name then
+                    if v.name and v.name == findme then
                         return k
                     end
                 end
@@ -884,11 +885,11 @@
             adjustAutopilotTargetIndex(up)
         end 
 
-        function Atlas.findAtlasIndex(atlasList)
-            findAtlasIndex(atlasList)
+        function Atlas.findAtlasIndex(atlasList, findme)
+            return findAtlasIndex(atlasList, findme)
         end
 
-        function Atlas.UpdatePosition(newName) -- Update a saved location with new position
+        function Atlas.UpdatePosition(newName, saveHeading) -- Update a saved location with new position
             local function updatePosition(private)
                 local positions
                 if private then positions = privatelocations else positions = SavedLocations end
@@ -901,6 +902,15 @@
                         adjustAutopilotTargetIndex()
                     else
                         local location = positions[index]
+                        if saveHeading then 
+                            location.heading = constructRight:cross(worldVertical)*5000 
+                            msgText = positions[index].name .. " heading saved ("..positions[index].planetname..")"
+                            return
+                        elseif saveHeading == false then 
+                            location.heading = nil 
+                            msgText = positions[index].name .. " heading cleared ("..positions[index].planetname..")"
+                            return
+                        end
                         location.gravity = u.getClosestPlanetInfluence()
                         location.position = worldPos
                         location.safe = true
