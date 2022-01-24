@@ -103,6 +103,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                         VertTakeOff = false
                         AltitudeHold = false
                         BrakeLanding = true
+                        apBrk = false
                         autoRoll = true
                         GearExtended = false -- Don't actually toggle the gear yet though
                     else
@@ -155,8 +156,10 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             end
         elseif action == "yawright" then
             yawInput = yawInput - 1
+            alignHeading = nil
         elseif action == "yawleft" then
             yawInput = yawInput + 1
+            alignHeading = nil
         elseif action == "straferight" then
                 navCom:updateCommandFromActionStart(axisCommandId.lateral, 1.0)
                 LeftAmount = 1
@@ -423,6 +426,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                     gyroIsOn = false
                     LockPitch = nil
                     IntoOrbit = false
+                    apBrk = false
+                    alignHeading = nil
                 end
             end
             clearAll()
@@ -760,13 +765,13 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             end
         elseif command == "/createPrivate" then
             if #privatelocations > 0 then
-                local saveStr = "privatelocations = {"
+                local saveStr = "privatelocations = {\n"
                 for k,v in pairs(privatelocations) do
-                    saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."}, "..
-                                        "name = '"..v.name.."', planetname = '"..v.planetname.."', gravity = "..v.gravity..", save = "
-                    if v.safe then saveStr = saveStr.."true}," else saveStr = saveStr.."false}," end
+                    saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
+                                        "name = '"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n save = "
+                    if v.safe then saveStr = saveStr.."true},\n" else saveStr = saveStr.."false},\n" end
                 end
-                saveStr = saveStr.."} return privatelocations"
+                saveStr = saveStr.."}\n return privatelocations"
                 s.logInfo("PRIVATELOCATIONS:"..saveStr)
                 if screenHud_1 then screenHud_1.setHTML(saveStr) end
                 msgText = "privatelocations.lua created in logfile and on attached screen if present"
