@@ -1,5 +1,20 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 0.712 - Landing Alignment, Starting Point, and Relativism
+- FEATURE: For any custom save point (private or databank) you can select it in IPH and hold shift to choose Save Heading button.
+    This will save the current heading of your ship to the currently selected IPH WP.  Anytime you AP to a waypoint with a saved heading
+    the ship will try to align to that heading after it finalizes braking as it begins landing. Hitting A or D (manual yaw) will 
+    cancel the alignment but not the brake landing.  Saved Heading Brake Landing will be slower due to alignment while keeping accuracy.
+    If a WP already has a heading, you will see a Clear Heading button instead to remove it.
+- FEATURE: When you hit Alt-4 to start an autopilot, STARTINGPOINT is saved to your databank if on/near ground for ease of return to
+    your starting point. It remains in your databank SavedLocations until you clear it or use it. Select the STARTINGPOINT waypoint 
+    and hit Alt-4 to go back  to where you began your trip.  This will clear STARTINGPOINT when you arrive. (Will not be created if flying a route)
+- FEATURE: When going > 3000k/hr, the INFO panel will show your relativistic mass
+- User Variable: `SaveStartLocation` (Default: true) If true, when a user first hits alt-4 to AP somewhere, his current location is saved if on ground.
+- FIX: Added fix during brake landing (after finalizing) for correcting horizontal drift by applying brakes on an AP landing.
+- FIX: Adjusted alignment requirements when arriving at a planet to be less strict before establishing orbit.
+- FIX: /createPrivate now adds line breaks to the log/screen dump to make a readable cut and paste for easy editing.
+
 Version 0.711 - PrivateLocations and Databank together.
 - OVERHAUL: PrivateLocations (only works with require file of privatelocations.lua)
     - If privatelocations.lua exists, both Private locations and databank locations are used.  Only databank locations are saved.

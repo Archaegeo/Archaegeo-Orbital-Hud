@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.711
+VERSION_NUMBER = 0.712
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
     -- User variables. Must be global to work with databank system
@@ -45,11 +45,13 @@ VERSION_NUMBER = 0.711
         AutoShieldToggle = true -- (Default: true) If true, system will toggle Shield off in safe space and on in PvP space automagically.
         PreventPvP = true -- (Default: true) If true, system will stop you before crossing from safe to pvp space while in autopilot.
         DisplayOdometer = true -- (Default: true) If false the top odometer bar of information will be hidden.
+        SaveStartingLocation = true -- (Default: true) If true, when a user first hits alt-4 to AP somewhere, his current location is saved if on ground.
         saveableVariablesBoolean = {userControlScheme={set=function (i)userControlScheme=i end,get=function() return userControlScheme end}, soundFolder={set=function (i)soundFolder=i end,get=function() return soundFolder end}, freeLookToggle={set=function (i)freeLookToggle=i end,get=function() return freeLookToggle end}, BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}, RemoteFreeze={set=function (i)RemoteFreeze=i end,get=function() return RemoteFreeze end}, brightHud={set=function (i)brightHud=i end,get=function() return brightHud end}, RemoteHud={set=function (i)RemoteHud=i end,get=function() return RemoteHud end}, VanillaRockets={set=function (i)VanillaRockets=i end,get=function() return VanillaRockets end},
         InvertMouse={set=function (i)InvertMouse=i end,get=function() return InvertMouse end}, autoRollPreference={set=function (i)autoRollPreference=i end,get=function() return autoRollPreference end}, ExternalAGG={set=function (i)ExternalAGG=i end,get=function() return ExternalAGG end}, UseSatNav={set=function (i)UseSatNav=i end,get=function() return UseSatNav end}, ShouldCheckDamage={set=function (i)ShouldCheckDamage=i end,get=function() return ShouldCheckDamage end}, 
         CalculateBrakeLandingSpeed={set=function (i)CalculateBrakeLandingSpeed=i end,get=function() return CalculateBrakeLandingSpeed end}, AtmoSpeedAssist={set=function (i)AtmoSpeedAssist=i end,get=function() return AtmoSpeedAssist end}, ForceAlignment={set=function (i)ForceAlignment=i end,get=function() return ForceAlignment end}, DisplayDeadZone={set=function (i)DisplayDeadZone=i end,get=function() return DisplayDeadZone end}, showHud={set=function (i)showHud=i end,get=function() return showHud end}, hideHudOnToggleWidgets={set=function (i)hideHudOnToggleWidgets=i end,get=function() return hideHudOnToggleWidgets end}, 
         ShiftShowsRemoteButtons={set=function (i)ShiftShowsRemoteButtons=i end,get=function() return ShiftShowsRemoteButtons end}, SetWaypointOnExit={set=function (i)SetWaypointOnExit=i end,get=function() return SetWaypointOnExit end}, AlwaysVSpd={set=function (i)AlwaysVSpd=i end,get=function() return AlwaysVSpd end}, BarFuelDisplay={set=function (i)BarFuelDisplay=i end,get=function() return BarFuelDisplay end}, 
-        voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end}, DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end},}
+        voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end}, DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end},
+        SaveStartingLocation={set=function (i)SaveStartingLocation=i end,get=function() return SaveStartingLocation end},}
 
     -- Ship Handling variables
         -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank system
@@ -314,6 +316,8 @@ VERSION_NUMBER = 0.711
             radarPanelID = nil
             privatelocations = {}
             customlocations = {}
+            apBrk = false
+            alignHeading=nil
         end
  
     --[[ timestamped print function for debugging
@@ -354,8 +358,8 @@ VERSION_NUMBER = 0.711
         local num = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
         local posPattern = '::pos{' .. num .. ',' .. num .. ',' .. num .. ',' .. num .. ',' .. num .. '}'
         -- Utilities
-        local utils = require('cpml.utils')
-        local vec3 = require('cpml.vec3')
+        local utils = utils
+        local vec3 = vec3
         local function formatNumber(n)
             local result = string.gsub(string.reverse(stringf('%.4f', n)), '^0*%.?', '')
             return result == '' and '0' or string.reverse(result)
@@ -760,6 +764,7 @@ VERSION_NUMBER = 0.711
             end
         })
     end
+
     local function Kinematics(Nav, c, u, s, msqrt, mabs) -- Part of Jaylebreak's flight files, modified slightly for hud
 
         local Kinematic = {} -- just a namespace
@@ -857,8 +862,9 @@ VERSION_NUMBER = 0.711
 
         return Kinematic
     end
+
     local function Keplers(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq) -- Part of Jaylebreak's flight files, modified slightly for hud
-        local vec3 = require('cpml.vec3')
+        local vec3 = vec3
         local PlanetRef = PlanetRef(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
         local function isString(s)
             return type(s) == 'string'
@@ -999,9 +1005,10 @@ VERSION_NUMBER = 0.711
                 table.sort(AtlasOrdered, atlasCmp)
             end
             
-            local function findAtlasIndex(atlasList)
+            local function findAtlasIndex(atlasList, findme)
+                if not findme then findme = CustomTarget.name end
                 for k, v in pairs(atlasList) do
-                    if v.name and v.name == CustomTarget.name then
+                    if v.name and v.name == findme then
                         return k
                     end
                 end
@@ -1107,9 +1114,9 @@ VERSION_NUMBER = 0.711
                         local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
                         local autopilotEntry = atlas[0][atlasIndex]
                         if autopilotEntry and 
-                          ((autopilotEntry ~= nil and autopilotEntry.name == "Space") or 
-                           (iphCondition == "Custom Only" and autopilotEntry.center) or
-                           (iphCondition == "No Moons" and string.find(autopilotEntry.name, "Moon") ~= nil))
+                        ((autopilotEntry ~= nil and autopilotEntry.name == "Space") or 
+                        (iphCondition == "Custom Only" and autopilotEntry.center) or
+                        (iphCondition == "No Moons" and string.find(autopilotEntry.name, "Moon") ~= nil))
                         then 
                             if up == nil then 
                                 adjustAutopilotTargetIndex()
@@ -1202,11 +1209,11 @@ VERSION_NUMBER = 0.711
             adjustAutopilotTargetIndex(up)
         end 
 
-        function Atlas.findAtlasIndex(atlasList)
-            findAtlasIndex(atlasList)
+        function Atlas.findAtlasIndex(atlasList, findme)
+            return findAtlasIndex(atlasList, findme)
         end
 
-        function Atlas.UpdatePosition(newName) -- Update a saved location with new position
+        function Atlas.UpdatePosition(newName, saveHeading) -- Update a saved location with new position
             local function updatePosition(private)
                 local positions
                 if private then positions = privatelocations else positions = SavedLocations end
@@ -1219,6 +1226,15 @@ VERSION_NUMBER = 0.711
                         adjustAutopilotTargetIndex()
                     else
                         local location = positions[index]
+                        if saveHeading then 
+                            location.heading = constructRight:cross(worldVertical)*5000 
+                            msgText = positions[index].name .. " heading saved ("..positions[index].planetname..")"
+                            return
+                        elseif saveHeading == false then 
+                            location.heading = nil 
+                            msgText = positions[index].name .. " heading cleared ("..positions[index].planetname..")"
+                            return
+                        end
                         location.gravity = u.getClosestPlanetInfluence()
                         location.position = worldPos
                         location.safe = true
@@ -1562,7 +1578,7 @@ VERSION_NUMBER = 0.711
         -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
         --for k,v in pairs(require("autoconf/custom/archhud/custom/customradarclass")) do Radar[k] = v end 
         return Radar
-    end  
+    end 
     local function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
         mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
         navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
@@ -3476,8 +3492,8 @@ VERSION_NUMBER = 0.711
                     AutoTakeoff = false
                 end
     
-                local function UpdatePosition()
-                    ATLAS.UpdatePosition()
+                local function UpdatePosition(heading)
+                    ATLAS.UpdatePosition(nil, heading)
                 end
                 local function ClearCurrentPosition()
                     -- So AutopilotTargetIndex is special and not a real index.  We have to do this by hand.
@@ -3628,10 +3644,14 @@ VERSION_NUMBER = 0.711
                         return AutopilotTargetIndex == 0 or CustomTarget == nil
                     end)
                 MakeButton("Update Position", "Update Position", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y,
-                    function()
-                        return false
-                    end, UpdatePosition, function()
-                        return AutopilotTargetIndex > 0 and CustomTarget ~= nil
+                    function() return false end, 
+                    function() UpdatePosition(nil) end, 
+                    function() return AutopilotTargetIndex > 0 and CustomTarget ~= nil
+                    end)
+                MakeButton("Save Heading", "Clear Heading", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y + apbutton.height + 20,
+                    function() return CustomTarget.heading ~= nil end, 
+                    function() if CustomTarget.heading ~= nil then UpdatePosition(false) else UpdatePosition(true) end end, 
+                    function() return AutopilotTargetIndex > 0 and CustomTarget ~= nil
                     end)
                 MakeButton("Clear Position", "Clear Position", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y,
                     function()
@@ -3639,7 +3659,7 @@ VERSION_NUMBER = 0.711
                     end, ClearCurrentPosition, function()
                         return AutopilotTargetIndex > 0 and CustomTarget ~= nil
                     end)
-                MakeButton("Save Route", "Save Route", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y + apbutton.height + 20, 
+                MakeButton("Save Route", "Save Route", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y + apbutton.height*2 + 40, 
                     function() return false end, function() AP.routeWP(false, false, 2) end, function() return #AP.routeWP(true) > 0 end)
                 MakeButton("Load Route","Clear Route", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y + apbutton.height + 20,
                     function()
@@ -3990,7 +4010,7 @@ VERSION_NUMBER = 0.711
                 newContent[#newContent + 1] = svgText(crx(635), cry(45), "TRIP", "")
                 newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(635),cry(31),crx(-90))
                 if travelTime then
-                    newContent[#newContent + 1] = svgText(crx(532), cry(23), stringf("%s", FormatTimeString(travelTime)), "txtstart size20") 
+                    newContent[#newContent + 1] = svgText(crx(545), cry(26), stringf("%s", FormatTimeString(travelTime)), "txtstart size20")  
                 end
                 --newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(20), stringf("Trip: %.2f km", totalDistanceTrip), "txtstart") 
                 --TODO: newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(30), stringf("Lifetime: %.2f kSU", (TotalDistanceTravelled / 200000)), "txtstart") 
@@ -4002,7 +4022,7 @@ VERSION_NUMBER = 0.711
                 --newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(30), "Total Time: "..FormatTimeString(TotalFlightTime), "txtstart") 
                 newContent[#newContent + 1] = svgText(crx(1285), cry(45), "MASS", "txtstart")
                 newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1285), cry(31), crx(90))
-                newContent[#newContent + 1] = svgText(crx(1388), cry(23), stringf("%s", mass), "size20") 
+                newContent[#newContent + 1] = svgText(crx(1375), cry(26), stringf("%s", mass), "size20") 
                 --newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(20), stringf("Mass: %s", mass), "txtstart") 
                 --newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(10), stringf("Max Brake: %s",  brakeValue), "txtend") 
                 newContent[#newContent + 1] = svgText(crx(1220), labelY1, "THRUST", "txtstart")
@@ -4071,6 +4091,11 @@ VERSION_NUMBER = 0.711
                 newContent[#newContent + 1] = svgText(midX, startY+height*5, HUD.FuelUsed("atmofueltank"))
                 newContent[#newContent + 1] = svgText(startX, startY+height*6, HUD.FuelUsed("spacefueltank"))
                 newContent[#newContent + 1] = svgText(midX, startY+height*6, HUD.FuelUsed("rocketfueltank"))
+                if velMag > 833 then
+                    local relamass = coreMass / (math.sqrt(1-(velMag/8333.33)^2))
+                    local mass = relamass > 1000000 and round(relamass / 1000000,2).." kTons" or round(relamass / 1000, 2).." Tons"
+                    newContent[#newContent +1] = svgText(midX, startY+height*7, stringf("Rel. Mass: %s", mass))
+                end
             end
             newContent[#newContent + 1] = "</g></g>"
             return newContent
@@ -4790,6 +4815,8 @@ VERSION_NUMBER = 0.711
     
         local myAutopilotTarget=""
     
+    
+    
         function ap.GetAutopilotBrakeDistanceAndTime(speed)
             return GetAutopilotBrakeDistanceAndTime(speed)
         end
@@ -4970,7 +4997,7 @@ VERSION_NUMBER = 0.711
                     previousYawAmount = yawAmount
                     previousPitchAmount = pitchAmount
                     -- Return true or false depending on whether or not we're aligned
-                    if mabs(yawAmount) < tolerance and mabs(pitchAmount) < tolerance then
+                    if mabs(yawAmount) < tolerance and (mabs(pitchAmount) < tolerance) then
                         return true
                     end
                     return false
@@ -4998,15 +5025,17 @@ VERSION_NUMBER = 0.711
                     else
                         yawInput2 = yawInput2 - (yawAmount + (yawAmount - previousYawAmount) * damping)
                     end
+    
                     if mabs(pitchAmount) < 0.1 then
                         pitchInput2 = pitchInput2 + pitchAmount*5
                     else
                         pitchInput2 = pitchInput2 + (pitchAmount + (pitchAmount - previousPitchAmount) * damping)
                     end
+    
                     previousYawAmount = yawAmount
                     previousPitchAmount = pitchAmount
                     -- Return true or false depending on whether or not we're aligned
-                    if mabs(yawAmount) < tolerance and mabs(pitchAmount) < tolerance then
+                    if mabs(yawAmount) < tolerance and (mabs(pitchAmount) < tolerance) then
                         return true
                     end
                     return false
@@ -5330,12 +5359,12 @@ VERSION_NUMBER = 0.711
                     end
                     pitchInput2 = 0
                     orbitPitch = 0
-                    if adjustedPitch <= orbitPitch+1 and adjustedPitch >= orbitPitch-1 then
+                    if adjustedPitch <= orbitPitch+2 and adjustedPitch >= orbitPitch-2 then
                         pitchAligned = true
                     else
                         pitchAligned = false
                     end
-                    if orbitalRoll <= orbitRoll+1 and orbitalRoll >= orbitRoll-1 then
+                    if orbitalRoll <= orbitRoll+2 and orbitalRoll >= orbitRoll-2 then
                         rollAligned = true
                     else
                         rollAligned = false
@@ -6242,8 +6271,11 @@ VERSION_NUMBER = 0.711
                             if not antigravOn then  
                                 play("bklOn","BL")
                                 BrakeLanding = true 
+                                apBrk = true
+                                if CustomTarget.heading then alignHeading = CustomTarget.heading else alignHeading = nil end
                             end
                             VectorToTarget = false
+                            if AutopilotTargetName == "STARTINGPOINT" then ATLAS.ClearCurrentPosition() end
                             VectorStatus = "Proceeding to Waypoint"
                             collisionAlertStatus = false
                         end
@@ -6299,108 +6331,126 @@ VERSION_NUMBER = 0.711
     
                 if BrakeLanding then
                     targetPitch = 0
-    
-                    local skipLandingRate = false
-                    local distanceToStop = 30 
-                    if maxKinematicUp ~= nil and maxKinematicUp > 0 then
-    
-                        -- Funny enough, LastMaxBrakeInAtmo has stuff done to it to convert to a flat value
-                        -- But we need the instant one back, to know how good we are at braking at this exact moment
-                        local atmos = uclamp(atmosDensity,0.4,2) -- Assume at least 40% atmo when they land, to keep things fast in low atmo
-                        local curBrake = LastMaxBrakeInAtmo * uclamp(velMag/100,0.1,1) * atmos
-                        local totalNewtons = maxKinematicUp * atmos + curBrake - gravity -- Ignore air friction for leeway, KinematicUp and Brake are already in newtons
-                        local weakBreakNewtons = curBrake/2 - gravity
-    
-                        local speedAfterBraking = velMag - msqrt((mabs(weakBreakNewtons/2)*20)/(0.5*coreMass))*utils.sign(weakBreakNewtons)
-                        if speedAfterBraking < 0 then  
-                            speedAfterBraking = 0 -- Just in case it gives us negative values
-                        end
-                        -- So then see if hovers can finish the job in the remaining distance
-    
-                        local brakeStopDistance
-                        if velMag > 100 then
-                            local brakeStopDistance1, _ = Kinematic.computeDistanceAndTime(velMag, 100, coreMass, 0, 0, curBrake)
-                            local brakeStopDistance2, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, msqrt(curBrake))
-                            brakeStopDistance = brakeStopDistance1+brakeStopDistance2
-                        else
-                            brakeStopDistance = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, msqrt(curBrake))
-                        end
-                        if brakeStopDistance < 20 then
-                            BrakeIsOn = false -- We can stop in less than 20m from just brakes, we don't need to do anything
-                            -- This gets overridden later if we don't know the altitude or don't want to calculate
-                        else
-                            local stopDistance = 0
-                            if speedAfterBraking > 100 then
-                                local stopDistance1, _ = Kinematic.computeDistanceAndTime(speedAfterBraking, 100, coreMass, 0, 0, totalNewtons) 
-                                local stopDistance2, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, maxKinematicUp * atmos + msqrt(curBrake) - gravity) -- Low brake power for the last 100kph
-                                stopDistance = stopDistance1 + stopDistance2
+                    if alignHeading then
+                        if hSpd < 0.05 and hSpd > -0.05 then
+                            if vSpd > -brakeLandingRate then BrakeIsOn = false else BrakeIsOn = true end
+                            if AlignToWorldVector(alignHeading, 0.0001) then 
+                                alignHeading = nil 
+                                autoRoll = autoRollPreference 
                             else
-                                stopDistance, _ = Kinematic.computeDistanceAndTime(speedAfterBraking, 0, coreMass, 0, 0, maxKinematicUp * atmos + msqrt(curBrake) - gravity) 
-                            end
-                            --if LandingGearGroundHeight == 0 then
-                            stopDistance = (stopDistance+15+(velMag*deltaTick))*1.1 -- Add leeway for large ships with forcefields or landing gear, and for lag
-                            -- And just bad math I guess
-                            local knownAltitude = (CustomTarget ~= nil and planet:getAltitude(CustomTarget.position) > 0 and CustomTarget.safe)
-                            
-                            if knownAltitude then
-                                local targetAltitude = planet:getAltitude(CustomTarget.position)
-                                local distanceToGround = coreAltitude - targetAltitude - 100 -- Try to aim for like 100m above the ground, give it lots of time
-                                -- We don't have to squeeze out the little bits of performance
-                                local targetVec = CustomTarget.position - worldPos
-                                local horizontalDistance = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
+                                pitchInput2 = 0
+                                autoRoll = true
     
-                                if horizontalDistance > 100 then
-                                    -- We are too far off, don't trust our altitude data
-                                    knownAltitude = false
-                                elseif distanceToGround <= stopDistance or stopDistance == -1 then
-                                    BrakeIsOn = true
-                                    skipLandingRate = true
-                                else
-                                    BrakeIsOn = false
-                                    skipLandingRate = true
-                                end
                             end
-                            
-                            if not knownAltitude and CalculateBrakeLandingSpeed then
-                                if stopDistance >= distanceToStop then -- 10% padding
-                                    BrakeIsOn = true
+                        else
+                            BrakeIsOn = true
+                        end
+                    else
+                        local skipLandingRate = false
+                        local distanceToStop = 30 
+    
+                        if maxKinematicUp ~= nil and maxKinematicUp > 0 then
+    
+                            -- Funny enough, LastMaxBrakeInAtmo has stuff done to it to convert to a flat value
+                            -- But we need the instant one back, to know how good we are at braking at this exact moment
+                            local atmos = uclamp(atmosDensity,0.4,2) -- Assume at least 40% atmo when they land, to keep things fast in low atmo
+                            local curBrake = LastMaxBrakeInAtmo * uclamp(velMag/100,0.1,1) * atmos
+                            local totalNewtons = maxKinematicUp * atmos + curBrake - gravity -- Ignore air friction for leeway, KinematicUp and Brake are already in newtons
+                            local weakBreakNewtons = curBrake/2 - gravity
+    
+                            local speedAfterBraking = velMag - msqrt((mabs(weakBreakNewtons/2)*20)/(0.5*coreMass))*utils.sign(weakBreakNewtons)
+                            if speedAfterBraking < 0 then  
+                                speedAfterBraking = 0 -- Just in case it gives us negative values
+                            end
+                            -- So then see if hovers can finish the job in the remaining distance
+    
+                            local brakeStopDistance
+                            if velMag > 100 then
+                                local brakeStopDistance1, _ = Kinematic.computeDistanceAndTime(velMag, 100, coreMass, 0, 0, curBrake)
+                                local brakeStopDistance2, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, msqrt(curBrake))
+                                brakeStopDistance = brakeStopDistance1+brakeStopDistance2
+                            else
+                                brakeStopDistance = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, msqrt(curBrake))
+                            end
+                            if brakeStopDistance < 20 then
+                                BrakeIsOn = false -- We can stop in less than 20m from just brakes, we don't need to do anything
+                                -- This gets overridden later if we don't know the altitude or don't want to calculate
+                            else
+                                local stopDistance = 0
+                                if speedAfterBraking > 100 then
+                                    local stopDistance1, _ = Kinematic.computeDistanceAndTime(speedAfterBraking, 100, coreMass, 0, 0, totalNewtons) 
+                                    local stopDistance2, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, maxKinematicUp * atmos + msqrt(curBrake) - gravity) -- Low brake power for the last 100kph
+                                    stopDistance = stopDistance1 + stopDistance2
                                 else
-                                    BrakeIsOn = false
+                                    stopDistance, _ = Kinematic.computeDistanceAndTime(speedAfterBraking, 0, coreMass, 0, 0, maxKinematicUp * atmos + msqrt(curBrake) - gravity) 
                                 end
-                                skipLandingRate = true
+                                --if LandingGearGroundHeight == 0 then
+                                stopDistance = (stopDistance+15+(velMag*deltaTick))*1.1 -- Add leeway for large ships with forcefields or landing gear, and for lag
+                                -- And just bad math I guess
+                                local knownAltitude = (CustomTarget ~= nil and planet:getAltitude(CustomTarget.position) > 0 and CustomTarget.safe)
+                                
+                                if knownAltitude then
+                                    local targetAltitude = planet:getAltitude(CustomTarget.position)
+                                    local distanceToGround = coreAltitude - targetAltitude - 100 -- Try to aim for like 100m above the ground, give it lots of time
+                                    -- We don't have to squeeze out the little bits of performance
+                                    local targetVec = CustomTarget.position - worldPos
+                                    local horizontalDistance = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
+    
+                                    if horizontalDistance > 100 then
+                                        -- We are too far off, don't trust our altitude data
+                                        knownAltitude = false
+                                    elseif distanceToGround <= stopDistance or stopDistance == -1 then
+                                        BrakeIsOn = true
+                                        skipLandingRate = true
+                                    else
+                                        BrakeIsOn = false
+                                        skipLandingRate = true
+                                    end
+                                end
+                                
+                                if not knownAltitude and CalculateBrakeLandingSpeed then
+                                    if stopDistance >= distanceToStop then -- 10% padding
+                                        BrakeIsOn = true
+                                    else
+                                        BrakeIsOn = false
+                                    end
+                                    skipLandingRate = true
+                                end
                             end
                         end
-                    end
-                    if not throttleMode then
-                        AP.cmdThrottle(0)
-                    end
-                    navCom:setTargetGroundAltitude(500)
-                    navCom:activateGroundEngineAltitudeStabilization(500)
-                    stablized = true
+                        if not throttleMode then
+                            AP.cmdThrottle(0)
+                        end
+                        navCom:setTargetGroundAltitude(500)
+                        navCom:activateGroundEngineAltitudeStabilization(500)
+                        stablized = true
     
-                    groundDistance = abvGndDet
-                    if groundDistance > -1 then 
-                            autoRoll = autoRollPreference                
-                            if velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0 then -- Or if they start going back up
-                                BrakeLanding = false
-                                AltitudeHold = false
-                                GearExtended = true
-                                if hasGear then
-                                    Nav.control.extendLandingGears()
-                                    play("grOut","LG",1)
+                        groundDistance = abvGndDet
+                        if groundDistance > -1 then 
+                                if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading then -- Or if they start going back up
+                                    BrakeLanding = false
+                                    AltitudeHold = false
+                                    GearExtended = true
+                                    if hasGear then
+                                        Nav.control.extendLandingGears()
+                                        play("grOut","LG",1)
+                                    end
+                                    navCom:setTargetGroundAltitude(LandingGearGroundHeight)
+                                    upAmount = 0
+                                    BrakeIsOn = true
+                                    autoRoll = autoRollPreference 
+                                    apBrk = false
+                                else
+                                    BrakeIsOn = true
                                 end
-                                navCom:setTargetGroundAltitude(LandingGearGroundHeight)
-                                upAmount = 0
-                                BrakeIsOn = true
-                            else
-                                BrakeIsOn = true
-                            end
-                    elseif StrongBrakes and (constructVelocity:normalize():dot(-up) < 0.999) then
-                        BrakeIsOn = true
-                    elseif vSpd < -brakeLandingRate and not skipLandingRate then
-                        BrakeIsOn = true
-                    elseif not skipLandingRate then
-                        BrakeIsOn = false
+                        elseif StrongBrakes and (constructVelocity:normalize():dot(-up) < 0.999) then
+                            BrakeIsOn = true
+                            AlignToWorldVector()
+                        elseif (vSpd < -brakeLandingRate and not skipLandingRate) or ((hSpd > 0.05 or hSpd < -0.05) and apBrk) then
+                            BrakeIsOn = true
+                        elseif not skipLandingRate then
+                            BrakeIsOn = false
+                        end
                     end
                 end
                 if AutoTakeoff or spaceLaunch then
@@ -6607,7 +6657,9 @@ VERSION_NUMBER = 0.711
                 end
                 ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
                 AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
-    
+                if SaveStartingLocation and #apRoute==0 and AutopilotTargetName ~= "STARTINGPOINT" and ATLAS.findAtlasIndex(SavedLocations, "STARTINGPOINT") == -1 and abvGndDet > -1 then 
+                    ATLAS.AddNewLocation("STARTINGPOINT", worldPos, false, false) 
+                end
                 if CustomTarget ~= nil then
                     LockPitch = nil
                     SpaceTarget = (CustomTarget.planetname == "Space")
@@ -6835,6 +6887,7 @@ VERSION_NUMBER = 0.711
                 apThrottleSet = false
                 HoldAltitude = coreAltitude
                 TargetSet = false
+                apBrk = false
             end
             VectorToTarget = false
             AutoTakeoff = false
@@ -6842,8 +6895,10 @@ VERSION_NUMBER = 0.711
             -- We won't abort interplanetary because that would fuck everyone.
             ProgradeIsOn = false -- No reason to brake while facing prograde, but retrograde yes.
             BrakeLanding = false
+            alignHeading = nil
             AutoLanding = false
             ReversalIsOn = nil
+            apBrk = false
             if not antigravOn then
                 AltitudeHold = false -- And stop alt hold
                 LockPitch = nil
@@ -7153,6 +7208,7 @@ VERSION_NUMBER = 0.711
                             VertTakeOff = false
                             AltitudeHold = false
                             BrakeLanding = true
+                            apBrk = false
                             autoRoll = true
                             GearExtended = false -- Don't actually toggle the gear yet though
                         else
@@ -7205,8 +7261,10 @@ VERSION_NUMBER = 0.711
                 end
             elseif action == "yawright" then
                 yawInput = yawInput - 1
+                alignHeading = nil
             elseif action == "yawleft" then
                 yawInput = yawInput + 1
+                alignHeading = nil
             elseif action == "straferight" then
                     navCom:updateCommandFromActionStart(axisCommandId.lateral, 1.0)
                     LeftAmount = 1
@@ -7473,6 +7531,8 @@ VERSION_NUMBER = 0.711
                         gyroIsOn = false
                         LockPitch = nil
                         IntoOrbit = false
+                        apBrk = false
+                        alignHeading = nil
                     end
                 end
                 clearAll()
@@ -7810,13 +7870,13 @@ VERSION_NUMBER = 0.711
                 end
             elseif command == "/createPrivate" then
                 if #privatelocations > 0 then
-                    local saveStr = "privatelocations = {"
+                    local saveStr = "privatelocations = {\n"
                     for k,v in pairs(privatelocations) do
-                        saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."}, "..
-                                            "name = '"..v.name.."', planetname = '"..v.planetname.."', gravity = "..v.gravity..", save = "
-                        if v.safe then saveStr = saveStr.."true}," else saveStr = saveStr.."false}," end
+                        saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
+                                            "name = '"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n save = "
+                        if v.safe then saveStr = saveStr.."true},\n" else saveStr = saveStr.."false},\n" end
                     end
-                    saveStr = saveStr.."} return privatelocations"
+                    saveStr = saveStr.."}\n return privatelocations"
                     s.logInfo("PRIVATELOCATIONS:"..saveStr)
                     if screenHud_1 then screenHud_1.setHTML(saveStr) end
                     msgText = "privatelocations.lua created in logfile and on attached screen if present"
