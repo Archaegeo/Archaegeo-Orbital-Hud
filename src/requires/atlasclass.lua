@@ -32,8 +32,8 @@
         local num = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
         local posPattern = '::pos{' .. num .. ',' .. num .. ',' .. num .. ',' .. num .. ',' .. num .. '}'
         -- Utilities
-        local utils = require('cpml.utils')
-        local vec3 = require('cpml.vec3')
+        local utils = utils
+        local vec3 = vec3
         local function formatNumber(n)
             local result = string.gsub(string.reverse(stringf('%.4f', n)), '^0*%.?', '')
             return result == '' and '0' or string.reverse(result)
@@ -539,7 +539,7 @@
     end
 
     function Keplers(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq) -- Part of Jaylebreak's flight files, modified slightly for hud
-        local vec3 = require('cpml.vec3')
+        local vec3 = vec3
         local PlanetRef = PlanetRef(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
         local function isString(s)
             return type(s) == 'string'

@@ -156,8 +156,10 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             end
         elseif action == "yawright" then
             yawInput = yawInput - 1
+            alignHeading = nil
         elseif action == "yawleft" then
             yawInput = yawInput + 1
+            alignHeading = nil
         elseif action == "straferight" then
                 navCom:updateCommandFromActionStart(axisCommandId.lateral, 1.0)
                 LeftAmount = 1
@@ -424,6 +426,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                     gyroIsOn = false
                     LockPitch = nil
                     IntoOrbit = false
+                    apBrk = false
+                    alignHeading = nil
                 end
             end
             clearAll()

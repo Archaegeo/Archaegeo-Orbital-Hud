@@ -49,7 +49,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
     local lastMaxBrakeAtG = nil
 
     local myAutopilotTarget=""
-    local alignHeading=nil
+
 
 
     function ap.GetAutopilotBrakeDistanceAndTime(speed)
@@ -1506,13 +1506,13 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                         if not antigravOn then  
                             play("bklOn","BL")
                             BrakeLanding = true 
+                            apBrk = true
                             if CustomTarget.heading then alignHeading = CustomTarget.heading else alignHeading = nil end
                         end
                         VectorToTarget = false
-                        if AutopilotTargetName == "LASTSTART" then ATLAS.ClearCurrentPosition() end
+                        if AutopilotTargetName == "STARTINGPOINT" then ATLAS.ClearCurrentPosition() end
                         VectorStatus = "Proceeding to Waypoint"
                         collisionAlertStatus = false
-                        apBrk = true
                     end
                     LastDistanceToTarget = distanceToTarget
                 end
@@ -1568,13 +1568,17 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 targetPitch = 0
                 if alignHeading then
                     if hSpd < 0.05 and hSpd > -0.05 then
+                        if vSpd > -brakeLandingRate then BrakeIsOn = false else BrakeIsOn = true end
                         if AlignToWorldVector(alignHeading, 0.0001) then 
                             alignHeading = nil 
                             autoRoll = autoRollPreference 
                         else
                             pitchInput2 = 0
                             autoRoll = true
+
                         end
+                    else
+                        BrakeIsOn = true
                     end
                 else
                     local skipLandingRate = false
@@ -1655,32 +1659,33 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                     navCom:setTargetGroundAltitude(500)
                     navCom:activateGroundEngineAltitudeStabilization(500)
                     stablized = true
-                end
-                groundDistance = abvGndDet
-                if groundDistance > -1 then 
-                        if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading then -- Or if they start going back up
-                            BrakeLanding = false
-                            AltitudeHold = false
-                            GearExtended = true
-                            if hasGear then
-                                Nav.control.extendLandingGears()
-                                play("grOut","LG",1)
+
+                    groundDistance = abvGndDet
+                    if groundDistance > -1 then 
+                            if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading then -- Or if they start going back up
+                                BrakeLanding = false
+                                AltitudeHold = false
+                                GearExtended = true
+                                if hasGear then
+                                    Nav.control.extendLandingGears()
+                                    play("grOut","LG",1)
+                                end
+                                navCom:setTargetGroundAltitude(LandingGearGroundHeight)
+                                upAmount = 0
+                                BrakeIsOn = true
+                                autoRoll = autoRollPreference 
+                                apBrk = false
+                            else
+                                BrakeIsOn = true
                             end
-                            navCom:setTargetGroundAltitude(LandingGearGroundHeight)
-                            upAmount = 0
-                            BrakeIsOn = true
-                            autoRoll = autoRollPreference 
-                            apBrk = false
-                        else
-                            BrakeIsOn = true
-                        end
-                elseif StrongBrakes and (constructVelocity:normalize():dot(-up) < 0.999) then
-                    BrakeIsOn = true
-                    AlignToWorldVector()
-                elseif (vSpd < -brakeLandingRate and not skipLandingRate) or ((hSpd > 0.05 or hSpd < -0.05) and apBrk) then
-                    BrakeIsOn = true
-                elseif not skipLandingRate then
-                    BrakeIsOn = false
+                    elseif StrongBrakes and (constructVelocity:normalize():dot(-up) < 0.999) then
+                        BrakeIsOn = true
+                        AlignToWorldVector()
+                    elseif (vSpd < -brakeLandingRate and not skipLandingRate) or ((hSpd > 0.05 or hSpd < -0.05) and apBrk) then
+                        BrakeIsOn = true
+                    elseif not skipLandingRate then
+                        BrakeIsOn = false
+                    end
                 end
             end
             if AutoTakeoff or spaceLaunch then
@@ -1887,7 +1892,9 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
             ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
             AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
-            if #apRoute==0 and AutopilotTargetName ~= "LASTSTART" and ATLAS.findAtlasIndex(SavedLocations, "LASTSTART") == -1 then ATLAS.AddNewLocation("LASTSTART", worldPos, false, false) end
+            if SaveStartingLocation and #apRoute==0 and AutopilotTargetName ~= "STARTINGPOINT" and ATLAS.findAtlasIndex(SavedLocations, "STARTINGPOINT") == -1 and abvGndDet > -1 then 
+                ATLAS.AddNewLocation("STARTINGPOINT", worldPos, false, false) 
+            end
             if CustomTarget ~= nil then
                 LockPitch = nil
                 SpaceTarget = (CustomTarget.planetname == "Space")
@@ -2115,6 +2122,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             apThrottleSet = false
             HoldAltitude = coreAltitude
             TargetSet = false
+            apBrk = false
         end
         VectorToTarget = false
         AutoTakeoff = false
@@ -2122,8 +2130,10 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         -- We won't abort interplanetary because that would fuck everyone.
         ProgradeIsOn = false -- No reason to brake while facing prograde, but retrograde yes.
         BrakeLanding = false
+        alignHeading = nil
         AutoLanding = false
         ReversalIsOn = nil
+        apBrk = false
         if not antigravOn then
             AltitudeHold = false -- And stop alt hold
             LockPitch = nil
@@ -2138,7 +2148,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         spaceLand = false
         finalLand = false
         upAmount = 0
-        if AutopilotTargetName == "LASTSTART" then ATLAS.ClearCurrentPosition() end
     end
 
     function ap.BrakeToggle() -- Toggle brakes on and off
