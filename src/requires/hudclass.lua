@@ -137,10 +137,9 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                         fuelMass = (eleMass(tankTable[i][tankID]) - tankTable[i][tankMassEmpty])
                         fuelMassLast = tankTable[i][tankLastMass]
                         if fuelMassLast > fuelMass then 
-                            tankTable[i][tankLastTime] = curTime 
                             fuelUsed[slottedTankType] = fuelUsed[slottedTankType]+(fuelMassLast - fuelMass) 
                         end
-                        tankTable[i][tankLastMass] = fuelMass
+
                         if slottedIndex ~= 0 then
                             fuelPercentTable[i] = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
                                                     .percentage
@@ -159,6 +158,8 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                                                             ((fuelMassLast - fuelMass) / (curTime - tankTable[i][tankLastTime])))
                             end
                         end
+                        tankTable[i][tankLastTime] = curTime
+                        tankTable[i][tankLastMass] = fuelMass
                     end
                     if name == nameSearchPrefix then
                         name = stringf("%s %d", nameReplacePrefix, i)

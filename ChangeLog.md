@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.713
+- FIX: Fixed time remaining on fuel bars, been gone since 1.707 :(
+
 Version 1.712 - Landing Alignment, Starting Point, and Relativism
 - FEATURE: For any custom save point (private or databank) you can select it in IPH and hold shift to choose Save Heading button.
     This will save the current heading of your ship to the currently selected IPH WP.  Anytime you AP to a waypoint with a saved heading
