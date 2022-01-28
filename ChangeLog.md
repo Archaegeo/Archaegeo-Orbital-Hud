@@ -1,6 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.713
+- CHANGE: If `ExtraEscapeThrust` > 0 then AtmoSpeedLimit when <10% atmosphere will now slowly increase actual speed till you hit 0.05% atmosphere where it turns off completely.
+    (Formula of extra speed in m/s:  addThrust = (0.1 - atmosDensity)*adjustedAtmoSpeedLimit*ExtraEscapeThrust)
+- USERSETTING: New variable `ExtraEscapeThrust` defaults to 0.  If set to > 0, the above CHANGE takes effect.  This is in physics area meaning tweak
+    slowly cause large changes might burn you up
 - FIX: Fixed time remaining on fuel bars, been gone since 1.707 :(
 
 Version 1.712 - Landing Alignment, Starting Point, and Relativism
