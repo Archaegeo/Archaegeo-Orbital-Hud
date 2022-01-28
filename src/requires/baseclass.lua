@@ -832,7 +832,11 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                 -- 0.5, 0, 1 is v good.  One early braking bit then stabilizes easily .  10 as the last is way too much, it's bouncy.  Even 2.  1 will do
             end
             -- Add in vertical speed as well as the front speed, to help with ships that have very bad brakes
-            throttlePID:inject(adjustedAtmoSpeedLimit/3.6 - constructVelocity:dot(constructForward))
+            local addThrust = 0
+            if ExtraEscapeThrust > 0 and atmosDensity < 0.1 and atmosDensity > 0.005 then
+                addThrust = (0.1 - atmosDensity)*adjustedAtmoSpeedLimit*ExtraEscapeThrust
+            end
+            throttlePID:inject(adjustedAtmoSpeedLimit/3.6 + addThrust - constructVelocity:dot(constructForward))
             local pidGet = throttlePID:get()
             calculatedThrottle = uclamp(pidGet,-1,1)
             if not ThrottleValue then 
@@ -850,7 +854,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             if (brakePID == nil) then
                 brakePID = pid.new(1 * 0.01, 0, 1 * 0.1)
             end
-            brakePID:inject(constructVelocity:len() - (adjustedAtmoSpeedLimit/3.6)) 
+            brakePID:inject(constructVelocity:len() - (adjustedAtmoSpeedLimit/3.6) - addThrust) 
             local calculatedBrake = uclamp(brakePID:get(),0,1)
             if (atmosDensity > 0 and vSpd < -80) or atmosDensity > 0.005 then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
                 brakeInput2 = calculatedBrake
