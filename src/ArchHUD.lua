@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.712
+VERSION_NUMBER = 0.713
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
     -- User variables. Must be global to work with databank system
@@ -140,13 +140,15 @@ VERSION_NUMBER = 0.712
         DampingMultiplier = 40 -- (Default: 40) How strongly autopilot dampens when nearing the correct orientation
         apTickRate = 0.0166667 -- (Default: 0.0166667) Set the Tick Rate for your autopilot features. 0.016667 is effectively 60 fps and the default value. 0.03333333 is 30 fps.
         hudTickRate = 0.0666667 -- (Default: 0.0666667) Set the tick rate for your HUD. Default is 4 times slower than apTickRate
+        ExtraEscapeThrust = 0.0 -- (Default: 0.0) Set this to some value (start low till you know your ship) to apply extra thrust between 10% and 0.05% atmosphere while using AtmoSpeedLimit.
         ExtraLongitudeTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "forward faster major" These will be added to the engines that are control by longitude.
         ExtraLateralTags = "none" -- (Default: "none") Enter any extra lateral tags you use inside '' seperated by space, i.e. "left right" These will be added to the engines that are control by lateral.
         ExtraVerticalTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "up down" These will be added to the engines that are control by vertical.
         savableVariablesPhysics = {speedChangeLarge={set=function (i)speedChangeLarge=i end,get=function() return speedChangeLarge end}, speedChangeSmall={set=function (i)speedChangeSmall=i end,get=function() return speedChangeSmall end}, MouseXSensitivity={set=function (i)MouseXSensitivity=i end,get=function() return MouseXSensitivity end}, MouseYSensitivity={set=function (i)MouseYSensitivity=i end,get=function() return MouseYSensitivity end}, autoRollFactor={set=function (i)autoRollFactor=i end,get=function() return autoRollFactor end},
         rollSpeedFactor={set=function (i)rollSpeedFactor=i end,get=function() return rollSpeedFactor end}, autoRollRollThreshold={set=function (i)autoRollRollThreshold=i end,get=function() return autoRollRollThreshold end}, minRollVelocity={set=function (i)minRollVelocity=i end,get=function() return minRollVelocity end}, TrajectoryAlignmentStrength={set=function (i)TrajectoryAlignmentStrength=i end,get=function() return TrajectoryAlignmentStrength end},
         torqueFactor={set=function (i)torqueFactor=i end,get=function() return torqueFactor end}, pitchSpeedFactor={set=function (i)pitchSpeedFactor=i end,get=function() return pitchSpeedFactor end}, yawSpeedFactor={set=function (i)yawSpeedFactor=i end,get=function() return yawSpeedFactor end}, brakeSpeedFactor={set=function (i)brakeSpeedFactor=i end,get=function() return brakeSpeedFactor end}, brakeFlatFactor={set=function (i)brakeFlatFactor=i end,get=function() return brakeFlatFactor end}, DampingMultiplier={set=function (i)DampingMultiplier=i end,get=function() return DampingMultiplier end}, 
-        apTickRate={set=function (i)apTickRate=i end,get=function() return apTickRate end},  hudTickRate={set=function (i)hudTickRate=i end,get=function() return hudTickRate end}, ExtraLongitudeTags={set=function (i)ExtraLongitudeTags=i end,get=function() return ExtraLongitudeTags end}, ExtraLateralTags={set=function (i)ExtraLateralTags=i end,get=function() return ExtraLateralTags end}, ExtraVerticalTags={set=function (i)ExtraVerticalTags=i end,get=function() return ExtraVerticalTags end}}
+        apTickRate={set=function (i)apTickRate=i end,get=function() return apTickRate end},  hudTickRate={set=function (i)hudTickRate=i end,get=function() return hudTickRate end}, ExtraEscapeThrust={set=function (i)ExtraEscapeThrust=i end,get=function() return ExtraEscapeThrust end}, 
+        ExtraLongitudeTags={set=function (i)ExtraLongitudeTags=i end,get=function() return ExtraLongitudeTags end}, ExtraLateralTags={set=function (i)ExtraLateralTags=i end,get=function() return ExtraLateralTags end}, ExtraVerticalTags={set=function (i)ExtraVerticalTags=i end,get=function() return ExtraVerticalTags end}}
 
     -- Auto Variable declarations that store status of ship on databank. Do not edit directly here unless you know what you are doing, these change as ship flies.
     -- NOTE: autoVariables below must contain any variable that needs to be saved/loaded from databank system
@@ -1718,10 +1720,9 @@ VERSION_NUMBER = 0.712
                             fuelMass = (eleMass(tankTable[i][tankID]) - tankTable[i][tankMassEmpty])
                             fuelMassLast = tankTable[i][tankLastMass]
                             if fuelMassLast > fuelMass then 
-                                tankTable[i][tankLastTime] = curTime 
                                 fuelUsed[slottedTankType] = fuelUsed[slottedTankType]+(fuelMassLast - fuelMass) 
                             end
-                            tankTable[i][tankLastMass] = fuelMass
+    
                             if slottedIndex ~= 0 then
                                 fuelPercentTable[i] = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
                                                         .percentage
@@ -1740,6 +1741,8 @@ VERSION_NUMBER = 0.712
                                                                 ((fuelMassLast - fuelMass) / (curTime - tankTable[i][tankLastTime])))
                                 end
                             end
+                            tankTable[i][tankLastTime] = curTime
+                            tankTable[i][tankLastMass] = fuelMass
                         end
                         if name == nameSearchPrefix then
                             name = stringf("%s %d", nameReplacePrefix, i)
@@ -8734,7 +8737,11 @@ VERSION_NUMBER = 0.712
                     -- 0.5, 0, 1 is v good.  One early braking bit then stabilizes easily .  10 as the last is way too much, it's bouncy.  Even 2.  1 will do
                 end
                 -- Add in vertical speed as well as the front speed, to help with ships that have very bad brakes
-                throttlePID:inject(adjustedAtmoSpeedLimit/3.6 - constructVelocity:dot(constructForward))
+                local addThrust = 0
+                if ExtraEscapeThrust > 0 and atmosDensity < 0.1 and atmosDensity > 0.005 then
+                    addThrust = (0.1 - atmosDensity)*adjustedAtmoSpeedLimit*ExtraEscapeThrust
+                end
+                throttlePID:inject(adjustedAtmoSpeedLimit/3.6 + addThrust - constructVelocity:dot(constructForward))
                 local pidGet = throttlePID:get()
                 calculatedThrottle = uclamp(pidGet,-1,1)
                 if not ThrottleValue then 
@@ -8752,7 +8759,7 @@ VERSION_NUMBER = 0.712
                 if (brakePID == nil) then
                     brakePID = pid.new(1 * 0.01, 0, 1 * 0.1)
                 end
-                brakePID:inject(constructVelocity:len() - (adjustedAtmoSpeedLimit/3.6)) 
+                brakePID:inject(constructVelocity:len() - (adjustedAtmoSpeedLimit/3.6) - addThrust) 
                 local calculatedBrake = uclamp(brakePID:get(),0,1)
                 if (atmosDensity > 0 and vSpd < -80) or atmosDensity > 0.005 then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
                     brakeInput2 = calculatedBrake
