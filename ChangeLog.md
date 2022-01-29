@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 0.714
+- FIX: Prevent `ExtraEscapeThrust` being applied during Reentry or if vSpd < -50 m/s.
+
 Version 0.713
 - CHANGE: If `ExtraEscapeThrust` > 0 then AtmoSpeedLimit when <10% atmosphere will now slowly increase actual speed till you hit 0.05% atmosphere where it turns off completely.
     (Formula of extra speed in m/s:  addThrust = (0.1 - atmosDensity)*adjustedAtmoSpeedLimit*ExtraEscapeThrust)
