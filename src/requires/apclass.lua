@@ -1856,6 +1856,16 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
             VectorStatus = "Proceeding to Waypoint"
         end
+
+        local function getIndex(name)
+            if name then
+                for i,k in pairs(AtlasOrdered) do
+                    if k.name and k.name == name then return i end
+                end
+            else
+                return 0
+            end
+        end
         local routeOrbit = false
         if (time - apDoubleClick) < 1.5 and atmosDensity > 0 then
             if not SpaceEngines then
@@ -1880,7 +1890,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
             if 0.5 * Nav:maxForceForward() / c.g() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
             if #apRoute>0 and not finalLand then 
-                AutopilotTargetIndex = apRoute[1]
+                AutopilotTargetIndex = getIndex(apRoute[1])
                 ATLAS.UpdateAutopilotTarget()
                 table.remove(apRoute,1)
                 msgText = "Route Autopilot in Progress"
@@ -1995,7 +2005,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             apRoute = {}
             msgText = "Current Route Cleared"
         else
-            apRoute[#apRoute+1]=AutopilotTargetIndex
+            apRoute[#apRoute+1]=CustomTarget.name
             msgText = "Added "..CustomTarget.name.." to route. "
         end
         return apRoute

@@ -643,7 +643,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                 "/iphWP - displays current IPH target's ::pos waypoint in lua chat\n"..
                 "/resist 0.15, 0.15, 0.15, 0.15 - Sets shield resistance distribution of the floating 60% extra available, usable once per minute\n"..
                 "/deletewp - Deletes current selected custom wp\n"..
-                "/createPrivate - dumps all custom waypoints to logfile and a screen if present for cut and paste to privatelocations.lua"
+                "/createPrivate (all) - dumps private lcoations to logfile and screen to cut and paste to privatelocations.lua, all if present will make it include all databank locations."
         i = string.find(text, " ")
         command = text
         if i ~= nil then
@@ -764,20 +764,31 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                 msgText = "No target selected in IPH"
             end
         elseif command == "/createPrivate" then
+            local saveStr = "privatelocations = {\n"
+            local msgStr = ""
             if #privatelocations > 0 then
-                local saveStr = "privatelocations = {\n"
                 for k,v in pairs(privatelocations) do
                     saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
-                                        "name = '"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n save = "
-                    if v.safe then saveStr = saveStr.."true},\n" else saveStr = saveStr.."false},\n" end
+                                        "name = '"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
+                    if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
+                    if v.safe then saveStr = saveStr.."safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
                 end
-                saveStr = saveStr.."}\n return privatelocations"
-                s.logInfo("PRIVATELOCATIONS:"..saveStr)
-                if screenHud_1 then screenHud_1.setHTML(saveStr) end
-                msgText = "privatelocations.lua created in logfile and on attached screen if present"
-            else
-                msgText = "No private locations to save"
             end
+            msgStr = #privatelocations.."-Private "
+            if arguement == "all" then
+                for k,v in pairs(SavedLocations) do
+                    saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
+                                        "name = '*"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
+                    if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
+                    if v.safe then saveStr = saveStr.."safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
+                end
+                msgStr = msgStr..#SavedLocations.."-Public "
+            end
+            saveStr = saveStr.."}\n return privatelocations"
+            s.logInfo("PRIVATELOCATIONS:"..saveStr)
+            if screenHud_1 then screenHud_1.setHTML(saveStr) end
+            msgText = msgStr.."locations dumped to logfile and screen if present.\n Cut and paste to privatelocations.lua to use"
+            msgTimer = 7
         end
     end
 
