@@ -1,5 +1,14 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 0.715
+- CHANGE: Routes now save location name vice index number.  This means routes will continue to work if you add or remove 
+    locations not in the route from the custom waypoints.  This does mean old saved routes will no longer function.
+- CHANGE: /createPrivate now takes and arguement of all, if all is used, it saves private and databank locations to the 
+    output log/screen for cut and paste into privatelocations.lua
+- FIX: Official Atlas has wrong atmosphere data for Lacobus.  Added a line to fix till NQ updates official Atlas.lua
+- FIX: Added check for SetupComplete to prevent user input prior to hud finishing loading.  (prevents bugs)
+- FIX: Made private locations save heading if present
+
 Version 0.714
 - FIX: Prevent `ExtraEscapeThrust` being applied during Reentry or if vSpd < -50 m/s.
 

@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.714
+VERSION_NUMBER = 0.715
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
     -- User variables. Must be global to work with databank system
@@ -2593,7 +2593,7 @@ VERSION_NUMBER = 0.714
                 end
                 for k,i in pairs(checkRoute) do
                     y=y+20
-                    newContent[#newContent + 1] = svgText( x, y, k..". "..getAPName(checkRoute[k]), "pdim txtstart size20")
+                    newContent[#newContent + 1] = svgText( x, y, k..". "..checkRoute[k], "pdim txtstart size20")
                 end
             end
     
@@ -3506,13 +3506,13 @@ VERSION_NUMBER = 0.714
                
                 local function getAPEnableName(index)
                     local checkRoute = AP.routeWP(true)
-                    if checkRoute and #checkRoute > 0 then return "Engage Route: "..getAPName(checkRoute[1]) end
+                    if checkRoute and #checkRoute > 0 then return "Engage Route: "..checkRoute[1] end
                     return "Engage Autopilot: " .. getAPName(index)
                 end
     
                 local function getAPDisableName(index)
                     local checkRoute = AP.routeWP(true)
-                    if checkRoute and #checkRoute > 0 then return "Next Route Point: "..getAPName(checkRoute[1]) end
+                    if checkRoute and #checkRoute > 0 then return "Next Route Point: "..checkRoute[1] end
                     return "Disable Autopilot: " .. getAPName(index)
                 end   
     
@@ -3595,8 +3595,6 @@ VERSION_NUMBER = 0.714
                 -- Make 9 more buttons that only show when moused over the AP button
                 local i
                 local function getAtlasIndexFromAddition(add)
-                    local checkRoute = AP.routeWP(true)
-                    if checkRoute and #checkRoute > 0 then return checkRoute[1] end
                     local index = apScrollIndex + add
                     if index > #AtlasOrdered then
                         index = index-#AtlasOrdered-1
@@ -6624,6 +6622,16 @@ VERSION_NUMBER = 0.714
                 end
                 VectorStatus = "Proceeding to Waypoint"
             end
+    
+            local function getIndex(name)
+                if name then
+                    for i,k in pairs(AtlasOrdered) do
+                        if k.name and k.name == name then return i end
+                    end
+                else
+                    return 0
+                end
+            end
             local routeOrbit = false
             if (time - apDoubleClick) < 1.5 and atmosDensity > 0 then
                 if not SpaceEngines then
@@ -6648,7 +6656,7 @@ VERSION_NUMBER = 0.714
             if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
                 if 0.5 * Nav:maxForceForward() / c.g() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
                 if #apRoute>0 and not finalLand then 
-                    AutopilotTargetIndex = apRoute[1]
+                    AutopilotTargetIndex = getIndex(apRoute[1])
                     ATLAS.UpdateAutopilotTarget()
                     table.remove(apRoute,1)
                     msgText = "Route Autopilot in Progress"
@@ -6763,7 +6771,7 @@ VERSION_NUMBER = 0.714
                 apRoute = {}
                 msgText = "Current Route Cleared"
             else
-                apRoute[#apRoute+1]=AutopilotTargetIndex
+                apRoute[#apRoute+1]=CustomTarget.name
                 msgText = "Added "..CustomTarget.name.." to route. "
             end
             return apRoute
@@ -7751,7 +7759,7 @@ VERSION_NUMBER = 0.714
                     "/iphWP - displays current IPH target's ::pos waypoint in lua chat\n"..
                     "/resist 0.15, 0.15, 0.15, 0.15 - Sets shield resistance distribution of the floating 60% extra available, usable once per minute\n"..
                     "/deletewp - Deletes current selected custom wp\n"..
-                    "/createPrivate - dumps all custom waypoints to logfile and a screen if present for cut and paste to privatelocations.lua"
+                    "/createPrivate (all) - dumps private lcoations to logfile and screen to cut and paste to privatelocations.lua, all if present will make it include all databank locations."
             i = string.find(text, " ")
             command = text
             if i ~= nil then
@@ -7872,20 +7880,31 @@ VERSION_NUMBER = 0.714
                     msgText = "No target selected in IPH"
                 end
             elseif command == "/createPrivate" then
+                local saveStr = "privatelocations = {\n"
+                local msgStr = ""
                 if #privatelocations > 0 then
-                    local saveStr = "privatelocations = {\n"
                     for k,v in pairs(privatelocations) do
                         saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
-                                            "name = '"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n save = "
-                        if v.safe then saveStr = saveStr.."true},\n" else saveStr = saveStr.."false},\n" end
+                                            "name = '"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
+                        if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
+                        if v.safe then saveStr = saveStr.."safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
                     end
-                    saveStr = saveStr.."}\n return privatelocations"
-                    s.logInfo("PRIVATELOCATIONS:"..saveStr)
-                    if screenHud_1 then screenHud_1.setHTML(saveStr) end
-                    msgText = "privatelocations.lua created in logfile and on attached screen if present"
-                else
-                    msgText = "No private locations to save"
                 end
+                msgStr = #privatelocations.."-Private "
+                if arguement == "all" then
+                    for k,v in pairs(SavedLocations) do
+                        saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
+                                            "name = '*"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
+                        if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
+                        if v.safe then saveStr = saveStr.."safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
+                    end
+                    msgStr = msgStr..#SavedLocations.."-Public "
+                end
+                saveStr = saveStr.."}\n return privatelocations"
+                s.logInfo("PRIVATELOCATIONS:"..saveStr)
+                if screenHud_1 then screenHud_1.setHTML(saveStr) end
+                msgText = msgStr.."locations dumped to logfile and screen if present.\n Cut and paste to privatelocations.lua to use"
+                msgTimer = 7
             end
         end
     
@@ -8385,7 +8404,8 @@ VERSION_NUMBER = 0.714
                             planet.name = planet.name[1]
                     
                             planet.noAtmosphericDensityAltitude = planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
-                            planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius))
+                            if planet.name == "Lacobus" then planet.noAtmosphericDensityAltitude = 12510 end
+                            planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness)
                                     
                             planet.planetarySystemId = galaxyId
                             planet.bodyId = planet.id
@@ -9024,19 +9044,27 @@ VERSION_NUMBER = 0.714
         end
     
         function program.controlStart(action)
-            CONTROL.startControl(action)
+            if SetupComplete then
+                CONTROL.startControl(action)
+            end
         end
     
         function program.controlStop(action)
-            CONTROL.stopControl(action)
+            if SetupComplete then
+                CONTROL.stopControl(action)
+            end
         end
     
         function program.controlLoop(action)
-            CONTROL.loopControl(action)
+            if SetupComplete then
+                CONTROL.loopControl(action)
+            end
         end
     
         function program.controlInput(text)
-            CONTROL.inputTextControl(text)
+            if SetupComplete then
+                CONTROL.inputTextControl(text)
+            end
         end
     
         function program.radarEnter(id)
