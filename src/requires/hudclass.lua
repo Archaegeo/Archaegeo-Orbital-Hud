@@ -1010,7 +1010,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             end
             for k,i in pairs(checkRoute) do
                 y=y+20
-                newContent[#newContent + 1] = svgText( x, y, k..". "..getAPName(checkRoute[k]), "pdim txtstart size20")
+                newContent[#newContent + 1] = svgText( x, y, k..". "..checkRoute[k], "pdim txtstart size20")
             end
         end
 
@@ -1923,13 +1923,13 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
            
             local function getAPEnableName(index)
                 local checkRoute = AP.routeWP(true)
-                if checkRoute and #checkRoute > 0 then return "Engage Route: "..getAPName(checkRoute[1]) end
+                if checkRoute and #checkRoute > 0 then return "Engage Route: "..checkRoute[1] end
                 return "Engage Autopilot: " .. getAPName(index)
             end
 
             local function getAPDisableName(index)
                 local checkRoute = AP.routeWP(true)
-                if checkRoute and #checkRoute > 0 then return "Next Route Point: "..getAPName(checkRoute[1]) end
+                if checkRoute and #checkRoute > 0 then return "Next Route Point: "..checkRoute[1] end
                 return "Disable Autopilot: " .. getAPName(index)
             end   
 
@@ -2012,8 +2012,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             -- Make 9 more buttons that only show when moused over the AP button
             local i
             local function getAtlasIndexFromAddition(add)
-                local checkRoute = AP.routeWP(true)
-                if checkRoute and #checkRoute > 0 then return checkRoute[1] end
                 local index = apScrollIndex + add
                 if index > #AtlasOrdered then
                     index = index-#AtlasOrdered-1

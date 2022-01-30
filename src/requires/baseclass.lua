@@ -480,7 +480,8 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                         planet.name = planet.name[1]
                 
                         planet.noAtmosphericDensityAltitude = planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
-                        planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius))
+                        if planet.name == "Lacobus" then planet.noAtmosphericDensityAltitude = 12510 end
+                        planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness)
                                 
                         planet.planetarySystemId = galaxyId
                         planet.bodyId = planet.id
@@ -1119,19 +1120,27 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
     end
 
     function program.controlStart(action)
-        CONTROL.startControl(action)
+        if SetupComplete then
+            CONTROL.startControl(action)
+        end
     end
 
     function program.controlStop(action)
-        CONTROL.stopControl(action)
+        if SetupComplete then
+            CONTROL.stopControl(action)
+        end
     end
 
     function program.controlLoop(action)
-        CONTROL.loopControl(action)
+        if SetupComplete then
+            CONTROL.loopControl(action)
+        end
     end
 
     function program.controlInput(text)
-        CONTROL.inputTextControl(text)
+        if SetupComplete then
+            CONTROL.inputTextControl(text)
+        end
     end
 
     function program.radarEnter(id)
