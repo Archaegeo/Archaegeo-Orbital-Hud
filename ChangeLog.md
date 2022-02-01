@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 0.716
+- CLEANUP: Removed variables from globals.lua that are not user variables and that are not used outside of one class.
+- CLEANUP: Moved onFlush to apclass from baseclass
+
 Version 0.715
 - CHANGE: Routes now save location name vice index number.  This means routes will continue to work if you add or remove 
     locations not in the route from the custom waypoints.  This does mean old saved routes will no longer function.
