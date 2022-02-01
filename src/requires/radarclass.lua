@@ -16,6 +16,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
         local UpdateRadarCoroutine
         local perisPanelID
         local peris = 0
+        local contacts = {}
 
     local function UpdateRadarRoutine()
         -- UpdateRadarRoutine Locals

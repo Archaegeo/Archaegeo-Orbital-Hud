@@ -20,6 +20,16 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     local maxBrakeTime = 0
     local damageMessage = ""
     local WeaponPanelID = nil
+    local PrimaryR = SafeR
+    local PrimaryG = SafeG
+    local PrimaryB = SafeB
+    local rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
+    local rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..   mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]
+    local totalDistanceTrip = 0
+    local flightTime = 0
+    local lastOdometerOutput = ""
+    local lastTravelTime = systime()
+    local repairArrows = false
 
     --Local Huds Functions
         -- safezone() variables

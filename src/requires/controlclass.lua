@@ -400,34 +400,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             local function clearAll()         
                 if (time - clearAllCheck) < 1.5 then
                     play("clear","CA")
-                    AutopilotAccelerating = false
-                    AutopilotBraking = false
-                    AutopilotCruising = false
-                    Autopilot = false
-                    AutopilotRealigned = false
-                    AutopilotStatus = "Aligning"                
-                    RetrogradeIsOn = false
-                    ProgradeIsOn = false
-                    ReversalIsOn = nil
-                    AltitudeHold = false
-                    Reentry = false
-                    BrakeLanding = false
-                    BrakeIsOn = false
-                    AutoTakeoff = false
-                    VertTakeOff = false
-                    followMode = false
-                    apThrottleSet = false
-                    spaceLand = false
-                    spaceLaunch = false
-                    reentryMode = false
-                    autoRoll = autoRollPreference
-                    VectorToTarget = false
-                    TurnBurn = false
-                    gyroIsOn = false
-                    LockPitch = nil
-                    IntoOrbit = false
-                    apBrk = false
-                    alignHeading = nil
+                    AP.clearAll()
                 end
             end
             clearAll()
@@ -804,5 +777,6 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
     end
     -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
     --for k,v in pairs(require("autoconf/custom/archhud/custom/customcontrolclass")) do Control[k] = v end 
+
     return Control
 end

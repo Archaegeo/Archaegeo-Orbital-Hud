@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.716
+- CLEANUP: Removed variables from globals.lua that are not user variables and that are not used outside of one class.
+- CLEANUP: Moved onFlush to apclass from baseclass
+
 Version 1.715
 - CHANGE: Routes now save location name vice index number.  This means routes will continue to work if you add or remove 
     locations not in the route from the custom waypoints.  This does mean old saved routes will no longer function.
@@ -8,7 +12,6 @@ Version 1.715
 - FIX: Official Atlas has wrong atmosphere data for Lacobus.  Added a line to fix till NQ updates official Atlas.lua
 - FIX: Added check for SetupComplete to prevent user input prior to hud finishing loading.  (prevents bugs)
 - FIX: Made private locations save heading if present
-
 
 Version 1.714 - Urgent fix for `ExtraEscapeThrust`
 - FIX: Prevent `ExtraEscapeThrust` being applied during Reentry or if vSpd < -50 m/s.
