@@ -1,4 +1,4 @@
-function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1,
+function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
     mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
     navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq,
     getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)  
@@ -318,6 +318,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 return false
             end
         end
+
         
         inAtmo = (atmosphere() > 0)
         atmosDensity = atmosphere()
@@ -325,7 +326,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         abvGndDet = AboveGroundLevel()
         time = systime()
         lastApTickTime = time
-
 
         if CollisionSystem then checkCollision() end
 

@@ -539,8 +539,8 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             coroutine.yield() -- Just to make sure
 
             atlasSetup()
-            RADAR = RadarClass(c, s, u, library, radar_1, radar_2, 
-            mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play)
+            if radar_1 then RADAR = RadarClass(c, s, u, library, radar_1, radar_2, 
+            mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) end
             HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
             mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
             navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
@@ -548,6 +548,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             HUD.ButtonSetup()
             CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro, screenHud_1,
                 isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
+            if shield_1 then SHIELD = ShieldClass(shield_1, stringmatch, mfloor) end
             coroutine.yield()
             u.hide()
             s.showScreen(1)
@@ -559,11 +560,12 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             coroutine.yield()
 
             u.setTimer("apTick", apTickRate)
-            u.setTimer("radarTick", apTickRate)
+            if radar_1 then u.setTimer("radarTick", apTickRate) end
             u.setTimer("hudTick", hudTickRate)
             u.setTimer("oneSecond", 1)
             u.setTimer("tenthSecond", 1/10)
             u.setTimer("fiveSecond", 5) 
+            if shield_1 then u.setTimer("shieldTick", apTickRate) end
             play("start","SU")
         end)
         coroutine.resume(beginSetup)
@@ -642,7 +644,6 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             button.activate()
         end
         if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
-        local mod = 1 - (ContainerOptimization*0.05+FuelTankOptimization*0.05)
         s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank"))
         play("stop","SU")
     end
@@ -697,6 +698,8 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             AP.APTick()
         elseif timerId == "radarTick" then
             RADAR.UpdateRadar()
+        elseif timerId == "shieldTick" then
+            SHIELD.shieldTick()
         elseif timerId == "tagTick" then
             CONTROL.tagTick()
         elseif timerId == "contact" then

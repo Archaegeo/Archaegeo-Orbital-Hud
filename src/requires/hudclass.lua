@@ -1075,7 +1075,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 addTable(help, helpSpace)
                 if shield_1 then
                     table.insert(help,"Alt-Shift-6: Vent shields")
-                    table.insert(help,"Alt-Shift-7: Toggle shied off/on")
+                    if not AutoShieldToggle then table.insert(help,"Alt-Shift-7: Toggle shield off/on") end
                 end
             end
             if CustomTarget ~= nil then
@@ -2210,16 +2210,10 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             PrimaryR = PvPR
             PrimaryG = PvPG
             PrimaryB = PvPB
-            if shield_1 and AutoShieldToggle and shield_1.getState() == 0 then
-                shield_1.toggle()
-            end
         else
             PrimaryR = SafeR
             PrimaryG = SafeG
             PrimaryB = SafeB
-            if shield_1 and AutoShieldToggle and shield_1.getState() == 1 then
-                shield_1.toggle()
-            end
         end
         rgb = [[rgb(]] .. mfloor(PrimaryR + 0.6) .. "," .. mfloor(PrimaryG + 0.6) .. "," .. mfloor(PrimaryB + 0.6) .. [[)]]
         rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.8 + 0.5) .. "," .. mfloor(PrimaryG * 0.8 + 0.5) .. "," ..   mfloor(PrimaryB * 0.8 + 0.5) .. [[)]]    
@@ -2593,7 +2587,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         local msg, where
 
     function Hud.DrawRadarInfo()
-        radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY)
+        radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY) 
     end
 
     function Hud.DrawTanks()
@@ -2614,7 +2608,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         local resistances = shield_1.getResistances()
         local resistString = "A: "..(10+resistances[1]*100).."% / E: "..(10+resistances[2]*100).."% / K:"..(10+resistances[3]*100).."% / T: "..(10+resistances[4]*100).."%"
         local x, y = shieldX -60, shieldY+30
-        local shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints())
         local colorMod = mfloor(shieldPercent * 2.55)
         local color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
         local class = ""

@@ -290,14 +290,11 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             toggleView = false 
             if AltIsOn and holdingShift then 
                 if shield_1 then 
-                    local vcd = shield_1.getVentingCooldown()
-                    if vcd > 0 then msgText="Cannot vent again for "..vcd.." seconds" return end
-                    if shield_1.getShieldHitpoints()<shield_1.getMaxShieldHitpoints() then shield_1.startVenting() msgText="Shields Venting Enabled - NO SHIELDS WHILE VENTING" else msgText="Shields already at max hitpoints" end
-                    return
+                    SHIELD.ventShield()
                 else
                     msgText = "No shield found"
-                    return
                 end
+                return
             end
             AP.ToggleAltitudeHold()
         elseif action == "option7" then
@@ -639,18 +636,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                 msgText = "Select a saved target to rename first"
             end
         elseif shield_1 and command =="/resist" then
-            if not shield_1 then
-                msgText = "No shield found"
-                return
-            elseif arguement == nil or shield_1.getResistancesCooldown()>0 then
-                msgText = "Usable once per min.  Usage: /resist 0.15, 0.15, 0.15, 0.15"
-                return
-            end
-            local num  = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
-            local posPattern = num .. ', ' .. num .. ', ' ..  num .. ', ' .. num    
-            local antimatter, electromagnetic, kinetic, thermic = stringmatch(arguement, posPattern)
-            if thermic == nil or (antimatter + electromagnetic+ kinetic + thermic) > 0.6 then msgText="Improperly formatted or total exceeds 0.6" return end
-            if shield_1.setResistances(antimatter,electromagnetic,kinetic,thermic)==1 then msgText="Shield Resistances set" else msgText="Resistance setting failed." end
+            SHIELD.setResist(arguement)
         elseif command == "/addlocation" or string.find(text, "::pos") ~= nil then
             local temp = false
             local savename = "0-Temp"
