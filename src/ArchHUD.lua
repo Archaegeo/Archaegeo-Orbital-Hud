@@ -2476,7 +2476,9 @@ VERSION_NUMBER = 0.716
                 end
                 if BrakeLanding then
                     if StrongBrakes then
-                        newContent[#newContent + 1] = svgText(warningX, apY, "Brake-Landing", "warnings")
+                        local str = "Brake-Landing"
+                        if alignHeading then str = str..": Aligning" end
+                        newContent[#newContent + 1] = svgText(warningX, apY, str, "warnings")
                     else
                         newContent[#newContent + 1] = svgText(warningX, apY, "Coast-Landing", "warnings")
                     end
@@ -6344,13 +6346,11 @@ VERSION_NUMBER = 0.716
                         elseif not AutoTakeoff then
                             BrakeIsOn = false
                         end
-                        if (VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget))) then
-                            if not antigravOn then  
-                                play("bklOn","BL")
-                                BrakeLanding = true 
-                                apBrk = true
-                                if CustomTarget.heading then alignHeading = CustomTarget.heading else alignHeading = nil end
-                            end
+                    if (VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget))) then
+                            play("bklOn","BL")
+                            BrakeLanding = true 
+                            apBrk = true
+                            if CustomTarget.heading then alignHeading = CustomTarget.heading else alignHeading = nil end
                             VectorToTarget = false
                             if AutopilotTargetName == "STARTINGPOINT" then ATLAS.ClearCurrentPosition() end
                             VectorStatus = "Proceeding to Waypoint"
@@ -6425,6 +6425,8 @@ VERSION_NUMBER = 0.716
                     else
                         local skipLandingRate = false
                         local distanceToStop = 30 
+                        local aggBase = false
+                        if not ExternalAGG and antigravOn then aggBase = antigrav.getBaseAltitude() end
     
                         if maxKinematicUp ~= nil and maxKinematicUp > 0 then
     
@@ -6465,9 +6467,14 @@ VERSION_NUMBER = 0.716
                                 stopDistance = (stopDistance+15+(velMag*deltaTick))*1.1 -- Add leeway for large ships with forcefields or landing gear, and for lag
                                 -- And just bad math I guess
                                 local knownAltitude = (CustomTarget ~= nil and planet:getAltitude(CustomTarget.position) > 0 and CustomTarget.safe)
-                                
+    
                                 if knownAltitude then
-                                    local targetAltitude = planet:getAltitude(CustomTarget.position)
+                                    local targetAltitude
+                                    if aggBase and aggBase < coreAltitude then
+                                        targetAltitude = aggBase
+                                    else
+                                        targetAltitude = planet:getAltitude(CustomTarget.position)
+                                    end
                                     local distanceToGround = coreAltitude - targetAltitude - 100 -- Try to aim for like 100m above the ground, give it lots of time
                                     -- We don't have to squeeze out the little bits of performance
                                     local targetVec = CustomTarget.position - worldPos
@@ -6483,9 +6490,7 @@ VERSION_NUMBER = 0.716
                                         BrakeIsOn = false
                                         skipLandingRate = true
                                     end
-                                end
-                                
-                                if not knownAltitude and CalculateBrakeLandingSpeed then
+                                elseif CalculateBrakeLandingSpeed then
                                     if stopDistance >= distanceToStop then -- 10% padding
                                         BrakeIsOn = true
                                     else
@@ -6503,7 +6508,12 @@ VERSION_NUMBER = 0.716
                         stablized = true
     
                         groundDistance = abvGndDet
-                        if groundDistance > -1 then 
+                        if groundDistance == -1 and aggBase and (coreAltitude - aggBase) < 100 then
+                            BrakeLanding = false
+                            BrakeIsOn = true
+                            autoRoll = autoRollPreference 
+                            apBrk = false
+                        elseif groundDistance > -1 then 
                                 if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading then -- Or if they start going back up
                                     BrakeLanding = false
                                     AltitudeHold = false
@@ -6523,12 +6533,12 @@ VERSION_NUMBER = 0.716
                         elseif StrongBrakes and (constructVelocity:normalize():dot(-up) < 0.999) then
                             BrakeIsOn = true
                             AlignToWorldVector()
-                        elseif (vSpd < -brakeLandingRate and not skipLandingRate) or ((hSpd > 0.05 or hSpd < -0.05) and apBrk) then
+                        elseif (vSpd < -brakeLandingRate and not skipLandingRate) or (math.abs(hSpd) > 0.05 and apBrk) then
                             BrakeIsOn = true
                         elseif not skipLandingRate then
                             BrakeIsOn = false
                         end
-                    end
+                    end 
                 end
                 if AutoTakeoff or spaceLaunch then
                     local intersectBody, nearSide, farSide

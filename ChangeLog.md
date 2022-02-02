@@ -1,9 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 0.716 - Shield Improvements
+Version 0.716 - Shield, AGG, and Cleanup
 - FEATURE: Hud will adjust shield resists once per minute to the ratio of damage done if shield percent remaining is < `AutoShieldPercent`
 - NEW: User variable `AutoShieldPercent` (Default: 90) Automatically adjusts shield resists once per minute if shield percent is less than this value.
 - NEW: shieldclass.lua file and class in standalone
+- FEATURE: If ExternalAGG is off, and AGG is activated, Brake Landing will use AGG Current Base Height for landing altitude if it is below current altitude (vice ground).
+- ENHANCE: Added `Aligning` after Brake Landing if ship is aligning.
 - CLEANUP: radarclass.lua and shieldclass.lua are only looked for if a radar or shield are slotted
 - CLEANUP: Removed variables from globals.lua that are not user variables and that are not used outside of one class.
 - CLEANUP: Moved onFlush to apclass from baseclass
