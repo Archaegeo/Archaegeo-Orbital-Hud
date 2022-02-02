@@ -862,7 +862,9 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             end
             if BrakeLanding then
                 if StrongBrakes then
-                    newContent[#newContent + 1] = svgText(warningX, apY, "Brake-Landing", "warnings")
+                    local str = "Brake-Landing"
+                    if alignHeading then str = str..": Aligning" end
+                    newContent[#newContent + 1] = svgText(warningX, apY, str, "warnings")
                 else
                     newContent[#newContent + 1] = svgText(warningX, apY, "Coast-Landing", "warnings")
                 end

@@ -49,5 +49,4 @@ function ShieldClass(shield_1, stringmatch, mfloor) -- Everything related to rad
     end
 
     return Shield
-    
 end
