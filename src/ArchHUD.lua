@@ -79,10 +79,11 @@ VERSION_NUMBER = 0.716
         fuelTankHandlingRocket = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
         ContainerOptimization = 0 -- (Default: 0) For accurate estimates on unslotted tanks, set this to the Container Optimization level of the person who placed the tanks. Ignored for slotted tanks.
         FuelTankOptimization = 0 -- (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank optimization skill level of the person who placed the tank. Ignored for slotted tanks.
+        AutoShieldPercent = 90 -- (Default: 90) Automatically adjusts shield resists once per minute if shield percent is less than this value.
         savableVariablesHandling = {YawStallAngle={set=function (i)YawStallAngle=i end,get=function() return YawStallAngle end},PitchStallAngle={set=function (i)PitchStallAngle=i end,get=function() return PitchStallAngle end},brakeLandingRate={set=function (i)brakeLandingRate=i end,get=function() return brakeLandingRate end},MaxPitch={set=function (i)MaxPitch=i end,get=function() return MaxPitch end}, ReEntryPitch={set=function (i)ReEntryPitch=i end,get=function() return ReEntryPitch end},LockPitchTarget={set=function (i)LockPitchTarget=i end,get=function() return LockPitchTarget end}, AutopilotSpaceDistance={set=function (i)AutopilotSpaceDistance=i end,get=function() return AutopilotSpaceDistance end}, TargetOrbitRadius={set=function (i)TargetOrbitRadius=i end,get=function() return TargetOrbitRadius end}, LowOrbitHeight={set=function (i)LowOrbitHeight=i end,get=function() return LowOrbitHeight end},
         AtmoSpeedLimit={set=function (i)AtmoSpeedLimit=i end,get=function() return AtmoSpeedLimit end},SpaceSpeedLimit={set=function (i)SpaceSpeedLimit=i end,get=function() return SpaceSpeedLimit end},AutoTakeoffAltitude={set=function (i)AutoTakeoffAltitude=i end,get=function() return AutoTakeoffAltitude end},TargetHoverHeight={set=function (i)TargetHoverHeight=i end,get=function() return TargetHoverHeight end}, LandingGearGroundHeight={set=function (i)LandingGearGroundHeight=i end,get=function() return LandingGearGroundHeight end}, ReEntryHeight={set=function (i)ReEntryHeight=i end,get=function() return ReEntryHeight end},
         MaxGameVelocity={set=function (i)MaxGameVelocity=i end,get=function() return MaxGameVelocity end}, AutopilotInterplanetaryThrottle={set=function (i)AutopilotInterplanetaryThrottle=i end,get=function() return AutopilotInterplanetaryThrottle end},warmup={set=function (i)warmup=i end,get=function() return warmup end},fuelTankHandlingAtmo={set=function (i)fuelTankHandlingAtmo=i end,get=function() return fuelTankHandlingAtmo end},fuelTankHandlingSpace={set=function (i)fuelTankHandlingSpace=i end,get=function() return fuelTankHandlingSpace end},
-        fuelTankHandlingRocket={set=function (i)fuelTankHandlingRocket=i end,get=function() return fuelTankHandlingRocket end},ContainerOptimization={set=function (i)ContainerOptimization=i end,get=function() return ContainerOptimization end},FuelTankOptimization={set=function (i)FuelTankOptimization=i end,get=function() return FuelTankOptimization end}}
+        fuelTankHandlingRocket={set=function (i)fuelTankHandlingRocket=i end,get=function() return fuelTankHandlingRocket end},ContainerOptimization={set=function (i)ContainerOptimization=i end,get=function() return ContainerOptimization end},FuelTankOptimization={set=function (i)FuelTankOptimization=i end,get=function() return FuelTankOptimization end},AutoShieldPercent={set=function (i)AutoShieldPercent=i end,get=function() return AutoShieldPercent end}}
 
 
     -- HUD Postioning variables
@@ -251,6 +252,7 @@ VERSION_NUMBER = 0.716
         AP = nil -- 5
         RADAR = nil -- 3
         CONTROL = nil -- 2
+        SHIELD = nil -- 2
         Animating = false -- 4
         Animated = false -- 2
         autoRoll = autoRollPreference -- 4
@@ -294,6 +296,7 @@ VERSION_NUMBER = 0.716
         customlocations = {} -- 2
         apBrk = false -- 2
         alignHeading=nil -- 2
+        if shield_1 then shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints()) end
     end
      
     --[[ timestamped print function for debugging
@@ -1556,6 +1559,59 @@ VERSION_NUMBER = 0.716
         --for k,v in pairs(require("autoconf/custom/archhud/custom/customradarclass")) do Radar[k] = v end 
         return Radar
     end
+    local function ShieldClass(shield_1, stringmatch, mfloor) -- Everything related to radar but draw data passed to HUD Class.
+        local Shield = {}
+        local RCD = shield_1.getResistancesCooldown()
+    
+        local function checkShield()
+            local shieldState = shield_1.getState()
+            if AutoShieldToggle then
+                if not notPvPZone and shieldState == 0 then
+                    shield_1.toggle()
+                elseif notPvPZone and shieldState == 1 then
+                    shield_1.toggle()
+                end
+            end
+        end
+    
+        local function updateResists()
+            local sRR = shield_1.getStressRatioRaw()
+            if sRR[1] == 0.0 and sRR[2] == 0.0 and sRR[3] == 0.0 and sRR[4] == 0.0 then return end
+            local setResist = shield_1.setResistances(0.6*sRR[1],0.6*sRR[2],0.6*sRR[3],0.6*sRR[4])
+            if setResist == 1 then msgText="Shield Resistances updated" else msgText = "Failed to update Shield Resistances" end
+        end
+    
+        function Shield.shieldTick()
+            shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints())
+            checkShield()
+            RCD = shield_1.getResistancesCooldown()
+            if RCD == 0 and shieldPercent < AutoShieldPercent then updateResists() end
+        end
+    
+        function Shield.setResist(arguement)
+            if not shield_1 then
+                msgText = "No shield found"
+                return
+            elseif arguement == nil or RCD>0 then
+                msgText = "Usable once per min.  Usage: /resist 0.15, 0.15, 0.15, 0.15"
+                return
+            end
+            local num  = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
+            local posPattern = num .. ', ' .. num .. ', ' ..  num .. ', ' .. num    
+            local antimatter, electromagnetic, kinetic, thermic = stringmatch(arguement, posPattern)
+            if thermic == nil or (antimatter + electromagnetic+ kinetic + thermic) > 0.6 then msgText="Improperly formatted or total exceeds 0.6" return end
+            if shield_1.setResistances(antimatter,electromagnetic,kinetic,thermic)==1 then msgText="Shield Resistances set" else msgText="Resistance setting failed." end
+        end
+    
+        function Shield.ventShield()
+            local vcd = shield_1.getVentingCooldown()
+            if vcd > 0 then msgText="Cannot vent again for "..vcd.." seconds" return end
+            if shield_1.getShieldHitpoints()<shield_1.getMaxShieldHitpoints() then shield_1.startVenting() msgText="Shields Venting Enabled - NO SHIELDS WHILE VENTING" else msgText="Shields already at max hitpoints" end
+        end
+    
+        return Shield
+        
+    end
     local function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
         mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
         navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
@@ -2633,7 +2689,7 @@ VERSION_NUMBER = 0.716
                     addTable(help, helpSpace)
                     if shield_1 then
                         table.insert(help,"Alt-Shift-6: Vent shields")
-                        table.insert(help,"Alt-Shift-7: Toggle shied off/on")
+                        if not AutoShieldToggle then table.insert(help,"Alt-Shift-7: Toggle shield off/on") end
                     end
                 end
                 if CustomTarget ~= nil then
@@ -3768,16 +3824,10 @@ VERSION_NUMBER = 0.716
                 PrimaryR = PvPR
                 PrimaryG = PvPG
                 PrimaryB = PvPB
-                if shield_1 and AutoShieldToggle and shield_1.getState() == 0 then
-                    shield_1.toggle()
-                end
             else
                 PrimaryR = SafeR
                 PrimaryG = SafeG
                 PrimaryB = SafeB
-                if shield_1 and AutoShieldToggle and shield_1.getState() == 1 then
-                    shield_1.toggle()
-                end
             end
             rgb = [[rgb(]] .. mfloor(PrimaryR + 0.6) .. "," .. mfloor(PrimaryG + 0.6) .. "," .. mfloor(PrimaryB + 0.6) .. [[)]]
             rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.8 + 0.5) .. "," .. mfloor(PrimaryG * 0.8 + 0.5) .. "," ..   mfloor(PrimaryB * 0.8 + 0.5) .. [[)]]    
@@ -4151,7 +4201,7 @@ VERSION_NUMBER = 0.716
             local msg, where
     
         function Hud.DrawRadarInfo()
-            radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY)
+            radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY) 
         end
     
         function Hud.DrawTanks()
@@ -4172,7 +4222,6 @@ VERSION_NUMBER = 0.716
             local resistances = shield_1.getResistances()
             local resistString = "A: "..(10+resistances[1]*100).."% / E: "..(10+resistances[2]*100).."% / K:"..(10+resistances[3]*100).."% / T: "..(10+resistances[4]*100).."%"
             local x, y = shieldX -60, shieldY+30
-            local shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints())
             local colorMod = mfloor(shieldPercent * 2.55)
             local color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
             local class = ""
@@ -4749,7 +4798,7 @@ VERSION_NUMBER = 0.716
         --for k,v in pairs(require("autoconf/custom/archhud/custom/customhudclass")) do Hud[k] = v end 
         return Hud
     end
-    local function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1,
+    local function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
         mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
         navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq,
         getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)  
@@ -5069,6 +5118,7 @@ VERSION_NUMBER = 0.716
                     return false
                 end
             end
+    
             
             inAtmo = (atmosphere() > 0)
             atmosDensity = atmosphere()
@@ -5076,7 +5126,6 @@ VERSION_NUMBER = 0.716
             abvGndDet = AboveGroundLevel()
             time = systime()
             lastApTickTime = time
-    
     
             if CollisionSystem then checkCollision() end
     
@@ -7906,14 +7955,11 @@ VERSION_NUMBER = 0.716
                 toggleView = false 
                 if AltIsOn and holdingShift then 
                     if shield_1 then 
-                        local vcd = shield_1.getVentingCooldown()
-                        if vcd > 0 then msgText="Cannot vent again for "..vcd.." seconds" return end
-                        if shield_1.getShieldHitpoints()<shield_1.getMaxShieldHitpoints() then shield_1.startVenting() msgText="Shields Venting Enabled - NO SHIELDS WHILE VENTING" else msgText="Shields already at max hitpoints" end
-                        return
+                        SHIELD.ventShield()
                     else
                         msgText = "No shield found"
-                        return
                     end
+                    return
                 end
                 AP.ToggleAltitudeHold()
             elseif action == "option7" then
@@ -8255,18 +8301,7 @@ VERSION_NUMBER = 0.716
                     msgText = "Select a saved target to rename first"
                 end
             elseif shield_1 and command =="/resist" then
-                if not shield_1 then
-                    msgText = "No shield found"
-                    return
-                elseif arguement == nil or shield_1.getResistancesCooldown()>0 then
-                    msgText = "Usable once per min.  Usage: /resist 0.15, 0.15, 0.15, 0.15"
-                    return
-                end
-                local num  = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
-                local posPattern = num .. ', ' .. num .. ', ' ..  num .. ', ' .. num    
-                local antimatter, electromagnetic, kinetic, thermic = stringmatch(arguement, posPattern)
-                if thermic == nil or (antimatter + electromagnetic+ kinetic + thermic) > 0.6 then msgText="Improperly formatted or total exceeds 0.6" return end
-                if shield_1.setResistances(antimatter,electromagnetic,kinetic,thermic)==1 then msgText="Shield Resistances set" else msgText="Resistance setting failed." end
+                SHIELD.setResist(arguement)
             elseif command == "/addlocation" or string.find(text, "::pos") ~= nil then
                 local temp = false
                 local savename = "0-Temp"
@@ -8937,8 +8972,8 @@ VERSION_NUMBER = 0.716
                 coroutine.yield() -- Just to make sure
     
                 atlasSetup()
-                RADAR = RadarClass(c, s, u, library, radar_1, radar_2, 
-                mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play)
+                if radar_1 then RADAR = RadarClass(c, s, u, library, radar_1, radar_2, 
+                mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) end
                 HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
                 mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
                 navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
@@ -8946,6 +8981,7 @@ VERSION_NUMBER = 0.716
                 HUD.ButtonSetup()
                 CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro, screenHud_1,
                     isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
+                if shield_1 then SHIELD = ShieldClass(shield_1, stringmatch, mfloor) end
                 coroutine.yield()
                 u.hide()
                 s.showScreen(1)
@@ -8957,11 +8993,12 @@ VERSION_NUMBER = 0.716
                 coroutine.yield()
     
                 u.setTimer("apTick", apTickRate)
-                u.setTimer("radarTick", apTickRate)
+                if radar_1 then u.setTimer("radarTick", apTickRate) end
                 u.setTimer("hudTick", hudTickRate)
                 u.setTimer("oneSecond", 1)
                 u.setTimer("tenthSecond", 1/10)
                 u.setTimer("fiveSecond", 5) 
+                if shield_1 then u.setTimer("shieldTick", apTickRate) end
                 play("start","SU")
             end)
             coroutine.resume(beginSetup)
@@ -9040,7 +9077,6 @@ VERSION_NUMBER = 0.716
                 button.activate()
             end
             if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
-            local mod = 1 - (ContainerOptimization*0.05+FuelTankOptimization*0.05)
             s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank"))
             play("stop","SU")
         end
@@ -9095,6 +9131,8 @@ VERSION_NUMBER = 0.716
                 AP.APTick()
             elseif timerId == "radarTick" then
                 RADAR.UpdateRadar()
+            elseif timerId == "shieldTick" then
+                SHIELD.shieldTick()
             elseif timerId == "tagTick" then
                 CONTROL.tagTick()
             elseif timerId == "contact" then
