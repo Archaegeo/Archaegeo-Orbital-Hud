@@ -1609,7 +1609,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 local aggBase = false
                 if not ExternalAGG and antigravOn then aggBase = antigrav.getBaseAltitude() end
                 if alignHeading then
-                    if math.abs(hSpd) > 0.05 then
+                    if math.abs(hSpd) < 0.05 then
                         if vSpd > -brakeLandingRate then BrakeIsOn = false else BrakeIsOn = true end
                         if AlignToWorldVector(alignHeading, 0.0001) then 
                             alignHeading = nil 
