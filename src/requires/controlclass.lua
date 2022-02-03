@@ -736,10 +736,12 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             msgStr = #privatelocations.."-Private "
             if arguement == "all" then
                 for k,v in pairs(SavedLocations) do
-                    saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
-                                        "name = '*"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
-                    if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
-                    if v.safe then saveStr = saveStr.."safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
+                    if v.name ~= "STARTINGPOINT" then
+                        saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
+                                            "name = '*"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
+                        if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
+                        if v.safe then saveStr = saveStr.."safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
+                    end
                 end
                 msgStr = msgStr..#SavedLocations.."-Public "
             end

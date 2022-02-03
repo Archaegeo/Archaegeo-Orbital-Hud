@@ -1609,7 +1609,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 local aggBase = false
                 if not ExternalAGG and antigravOn then aggBase = antigrav.getBaseAltitude() end
                 if alignHeading then
-                    if hSpd < 0.05 and hSpd > -0.05 then
+                    if math.abs(hSpd) > 0.05 then
                         if vSpd > -brakeLandingRate then BrakeIsOn = false else BrakeIsOn = true end
                         if AlignToWorldVector(alignHeading, 0.0001) then 
                             alignHeading = nil 
@@ -1957,7 +1957,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
             AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
             if SaveStartingLocation and #apRoute==0 and AutopilotTargetName ~= "STARTINGPOINT" and ATLAS.findAtlasIndex(SavedLocations, "STARTINGPOINT") == -1 and abvGndDet > -1 then 
-                ATLAS.AddNewLocation("STARTINGPOINT", worldPos, false, false) 
+                ATLAS.AddNewLocation("STARTINGPOINT", worldPos, false, true) 
             end
             if CustomTarget ~= nil then
                 LockPitch = nil
@@ -2220,6 +2220,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         if BrakeLanding then
             BrakeLanding = false
             autoRoll = autoRollPreference
+            apBrk = false
         end
         if BrakeIsOn then
             play("bkOn","B",1)
@@ -2340,6 +2341,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                     lastMaxBrakeAtG = gravity
                 end
             end
+            p("C.G: "..c.g().." PGG: "..planet:getGravity(c.getConstructWorldPos()):len() * coreMass)
         RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
         if setCruiseSpeed ~= nil then
             if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then

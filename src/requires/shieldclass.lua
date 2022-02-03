@@ -15,9 +15,10 @@ function ShieldClass(shield_1, stringmatch, mfloor) -- Everything related to rad
 
     local function updateResists()
         local sRR = shield_1.getStressRatioRaw()
+        local tot = 0.5999
         if sRR[1] == 0.0 and sRR[2] == 0.0 and sRR[3] == 0.0 and sRR[4] == 0.0 then return end
-        local setResist = shield_1.setResistances(0.6*sRR[1],0.6*sRR[2],0.6*sRR[3],0.6*sRR[4])
-        if setResist == 1 then msgText="Shield Resistances updated" else msgText = "Failed to update Shield Resistances" end
+        local setResist = shield_1.setResistances((tot*sRR[1]),(tot*sRR[2]),(tot*sRR[3]),(tot*sRR[4]))
+        if setResist == 1 then msgText="Shield Resistances updated" else msgText = "Value Exceeded. Failed to update Shield Resistances" end
     end
 
     function Shield.shieldTick()
