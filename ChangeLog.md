@@ -1,5 +1,14 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 0.717 - Enable Space engines to work in <10% atmo with no Atmo engines
+- FEATURE: Space Engines will now work in atmosphere if no atmosphere engines are attached, down to normal 9.89% (they turn off at 9.9% normally)
+- NEW: axiscommandoverride.lua file contains the override function to support the above feature.
+NOTE - This is correcting a vanilla DU issue.
+    To use this feature you must either use Modular ArchHUD 1.717 (and the new require file) or you must edit the default AxisCommand.lua in
+    `ProgramData\Dual Universe\Game\data\lua` and replace the `function AxisCommand.composeAxisAccelerationFromThrottle(self, tags)` with the one 
+    found in axiscommandoverride.lua
+- FIX: Issue with landing when aligning.
+
 Version 0.716 - Shield, AGG, and Cleanup
 - FEATURE: Hud will adjust shield resists once per minute to the ratio of damage done if shield percent remaining is < `AutoShieldPercent`
 - NEW: User variable `AutoShieldPercent` (Default: 90) Automatically adjusts shield resists once per minute if shield percent is less than this value.

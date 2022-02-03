@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.716
+VERSION_NUMBER = 0.717
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
     -- User variables. Must be global to work with databank system
@@ -6407,7 +6407,7 @@ VERSION_NUMBER = 0.716
                     local aggBase = false
                     if not ExternalAGG and antigravOn then aggBase = antigrav.getBaseAltitude() end
                     if alignHeading then
-                        if math.abs(hSpd) > 0.05 then
+                        if math.abs(hSpd) < 0.05 then
                             if vSpd > -brakeLandingRate then BrakeIsOn = false else BrakeIsOn = true end
                             if AlignToWorldVector(alignHeading, 0.0001) then 
                                 alignHeading = nil 
