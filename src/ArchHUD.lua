@@ -51,7 +51,7 @@ VERSION_NUMBER = 0.716
         CalculateBrakeLandingSpeed={set=function (i)CalculateBrakeLandingSpeed=i end,get=function() return CalculateBrakeLandingSpeed end}, AtmoSpeedAssist={set=function (i)AtmoSpeedAssist=i end,get=function() return AtmoSpeedAssist end}, ForceAlignment={set=function (i)ForceAlignment=i end,get=function() return ForceAlignment end}, DisplayDeadZone={set=function (i)DisplayDeadZone=i end,get=function() return DisplayDeadZone end}, showHud={set=function (i)showHud=i end,get=function() return showHud end}, hideHudOnToggleWidgets={set=function (i)hideHudOnToggleWidgets=i end,get=function() return hideHudOnToggleWidgets end}, 
         ShiftShowsRemoteButtons={set=function (i)ShiftShowsRemoteButtons=i end,get=function() return ShiftShowsRemoteButtons end}, SetWaypointOnExit={set=function (i)SetWaypointOnExit=i end,get=function() return SetWaypointOnExit end}, AlwaysVSpd={set=function (i)AlwaysVSpd=i end,get=function() return AlwaysVSpd end}, BarFuelDisplay={set=function (i)BarFuelDisplay=i end,get=function() return BarFuelDisplay end}, 
         voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end}, DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end},
-        SaveStartingLocation={set=function (i)SaveStartingLocation=i end,get=function() return SaveStartingLocation end},}
+        SaveStartingLocation={set=function (i)SaveStartingLocation=i end,get=function() return SaveStartingLocation end}}
 
     -- Ship Handling variables
         -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank system
@@ -79,7 +79,7 @@ VERSION_NUMBER = 0.716
         fuelTankHandlingRocket = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
         ContainerOptimization = 0 -- (Default: 0) For accurate estimates on unslotted tanks, set this to the Container Optimization level of the person who placed the tanks. Ignored for slotted tanks.
         FuelTankOptimization = 0 -- (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank optimization skill level of the person who placed the tank. Ignored for slotted tanks.
-        AutoShieldPercent = 90 -- (Default: 90) Automatically adjusts shield resists once per minute if shield percent is less than this value.
+        AutoShieldPercent = 0 -- (Default: 0) Automatically adjusts shield resists once per minute if shield percent is less than this value. 0 means it is effectively off.
         savableVariablesHandling = {YawStallAngle={set=function (i)YawStallAngle=i end,get=function() return YawStallAngle end},PitchStallAngle={set=function (i)PitchStallAngle=i end,get=function() return PitchStallAngle end},brakeLandingRate={set=function (i)brakeLandingRate=i end,get=function() return brakeLandingRate end},MaxPitch={set=function (i)MaxPitch=i end,get=function() return MaxPitch end}, ReEntryPitch={set=function (i)ReEntryPitch=i end,get=function() return ReEntryPitch end},LockPitchTarget={set=function (i)LockPitchTarget=i end,get=function() return LockPitchTarget end}, AutopilotSpaceDistance={set=function (i)AutopilotSpaceDistance=i end,get=function() return AutopilotSpaceDistance end}, TargetOrbitRadius={set=function (i)TargetOrbitRadius=i end,get=function() return TargetOrbitRadius end}, LowOrbitHeight={set=function (i)LowOrbitHeight=i end,get=function() return LowOrbitHeight end},
         AtmoSpeedLimit={set=function (i)AtmoSpeedLimit=i end,get=function() return AtmoSpeedLimit end},SpaceSpeedLimit={set=function (i)SpaceSpeedLimit=i end,get=function() return SpaceSpeedLimit end},AutoTakeoffAltitude={set=function (i)AutoTakeoffAltitude=i end,get=function() return AutoTakeoffAltitude end},TargetHoverHeight={set=function (i)TargetHoverHeight=i end,get=function() return TargetHoverHeight end}, LandingGearGroundHeight={set=function (i)LandingGearGroundHeight=i end,get=function() return LandingGearGroundHeight end}, ReEntryHeight={set=function (i)ReEntryHeight=i end,get=function() return ReEntryHeight end},
         MaxGameVelocity={set=function (i)MaxGameVelocity=i end,get=function() return MaxGameVelocity end}, AutopilotInterplanetaryThrottle={set=function (i)AutopilotInterplanetaryThrottle=i end,get=function() return AutopilotInterplanetaryThrottle end},warmup={set=function (i)warmup=i end,get=function() return warmup end},fuelTankHandlingAtmo={set=function (i)fuelTankHandlingAtmo=i end,get=function() return fuelTankHandlingAtmo end},fuelTankHandlingSpace={set=function (i)fuelTankHandlingSpace=i end,get=function() return fuelTankHandlingSpace end},
@@ -1140,15 +1140,11 @@ VERSION_NUMBER = 0.716
                     if dbHud_1 or temp or private then
         
                         local p = getPlanet(position)
-                        local gravity = p.gravity
-                        if safe then
-                            gravity = u.getClosestPlanetInfluence()
-                        end
                         local newLocation = {
                             position = position,
                             name = name,
                             planetname = p.name,
-                            gravity = gravity,
+                            gravity = c.g(),
                             safe = safe, -- This indicates we can extreme land here, if this was a real positional waypoint
                         }
                         if not temp then 
@@ -1214,7 +1210,7 @@ VERSION_NUMBER = 0.716
                             msgText = positions[index].name .. " heading cleared ("..positions[index].planetname..")"
                             return
                         end
-                        location.gravity = u.getClosestPlanetInfluence()
+                        location.gravity = c.g()
                         location.position = worldPos
                         location.safe = true
                     end
@@ -1558,7 +1554,7 @@ VERSION_NUMBER = 0.716
         -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
         --for k,v in pairs(require("autoconf/custom/archhud/custom/customradarclass")) do Radar[k] = v end 
         return Radar
-    end
+    end 
     local function ShieldClass(shield_1, stringmatch, mfloor) -- Everything related to radar but draw data passed to HUD Class.
         local Shield = {}
         local RCD = shield_1.getResistancesCooldown()
@@ -1576,9 +1572,10 @@ VERSION_NUMBER = 0.716
     
         local function updateResists()
             local sRR = shield_1.getStressRatioRaw()
+            local tot = 0.5999
             if sRR[1] == 0.0 and sRR[2] == 0.0 and sRR[3] == 0.0 and sRR[4] == 0.0 then return end
-            local setResist = shield_1.setResistances(0.6*sRR[1],0.6*sRR[2],0.6*sRR[3],0.6*sRR[4])
-            if setResist == 1 then msgText="Shield Resistances updated" else msgText = "Failed to update Shield Resistances" end
+            local setResist = shield_1.setResistances((tot*sRR[1]),(tot*sRR[2]),(tot*sRR[3]),(tot*sRR[4]))
+            if setResist == 1 then msgText="Shield Resistances updated" else msgText = "Value Exceeded. Failed to update Shield Resistances" end
         end
     
         function Shield.shieldTick()
@@ -1610,7 +1607,6 @@ VERSION_NUMBER = 0.716
         end
     
         return Shield
-        
     end
     local function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
         mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
@@ -6408,8 +6404,10 @@ VERSION_NUMBER = 0.716
     
                 if BrakeLanding then
                     targetPitch = 0
+                    local aggBase = false
+                    if not ExternalAGG and antigravOn then aggBase = antigrav.getBaseAltitude() end
                     if alignHeading then
-                        if hSpd < 0.05 and hSpd > -0.05 then
+                        if math.abs(hSpd) > 0.05 then
                             if vSpd > -brakeLandingRate then BrakeIsOn = false else BrakeIsOn = true end
                             if AlignToWorldVector(alignHeading, 0.0001) then 
                                 alignHeading = nil 
@@ -6422,11 +6420,13 @@ VERSION_NUMBER = 0.716
                         else
                             BrakeIsOn = true
                         end
+                        if aggBase and (coreAltitude - aggBase) < 100 then
+                            BrakeIsOn = true
+                        end
                     else
                         local skipLandingRate = false
                         local distanceToStop = 30 
-                        local aggBase = false
-                        if not ExternalAGG and antigravOn then aggBase = antigrav.getBaseAltitude() end
+    
     
                         if maxKinematicUp ~= nil and maxKinematicUp > 0 then
     
@@ -6755,7 +6755,7 @@ VERSION_NUMBER = 0.716
                 ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
                 AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
                 if SaveStartingLocation and #apRoute==0 and AutopilotTargetName ~= "STARTINGPOINT" and ATLAS.findAtlasIndex(SavedLocations, "STARTINGPOINT") == -1 and abvGndDet > -1 then 
-                    ATLAS.AddNewLocation("STARTINGPOINT", worldPos, false, false) 
+                    ATLAS.AddNewLocation("STARTINGPOINT", worldPos, false, true) 
                 end
                 if CustomTarget ~= nil then
                     LockPitch = nil
@@ -7018,6 +7018,7 @@ VERSION_NUMBER = 0.716
             if BrakeLanding then
                 BrakeLanding = false
                 autoRoll = autoRollPreference
+                apBrk = false
             end
             if BrakeIsOn then
                 play("bkOn","B",1)
@@ -8411,10 +8412,12 @@ VERSION_NUMBER = 0.716
                 msgStr = #privatelocations.."-Private "
                 if arguement == "all" then
                     for k,v in pairs(SavedLocations) do
-                        saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
-                                            "name = '*"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
-                        if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
-                        if v.safe then saveStr = saveStr.."safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
+                        if v.name ~= "STARTINGPOINT" then
+                            saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
+                                                "name = '*"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
+                            if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
+                            if v.safe then saveStr = saveStr.."safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
+                        end
                     end
                     msgStr = msgStr..#SavedLocations.."-Public "
                 end
