@@ -837,15 +837,11 @@
                     if dbHud_1 or temp or private then
         
                         local p = getPlanet(position)
-                        local gravity = p.gravity
-                        if safe then
-                            gravity = u.getClosestPlanetInfluence()
-                        end
                         local newLocation = {
                             position = position,
                             name = name,
                             planetname = p.name,
-                            gravity = gravity,
+                            gravity = c.g(),
                             safe = safe, -- This indicates we can extreme land here, if this was a real positional waypoint
                         }
                         if not temp then 
@@ -911,7 +907,7 @@
                             msgText = positions[index].name .. " heading cleared ("..positions[index].planetname..")"
                             return
                         end
-                        location.gravity = u.getClosestPlanetInfluence()
+                        location.gravity = c.g()
                         location.position = worldPos
                         location.safe = true
                     end

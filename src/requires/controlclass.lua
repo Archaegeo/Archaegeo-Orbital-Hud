@@ -290,14 +290,11 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             toggleView = false 
             if AltIsOn and holdingShift then 
                 if shield_1 then 
-                    local vcd = shield_1.getVentingCooldown()
-                    if vcd > 0 then msgText="Cannot vent again for "..vcd.." seconds" return end
-                    if shield_1.getShieldHitpoints()<shield_1.getMaxShieldHitpoints() then shield_1.startVenting() msgText="Shields Venting Enabled - NO SHIELDS WHILE VENTING" else msgText="Shields already at max hitpoints" end
-                    return
+                    SHIELD.ventShield()
                 else
                     msgText = "No shield found"
-                    return
                 end
+                return
             end
             AP.ToggleAltitudeHold()
         elseif action == "option7" then
@@ -400,34 +397,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             local function clearAll()         
                 if (time - clearAllCheck) < 1.5 then
                     play("clear","CA")
-                    AutopilotAccelerating = false
-                    AutopilotBraking = false
-                    AutopilotCruising = false
-                    Autopilot = false
-                    AutopilotRealigned = false
-                    AutopilotStatus = "Aligning"                
-                    RetrogradeIsOn = false
-                    ProgradeIsOn = false
-                    ReversalIsOn = nil
-                    AltitudeHold = false
-                    Reentry = false
-                    BrakeLanding = false
-                    BrakeIsOn = false
-                    AutoTakeoff = false
-                    VertTakeOff = false
-                    followMode = false
-                    apThrottleSet = false
-                    spaceLand = false
-                    spaceLaunch = false
-                    reentryMode = false
-                    autoRoll = autoRollPreference
-                    VectorToTarget = false
-                    TurnBurn = false
-                    gyroIsOn = false
-                    LockPitch = nil
-                    IntoOrbit = false
-                    apBrk = false
-                    alignHeading = nil
+                    AP.clearAll()
                 end
             end
             clearAll()
@@ -666,18 +636,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                 msgText = "Select a saved target to rename first"
             end
         elseif shield_1 and command =="/resist" then
-            if not shield_1 then
-                msgText = "No shield found"
-                return
-            elseif arguement == nil or shield_1.getResistancesCooldown()>0 then
-                msgText = "Usable once per min.  Usage: /resist 0.15, 0.15, 0.15, 0.15"
-                return
-            end
-            local num  = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
-            local posPattern = num .. ', ' .. num .. ', ' ..  num .. ', ' .. num    
-            local antimatter, electromagnetic, kinetic, thermic = stringmatch(arguement, posPattern)
-            if thermic == nil or (antimatter + electromagnetic+ kinetic + thermic) > 0.6 then msgText="Improperly formatted or total exceeds 0.6" return end
-            if shield_1.setResistances(antimatter,electromagnetic,kinetic,thermic)==1 then msgText="Shield Resistances set" else msgText="Resistance setting failed." end
+            SHIELD.setResist(arguement)
         elseif command == "/addlocation" or string.find(text, "::pos") ~= nil then
             local temp = false
             local savename = "0-Temp"
@@ -777,10 +736,12 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             msgStr = #privatelocations.."-Private "
             if arguement == "all" then
                 for k,v in pairs(SavedLocations) do
-                    saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
-                                        "name = '*"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
-                    if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
-                    if v.safe then saveStr = saveStr.."safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
+                    if v.name ~= "STARTINGPOINT" then
+                        saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
+                                            "name = '*"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
+                        if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
+                        if v.safe then saveStr = saveStr.."safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
+                    end
                 end
                 msgStr = msgStr..#SavedLocations.."-Public "
             end
@@ -804,5 +765,6 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
     end
     -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
     --for k,v in pairs(require("autoconf/custom/archhud/custom/customcontrolclass")) do Control[k] = v end 
+
     return Control
 end

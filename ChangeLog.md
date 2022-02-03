@@ -1,5 +1,21 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.716 - Shield, Cleanup, and AGG.
+- FEATURE: Hud will adjust shield resists once per minute to the ratio of damage done if shield percent remaining is < `AutoShieldPercent`
+- NEW: User variable `AutoShieldPercent` (Default: 0) Automatically adjusts shield resists once per minute if shield percent is less than this value. (0 means off)
+- NEW: shieldclass.lua file and class in standalone
+- FEATURE: If ExternalAGG is off, and AGG is activated, Brake Landing will use AGG Current Base Height for landing altitude if it is below current altitude (vice ground).
+- ENHANCE: Added `Aligning` after Brake Landing if ship is aligning.
+- CLEANUP: radarclass.lua and shieldclass.lua are only looked for if a radar or shield are slotted
+- CLEANUP: Removed variables from globals.lua that are not user variables and that are not used outside of one class.
+- CLEANUP: Moved onFlush to apclass from baseclass
+- FIX: STARTINGPOINT saves as a known location.
+- FIX: STARTINGPOINT does not save out to privatelocations.lua dump (it does save to databank which is intentional)
+- FIX: Saved locations gravity will all use same value going forward (core.g()) (update locations you care about, value is not used at this time)
+- FIX: Double tapping G during Autopilot Brake Landing to turn off and back on Brake Landing will clear the limit on horizontal speed (Brakes on less)
+    For when you want to get down faster and don't care about accuracy as much.w
+
+
 Version 1.715
 - CHANGE: Routes now save location name vice index number.  This means routes will continue to work if you add or remove 
     locations not in the route from the custom waypoints.  This does mean old saved routes will no longer function.
@@ -8,7 +24,6 @@ Version 1.715
 - FIX: Official Atlas has wrong atmosphere data for Lacobus.  Added a line to fix till NQ updates official Atlas.lua
 - FIX: Added check for SetupComplete to prevent user input prior to hud finishing loading.  (prevents bugs)
 - FIX: Made private locations save heading if present
-
 
 Version 1.714 - Urgent fix for `ExtraEscapeThrust`
 - FIX: Prevent `ExtraEscapeThrust` being applied during Reentry or if vSpd < -50 m/s.
