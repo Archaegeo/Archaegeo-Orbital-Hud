@@ -2341,7 +2341,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                     lastMaxBrakeAtG = gravity
                 end
             end
-            p("C.G: "..c.g().." PGG: "..planet:getGravity(c.getConstructWorldPos()):len() * coreMass)
         RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
         if setCruiseSpeed ~= nil then
             if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
