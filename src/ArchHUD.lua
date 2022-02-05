@@ -19,7 +19,7 @@ if radar_1 then pcall(require,"autoconf/custom/archhud/radarclass") end
 pcall(require, "autoconf/custom/archhud/axiscommandoverride")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.717
+VERSION_NUMBER = 1.718
 
 globalDeclare(s, c, u, s.getTime, math.floor, u.getAtmosphereDensity) -- Variables that need to be Global and are declared in globals.lua due to use across multple modules where there values can change.
 

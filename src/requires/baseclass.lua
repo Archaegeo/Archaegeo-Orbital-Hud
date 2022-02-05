@@ -225,7 +225,6 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                     antigrav.setBaseAltitude(AntigravTargetAltitude)
                 end
                 if pcall(require, "autoconf/custom/archhud/privatelocations") then
-                    privatelocations = require("autoconf/custom/archhud/privatelocations")
                     if #privatelocations>0 then customlocations = addTable(customlocations, privatelocations) end
                 end
                 VectorStatus = "Proceeding to Waypoint"

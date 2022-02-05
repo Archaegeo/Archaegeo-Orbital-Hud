@@ -1,5 +1,13 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.718
+- Feature: Route Pause.  Routes in progress save when getting out and back into seat to allow for stops along the way, or refueling/repairing without losing route progress.
+- Change: Routes unload route leg on arrival rather than on starting the route leg.
+- Enhance: Added indication if brake landing has drift limit on (0.5m/s horizontal movement causes brakes to engage even if not at brake fall rate)
+- Removed: STARTINGPOINT feature removed.  Too clunky and not enough use to justify, niche feature.
+- Fix: Tapping G while already brake landing will toggle drift limit on and off
+- More Cleanup
+
 Version 1.717 - Enable Space engines to work in <10% atmo with no Atmo engines
 - FEATURE: Space Engines will now work in atmosphere if no atmosphere engines are attached, down to normal 9.89% (they turn off at 9.9% normally)
 - NEW: axiscommandoverride.lua file contains the override function to support the above feature.

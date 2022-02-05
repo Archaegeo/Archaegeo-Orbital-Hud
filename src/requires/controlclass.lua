@@ -103,7 +103,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                         VertTakeOff = false
                         AltitudeHold = false
                         BrakeLanding = true
-                        apBrk = false
+                        apBrk = not apBrk
                         autoRoll = true
                         GearExtended = false -- Don't actually toggle the gear yet though
                     else
@@ -111,6 +111,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                             play("grOut","LG",1)
                             Nav.control.extendLandingGears()                            
                         end
+                        apBrk = false
                         navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                         if inAtmo then
                             BrakeIsOn = true
@@ -736,12 +737,10 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             msgStr = #privatelocations.."-Private "
             if arguement == "all" then
                 for k,v in pairs(SavedLocations) do
-                    if v.name ~= "STARTINGPOINT" then
-                        saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
-                                            "name = '*"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
-                        if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
-                        if v.safe then saveStr = saveStr.."safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
-                    end
+                    saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
+                                        "name = '*"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
+                    if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
+                    if v.safe then saveStr = saveStr.." safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
                 end
                 msgStr = msgStr..#SavedLocations.."-Public "
             end

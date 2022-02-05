@@ -45,7 +45,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         local OrbitTargetSet = false
         local OrbitTargetPlanet = nil
         local OrbitTicks = 0
-        local apRoute = {}
         local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in. Also used in hudclass
         local lastMaxBrakeAtG = nil
         local mousePause = false
@@ -1074,10 +1073,13 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 end
                 if (CustomTarget and CustomTarget.planetname == "Space" and velMag < 50) then
                     if #apRoute>0 then
-                        BrakeIsOn = false
-                        AP.ToggleAutopilot()
-                        AP.ToggleAutopilot()
-                        return
+                        table.remove(apRoute,1)
+                        if #apRoute>0 then
+                            BrakeIsOn = false
+                            AP.ToggleAutopilot()
+                            AP.ToggleAutopilot()
+                            return
+                        end
                     end
                     finishAutopilot("Autopilot complete, arrived at space location")
                     BrakeIsOn = true
@@ -1529,9 +1531,12 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                             (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99  or VectorStatus == "Finalizing Approach")) then 
                         VectorStatus = "Finalizing Approach" 
                         if #apRoute>0 then
-                            AP.ToggleAutopilot()
-                            AP.ToggleAutopilot()
-                            return
+                            table.remove(apRoute,1)
+                            if #apRoute>0 then
+                                AP.ToggleAutopilot()
+                                AP.ToggleAutopilot()
+                                return
+                            end
                         end
                         AP.cmdThrottle(0) -- Kill throttle in case they weren't in cruise
                         if AltitudeHold then
@@ -1550,7 +1555,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                         apBrk = true
                         if CustomTarget.heading then alignHeading = CustomTarget.heading else alignHeading = nil end
                         VectorToTarget = false
-                        if AutopilotTargetName == "STARTINGPOINT" then ATLAS.ClearCurrentPosition() end
                         VectorStatus = "Proceeding to Waypoint"
                         collisionAlertStatus = false
                     end
@@ -1946,7 +1950,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             if #apRoute>0 and not finalLand then 
                 AutopilotTargetIndex = getIndex(apRoute[1])
                 ATLAS.UpdateAutopilotTarget()
-                table.remove(apRoute,1)
                 msgText = "Route Autopilot in Progress"
                 local targetVec = CustomTarget.position - worldPos
                 local distanceToTarget = targetVec:project_on_plane(worldVertical):len()
@@ -1956,9 +1959,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
             ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
             AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
-            if SaveStartingLocation and #apRoute==0 and AutopilotTargetName ~= "STARTINGPOINT" and ATLAS.findAtlasIndex(SavedLocations, "STARTINGPOINT") == -1 and abvGndDet > -1 then 
-                ATLAS.AddNewLocation("STARTINGPOINT", worldPos, false, true) 
-            end
             if CustomTarget ~= nil then
                 LockPitch = nil
                 SpaceTarget = (CustomTarget.planetname == "Space")
