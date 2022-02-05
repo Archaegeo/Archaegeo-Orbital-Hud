@@ -504,7 +504,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                 Kinematic = Kinematics(Nav, c, u, s, msqrt, mabs)
                 Kep = Keplers(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
 
-                ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play)
+                ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round)
             end
 
         SetupComplete = false

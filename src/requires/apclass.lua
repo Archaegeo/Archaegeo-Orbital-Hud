@@ -1611,7 +1611,13 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             if BrakeLanding then
                 targetPitch = 0
                 local aggBase = false
-                if not ExternalAGG and antigravOn then aggBase = antigrav.getBaseAltitude() end
+                if not ExternalAGG and antigravOn then 
+                    aggBase = antigrav.getBaseAltitude() 
+                    if (aggBase < planet.surfaceMaxAltitude and CustomTarget == nil) or
+                       (CustomTarget ~= nil and planet:getAltitude(CustomTarget.position) > aggBase) then 
+                        aggBase = false 
+                    end
+                end
                 if alignHeading then
                     if math.abs(hSpd) < 0.05 then
                         if vSpd > -brakeLandingRate then BrakeIsOn = false else BrakeIsOn = true end
@@ -1751,7 +1757,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if AutopilotTargetCoords ~= nil then
                     intersectBody, nearSide, farSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (AutopilotTargetCoords-worldPos):normalize(), function(body) return (body.radius+body.noAtmosphericDensityAltitude) end)
                 end
-                if antigravOn then
+                if antigravOn and not spaceLaunch then
                     if coreAltitude >= (HoldAltitude-50) then
                         AutoTakeoff = false
                         if not Autopilot and not VectorToTarget then
@@ -1960,6 +1966,10 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
             AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
             if CustomTarget ~= nil then
+                if CustomTarget.agg and not ExternalAGG and antigrav then
+                    if not antigravOn then AP.ToggleAntigrav() end
+                    AntigravTargetAltitude = CustomTarget.agg
+                end
                 LockPitch = nil
                 SpaceTarget = (CustomTarget.planetname == "Space")
                 if SpaceTarget then
@@ -2164,7 +2174,14 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 end
                 if VertTakeOff then AP.ToggleVerticalTakeoff() end
             end
-            if spaceLaunch then HoldAltitude = 100000 end
+            if antigravOn and not ExternalAGG and CustomTarget.agg then 
+                if CustomTarget.agg > coreAltitude then 
+                    HoldAltitude = CustomTarget.agg
+                else
+                    HoldAltitude = antigrav.getBaseAltitude()
+                end
+            end
+            if spaceLaunch then HoldAltitude = 200000 end
         else
             play("altOff","AH")
             if IntoOrbit then AP.ToggleIntoOrbit() end

@@ -1,12 +1,29 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.718
+Version 1.718 - AGG Overhaul, Route improvement
 - Feature: Route Pause.  Routes in progress save when getting out and back into seat to allow for stops along the way, or refueling/repairing without losing route progress.
 - Change: Routes unload route leg on arrival rather than on starting the route leg.
+- Overhaul: AGG system overhauled, should perform as shown below.
+- FEATURE: For any custom save point (private or databank) you can select it in IPH and hold shift to choose Save AGG Alt button. (If AGG on ship)
+    This will save the current altitude of your ship (minimum 1000m) to the selected IPH WP as the AGG height.  Anytime you AP to a waypoint with a saved AGG Altitude
+    the ship will turn on AGG if off and set AGG Target Altitude to that value.
+    If a WP already has a AGG Altitude, you will see a Clear AGG Alt button instead to remove it.
 - Enhance: Added indication if brake landing has drift limit on (0.5m/s horizontal movement causes brakes to engage even if not at brake fall rate)
 - Removed: STARTINGPOINT feature removed.  Too clunky and not enough use to justify, niche feature.
 - Fix: Tapping G while already brake landing will toggle drift limit on and off
 - More Cleanup
+
+AGG Scenarios
+- 1) On ground, AGG off, Alt-4 to same planet WP.  Ship takes off to Takeoff height (user variable distance over starting altitude).  If you turn on AGG prior to arrival, 
+    Brake Landing will use the AGG current height as its target altitude to turn off Brake Landing with Brake On.  Alignment will be done if alignment is saved for WP.
+- 2) On Ground, AGG on, Alt-4 to same planet WP.  Ship takes off to current AGG height and continues to WP.  If AGG still on at arrival, performs as #1 above.  
+    If AGG off at arrival, lands (and aligns if alignment saved)
+- 3) In air at AGG height, AGG on, Alt-4 to same planet WP.  Brake releases, waits for pilot throttle up. Ship heads for WP at current AGG height. Performas as #2 above.
+- 4) In air at AGG height, AGG on, Alt-4-4 same planet. Performs as #3 using Orbital Hop.  Comes in at 11% atmo till at target then AGG Brake Lands.
+- 5) On Ground, AGG on, Alt-4 to other planet WP.  Ship takes off to other planet as normal.  Arrival is per #4.
+- 6) On Ground, AGG on, Alt-4-4. Ship takes off to low orbit height.  Arrival is per #4.
+- 7) In Air at AGG height, Alt-4 to another planet.
+- Note: Alt-6 from ground with AGG on takes off to AGG height. Alt-6-6 is same as Alt-6 with AGG on intentionally.
 
 Version 1.717 - Enable Space engines to work in <10% atmo with no Atmo engines
 - FEATURE: Space Engines will now work in atmosphere if no atmosphere engines are attached, down to normal 9.89% (they turn off at 9.9% normally)

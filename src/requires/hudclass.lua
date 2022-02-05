@@ -812,13 +812,12 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 aggFill = "#00DD00"
                 aggStroke = onFill
                 aggClass = fillClass
-                if mabs(coreAltitude - antigrav.getBaseAltitude()) < 501 then
-                    newContent[#newContent + 1] = svgText(warningX, apY+15, stringf("Target Altitude: %d Singularity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), "warn")
-                else
-                    newContent[#newContent + 1] = svgText( warningX, apY+15, stringf("Target Altitude: %d Singluarity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), "warnings")
-                end
-            elseif Autopilot and AutopilotTargetName ~= "None" then
-                newContent[#newContent + 1] = svgText(warningX, apY+20,  "Autopilot "..AutopilotStatus, "warn")
+                local aggWarn = "warnings"
+                if mabs(coreAltitude - antigrav.getBaseAltitude()) < 501 then aggWarn = "warn" end
+                    newContent[#newContent + 1] = svgText(warningX, apY+25, stringf("Target Altitude: %d Singularity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), aggWarn)
+            end
+            if Autopilot and AutopilotTargetName ~= "None" then
+                newContent[#newContent + 1] = svgText(warningX, apY,  "Autopilot "..AutopilotStatus, "warn")
             elseif LockPitch ~= nil then
                 newContent[#newContent + 1] = svgText(warningX, apY+20, stringf("LockedPitch: %d", mfloor(LockPitch)), "warn")
             elseif followMode then
@@ -840,7 +839,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                         newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..displayText, "warn")
                     end
                     if BrakeIsOn and not VertTakeOff then
-                        newContent[#newContent + 1] = svgText( warningX, apY + 50,"Throttle Up and Disengage Brake For Takeoff", "crit")
+                        newContent[#newContent + 1] = svgText( warningX, apY + 60,"Throttle Up and Disengage Brake For Takeoff", "crit")
                     end
                 else
                     newContent[#newContent + 1] = svgText(warningX, apY, "Altitude Hold: ".. displayText, "warn")
@@ -900,7 +899,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 end
             end
             if VectorToTarget and not IntoOrbit then
-                newContent[#newContent + 1] = svgText(warningX, apY+35, VectorStatus, "warn")
+                newContent[#newContent + 1] = svgText(warningX, apY+45, VectorStatus, "warn")
             end
             local boardersFill = "#111100"
             local boardersStroke = defaultStroke
@@ -1925,8 +1924,8 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 AutoTakeoff = false
             end
 
-            local function UpdatePosition(heading)
-                ATLAS.UpdatePosition(nil, heading)
+            local function UpdatePosition(heading, saveAGG)
+                ATLAS.UpdatePosition(nil, heading, saveAGG)
             end
             local function ClearCurrentPosition()
                 -- So AutopilotTargetIndex is special and not a real index.  We have to do this by hand.
@@ -2083,6 +2082,11 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 function() return CustomTarget.heading ~= nil end, 
                 function() if CustomTarget.heading ~= nil then UpdatePosition(false) else UpdatePosition(true) end end, 
                 function() return AutopilotTargetIndex > 0 and CustomTarget ~= nil
+                end)
+            MakeButton("Save AGG Alt", "Clear AGG Alt", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y + apbutton.height*2 + 40,
+                function() return CustomTarget.agg ~= nil end, 
+                function() if CustomTarget.agg ~= nil then UpdatePosition(nil, false) else UpdatePosition(nil, true) end end, 
+                function() return AutopilotTargetIndex > 0 and CustomTarget ~= nil and antigrav
                 end)
             MakeButton("Clear Position", "Clear Position", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y,
                 function()
