@@ -1,16 +1,21 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.718 - AGG Overhaul, Route improvement
+Version 1.718 - AGG, Route, Brake Landing 
+- Enhance: Brake Landing from high altitudes will now be MUCH faster till you reach a specific height. 
+    For Unknown Altitude landings (you hit G while flying), this occurs down to the max surface altitude of the planet you are on. 
+    Then `brakeLandingRate` will take over.  For Known locations, `brakeLandingRate` will takeover 1000m over the target location.
 - Feature: Route Pause.  Routes in progress save when getting out and back into seat to allow for stops along the way, or refueling/repairing without losing route progress.
 - Change: Routes unload route leg on arrival rather than on starting the route leg.
 - Overhaul: AGG system overhauled, should perform as shown below.
 - FEATURE: For any custom save point (private or databank) you can select it in IPH and hold shift to choose Save AGG Alt button. (If AGG on ship)
-    This will save the current altitude of your ship (minimum 1000m) to the selected IPH WP as the AGG height.  Anytime you AP to a waypoint with a saved AGG Altitude
-    the ship will turn on AGG if off and set AGG Target Altitude to that value.
+    This will save the current altitude of your ship (minimum 1000m) to the selected IPH WP as the AGG height.  (Will not change position or alignment if on)
+    Anytime you AP to a waypoint with a saved AGG Altitude the ship will turn on AGG if off and set AGG Target Altitude to that value.
     If a WP already has a AGG Altitude, you will see a Clear AGG Alt button instead to remove it.
 - Enhance: Added indication if brake landing has drift limit on (0.5m/s horizontal movement causes brakes to engage even if not at brake fall rate)
-- Removed: STARTINGPOINT feature removed.  Too clunky and not enough use to justify, niche feature.
 - Fix: Tapping G while already brake landing will toggle drift limit on and off
+- Removed: STARTINGPOINT feature removed.  Too clunky and not enough use to justify, niche feature.
+- Remvoed: CalculateBrakeLandingRate - Depreciated (and didnt work properly before.)
+- REMINDER: Tapping A or D while aligning to a saved alignment during brake landing will cancel the alignment.
 - More Cleanup
 
 AGG Scenarios

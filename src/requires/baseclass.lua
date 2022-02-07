@@ -417,11 +417,6 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
 
                 navCom:setTargetGroundAltitude(targetGroundAltitude)
 
-                -- Store their max kinematic parameters in ship-up direction for use in brake-landing
-                if inAtmo and abvGndDet ~= -1 then 
-                    maxKinematicUp = c.getMaxKinematicsParametersAlongAxis("ground", c.getConstructOrientationUp())[1]
-                end
-
                 WasInAtmo = inAtmo
 
             end

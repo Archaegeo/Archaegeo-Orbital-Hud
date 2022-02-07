@@ -367,7 +367,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
 
         local gravity = planet:getGravity(c.getConstructWorldPos()):len() * coreMass
         targetRoll = 0
-        maxKinematicUp = c.getMaxKinematicsParametersAlongAxis("ground", c.getConstructOrientationUp())[1]
+        local maxKinematicUp = c.getMaxKinematicsParametersAlongAxis("ground", c.getConstructOrientationUp())[1]
 
         if sysIsVwLock() == 0 then
             if isRemote() == 1 and holdingShift then
@@ -1035,7 +1035,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                             if pvpDist < lastPvPDist and pvpDist > 2000 then
                                 AP.ToggleAutopilot()
                                 msgText = "Autopilot cancelled to prevent crossing PvP Line" 
-                                BrakeIsOn=true
+                                BrakeIsOn = true
                                 lastPvPDist = pvpDist
                             else
                                 lastPvPDist = pvpDist
@@ -1140,7 +1140,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                         if pvpDist < lastPvPDist and pvpDist > 2000 then 
                             AP.ToggleAutopilot()
                             msgText = "Autopilot cancelled to prevent crossing PvP Line" 
-                            BrakeIsOn=true
+                            BrakeIsOn = true
                             lastPvPDist = pvpDist
                         else
                             lastPvPDist = pvpDist
@@ -1611,6 +1611,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             if BrakeLanding then
                 targetPitch = 0
                 local aggBase = false
+                local absHspd = math.abs(hSpd)
                 if not ExternalAGG and antigravOn then 
                     aggBase = antigrav.getBaseAltitude() 
                     if (aggBase < planet.surfaceMaxAltitude and CustomTarget == nil) or
@@ -1619,9 +1620,9 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                     end
                 end
                 if alignHeading then
-                    if math.abs(hSpd) < 0.05 then
+                    if absHspd < 0.05 then
                         if vSpd > -brakeLandingRate then BrakeIsOn = false else BrakeIsOn = true end
-                        if AlignToWorldVector(alignHeading, 0.0001) then 
+                        if AlignToWorldVector(alignHeading, 0.001) then 
                             alignHeading = nil 
                             autoRoll = autoRollPreference 
                         else
@@ -1639,9 +1640,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                     local skipLandingRate = false
                     local distanceToStop = 30 
 
-
-                    if maxKinematicUp ~= nil and maxKinematicUp > 0 then
-
+                    if absHspd < 10 and maxKinematicUp ~= nil and maxKinematicUp > 0 then
                         -- Funny enough, LastMaxBrakeInAtmo has stuff done to it to convert to a flat value
                         -- But we need the instant one back, to know how good we are at braking at this exact moment
                         local atmos = uclamp(atmosDensity,0.4,2) -- Assume at least 40% atmo when they land, to keep things fast in low atmo
@@ -1678,37 +1677,25 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                             --if LandingGearGroundHeight == 0 then
                             stopDistance = (stopDistance+15+(velMag*deltaTick))*1.1 -- Add leeway for large ships with forcefields or landing gear, and for lag
                             -- And just bad math I guess
-                            local knownAltitude = (CustomTarget ~= nil and planet:getAltitude(CustomTarget.position) > 0 and CustomTarget.safe)
-
-                            if knownAltitude then
-                                local targetAltitude
-                                if aggBase and aggBase < coreAltitude then
-                                    targetAltitude = aggBase
-                                else
-                                    targetAltitude = planet:getAltitude(CustomTarget.position)
-                                end
-                                local distanceToGround = coreAltitude - targetAltitude - 100 -- Try to aim for like 100m above the ground, give it lots of time
-                                -- We don't have to squeeze out the little bits of performance
-                                local targetVec = CustomTarget.position - worldPos
-                                local horizontalDistance = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
-
-                                if horizontalDistance > 100 then
-                                    -- We are too far off, don't trust our altitude data
-                                    knownAltitude = false
-                                elseif distanceToGround <= stopDistance or stopDistance == -1 then
+                            local knownAltitude = (apBrk and CustomTarget ~= nil and planet:getAltitude(CustomTarget.position) > 0 and CustomTarget.safe)
+                            local targetAltitude = nil
+                            if aggBase and aggBase < coreAltitude then
+                                targetAltitude = aggBase
+                            elseif knownAltitude then
+                                targetAltitude = planet:getAltitude(CustomTarget.position) + 1000 -- Try to aim for like 1000m above the target, give it lots of time
+                                if coreAltitude < targetAltitude then targetAltitude = nil end
+                            elseif coreAltitude > planet.surfaceMaxAltitude then
+                                targetAltitude = planet.surfaceMaxAltitude
+                            end
+                            if targetAltitude ~= nil then
+                                local distanceToGround = coreAltitude - targetAltitude 
+                                if distanceToGround <= stopDistance or stopDistance == -1 then
                                     BrakeIsOn = true
                                     skipLandingRate = true
                                 else
                                     BrakeIsOn = false
                                     skipLandingRate = true
                                 end
-                            elseif CalculateBrakeLandingSpeed then
-                                if stopDistance >= distanceToStop then -- 10% padding
-                                    BrakeIsOn = true
-                                else
-                                    BrakeIsOn = false
-                                end
-                                skipLandingRate = true
                             end
                         end
                     end
@@ -1742,15 +1729,19 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                             else
                                 BrakeIsOn = true
                             end
-                    elseif StrongBrakes and (constructVelocity:normalize():dot(-up) < 0.999) then
-                        BrakeIsOn = true
-                        AlignToWorldVector()
-                    elseif (vSpd < -brakeLandingRate and not skipLandingRate) or (math.abs(hSpd) > 0.05 and apBrk) then
-                        BrakeIsOn = true
                     elseif not skipLandingRate then
-                        BrakeIsOn = false
+                        if StrongBrakes and (constructVelocity:normalize():dot(-up) < 0.999) then
+                            BrakeIsOn = true
+                            AlignToWorldVector()
+                        elseif absHspd > 10 or (absHspd > 0.05 and apBrk) then
+                            BrakeIsOn = true
+                        elseif vSpd < -brakeLandingRate then
+                            BrakeIsOn = true
+                        else
+                            BrakeIsOn = false
+                        end
                     end
-                end 
+                end
             end
             if AutoTakeoff or spaceLaunch then
                 local intersectBody, nearSide, farSide
@@ -2273,7 +2264,9 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             autoRoll = true
             BrakeIsOn = false
             HoldAltitude = planet.surfaceMaxAltitude + ReEntryHeight
-            if HoldAltitude > planet.spaceEngineMinAltitude then HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude end
+            if HoldAltitude > planet.spaceEngineMinAltitude then 
+                HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude 
+            end
             local text = getDistanceDisplayString(HoldAltitude)
             msgText = "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text 
             play("glide","RE")

@@ -102,8 +102,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                         AutoTakeoff = false
                         VertTakeOff = false
                         AltitudeHold = false
+                        if BrakeLanding then apBrk = not apBrk end
                         BrakeLanding = true
-                        apBrk = not apBrk
                         autoRoll = true
                         GearExtended = false -- Don't actually toggle the gear yet though
                     else
