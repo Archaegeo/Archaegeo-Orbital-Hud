@@ -658,7 +658,7 @@
     end 
 
 -- ArchHUD AtlasOrdering
-    function AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play) -- Atlas and Interplanetary functions including Update Autopilot Target
+    function AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round) -- Atlas and Interplanetary functions including Update Autopilot Target
 
         -- Atlas functions
             local function getPlanet(position)
@@ -885,7 +885,7 @@
             return findAtlasIndex(atlasList, findme)
         end
 
-        function Atlas.UpdatePosition(newName, saveHeading) -- Update a saved location with new position
+        function Atlas.UpdatePosition(newName, saveHeading, saveAgg) -- Update a saved location with new position
             local function updatePosition(private)
                 local positions
                 if private then positions = privatelocations else positions = SavedLocations end
@@ -896,6 +896,18 @@
                         positions[index].name = newName
                         AutopilotTargetIndex = AutopilotTargetIndex - 1
                         adjustAutopilotTargetIndex()
+                    elseif saveAgg ~= nil then
+                        if saveAgg then
+                            local alt = coreAltitude
+                            if alt < 1000 then alt = 1000 end
+                            positions[index].agg = round(alt,0)
+                            msgText = positions[index].name .. " AGG Altitude:"..positions[index].agg.." saved ("..positions[index].planetname..")"
+                            return
+                        elseif saveAgg == false then 
+                            positions[index].agg = nil 
+                            msgText = positions[index].name .. " AGG Altitude cleared ("..positions[index].planetname..")"
+                            return
+                        end                        
                     else
                         local location = positions[index]
                         if saveHeading then 

@@ -102,8 +102,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                         AutoTakeoff = false
                         VertTakeOff = false
                         AltitudeHold = false
+                        if BrakeLanding then apBrk = not apBrk end
                         BrakeLanding = true
-                        apBrk = false
                         autoRoll = true
                         GearExtended = false -- Don't actually toggle the gear yet though
                     else
@@ -111,9 +111,10 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                             play("grOut","LG",1)
                             Nav.control.extendLandingGears()                            
                         end
+                        apBrk = false
                         navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                         if inAtmo then
-                            BrakeIsOn = true
+                            BrakeIsOn = "Landing"
                         end
                     end
                 end
@@ -364,11 +365,11 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             end
         elseif action == "brake" then
             if BrakeToggleStatus or AltIsOn then
-                AP.BrakeToggle()
+                AP.BrakeToggle("Manual")
             elseif not BrakeIsOn then
-                AP.BrakeToggle() -- Trigger the cancellations
+                AP.BrakeToggle("Manual") -- Trigger the cancellations
             else
-                BrakeIsOn = true -- Should never happen
+                BrakeIsOn = "Manual" -- Should never happen
             end
         elseif action == "lalt" then
             toggleView = true
@@ -613,7 +614,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                 "/iphWP - displays current IPH target's ::pos waypoint in lua chat\n"..
                 "/resist 0.15, 0.15, 0.15, 0.15 - Sets shield resistance distribution of the floating 60% extra available, usable once per minute\n"..
                 "/deletewp - Deletes current selected custom wp\n"..
-                "/createPrivate (all) - dumps private lcoations to logfile and screen to cut and paste to privatelocations.lua, all if present will make it include all databank locations."
+                "/createPrivate (all) - dumps private lcoations to screen if present to cut and paste to privatelocations.lua, all if present will make it include all databank locations."
         i = string.find(text, " ")
         command = text
         if i ~= nil then
@@ -736,19 +737,16 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             msgStr = #privatelocations.."-Private "
             if arguement == "all" then
                 for k,v in pairs(SavedLocations) do
-                    if v.name ~= "STARTINGPOINT" then
-                        saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
-                                            "name = '*"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
-                        if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
-                        if v.safe then saveStr = saveStr.."safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
-                    end
+                    saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
+                                        "name = '*"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
+                    if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
+                    if v.safe then saveStr = saveStr.." safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
                 end
                 msgStr = msgStr..#SavedLocations.."-Public "
             end
             saveStr = saveStr.."}\n return privatelocations"
-            s.logInfo("PRIVATELOCATIONS:"..saveStr)
             if screenHud_1 then screenHud_1.setHTML(saveStr) end
-            msgText = msgStr.."locations dumped to logfile and screen if present.\n Cut and paste to privatelocations.lua to use"
+            msgText = msgStr.."locations dumped to screen if present.\n Cut and paste to privatelocations.lua to use"
             msgTimer = 7
         end
     end
