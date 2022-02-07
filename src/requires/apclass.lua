@@ -1606,7 +1606,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 end
                 if alignHeading then
                     if absHspd < 0.05 then
-                        if vSpd > -brakeLandingRate then BrakeIsOn = false else BrakeIsOn = "BL Rate" end
+                        if vSpd > -brakeLandingRate then BrakeIsOn = false else BrakeIsOn = "BL Align BLR" end
                         if AlignToWorldVector(alignHeading, 0.001) then 
                             alignHeading = nil 
                             autoRoll = autoRollPreference 
@@ -1615,7 +1615,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                             autoRoll = true
                         end
                     else
-                        BrakeIsOn = "BL Align Hzn Lmt"
+                        BrakeIsOn = "BL Align Hzn"
                     end
                 else
                     local skipLandingRate = false
