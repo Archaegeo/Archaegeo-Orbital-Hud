@@ -1,29 +1,34 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.718 - AGG, Route, Brake Landing 
+Version 1.718 - AGG, Route, Brake Landing, Pre Panacea
 - Enhance: Brake Landing from high altitudes will now be MUCH faster till you reach a specific height. 
     For Unknown Altitude landings (you hit G while flying), this occurs down to the max surface altitude of the planet you are on. 
     Then `brakeLandingRate` will take over.  For Known locations, `brakeLandingRate` will takeover 1000m over the target location.
-- Feature: Route Pause.  Routes in progress save when getting out and back into seat to allow for stops along the way, or refueling/repairing without losing route progress.
+- Fix: Tapping G while already brake landing will toggle drift limit on and off
+- Enhance: "Brake Engaged" down bottom now has support to show reason brake is on.
+- FEATURE: Route Pause.  Routes in progress save when getting out and back into seat to allow for stops along the way, or refueling/repairing without losing route progress.
 - Change: Routes unload route leg on arrival rather than on starting the route leg.
-- Overhaul: AGG system overhauled, should perform as shown below.
+- Overhaul: AGG system overhauled, should perform as shown in AGG Scenarios below.
 - FEATURE: For any custom save point (private or databank) you can select it in IPH and hold shift to choose Save AGG Alt button. (If AGG on ship)
     This will save the current altitude of your ship (minimum 1000m) to the selected IPH WP as the AGG height.  (Will not change position or alignment if on)
     Anytime you AP to a waypoint with a saved AGG Altitude the ship will turn on AGG if off and set AGG Target Altitude to that value.
     If a WP already has a AGG Altitude, you will see a Clear AGG Alt button instead to remove it.
+    NOTE: It is assumed if you AP to a wp with a saved AGG height, you want to arrive at AGG height.  You can turn AGG off after it gets turned on if desired.
 - Enhance: Added indication if brake landing has drift limit on (0.5m/s horizontal movement causes brakes to engage even if not at brake fall rate)
-- Fix: Tapping G while already brake landing will toggle drift limit on and off
+- PANACEA: Soundpack will not work till first patch after panacea.  Also removed logging of private locations to logfile, so will need screen now.
 - Removed: STARTINGPOINT feature removed.  Too clunky and not enough use to justify, niche feature.
-- Remvoed: CalculateBrakeLandingRate - Depreciated (and didnt work properly before.)
-- REMINDER: Tapping A or D while aligning to a saved alignment during brake landing will cancel the alignment.
+- Remvoed: User variable `CalculateBrakeLandingRate` - Depreciated (and didnt work properly before.)
 - More Cleanup
 
 AGG Scenarios
-- 1) On ground, AGG off, Alt-4 to same planet WP.  Ship takes off to Takeoff height (user variable distance over starting altitude).  If you turn on AGG prior to arrival, 
-    Brake Landing will use the AGG current height as its target altitude to turn off Brake Landing with Brake On.  Alignment will be done if alignment is saved for WP.
-- 2) On Ground, AGG on, Alt-4 to same planet WP.  Ship takes off to current AGG height and continues to WP.  If AGG still on at arrival, performs as #1 above.  
-    If AGG off at arrival, lands (and aligns if alignment saved)
-- 3) In air at AGG height, AGG on, Alt-4 to same planet WP.  Brake releases, waits for pilot throttle up. Ship heads for WP at current AGG height. Performas as #2 above.
+NOTE: Alt-4 to a WP with a Saved AGG Altitude (new Feature) will turn on AGG (if off), set the target height to the saved value, and use that height.
+NOTE: Anytime AGG is on and Altitude Hold is engaged, Hold Altitude will be set to current base agg altitude and change with it if agg altitude is changing.
+- 1) On ground, AGG off, Alt-4 to same planet WP.  User throttles up and released brake, normal takeoff.  Turn on AGG prior to arrival:
+    a) Current height above AGG height, Brake Landing use AGG height as target landing height and turn off with brake on at that height.
+    b) If current height is below AGG height, ship will do normal brake landing.
+    c) Turning on AGG during takeoff changes takeoff height to AGG height.
+- 2) On Ground, AGG on, Alt-4 to same planet WP.  Same as 1c.
+- 3) In air at AGG height, AGG on, Alt-4 to same planet WP.  Brake releases, levels pitch and aligns, waits for pilot throttle up. Ship heads for WP at current AGG height. Performs as #2 above.
 - 4) In air at AGG height, AGG on, Alt-4-4 same planet. Performs as #3 using Orbital Hop.  Comes in at 11% atmo till at target then AGG Brake Lands.
 - 5) On Ground, AGG on, Alt-4 to other planet WP.  Ship takes off to other planet as normal.  Arrival is per #4.
 - 6) On Ground, AGG on, Alt-4-4. Ship takes off to low orbit height.  Arrival is per #4.

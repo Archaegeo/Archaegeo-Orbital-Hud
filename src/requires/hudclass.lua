@@ -755,7 +755,9 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local brakeStroke = defaultStroke
             local brakeClass = defaultClass
             if BrakeIsOn then
-                newContent[#newContent + 1] = svgText(warningX, brakeY, "Brake Engaged", "warnings")
+                local bkStr = ""
+                if type(BrakeIsOn) == "string" then bkStr="-"..BrakeIsOn end
+                newContent[#newContent + 1] = svgText(warningX, brakeY, "Brake Engaged"..bkStr, "warnings")
                 brakeFill = "#440000"
                 brakeStroke = onFill
                 brakeClass = fillClass
@@ -814,7 +816,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 aggClass = fillClass
                 local aggWarn = "warnings"
                 if mabs(coreAltitude - antigrav.getBaseAltitude()) < 501 then aggWarn = "warn" end
-                    newContent[#newContent + 1] = svgText(warningX, apY+25, stringf("Target Altitude: %d Singularity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), aggWarn)
+                    newContent[#newContent + 1] = svgText(warningX, apY+40, stringf("Target Altitude: %d Singularity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), aggWarn)
             end
             if Autopilot and AutopilotTargetName ~= "None" then
                 newContent[#newContent + 1] = svgText(warningX, apY,  "Autopilot "..AutopilotStatus, "warn")
@@ -839,7 +841,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                         newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..displayText, "warn")
                     end
                     if BrakeIsOn and not VertTakeOff then
-                        newContent[#newContent + 1] = svgText( warningX, apY + 60,"Throttle Up and Disengage Brake For Takeoff", "crit")
+                        newContent[#newContent + 1] = svgText( warningX, apY + 80,"Throttle Up and Disengage Brake For Takeoff", "crit")
                     end
                 else
                     newContent[#newContent + 1] = svgText(warningX, apY, "Altitude Hold: ".. displayText, "warn")
@@ -899,7 +901,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 end
             end
             if VectorToTarget and not IntoOrbit then
-                newContent[#newContent + 1] = svgText(warningX, apY+45, VectorStatus, "warn")
+                newContent[#newContent + 1] = svgText(warningX, apY+60, VectorStatus, "warn")
             end
             local boardersFill = "#111100"
             local boardersStroke = defaultStroke
@@ -1963,7 +1965,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                         play("folOn","F")
                     else
                         play("folOff","F")
-                        BrakeIsOn = true
+                        BrakeIsOn = "Follow Off"
                         autoRoll = autoRollPreference
                         GearExtended = OldGearExtended
                         if GearExtended then

@@ -96,12 +96,12 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
             if type ~= nil then
                 if type == 2 then
-                    s.logInfo("sound_loop|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
+                    --s.logInfo("sound_loop|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
                 else
-                    s.logInfo("sound_notification|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
+                    --s.logInfo("sound_notification|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
                 end
             else
-                s.logInfo("sound_q|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
+                --s.logInfo("sound_q|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
             end
         end
         local function svgText(x, y, text, class, style) -- processes a svg text string, saves code lines by doing it this way
@@ -406,7 +406,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                 end
                 -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
                 if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 50) then
-                    BrakeIsOn = true
+                    BrakeIsOn = "Startup"
                     GearExtended = true
                     if hasGear then
                         Nav.control.extendLandingGears()

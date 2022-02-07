@@ -114,7 +114,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                         apBrk = false
                         navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                         if inAtmo then
-                            BrakeIsOn = true
+                            BrakeIsOn = "Landing"
                         end
                     end
                 end
@@ -365,11 +365,11 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             end
         elseif action == "brake" then
             if BrakeToggleStatus or AltIsOn then
-                AP.BrakeToggle()
+                AP.BrakeToggle("Manual")
             elseif not BrakeIsOn then
-                AP.BrakeToggle() -- Trigger the cancellations
+                AP.BrakeToggle("Manual") -- Trigger the cancellations
             else
-                BrakeIsOn = true -- Should never happen
+                BrakeIsOn = "Manual" -- Should never happen
             end
         elseif action == "lalt" then
             toggleView = true
@@ -614,7 +614,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                 "/iphWP - displays current IPH target's ::pos waypoint in lua chat\n"..
                 "/resist 0.15, 0.15, 0.15, 0.15 - Sets shield resistance distribution of the floating 60% extra available, usable once per minute\n"..
                 "/deletewp - Deletes current selected custom wp\n"..
-                "/createPrivate (all) - dumps private lcoations to logfile and screen to cut and paste to privatelocations.lua, all if present will make it include all databank locations."
+                "/createPrivate (all) - dumps private lcoations to screen if present to cut and paste to privatelocations.lua, all if present will make it include all databank locations."
         i = string.find(text, " ")
         command = text
         if i ~= nil then
@@ -745,9 +745,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                 msgStr = msgStr..#SavedLocations.."-Public "
             end
             saveStr = saveStr.."}\n return privatelocations"
-            s.logInfo("PRIVATELOCATIONS:"..saveStr)
             if screenHud_1 then screenHud_1.setHTML(saveStr) end
-            msgText = msgStr.."locations dumped to logfile and screen if present.\n Cut and paste to privatelocations.lua to use"
+            msgText = msgStr.."locations dumped to screen if present.\n Cut and paste to privatelocations.lua to use"
             msgTimer = 7
         end
     end
