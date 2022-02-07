@@ -1,0 +1,34 @@
+-- Example privatelocations.lua file, rename from privatelocations.sample
+
+privatelocations = {
+    {
+        position = {x=-78779.81798488, -- POSITION must be in world coordinates, number of decimals is up to you
+                    y=-36509.020896575, -- Use /iphWP while in seat with a wp selected on IPH to see world coordinates.
+                    z=-34869.940703042},
+        name = "*Alioth-Home",  -- Custom Name, can be anything.
+        planetname = "Alioth", -- MUST match the name in the current atlas for the associated planet or Space for a space location
+        gravity = 0.992, -- used for brake landing rate
+        safe = true, -- This indicates we can extreme land here, if this was a real positional waypoint
+    },
+    {
+        position = {x=-80209.654693357,
+                    y=-13116.92861660,
+                    z=-29814.760624365},
+        name = "*Alioth-Mk18",
+        planetname = "Alioth",
+        gravity = 0.992,
+        safe = true, 
+    },
+    {
+        position = {x=-381453.22,
+                    y=-138076.14,
+                    z=323157.67},
+        name = "*Space-Temp1",
+        planetname = "Space",
+        gravity = 0,
+        safe = true, 
+    }
+    
+}
+
+return privatelocations

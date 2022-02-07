@@ -1,6 +1,8 @@
-function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1,
+function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
     mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
-    navCom, sysDestWid, sysIsVwLock, msqrt, round, svgText)
+    navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
+    getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
+
 
     local gravConstant = 9.80665
     local Buttons = {}
@@ -13,6 +15,21 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     local showSettings = false
     local settingsVariables = "none"
     local pipeMessage = ""
+    local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in. Also used in apclass
+    local maxBrakeDistance = 0
+    local maxBrakeTime = 0
+    local damageMessage = ""
+    local WeaponPanelID = nil
+    local PrimaryR = SafeR
+    local PrimaryG = SafeG
+    local PrimaryB = SafeB
+    local rgb = [[rgb(]] .. mfloor(PrimaryR + 0.5) .. "," .. mfloor(PrimaryG + 0.5) .. "," .. mfloor(PrimaryB + 0.5) .. [[)]]
+    local rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.9 + 0.5) .. "," .. mfloor(PrimaryG * 0.9 + 0.5) .. "," ..   mfloor(PrimaryB * 0.9 + 0.5) .. [[)]]
+    local totalDistanceTrip = 0
+    local flightTime = 0
+    local lastOdometerOutput = ""
+    local lastTravelTime = systime()
+    local repairArrows = false
 
     --Local Huds Functions
         -- safezone() variables
@@ -85,6 +102,10 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local fuelPercentS = {}
             local fuelTimeLeft = {}
             local fuelPercent = {}
+            local fuelUsed = {}
+            fuelUsed["atmofueltank"],fuelUsed["spacefueltank"],fuelUsed["rocketfueltank"] = 0,0,0
+
+            local tankY = 0
         
         local function DrawTank(x, nameSearchPrefix, nameReplacePrefix, tankTable, fuelTimeLeftTable,
             fuelPercentTable)
@@ -122,6 +143,13 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                         
                         local fuelMassLast
                         local fuelMass = 0
+
+                        fuelMass = (eleMass(tankTable[i][tankID]) - tankTable[i][tankMassEmpty])
+                        fuelMassLast = tankTable[i][tankLastMass]
+                        if fuelMassLast > fuelMass then 
+                            fuelUsed[slottedTankType] = fuelUsed[slottedTankType]+(fuelMassLast - fuelMass) 
+                        end
+
                         if slottedIndex ~= 0 then
                             fuelPercentTable[i] = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
                                                     .percentage
@@ -131,9 +159,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                                 fuelTimeLeftTable[i] = 0
                             end
                         else
-                            fuelMass = (eleMass(tankTable[i][tankID]) - tankTable[i][tankMassEmpty])
                             fuelPercentTable[i] = mfloor(0.5 + fuelMass * 100 / tankTable[i][tankMaxVol])
-                            fuelMassLast = tankTable[i][tankLastMass]
                             if fuelMassLast <= fuelMass then
                                 fuelTimeLeftTable[i] = 0
                             else
@@ -141,9 +167,9 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                                                         0.5 + fuelMass /
                                                             ((fuelMassLast - fuelMass) / (curTime - tankTable[i][tankLastTime])))
                             end
-                            tankTable[i][tankLastMass] = fuelMass
-                            tankTable[i][tankLastTime] = curTime
                         end
+                        tankTable[i][tankLastTime] = curTime
+                        tankTable[i][tankLastMass] = fuelMass
                     end
                     if name == nameSearchPrefix then
                         name = stringf("%s %d", nameReplacePrefix, i)
@@ -201,6 +227,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                     end
                 end
             end
+
             tankY = y1
         end
 
@@ -728,7 +755,9 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local brakeStroke = defaultStroke
             local brakeClass = defaultClass
             if BrakeIsOn then
-                newContent[#newContent + 1] = svgText(warningX, brakeY, "Brake Engaged", "warnings")
+                local bkStr = ""
+                if type(BrakeIsOn) == "string" then bkStr="-"..BrakeIsOn end
+                newContent[#newContent + 1] = svgText(warningX, brakeY, "Brake Engaged"..bkStr, "warnings")
                 brakeFill = "#440000"
                 brakeStroke = onFill
                 brakeClass = fillClass
@@ -785,13 +814,12 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 aggFill = "#00DD00"
                 aggStroke = onFill
                 aggClass = fillClass
-                if mabs(coreAltitude - antigrav.getBaseAltitude()) < 501 then
-                    newContent[#newContent + 1] = svgText(warningX, apY+15, stringf("Target Altitude: %d Singularity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), "warn")
-                else
-                    newContent[#newContent + 1] = svgText( warningX, apY+15, stringf("Target Altitude: %d Singluarity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), "warnings")
-                end
-            elseif Autopilot and AutopilotTargetName ~= "None" then
-                newContent[#newContent + 1] = svgText(warningX, apY+20,  "Autopilot "..AutopilotStatus, "warn")
+                local aggWarn = "warnings"
+                if mabs(coreAltitude - antigrav.getBaseAltitude()) < 501 then aggWarn = "warn" end
+                    newContent[#newContent + 1] = svgText(warningX, apY+40, stringf("Target Altitude: %d Singularity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), aggWarn)
+            end
+            if Autopilot and AutopilotTargetName ~= "None" then
+                newContent[#newContent + 1] = svgText(warningX, apY,  "Autopilot "..AutopilotStatus, "warn")
             elseif LockPitch ~= nil then
                 newContent[#newContent + 1] = svgText(warningX, apY+20, stringf("LockedPitch: %d", mfloor(LockPitch)), "warn")
             elseif followMode then
@@ -813,7 +841,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                         newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..displayText, "warn")
                     end
                     if BrakeIsOn and not VertTakeOff then
-                        newContent[#newContent + 1] = svgText( warningX, apY + 50,"Throttle Up and Disengage Brake For Takeoff", "crit")
+                        newContent[#newContent + 1] = svgText( warningX, apY + 80,"Throttle Up and Disengage Brake For Takeoff", "crit")
                     end
                 else
                     newContent[#newContent + 1] = svgText(warningX, apY, "Altitude Hold: ".. displayText, "warn")
@@ -835,7 +863,10 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             end
             if BrakeLanding then
                 if StrongBrakes then
-                    newContent[#newContent + 1] = svgText(warningX, apY, "Brake-Landing", "warnings")
+                    local str = "Brake Landing"
+                    if alignHeading then str = str.."-Aligning" end
+                    if apBrk then str = str.."-Drift Limited" end
+                    newContent[#newContent + 1] = svgText(warningX, apY, str, "warnings")
                 else
                     newContent[#newContent + 1] = svgText(warningX, apY, "Coast-Landing", "warnings")
                 end
@@ -870,7 +901,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 end
             end
             if VectorToTarget and not IntoOrbit then
-                newContent[#newContent + 1] = svgText(warningX, apY+35, VectorStatus, "warn")
+                newContent[#newContent + 1] = svgText(warningX, apY+60, VectorStatus, "warn")
             end
             local boardersFill = "#111100"
             local boardersStroke = defaultStroke
@@ -993,7 +1024,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             end
             for k,i in pairs(checkRoute) do
                 y=y+20
-                newContent[#newContent + 1] = svgText( x, y, k..". "..getAPName(checkRoute[k]), "pdim txtstart size20")
+                newContent[#newContent + 1] = svgText( x, y, k..". "..checkRoute[k], "pdim txtstart size20")
             end
         end
 
@@ -1004,11 +1035,12 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local helpAtmoGround = {"Alt-4: AutoTakeoff to Target"}
             local helpAtmoAir = { "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", 
                                 "Alt-Q/E: Hard Bankroll left/right till released", "Alt-S: 180 deg bank turn"}
-            local helpSpace = {"Alt-6: Orbit at current altitude", "Alt-6-6: Orbit at LowOrbitHeight over atmosphere"}
-            local helpGeneral = {"", "------------------ALWAYS--------------------", "Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-3: Toggle Vanilla Widget view", 
-                                "Alt-4: Autopilot to IPH target", "Alt-5: Lock Pitch at current pitch","Alt-7: Toggle Collision System on and off", "Alt-8: Toggle ground stabilization (underwater flight)",
-                                "CTRL: Toggle Brakes on and off. Cancels active AP", "LAlt: Tap to shift freelook on and off", 
-                                "Shift: Hold while not in freelook to see Buttons", "Type /commands or /help in lua chat to see text commands"}
+            local helpSpace = {"Alt-6: Orbit at current altitude", "Alt-6-6: Orbit at LowOrbitHeight over atmosphere","G: Raise or lower landing gear"}
+            local helpGeneral = {"", "------------------ALWAYS--------------------", "Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-Shift 1: Show passengers on board","Alt-Shift-2: Deboard passengers",
+                                "Alt-3: Toggle Vanilla Widget view", "Alt-4: Autopilot to IPH target", "Alt-Shift-3: Show docked ships","Alt-Shift-4: Undock all ships",
+                                "Alt-5: Lock Pitch at current pitch","Alt-Shift-5: Lock pitch at preset pitch","Alt-7: Toggle Collision System on and off", "Alt-8: Toggle ground stabilization (underwater flight)",
+                                "B: Toggle rocket boost on/off","CTRL: Toggle Brakes on and off. Cancels active AP", "LAlt: Tap to shift freelook on and off", 
+                                "Shift: Hold while not in freelook to see Buttons", "L: Toggle lights on and off", "Type /commands or /help in lua chat to see text commands"}
             table.insert(help, "--------------DYNAMIC-----------------")
             if inAtmo then 
                 if abvGndDet ~= -1 then
@@ -1046,9 +1078,12 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             else
                 addTable(help, helpSpace)
                 if shield_1 then
-                    table.insert(help,"Alt-Shift-5: Toggle shield off and on")
                     table.insert(help,"Alt-Shift-6: Vent shields")
+                    if not AutoShieldToggle then table.insert(help,"Alt-Shift-7: Toggle shield off/on") end
                 end
+            end
+            if CustomTarget ~= nil then
+                table.insert(help, "Alt-Shift-8: Add current IPH target to Route")
             end
             if gyro then
                 table.insert(help,"Alt-9: Activate Gyroscope")
@@ -1120,7 +1155,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
 
             local targetHeight = orbitMapSize*1.5
             if SelectedTab == "INFO" then
-                targetHeight = 25*7
+                targetHeight = 25*9
             end
 
             if SelectedTab ~= "HIDE" then
@@ -1891,8 +1926,8 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 AutoTakeoff = false
             end
 
-            local function UpdatePosition()
-                ATLAS.UpdatePosition()
+            local function UpdatePosition(heading, saveAGG)
+                ATLAS.UpdatePosition(nil, heading, saveAGG)
             end
             local function ClearCurrentPosition()
                 -- So AutopilotTargetIndex is special and not a real index.  We have to do this by hand.
@@ -1902,13 +1937,13 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
            
             local function getAPEnableName(index)
                 local checkRoute = AP.routeWP(true)
-                if checkRoute and #checkRoute > 0 then return "Engage Route: "..getAPName(checkRoute[1]) end
+                if checkRoute and #checkRoute > 0 then return "Engage Route: "..checkRoute[1] end
                 return "Engage Autopilot: " .. getAPName(index)
             end
 
             local function getAPDisableName(index)
                 local checkRoute = AP.routeWP(true)
-                if checkRoute and #checkRoute > 0 then return "Next Route Point: "..getAPName(checkRoute[1]) end
+                if checkRoute and #checkRoute > 0 then return "Next Route Point: "..checkRoute[1] end
                 return "Disable Autopilot: " .. getAPName(index)
             end   
 
@@ -1930,7 +1965,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                         play("folOn","F")
                     else
                         play("folOff","F")
-                        BrakeIsOn = true
+                        BrakeIsOn = "Follow Off"
                         autoRoll = autoRollPreference
                         GearExtended = OldGearExtended
                         if GearExtended then
@@ -1991,8 +2026,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             -- Make 9 more buttons that only show when moused over the AP button
             local i
             local function getAtlasIndexFromAddition(add)
-                local checkRoute = AP.routeWP(true)
-                if checkRoute and #checkRoute > 0 then return checkRoute[1] end
                 local index = apScrollIndex + add
                 if index > #AtlasOrdered then
                     index = index-#AtlasOrdered-1
@@ -2043,10 +2076,19 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                     return AutopilotTargetIndex == 0 or CustomTarget == nil
                 end)
             MakeButton("Update Position", "Update Position", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y,
-                function()
-                    return false
-                end, UpdatePosition, function()
-                    return AutopilotTargetIndex > 0 and CustomTarget ~= nil
+                function() return false end, 
+                function() UpdatePosition(nil) end, 
+                function() return AutopilotTargetIndex > 0 and CustomTarget ~= nil
+                end)
+            MakeButton("Save Heading", "Clear Heading", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y + apbutton.height + 20,
+                function() return CustomTarget.heading ~= nil end, 
+                function() if CustomTarget.heading ~= nil then UpdatePosition(false) else UpdatePosition(true) end end, 
+                function() return AutopilotTargetIndex > 0 and CustomTarget ~= nil
+                end)
+            MakeButton("Save AGG Alt", "Clear AGG Alt", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y + apbutton.height*2 + 40,
+                function() return CustomTarget.agg ~= nil end, 
+                function() if CustomTarget.agg ~= nil then UpdatePosition(nil, false) else UpdatePosition(nil, true) end end, 
+                function() return AutopilotTargetIndex > 0 and CustomTarget ~= nil and antigrav
                 end)
             MakeButton("Clear Position", "Clear Position", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y,
                 function()
@@ -2054,7 +2096,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 end, ClearCurrentPosition, function()
                     return AutopilotTargetIndex > 0 and CustomTarget ~= nil
                 end)
-            MakeButton("Save Route", "Save Route", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y + apbutton.height + 20, 
+            MakeButton("Save Route", "Save Route", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y + apbutton.height*2 + 40, 
                 function() return false end, function() AP.routeWP(false, false, 2) end, function() return #AP.routeWP(true) > 0 end)
             MakeButton("Load Route","Clear Route", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y + apbutton.height + 20,
                 function()
@@ -2066,6 +2108,9 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             buttonWidth = 300
             local x = 0
             local y = resolutionHeight / 2 - 150
+            MakeButton("Enable Check Damage", "Disable Check Damage", buttonWidth, buttonHeight, x, y - buttonHeight - 20, function()
+                return ShouldCheckDamage
+            end, function() ShouldCheckDamage = not ShouldCheckDamage end)
             MakeButton("View Settings", "View Settings", buttonWidth, buttonHeight, x, y, function() return true end, ToggleButtons)
             y = y + buttonHeight + 20
             MakeButton("Enable Turn and Burn", "Disable Turn and Burn", buttonWidth, buttonHeight, x, y, function()
@@ -2096,7 +2141,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 function() return Reentry end, function() spaceLand = 1 gradeToggle(1) end, function() return (planet.hasAtmosphere and not inAtmo) end )
             y = y + buttonHeight + 20
             MakeButton("Parachute Re-Entry", "Cancel Parachute Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
-                function() return Reentry end, AP.BeginReentry, function() return (planet.hasAtmosphere and not inAtmo) end )
+                function() return Reentry end, function() spaceLand = 2 gradeToggle(1) end, function() return (planet.hasAtmosphere and not inAtmo) end )
             y = y + buttonHeight + 20
             MakeButton("Engage Follow Mode", "Disable Follow Mode", buttonWidth, buttonHeight, x, y, function()
                 return followMode
@@ -2174,16 +2219,10 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             PrimaryR = PvPR
             PrimaryG = PvPG
             PrimaryB = PvPB
-            if shield_1 and AutoShieldToggle and shield_1.getState() == 0 then
-                shield_1.toggle()
-            end
         else
             PrimaryR = SafeR
             PrimaryG = SafeG
             PrimaryB = SafeB
-            if shield_1 and AutoShieldToggle and shield_1.getState() == 1 then
-                shield_1.toggle()
-            end
         end
         rgb = [[rgb(]] .. mfloor(PrimaryR + 0.6) .. "," .. mfloor(PrimaryG + 0.6) .. "," .. mfloor(PrimaryB + 0.6) .. [[)]]
         rgbdim = [[rgb(]] .. mfloor(PrimaryR * 0.8 + 0.5) .. "," .. mfloor(PrimaryG * 0.8 + 0.5) .. "," ..   mfloor(PrimaryB * 0.8 + 0.5) .. [[)]]    
@@ -2402,7 +2441,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             newContent[#newContent + 1] = svgText(crx(635), cry(45), "TRIP", "")
             newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(635),cry(31),crx(-90))
             if travelTime then
-                newContent[#newContent + 1] = svgText(crx(532), cry(23), stringf("%s", FormatTimeString(travelTime)), "txtstart size20") 
+                newContent[#newContent + 1] = svgText(crx(545), cry(26), stringf("%s", FormatTimeString(travelTime)), "txtstart size20")  
             end
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(20), stringf("Trip: %.2f km", totalDistanceTrip), "txtstart") 
             --TODO: newContent[#newContent + 1] = svgText(ConvertResolutionX(700), ConvertResolutionY(30), stringf("Lifetime: %.2f kSU", (TotalDistanceTravelled / 200000)), "txtstart") 
@@ -2414,7 +2453,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(830), ConvertResolutionY(30), "Total Time: "..FormatTimeString(TotalFlightTime), "txtstart") 
             newContent[#newContent + 1] = svgText(crx(1285), cry(45), "MASS", "txtstart")
             newContent[#newContent + 1] = stringf([[<path class="linethin dimstroke" d="M %f %f l %f 0"/>]],crx(1285), cry(31), crx(90))
-            newContent[#newContent + 1] = svgText(crx(1388), cry(23), stringf("%s", mass), "size20") 
+            newContent[#newContent + 1] = svgText(crx(1375), cry(26), stringf("%s", mass), "size20") 
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(970), ConvertResolutionY(20), stringf("Mass: %s", mass), "txtstart") 
             --newContent[#newContent + 1] = svgText(ConvertResolutionX(1240), ConvertResolutionY(10), stringf("Max Brake: %s",  brakeValue), "txtend") 
             newContent[#newContent + 1] = svgText(crx(1220), labelY1, "THRUST", "txtstart")
@@ -2423,6 +2462,19 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(175), flightStyle, "pbright txtbig txtmid size20")
         end
         newContent[#newContent + 1] = "</g>"
+    end
+    
+    local mod = 1 - (ContainerOptimization*0.05+FuelTankOptimization*0.05)
+    function Hud.FuelUsed(fuelType)
+        local used
+        if fuelType == "atmofueltank" then 
+            used = stringf("Atmo Fuel Used: %.1f L", fuelUsed[fuelType]/(4*mod))
+        elseif fuelType == "spacefueltank" then
+            used = stringf("Space Fuel Used: %.1f L", fuelUsed[fuelType]/(6*mod))
+        else
+            used = stringf("Rocket Fuel Used: %.1f L", fuelUsed[fuelType]/(0.8*mod))
+        end
+        return used
     end
 
     function Hud.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
@@ -2463,8 +2515,17 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 newContent[#newContent + 1] = svgText(midX, startY+height*4, stringf("Max Thrust Mass: %s", (maxMass)))
                 newContent[#newContent + 1] = svgText(startX, startY+height*5, stringf("Req Thrust: %s", reqThrust )) 
             else
-                newContent[#newContent + 1] = svgText(midX, startY+height*5, "Max Mass: n/a") 
-                newContent[#newContent + 1] = svgText(startX, startY+height*6, "Req Thrust: n/a") 
+                newContent[#newContent + 1] = svgText(midX, startY+height*4, "Max Mass: n/a") 
+                newContent[#newContent + 1] = svgText(startX, startY+height*5, "Req Thrust: n/a") 
+            end
+
+            newContent[#newContent + 1] = svgText(midX, startY+height*5, HUD.FuelUsed("atmofueltank"))
+            newContent[#newContent + 1] = svgText(startX, startY+height*6, HUD.FuelUsed("spacefueltank"))
+            newContent[#newContent + 1] = svgText(midX, startY+height*6, HUD.FuelUsed("rocketfueltank"))
+            if velMag > 833 then
+                local relamass = coreMass / (math.sqrt(1-(velMag/8333.33)^2))
+                local mass = relamass > 1000000 and round(relamass / 1000000,2).." kTons" or round(relamass / 1000, 2).." Tons"
+                newContent[#newContent +1] = svgText(midX, startY+height*7, stringf("Rel. Mass: %s", mass))
             end
         end
         newContent[#newContent + 1] = "</g></g>"
@@ -2527,16 +2588,15 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     end
 
         -- DrawRadarInfo() variables
-        local perisPanelID
+
         local radarX = ConvertResolutionX(1770)
         local radarY = ConvertResolutionY(350)
         local friendy = ConvertResolutionY(15)
         local friendx = ConvertResolutionX(1370)
         local msg, where
-        local peris = 0
 
     function Hud.DrawRadarInfo()
-        radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY)
+        radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY) 
     end
 
     function Hud.DrawTanks()
@@ -2557,7 +2617,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         local resistances = shield_1.getResistances()
         local resistString = "A: "..(10+resistances[1]*100).."% / E: "..(10+resistances[2]*100).."% / K:"..(10+resistances[3]*100).."% / T: "..(10+resistances[4]*100).."%"
         local x, y = shieldX -60, shieldY+30
-        local shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints())
         local colorMod = mfloor(shieldPercent * 2.55)
         local color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
         local class = ""
@@ -2802,11 +2861,202 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     end
 
     function Hud.TenthTick()
+        -- Local Functions for tenthSecond
+            local function SetupInterplanetaryPanel() -- Interplanetary helper
+                local sysCrData = s.createData
+                local sysCrWid = s.createWidget
+                panelInterplanetary = s.createWidgetPanel("Interplanetary Helper")
+            
+                interplanetaryHeader = sysCrWid(panelInterplanetary, "value")
+                interplanetaryHeaderText = sysCrData('{"label": "Target Planet", "value": "N/A", "unit":""}')
+                sysAddData(interplanetaryHeaderText, interplanetaryHeader)
+            
+                widgetDistance = sysCrWid(panelInterplanetary, "value")
+                widgetDistanceText = sysCrData('{"label": "distance", "value": "N/A", "unit":""}')
+                sysAddData(widgetDistanceText, widgetDistance)
+            
+                widgetTravelTime = sysCrWid(panelInterplanetary, "value")
+                widgetTravelTimeText = sysCrData('{"label": "Travel Time", "value": "N/A", "unit":""}')
+                sysAddData(widgetTravelTimeText, widgetTravelTime)
+            
+                widgetMaxMass = sysCrWid(panelInterplanetary, "value")
+                widgetMaxMassText = sysCrData('{"label": "Maximum Mass", "value": "N/A", "unit":""}')
+                sysAddData(widgetMaxMassText, widgetMaxMass)
+            
+                widgetTargetOrbit = sysCrWid(panelInterplanetary, "value")
+                widgetTargetOrbitText = sysCrData('{"label": "Target Altitude", "value": "N/A", "unit":""}')
+                sysAddData(widgetTargetOrbitText, widgetTargetOrbit)
+            
+                widgetCurBrakeDistance = sysCrWid(panelInterplanetary, "value")
+                widgetCurBrakeDistanceText = sysCrData('{"label": "Cur Brake distance", "value": "N/A", "unit":""}')
+                widgetCurBrakeTime = sysCrWid(panelInterplanetary, "value")
+                widgetCurBrakeTimeText = sysCrData('{"label": "Cur Brake Time", "value": "N/A", "unit":""}')
+                widgetMaxBrakeDistance = sysCrWid(panelInterplanetary, "value")
+                widgetMaxBrakeDistanceText = sysCrData('{"label": "Max Brake distance", "value": "N/A", "unit":""}')
+                widgetMaxBrakeTime = sysCrWid(panelInterplanetary, "value")
+                widgetMaxBrakeTimeText = sysCrData('{"label": "Max Brake Time", "value": "N/A", "unit":""}')
+                widgetTrajectoryAltitude = sysCrWid(panelInterplanetary, "value")
+                widgetTrajectoryAltitudeText = sysCrData('{"label": "Projected Altitude", "value": "N/A", "unit":""}')
+                if not inAtmo then
+                    sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
+                    sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime)
+                    sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
+                    sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
+                    sysAddData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
+                end
+            end                    
+            local function HideInterplanetaryPanel()
+                sysDestWid(panelInterplanetary)
+                panelInterplanetary = nil
+            end 
+            local function GetAutopilotTravelTime()
+                if not Autopilot then
+                    if CustomTarget == nil or CustomTarget.planetname ~= planet.name then
+                        AutopilotDistance = (autopilotTargetPlanet.center - worldPos):len() -- This updates elsewhere if we're already piloting
+                    else
+                        AutopilotDistance = (CustomTarget.position - worldPos):len()
+                    end
+                end
+                local speed = velMag
+                local throttle = u.getThrottle()/100
+                if AtmoSpeedAssist then throttle = PlayerThrottle end
+                local accelDistance, accelTime =
+                    Kinematic.computeDistanceAndTime(velMag, MaxGameVelocity, -- From currently velocity to max
+                        coreMass, Nav:maxForceForward()*throttle, warmup, -- T50?  Assume none, negligible for this
+                        0) -- Brake thrust, none for this
+                -- accelDistance now has the amount of distance for which we will be accelerating
+                -- Then we need the distance we'd brake from full speed
+                -- Note that for some nearby moons etc, it may never reach full speed though.
+                local brakeDistance, brakeTime
+                if not TurnBurn then
+                    brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
+                else
+                    brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
+                end
+                local _, curBrakeTime
+                if not TurnBurn and speed > 0 then -- Will this cause problems?  Was spamming something in here was giving 0 speed and 0 accel
+                    _, curBrakeTime = AP.GetAutopilotBrakeDistanceAndTime(speed)
+                else
+                    _, curBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(speed)
+                end
+                local cruiseDistance = 0
+                local cruiseTime = 0
+                -- So, time is in seconds
+                -- If cruising or braking, use real cruise/brake values
+                if AutopilotCruising or (not Autopilot and speed > 5) then -- If already cruising, use current speed
+                    cruiseTime = Kinematic.computeTravelTime(speed, 0, AutopilotDistance)
+                elseif brakeDistance + accelDistance < AutopilotDistance then
+                    -- Add any remaining distance
+                    cruiseDistance = AutopilotDistance - (brakeDistance + accelDistance)
+                    cruiseTime = Kinematic.computeTravelTime(8333.0556, 0, cruiseDistance)
+                else
+                    local accelRatio = (AutopilotDistance - brakeDistance) / accelDistance
+                    accelDistance = AutopilotDistance - brakeDistance -- Accel until we brake
+                    
+                    accelTime = accelTime * accelRatio
+                end
+                if CustomTarget ~= nil and CustomTarget.planetname == planet.name and not Autopilot then
+                    return cruiseTime
+                elseif AutopilotBraking then
+                    return curBrakeTime
+                elseif AutopilotCruising then
+                    return cruiseTime + curBrakeTime
+                else -- If not cruising or braking, assume we'll get to max speed
+                    return accelTime + brakeTime + cruiseTime
+                end
+            end
         HUD.DrawTanks()
         if shield_1 then HUD.DrawShield() end
+        if AutopilotTargetName ~= "None" then
+            if panelInterplanetary == nil then
+                SetupInterplanetaryPanel()
+            end
+            if AutopilotTargetName ~= nil then
+                local customLocation = CustomTarget ~= nil
+                local planetMaxMass = 0.5 * LastMaxBrakeInAtmo /
+                    (autopilotTargetPlanet:getGravity(
+                    autopilotTargetPlanet.center + (vec3(0, 0, 1) * autopilotTargetPlanet.radius))
+                    :len())
+                planetMaxMass = planetMaxMass > 1000000 and round(planetMaxMass / 1000000,2).." kTons" or round(planetMaxMass / 1000, 2).." Tons"
+                sysUpData(interplanetaryHeaderText,
+                    '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "unit":""}')
+                travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
+                if customLocation and not Autopilot then -- If in autopilot, keep this displaying properly
+                    distance = (worldPos - CustomTarget.position):len()
+                else
+                    distance = (AutopilotTargetCoords - worldPos):len() -- Don't show our weird variations
+                end
+                if not TurnBurn then
+                    brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(velMag)
+                    maxBrakeDistance, maxBrakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
+                else
+                    brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(velMag)
+                    maxBrakeDistance, maxBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
+                end
+                local displayText = getDistanceDisplayString(distance)
+                sysUpData(widgetDistanceText, '{"label": "distance", "value": "' .. displayText
+                    .. '"}')
+                sysUpData(widgetTravelTimeText, '{"label": "Travel Time", "value": "' ..
+                    FormatTimeString(travelTime) .. '", "unit":""}')
+                displayText = getDistanceDisplayString(brakeDistance)
+                sysUpData(widgetCurBrakeDistanceText, '{"label": "Cur Brake distance", "value": "' ..
+                    displayText.. '"}')
+                sysUpData(widgetCurBrakeTimeText, '{"label": "Cur Brake Time", "value": "' ..
+                    FormatTimeString(brakeTime) .. '", "unit":""}')
+                displayText = getDistanceDisplayString(maxBrakeDistance)
+                sysUpData(widgetMaxBrakeDistanceText, '{"label": "Max Brake distance", "value": "' ..
+                    displayText.. '"}')
+                sysUpData(widgetMaxBrakeTimeText, '{"label": "Max Brake Time", "value": "' ..
+                    FormatTimeString(maxBrakeTime) .. '", "unit":""}')
+                sysUpData(widgetMaxMassText, '{"label": "Max Brake Mass", "value": "' ..
+                    stringf("%s", planetMaxMass ) .. '", "unit":""}')
+                displayText = getDistanceDisplayString(AutopilotTargetOrbit)
+                sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
+                displayText .. '"}')
+                if atmosDensity > 0 and not WasInAtmo then
+                    s.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
+                    s.removeDataFromWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
+                    s.removeDataFromWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
+                    s.removeDataFromWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
+                    s.removeDataFromWidget(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude)
+                    WasInAtmo = true
+                    if not throttleMode and AtmoSpeedAssist and (AltitudeHold or Reentry or finalLand) then
+                        -- If they're reentering atmo from cruise, and have atmo speed Assist
+                        -- Put them in throttle mode at 100%
+                        AP.cmdThrottle(1)
+                        BrakeIsOn = false
+                        WasInCruise = false -- And override the thing that would reset it, in this case
+                    end
+                end
+                if atmosDensity == 0 and WasInAtmo then
+                    if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) == 1 then
+                        sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
+                    if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) == 1 then
+                        sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
+                    if sysUpData(widgetCurBrakeTimeText, widgetCurBrakeTime) == 1 then
+                        sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime) end
+                    if sysUpData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) == 1 then
+                        sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
+                    if sysUpData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) == 1 then
+                        sysAddData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
+                    WasInAtmo = false
+                end
+            end
+        else
+            HideInterplanetaryPanel()
+        end
+        if warpdrive ~= nil then
+            if jdecode(warpdrive.getData()).destination ~= "Unknown" and jdecode(warpdrive.getData()).distance > 400000 then
+                warpdrive.show()
+                showWarpWidget = true
+            else
+                warpdrive.hide()
+                showWarpWidget = false
+            end
+        end
     end
 
-    function Hud.OneSecond(newContent)
+    function Hud.OneSecondTick()
         local function updateDistance()
             local curTime = systime()
             local spd = velMag
@@ -2821,12 +3071,118 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             TotalFlightTime = TotalFlightTime + elapsedTime
             lastTravelTime = curTime
         end
+        local function CheckDamage(newContent)
 
+            local percentDam = 0
+            damageMessage = ""
+            local maxShipHP = eleTotalMaxHp
+            local curShipHP = 0
+            local damagedElements = 0
+            local disabledElements = 0
+            local colorMod = 0
+            local color = ""
+            local eleHp = c.getElementHitPointsById
+            local eleMaxHp = c.getElementMaxHitPointsById
+            local markers = {}
+
+            for k in pairs(elementsID) do
+                local hp = 0
+                local mhp = 0
+                mhp = eleMaxHp(elementsID[k])
+                hp = eleHp(elementsID[k])
+                curShipHP = curShipHP + hp
+                if (hp < mhp) then
+                    if (hp == 0) then
+                        disabledElements = disabledElements + 1
+                    else
+                        damagedElements = damagedElements + 1
+                    end
+                    -- Thanks to Jerico for the help and code starter for arrow markers!
+                    if repairArrows and #markers == 0 then
+                        position = vec3(c.getElementPositionById(elementsID[k]))
+                        local x = position.x 
+                        local y = position.y 
+                        local z = position.z 
+                        table.insert(markers, c.spawnArrowSticker(x, y, z + 1, "down"))
+                        table.insert(markers, c.spawnArrowSticker(x, y, z + 1, "down"))
+                        c.rotateSticker(markers[2], 0, 0, 90)
+                        table.insert(markers, c.spawnArrowSticker(x + 1, y, z, "north"))
+                        table.insert(markers, c.spawnArrowSticker(x + 1, y, z, "north"))
+                        c.rotateSticker(markers[4], 90, 90, 0)
+                        table.insert(markers, c.spawnArrowSticker(x - 1, y, z, "south"))
+                        table.insert(markers, c.spawnArrowSticker(x - 1, y, z, "south"))
+                        c.rotateSticker(markers[6], 90, -90, 0)
+                        table.insert(markers, c.spawnArrowSticker(x, y - 1, z, "east"))
+                        table.insert(markers, c.spawnArrowSticker(x, y - 1, z, "east"))
+                        c.rotateSticker(markers[8], 90, 0, 90)
+                        table.insert(markers, c.spawnArrowSticker(x, y + 1, z, "west"))
+                        table.insert(markers, c.spawnArrowSticker(x, y + 1, z, "west"))
+                        c.rotateSticker(markers[10], -90, 0, 90)
+                        table.insert(markers, elementsID[k])
+                    end
+                elseif repairArrows and #markers > 0 and markers[11] == elementsID[k] then
+                    for j in pairs(markers) do
+                        c.deleteSticker(markers[j])
+                    end
+                    markers = {}
+                end
+            end
+            percentDam = mfloor((curShipHP / maxShipHP)*100)
+            if percentDam < 100 then
+                newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
+                colorMod = mfloor(percentDam * 2.55)
+                color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
+                if percentDam < 100 then
+                    newContent[#newContent + 1] = svgText("50%", 1035, "Elemental Integrity: "..percentDam.."%", "txtbig txtmid","fill:"..color )
+                    if (disabledElements > 0) then
+                        newContent[#newContent + 1] = svgText("50%",1055, "Disabled Modules: "..disabledElements.." Damaged Modules: "..damagedElements, "txtbig txtmid","fill:"..color)
+                    elseif damagedElements > 0 then
+                        newContent[#newContent + 1] = svgText("50%", 1055, "Damaged Modules: "..damagedElements, "txtbig txtmid", "fill:" .. color)
+                    end
+                end
+            end
+        end
+        local function updateWeapons()
+            if weapon then
+                if  WeaponPanelID==nil and (radarPanelID ~= nil or GearExtended)  then
+                    _autoconf.displayCategoryPanel(weapon, weapon_size, "Weapons", "weapon", true)
+                    WeaponPanelID = _autoconf.panels[_autoconf.panels_size]
+                elseif WeaponPanelID ~= nil and radarPanelID == nil and not GearExtended then
+                    sysDestWid(WeaponPanelID)
+                    WeaponPanelID = nil
+                end
+            end
+        end
+        passengers = c.getPlayersOnBoard()
+        ships = c.getDockedConstructs()  
+        local newContent = {}
         updateDistance()
+        if ShouldCheckDamage then
+            CheckDamage(newContent)
+        end
+        updateWeapons()
         HUD.UpdatePipe()
         HUD.ExtraData(newContent)
+        lastOdometerOutput = table.concat(newContent, "")
+        collectgarbage("collect")
     end
 
+    function Hud.AnimateTick()
+        Animated = true
+        Animating = false
+        simulatedX = 0
+        simulatedY = 0
+        u.stopTimer("animateTick")
+    end
+
+    function Hud.MsgTick()
+        -- This is used to clear a message on screen after a short period of time and then stop itself
+        local newContent = {}
+        HUD.DisplayMessage(newContent, "empty")
+        msgText = "empty"
+        u.stopTimer("msgTick")
+        msgTimer = 3
+    end
     function Hud.ButtonSetup()
         SettingsButtons()
         ControlsButtons() -- Set up all the pushable buttons.
@@ -2837,4 +3193,4 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     --for k,v in pairs(require("autoconf/custom/archhud/custom/customhudclass")) do Hud[k] = v end 
     return Hud
 end
- 
+  
