@@ -8,204 +8,203 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.717
+VERSION_NUMBER = 0.718
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
-    -- User variables. Must be global to work with databank system
-        useTheseSettings = false --  Change this to true to override databank saved settings
-        userControlScheme = "virtual joystick" -- (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard". This can be set by holding SHIFT and clicking the button in lower left of main Control buttons view.
-        soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder with sound files in it. Must be changed from archHUD to prevent other scripts making your PC play sounds.
-    -- True/False variables
-        -- NOTE: saveableVariablesBoolean below must contain any True/False variables that needs to be saved/loaded from databank.
+-- User variables. Must be global to work with databank system
+    useTheseSettings = false --  Change this to true to override databank saved settings
+    userControlScheme = "virtual joystick" -- (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard". This can be set by holding SHIFT and clicking the button in lower left of main Control buttons view.
+    soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder with sound files in it. Must be changed from archHUD to prevent other scripts making your PC play sounds.
+-- True/False variables
+    -- NOTE: saveableVariablesBoolean below must contain any True/False variables that needs to be saved/loaded from databank.
 
-        freeLookToggle = true -- (Default: true) Set to false for vanilla DU free look behavior.
-        BrakeToggleDefault = true -- (Default: true) Whether your brake toggle is on/off by default. Can be adjusted in the button menu. False is vanilla DU brakes.
-        RemoteFreeze = false -- (Default: false) Whether or not to freeze your character in place when using a remote controller.
-        RemoteHud = false --  (Default: false) Whether you want to see the full normal HUD while in remote mode.
-        brightHud = false -- (Default: false) Enable to prevent hud hiding when in freelook.
-        VanillaRockets = false -- (Default: false) If on, rockets behave like vanilla
-        InvertMouse = false -- (Default: false) If true, then when controlling flight mouse Y axis is inverted (pushing up noses plane down) Does not affect selecting buttons or camera.
-        autoRollPreference = false -- (Default: false) [Only in atmosphere] - When the pilot stops rolling, flight model will try to get back to horizontal (no roll)
-        ExternalAGG = false -- (Default: false) Toggle On if using an external AGG system. If on will prevent this HUD from doing anything with AGG.
-        UseSatNav = false -- (Default: false) Toggle on if using Trog SatNav script. This will provide SatNav support.
-        ShouldCheckDamage = false -- (Default: false) Whether or not damage checks are performed. Disable for performance improvement on very large ships or if using external Damage Report and you do not want the built in info.
-        CalculateBrakeLandingSpeed = false -- (Default: false) Whether BrakeLanding speed at non-waypoints should be calculated (faster) or use the brakeLandingRate user setting (safer).  Set to true for faster, not as safe, brake landing
-        AtmoSpeedAssist = true -- (Default: true) Whether or not atmospheric speeds should be limited to a maximum of AtmoSpeedLimit (Hud built in speed limiter)
-        ForceAlignment = false -- (Default: false) Whether velocity vector alignment should be forced when in Altitude Hold (needed for ships that drift alignment in altitude hold mode due to poor inertial matrix)
-        DisplayDeadZone = true -- (Default: true) Virtual Joystick Mode: Set this to false to not display deadzone circle while in virtual joystick mode.
-        showHud = true -- (Default: true) False to hide the HUD screen and only use HUD Autopilot features (AP via ALT+# keys)
-        hideHudOnToggleWidgets = true --  (Default: true) Uncheck to keep showing HUD when you toggle on the vanilla widgets via ALT+3. Note, hiding the HUD with Alt+3 gives a lot of FPS back in laggy areas, so leave true normally.
-        ShiftShowsRemoteButtons = true -- (Default: true) Whether or not pressing Shift in remote controller mode shows you the buttons (otherwise no access to them)
-        SetWaypointOnExit = false -- (Default: true) Set to false to not set a waypoint when you exit hud. True helps find your ship in crowded locations when you get out of seat.
-        AlwaysVSpd = false -- (Default: false) Set to true to make vertical speed meter stay on screen when you alt-3 widget mode.
-        BarFuelDisplay = true -- (Default: true) Set to false to use old non-bar fuel display
-        voices = true -- (Default: true) Set to false to disable voice sounds when using sound pack
-        alerts = true -- (Default: true) Set to false to disable alert sounds when using sound pack
-        CollisionSystem = true -- (Default: true) If True, system will provide collision alerts and abort vector to target if conditions met.
-        AutoShieldToggle = true -- (Default: true) If true, system will toggle Shield off in safe space and on in PvP space automagically.
-        PreventPvP = true -- (Default: true) If true, system will stop you before crossing from safe to pvp space while in autopilot.
-        DisplayOdometer = true -- (Default: true) If false the top odometer bar of information will be hidden.
-        SaveStartingLocation = true -- (Default: true) If true, when a user first hits alt-4 to AP somewhere, his current location is saved if on ground.
-        saveableVariablesBoolean = {userControlScheme={set=function (i)userControlScheme=i end,get=function() return userControlScheme end}, soundFolder={set=function (i)soundFolder=i end,get=function() return soundFolder end}, freeLookToggle={set=function (i)freeLookToggle=i end,get=function() return freeLookToggle end}, BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}, RemoteFreeze={set=function (i)RemoteFreeze=i end,get=function() return RemoteFreeze end}, brightHud={set=function (i)brightHud=i end,get=function() return brightHud end}, RemoteHud={set=function (i)RemoteHud=i end,get=function() return RemoteHud end}, VanillaRockets={set=function (i)VanillaRockets=i end,get=function() return VanillaRockets end},
-        InvertMouse={set=function (i)InvertMouse=i end,get=function() return InvertMouse end}, autoRollPreference={set=function (i)autoRollPreference=i end,get=function() return autoRollPreference end}, ExternalAGG={set=function (i)ExternalAGG=i end,get=function() return ExternalAGG end}, UseSatNav={set=function (i)UseSatNav=i end,get=function() return UseSatNav end}, ShouldCheckDamage={set=function (i)ShouldCheckDamage=i end,get=function() return ShouldCheckDamage end}, 
-        CalculateBrakeLandingSpeed={set=function (i)CalculateBrakeLandingSpeed=i end,get=function() return CalculateBrakeLandingSpeed end}, AtmoSpeedAssist={set=function (i)AtmoSpeedAssist=i end,get=function() return AtmoSpeedAssist end}, ForceAlignment={set=function (i)ForceAlignment=i end,get=function() return ForceAlignment end}, DisplayDeadZone={set=function (i)DisplayDeadZone=i end,get=function() return DisplayDeadZone end}, showHud={set=function (i)showHud=i end,get=function() return showHud end}, hideHudOnToggleWidgets={set=function (i)hideHudOnToggleWidgets=i end,get=function() return hideHudOnToggleWidgets end}, 
-        ShiftShowsRemoteButtons={set=function (i)ShiftShowsRemoteButtons=i end,get=function() return ShiftShowsRemoteButtons end}, SetWaypointOnExit={set=function (i)SetWaypointOnExit=i end,get=function() return SetWaypointOnExit end}, AlwaysVSpd={set=function (i)AlwaysVSpd=i end,get=function() return AlwaysVSpd end}, BarFuelDisplay={set=function (i)BarFuelDisplay=i end,get=function() return BarFuelDisplay end}, 
-        voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end}, DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end},
-        SaveStartingLocation={set=function (i)SaveStartingLocation=i end,get=function() return SaveStartingLocation end}}
+    freeLookToggle = true -- (Default: true) Set to false for vanilla DU free look behavior.
+    BrakeToggleDefault = true -- (Default: true) Whether your brake toggle is on/off by default. Can be adjusted in the button menu. False is vanilla DU brakes.
+    RemoteFreeze = false -- (Default: false) Whether or not to freeze your character in place when using a remote controller.
+    RemoteHud = false --  (Default: false) Whether you want to see the full normal HUD while in remote mode.
+    brightHud = false -- (Default: false) Enable to prevent hud hiding when in freelook.
+    VanillaRockets = false -- (Default: false) If on, rockets behave like vanilla
+    InvertMouse = false -- (Default: false) If true, then when controlling flight mouse Y axis is inverted (pushing up noses plane down) Does not affect selecting buttons or camera.
+    autoRollPreference = false -- (Default: false) [Only in atmosphere] - When the pilot stops rolling, flight model will try to get back to horizontal (no roll)
+    ExternalAGG = false -- (Default: false) Toggle On if using an external AGG system. If on will prevent this HUD from doing anything with AGG.
+    UseSatNav = false -- (Default: false) Toggle on if using Trog SatNav script. This will provide SatNav support.
+    ShouldCheckDamage = false -- (Default: true) Whether or not damage checks are performed. Disable for performance improvement on very large ships or if using external Damage Report and you do not want the built in info.
+    AtmoSpeedAssist = true -- (Default: true) Whether or not atmospheric speeds should be limited to a maximum of AtmoSpeedLimit (Hud built in speed limiter)
+    ForceAlignment = false -- (Default: false) Whether velocity vector alignment should be forced when in Altitude Hold (needed for ships that drift alignment in altitude hold mode due to poor inertial matrix)
+    DisplayDeadZone = true -- (Default: true) Virtual Joystick Mode: Set this to false to not display deadzone circle while in virtual joystick mode.
+    showHud = true -- (Default: true) False to hide the HUD screen and only use HUD Autopilot features (AP via ALT+# keys)
+    hideHudOnToggleWidgets = true --  (Default: true) Uncheck to keep showing HUD when you toggle on the vanilla widgets via ALT+3. Note, hiding the HUD with Alt+3 gives a lot of FPS back in laggy areas, so leave true normally.
+    ShiftShowsRemoteButtons = true -- (Default: true) Whether or not pressing Shift in remote controller mode shows you the buttons (otherwise no access to them)
+    SetWaypointOnExit = false -- (Default: true) Set to false to not set a waypoint when you exit hud. True helps find your ship in crowded locations when you get out of seat.
+    AlwaysVSpd = false -- (Default: false) Set to true to make vertical speed meter stay on screen when you alt-3 widget mode.
+    BarFuelDisplay = true -- (Default: true) Set to false to use old non-bar fuel display
+    voices = true -- (Default: true) Set to false to disable voice sounds when using sound pack
+    alerts = true -- (Default: true) Set to false to disable alert sounds when using sound pack
+    CollisionSystem = true -- (Default: true) If True, system will provide collision alerts and abort vector to target if conditions met.
+    AutoShieldToggle = true -- (Default: true) If true, system will toggle Shield off in safe space and on in PvP space automagically.
+    PreventPvP = true -- (Default: true) If true, system will stop you before crossing from safe to pvp space while in autopilot.
+    DisplayOdometer = true -- (Default: true) If false the top odometer bar of information will be hidden.
 
-    -- Ship Handling variables
-        -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank system
+    saveableVariablesBoolean = {userControlScheme={set=function (i)userControlScheme=i end,get=function() return userControlScheme end}, soundFolder={set=function (i)soundFolder=i end,get=function() return soundFolder end}, freeLookToggle={set=function (i)freeLookToggle=i end,get=function() return freeLookToggle end}, BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}, RemoteFreeze={set=function (i)RemoteFreeze=i end,get=function() return RemoteFreeze end}, brightHud={set=function (i)brightHud=i end,get=function() return brightHud end}, RemoteHud={set=function (i)RemoteHud=i end,get=function() return RemoteHud end}, VanillaRockets={set=function (i)VanillaRockets=i end,get=function() return VanillaRockets end},
+    InvertMouse={set=function (i)InvertMouse=i end,get=function() return InvertMouse end}, autoRollPreference={set=function (i)autoRollPreference=i end,get=function() return autoRollPreference end}, ExternalAGG={set=function (i)ExternalAGG=i end,get=function() return ExternalAGG end}, UseSatNav={set=function (i)UseSatNav=i end,get=function() return UseSatNav end}, ShouldCheckDamage={set=function (i)ShouldCheckDamage=i end,get=function() return ShouldCheckDamage end}, 
+    AtmoSpeedAssist={set=function (i)AtmoSpeedAssist=i end,get=function() return AtmoSpeedAssist end}, ForceAlignment={set=function (i)ForceAlignment=i end,get=function() return ForceAlignment end}, DisplayDeadZone={set=function (i)DisplayDeadZone=i end,get=function() return DisplayDeadZone end}, showHud={set=function (i)showHud=i end,get=function() return showHud end}, hideHudOnToggleWidgets={set=function (i)hideHudOnToggleWidgets=i end,get=function() return hideHudOnToggleWidgets end}, 
+    ShiftShowsRemoteButtons={set=function (i)ShiftShowsRemoteButtons=i end,get=function() return ShiftShowsRemoteButtons end}, SetWaypointOnExit={set=function (i)SetWaypointOnExit=i end,get=function() return SetWaypointOnExit end}, AlwaysVSpd={set=function (i)AlwaysVSpd=i end,get=function() return AlwaysVSpd end}, BarFuelDisplay={set=function (i)BarFuelDisplay=i end,get=function() return BarFuelDisplay end}, 
+    voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end}, DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end}}
 
-        YawStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when yawing, determine by experimentation. Higher allows faster AP Bank turns.
-        PitchStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when pitching, determine by experimentation.
-        brakeLandingRate = 30 -- (Default: 30) Max loss of altitude speed in m/s when doing a brake landing. 30 is safe for almost all ships.  Overriden if CalculateBrakeLandingSpeed is true.
-        MaxPitch = 30 -- (Default: 30) Maximum allowed pitch during takeoff and altitude changes while in altitude hold. You can set higher or lower depending on your ships capabilities.
-        ReEntryPitch = -30 -- (Default: -30) Maximum downward pitch allowed during freefall portion of re-entry.
-        LockPitchTarget = 0 -- (Default: 0) Target pitch ship tries to hold when LALT-LSHIFT-5 is pressed.
-        AutopilotSpaceDistance = 5000 -- (Default: 5000) Target distance AP will try to stop from a custom waypoint in space.  Good ships can lower this value a lot.
-        TargetOrbitRadius = 1.2 -- (Default: 1.2) How tight you want to orbit the planet at end of autopilot.  The smaller the value the tighter the orbit.  Value is multiple of Atmospheric Height
-        LowOrbitHeight = 2000 -- (Default: 2000) Height of Orbit above top of atmospehre when using Alt-4-4 same planet autopilot or alt-6-6 in space.
-        AtmoSpeedLimit = 1050 -- (Default: 1050) Speed limit in Atmosphere in km/h. AtmoSpeedAssist will cause ship to throttle back when this speed is reached.
-        SpaceSpeedLimit = 30000 -- (Default: 30000) Space speed limit in KM/H. If you hit this speed and are NOT in active autopilot, engines will turn off to prevent using all fuel (30000 means they wont turn off)
-        AutoTakeoffAltitude = 1000 -- (Default: 1000) How high above your ground height AutoTakeoff tries to put you
-        TargetHoverHeight = 50 -- (Default: 50) Hover height above ground when G used to lift off, 50 is above all max hover heights.
-        LandingGearGroundHeight = 0 -- (Default: 0) Set to AGL-1 when on ground (or 0). Will help prevent ship landing on ground then bouncing back up to landing gear height. If too high, engines will not turn off
-        ReEntryHeight = 100000 -- (Default: 100000) Height above a planets maximum surface altitude used for re-entry, if height exceeds min space engine height, then 11% atmo is used instead. (100000 means 11% is used)
-        MaxGameVelocity = 8333.00 -- (Default: 8333.00) Max speed for your autopilot in m/s, do not go above 8333.055 (30000 km/hr), can be reduced to save fuel. Some ships will not turn off engines if 8333.055 is used.
-        AutopilotInterplanetaryThrottle = 1.0 -- (Default: 1.0) How much throttle, 0.0 to 1.0, you want it to use when in autopilot to another planet while reaching MaxGameVelocity
-        warmup = 32 -- How long it takes your space engines to warmup. Basic Space Engines, from XS to XL: 0.25,1,4,16,32. Only affects turn and burn brake calculations.
-        fuelTankHandlingAtmo = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
-        fuelTankHandlingSpace = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
-        fuelTankHandlingRocket = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
-        ContainerOptimization = 0 -- (Default: 0) For accurate estimates on unslotted tanks, set this to the Container Optimization level of the person who placed the tanks. Ignored for slotted tanks.
-        FuelTankOptimization = 0 -- (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank optimization skill level of the person who placed the tank. Ignored for slotted tanks.
-        AutoShieldPercent = 0 -- (Default: 0) Automatically adjusts shield resists once per minute if shield percent is less than this value. 0 means it is effectively off.
-        savableVariablesHandling = {YawStallAngle={set=function (i)YawStallAngle=i end,get=function() return YawStallAngle end},PitchStallAngle={set=function (i)PitchStallAngle=i end,get=function() return PitchStallAngle end},brakeLandingRate={set=function (i)brakeLandingRate=i end,get=function() return brakeLandingRate end},MaxPitch={set=function (i)MaxPitch=i end,get=function() return MaxPitch end}, ReEntryPitch={set=function (i)ReEntryPitch=i end,get=function() return ReEntryPitch end},LockPitchTarget={set=function (i)LockPitchTarget=i end,get=function() return LockPitchTarget end}, AutopilotSpaceDistance={set=function (i)AutopilotSpaceDistance=i end,get=function() return AutopilotSpaceDistance end}, TargetOrbitRadius={set=function (i)TargetOrbitRadius=i end,get=function() return TargetOrbitRadius end}, LowOrbitHeight={set=function (i)LowOrbitHeight=i end,get=function() return LowOrbitHeight end},
-        AtmoSpeedLimit={set=function (i)AtmoSpeedLimit=i end,get=function() return AtmoSpeedLimit end},SpaceSpeedLimit={set=function (i)SpaceSpeedLimit=i end,get=function() return SpaceSpeedLimit end},AutoTakeoffAltitude={set=function (i)AutoTakeoffAltitude=i end,get=function() return AutoTakeoffAltitude end},TargetHoverHeight={set=function (i)TargetHoverHeight=i end,get=function() return TargetHoverHeight end}, LandingGearGroundHeight={set=function (i)LandingGearGroundHeight=i end,get=function() return LandingGearGroundHeight end}, ReEntryHeight={set=function (i)ReEntryHeight=i end,get=function() return ReEntryHeight end},
-        MaxGameVelocity={set=function (i)MaxGameVelocity=i end,get=function() return MaxGameVelocity end}, AutopilotInterplanetaryThrottle={set=function (i)AutopilotInterplanetaryThrottle=i end,get=function() return AutopilotInterplanetaryThrottle end},warmup={set=function (i)warmup=i end,get=function() return warmup end},fuelTankHandlingAtmo={set=function (i)fuelTankHandlingAtmo=i end,get=function() return fuelTankHandlingAtmo end},fuelTankHandlingSpace={set=function (i)fuelTankHandlingSpace=i end,get=function() return fuelTankHandlingSpace end},
-        fuelTankHandlingRocket={set=function (i)fuelTankHandlingRocket=i end,get=function() return fuelTankHandlingRocket end},ContainerOptimization={set=function (i)ContainerOptimization=i end,get=function() return ContainerOptimization end},FuelTankOptimization={set=function (i)FuelTankOptimization=i end,get=function() return FuelTankOptimization end},AutoShieldPercent={set=function (i)AutoShieldPercent=i end,get=function() return AutoShieldPercent end}}
+-- Ship Handling variables
+    -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank system
+
+    YawStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when yawing, determine by experimentation. Higher allows faster AP Bank turns.
+    PitchStallAngle = 35 -- (Default: 35) Angle at which the ship stalls when pitching, determine by experimentation.
+    brakeLandingRate = 30 -- (Default: 30) Max loss of altitude speed in m/s when doing a brake landing. 30 is safe for almost all ships.  
+    MaxPitch = 30 -- (Default: 30) Maximum allowed pitch during takeoff and altitude changes while in altitude hold. You can set higher or lower depending on your ships capabilities.
+    ReEntryPitch = -30 -- (Default: -30) Maximum downward pitch allowed during freefall portion of re-entry.
+    LockPitchTarget = 0 -- (Default: 0) Target pitch ship tries to hold when LALT-LSHIFT-5 is pressed.
+    AutopilotSpaceDistance = 5000 -- (Default: 5000) Target distance AP will try to stop from a custom waypoint in space.  Good ships can lower this value a lot.
+    TargetOrbitRadius = 1.2 -- (Default: 1.2) How tight you want to orbit the planet at end of autopilot.  The smaller the value the tighter the orbit.  Value is multiple of Atmospheric Height
+    LowOrbitHeight = 2000 -- (Default: 2000) Height of Orbit above top of atmospehre when using Alt-4-4 same planet autopilot or alt-6-6 in space.
+    AtmoSpeedLimit = 1050 -- (Default: 1050) Speed limit in Atmosphere in km/h. AtmoSpeedAssist will cause ship to throttle back when this speed is reached.
+    SpaceSpeedLimit = 30000 -- (Default: 30000) Space speed limit in KM/H. If you hit this speed and are NOT in active autopilot, engines will turn off to prevent using all fuel (30000 means they wont turn off)
+    AutoTakeoffAltitude = 1000 -- (Default: 1000) How high above your ground height AutoTakeoff tries to put you
+    TargetHoverHeight = 50 -- (Default: 50) Hover height above ground when G used to lift off, 50 is above all max hover heights.
+    LandingGearGroundHeight = 0 -- (Default: 0) Set to AGL-1 when on ground (or 0). Will help prevent ship landing on ground then bouncing back up to landing gear height. If too high, engines will not turn off
+    ReEntryHeight = 100000 -- (Default: 100000) Height above a planets maximum surface altitude used for re-entry, if height exceeds min space engine height, then 11% atmo is used instead. (100000 means 11% is used)
+    MaxGameVelocity = 8333.00 -- (Default: 8333.00) Max speed for your autopilot in m/s, do not go above 8333.055 (30000 km/hr), can be reduced to save fuel. Some ships will not turn off engines if 8333.055 is used.
+    AutopilotInterplanetaryThrottle = 1.0 -- (Default: 1.0) How much throttle, 0.0 to 1.0, you want it to use when in autopilot to another planet while reaching MaxGameVelocity
+    warmup = 32 -- How long it takes your space engines to warmup. Basic Space Engines, from XS to XL: 0.25,1,4,16,32. Only affects turn and burn brake calculations.
+    fuelTankHandlingAtmo = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
+    fuelTankHandlingSpace = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
+    fuelTankHandlingRocket = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
+    ContainerOptimization = 0 -- (Default: 0) For accurate estimates on unslotted tanks, set this to the Container Optimization level of the person who placed the tanks. Ignored for slotted tanks.
+    FuelTankOptimization = 0 -- (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank optimization skill level of the person who placed the tank. Ignored for slotted tanks.
+    AutoShieldPercent = 0 -- (Default: 0) Automatically adjusts shield resists once per minute if shield percent is less than this value.
+    savableVariablesHandling = {YawStallAngle={set=function (i)YawStallAngle=i end,get=function() return YawStallAngle end},PitchStallAngle={set=function (i)PitchStallAngle=i end,get=function() return PitchStallAngle end},brakeLandingRate={set=function (i)brakeLandingRate=i end,get=function() return brakeLandingRate end},MaxPitch={set=function (i)MaxPitch=i end,get=function() return MaxPitch end}, ReEntryPitch={set=function (i)ReEntryPitch=i end,get=function() return ReEntryPitch end},LockPitchTarget={set=function (i)LockPitchTarget=i end,get=function() return LockPitchTarget end}, AutopilotSpaceDistance={set=function (i)AutopilotSpaceDistance=i end,get=function() return AutopilotSpaceDistance end}, TargetOrbitRadius={set=function (i)TargetOrbitRadius=i end,get=function() return TargetOrbitRadius end}, LowOrbitHeight={set=function (i)LowOrbitHeight=i end,get=function() return LowOrbitHeight end},
+    AtmoSpeedLimit={set=function (i)AtmoSpeedLimit=i end,get=function() return AtmoSpeedLimit end},SpaceSpeedLimit={set=function (i)SpaceSpeedLimit=i end,get=function() return SpaceSpeedLimit end},AutoTakeoffAltitude={set=function (i)AutoTakeoffAltitude=i end,get=function() return AutoTakeoffAltitude end},TargetHoverHeight={set=function (i)TargetHoverHeight=i end,get=function() return TargetHoverHeight end}, LandingGearGroundHeight={set=function (i)LandingGearGroundHeight=i end,get=function() return LandingGearGroundHeight end}, ReEntryHeight={set=function (i)ReEntryHeight=i end,get=function() return ReEntryHeight end},
+    MaxGameVelocity={set=function (i)MaxGameVelocity=i end,get=function() return MaxGameVelocity end}, AutopilotInterplanetaryThrottle={set=function (i)AutopilotInterplanetaryThrottle=i end,get=function() return AutopilotInterplanetaryThrottle end},warmup={set=function (i)warmup=i end,get=function() return warmup end},fuelTankHandlingAtmo={set=function (i)fuelTankHandlingAtmo=i end,get=function() return fuelTankHandlingAtmo end},fuelTankHandlingSpace={set=function (i)fuelTankHandlingSpace=i end,get=function() return fuelTankHandlingSpace end},
+    fuelTankHandlingRocket={set=function (i)fuelTankHandlingRocket=i end,get=function() return fuelTankHandlingRocket end},ContainerOptimization={set=function (i)ContainerOptimization=i end,get=function() return ContainerOptimization end},FuelTankOptimization={set=function (i)FuelTankOptimization=i end,get=function() return FuelTankOptimization end},AutoShieldPercent={set=function (i)AutoShieldPercent=i end,get=function() return AutoShieldPercent end}}
 
 
-    -- HUD Postioning variables
-        -- NOTE: savableVariablesHud below must contain any HUD Postioning variables that needs to be saved/loaded from databank system
+-- HUD Postioning variables
+    -- NOTE: savableVariablesHud below must contain any HUD Postioning variables that needs to be saved/loaded from databank system
 
-        ResolutionX = 1920 -- (Default: 1920) Does not need to be set to same as game resolution. You can set 1920 on a 2560 to get larger resolution
-        ResolutionY = 1080 -- (Default: 1080) Does not need to be set to same as game resolution. You can set 1080 on a 1440 to get larger resolution
-        circleRad = 400 -- (Default: 400) The size of the artifical horizon circle, recommended minimum 100, maximum 400. Looks different > 200. Set to 0 to remove.
-        SafeR = 130 -- (Default: 130) Primary HUD color
-        SafeG = 224 -- (Default: 224) Primary HUD color
-        SafeB = 255 -- (Default: 255) Primary HUD color
-        PvPR = 255 -- (Default: 255) PvP HUD color
-        PvPG = 0 -- (Default: 0) PvP HUD color
-        PvPB = 0 -- (Default: 0) PvP HUD color
-        centerX = 960 -- (Default: 960) X postion of Artifical Horizon (KSP Navball), Default 960. Use centerX=700 and centerY=880 for lower left placement.
-        centerY = 540 -- (Default: 540) Y postion of Artifical Horizon (KSP Navball), Default 540. Use centerX=700 and centerY=880 for lower left placement.
-        throtPosX = 1300 -- (Default: 1300) X position of Throttle Indicator, default 1300 to put it to right of default AH centerX parameter.
-        throtPosY = 540 -- (Default: 540) Y position of Throttle indicator, default is 540 to place it centered on default AH centerY parameter
-        vSpdMeterX = 1525  -- (Default: 1525) X postion of Vertical Speed Meter. Default 1525
-        vSpdMeterY = 325 -- (Default: 325) Y postion of Vertical Speed Meter. Default 325
-        altMeterX = 550  -- (Default: 550) X postion of Altimeter. Default 550
-        altMeterY = 540 -- (Default: 540) Y postion of Altimeter. Default 500
-        fuelX = 30 -- (Default: 30) X position of fuel tanks, set to 100 for non-bar style fuel display, set both fuelX and fuelY to 0 to hide fuel display
-        fuelY = 700 -- (Default: 700) Y position of fuel tanks, set to 300 for non-bar style fuel display, set both fuelX and fuelY to 0 to hide fuel display
-        shieldX = 1750 -- (Default: 1750) X position of shield indicator
-        shieldY = 250 -- (Default: 250) Y position of shield indicator
-        DeadZone = 50 -- (Default: 50) Number of pixels of deadzone at the center of the screen
-        OrbitMapSize = 250 -- (Default: 250) Size of the orbit map, make sure it is divisible by 4
-        OrbitMapX = 0 -- (Default: 0) X postion of Orbit Display 
-        OrbitMapY = 30 -- (Default: 30) Y position of Orbit Display
-        soundVolume = 100 -- (Default: 100) Set to value (0-100 recommended) to control volume of voice and alerts. Alerts will automatically lower other hud sounds 50% if needed.
+    ResolutionX = 1920 -- (Default: 1920) Does not need to be set to same as game resolution. You can set 1920 on a 2560 to get larger resolution
+    ResolutionY = 1080 -- (Default: 1080) Does not need to be set to same as game resolution. You can set 1080 on a 1440 to get larger resolution
+    circleRad = 400 -- (Default: 400) The size of the artifical horizon circle, recommended minimum 100, maximum 400. Looks different > 200. Set to 0 to remove.
+    SafeR = 130 -- (Default: 130) Primary HUD color
+    SafeG = 224 -- (Default: 224) Primary HUD color
+    SafeB = 255 -- (Default: 255) Primary HUD color
+    PvPR = 255 -- (Default: 255) PvP HUD color
+    PvPG = 0 -- (Default: 0) PvP HUD color
+    PvPB = 0 -- (Default: 0) PvP HUD color
+    centerX = 960 -- (Default: 960) X postion of Artifical Horizon (KSP Navball), Default 960. Use centerX=700 and centerY=880 for lower left placement.
+    centerY = 540 -- (Default: 540) Y postion of Artifical Horizon (KSP Navball), Default 540. Use centerX=700 and centerY=880 for lower left placement.
+    throtPosX = 1300 -- (Default: 1300) X position of Throttle Indicator, default 1300 to put it to right of default AH centerX parameter.
+    throtPosY = 540 -- (Default: 540) Y position of Throttle indicator, default is 540 to place it centered on default AH centerY parameter
+    vSpdMeterX = 1525  -- (Default: 1525) X postion of Vertical Speed Meter. Default 1525
+    vSpdMeterY = 325 -- (Default: 325) Y postion of Vertical Speed Meter. Default 325
+    altMeterX = 550  -- (Default: 550) X postion of Altimeter. Default 550
+    altMeterY = 540 -- (Default: 540) Y postion of Altimeter. Default 500
+    fuelX = 30 -- (Default: 30) X position of fuel tanks, set to 100 for non-bar style fuel display, set both fuelX and fuelY to 0 to hide fuel display
+    fuelY = 700 -- (Default: 700) Y position of fuel tanks, set to 300 for non-bar style fuel display, set both fuelX and fuelY to 0 to hide fuel display
+    shieldX = 1750 -- (Default: 1750) X position of shield indicator
+    shieldY = 250 -- (Default: 250) Y position of shield indicator
+    DeadZone = 50 -- (Default: 50) Number of pixels of deadzone at the center of the screen
+    OrbitMapSize = 250 -- (Default: 250) Size of the orbit map, make sure it is divisible by 4
+    OrbitMapX = 0 -- (Default: 0) X postion of Orbit Display 
+    OrbitMapY = 30 -- (Default: 30) Y position of Orbit Display
+    soundVolume = 100 -- (Default: 100) Set to value (0-100 recommended) to control volume of voice and alerts. Alerts will automatically lower other hud sounds 50% if needed.
 
-        savableVariablesHud = {ResolutionX={set=function (i)ResolutionX=i end,get=function() return ResolutionX end},ResolutionY={set=function (i)ResolutionY=i end,get=function() return ResolutionY end},circleRad={set=function (i)circleRad=i end,get=function() return circleRad end},SafeR={set=function (i)SafeR=i end,get=function() return SafeR end}, SafeG={set=function (i)SafeG=i end,get=function() return SafeG end}, SafeB={set=function (i)SafeB=i end,get=function() return SafeB end}, 
-        PvPR={set=function (i)PvPR=i end,get=function() return PvPR end}, PvPG={set=function (i)PvPG=i end,get=function() return PvPG end}, PvPB={set=function (i)PvPB=i end,get=function() return PvPB end},centerX={set=function (i)centerX=i end,get=function() return centerX end}, centerY={set=function (i)centerY=i end,get=function() return centerY end}, throtPosX={set=function (i)throtPosX=i end,get=function() return throtPosX end}, throtPosY={set=function (i)throtPosY=i end,get=function() return throtPosY end},
-        vSpdMeterX={set=function (i)vSpdMeterX=i end,get=function() return vSpdMeterX end}, vSpdMeterY={set=function (i)vSpdMeterY=i end,get=function() return vSpdMeterY end},altMeterX={set=function (i)altMeterX=i end,get=function() return altMeterX end}, altMeterY={set=function (i)altMeterY=i end,get=function() return altMeterY end},fuelX={set=function (i)fuelX=i end,get=function() return fuelX end}, fuelY={set=function (i)fuelY=i end,get=function() return fuelY end}, shieldX={set=function (i)shieldX=i end,get=function() return shieldX end}, shieldY={set=function (i)shieldY=i end,get=function() return shieldY end}, DeadZone={set=function (i)DeadZone=i end,get=function() return DeadZone end},
-        OrbitMapSize={set=function (i)OrbitMapSize=i end,get=function() return OrbitMapSize end}, OrbitMapX={set=function (i)OrbitMapX=i end,get=function() return OrbitMapX end}, OrbitMapY={set=function (i)OrbitMapY=i end,get=function() return OrbitMapY end}, soundVolume={set=function (i)soundVolume=i end,get=function() return soundVolume end}}
+    savableVariablesHud = {ResolutionX={set=function (i)ResolutionX=i end,get=function() return ResolutionX end},ResolutionY={set=function (i)ResolutionY=i end,get=function() return ResolutionY end},circleRad={set=function (i)circleRad=i end,get=function() return circleRad end},SafeR={set=function (i)SafeR=i end,get=function() return SafeR end}, SafeG={set=function (i)SafeG=i end,get=function() return SafeG end}, SafeB={set=function (i)SafeB=i end,get=function() return SafeB end}, 
+    PvPR={set=function (i)PvPR=i end,get=function() return PvPR end}, PvPG={set=function (i)PvPG=i end,get=function() return PvPG end}, PvPB={set=function (i)PvPB=i end,get=function() return PvPB end},centerX={set=function (i)centerX=i end,get=function() return centerX end}, centerY={set=function (i)centerY=i end,get=function() return centerY end}, throtPosX={set=function (i)throtPosX=i end,get=function() return throtPosX end}, throtPosY={set=function (i)throtPosY=i end,get=function() return throtPosY end},
+    vSpdMeterX={set=function (i)vSpdMeterX=i end,get=function() return vSpdMeterX end}, vSpdMeterY={set=function (i)vSpdMeterY=i end,get=function() return vSpdMeterY end},altMeterX={set=function (i)altMeterX=i end,get=function() return altMeterX end}, altMeterY={set=function (i)altMeterY=i end,get=function() return altMeterY end},fuelX={set=function (i)fuelX=i end,get=function() return fuelX end}, fuelY={set=function (i)fuelY=i end,get=function() return fuelY end}, shieldX={set=function (i)shieldX=i end,get=function() return shieldX end}, shieldY={set=function (i)shieldY=i end,get=function() return shieldY end}, DeadZone={set=function (i)DeadZone=i end,get=function() return DeadZone end},
+    OrbitMapSize={set=function (i)OrbitMapSize=i end,get=function() return OrbitMapSize end}, OrbitMapX={set=function (i)OrbitMapX=i end,get=function() return OrbitMapX end}, OrbitMapY={set=function (i)OrbitMapY=i end,get=function() return OrbitMapY end}, soundVolume={set=function (i)soundVolume=i end,get=function() return soundVolume end}}
 
-    -- Ship flight physics variables - Change with care, can have large effects on ships performance.
-        -- NOTE: savableVariablesPhysics below must contain any Ship flight physics variables that needs to be saved/loaded from databank system
+-- Ship flight physics variables - Change with care, can have large effects on ships performance.
+    -- NOTE: savableVariablesPhysics below must contain any Ship flight physics variables that needs to be saved/loaded from databank system
 
-        speedChangeLarge = 5 -- (Default: 5) The speed change that occurs when you tap speed up/down or mousewheel, default is 5%
-        speedChangeSmall = 1 -- (Default: 1) the speed change that occurs while you hold speed up/down, default is 1%
-        MouseXSensitivity = 0.003 -- (Default: 0.003) For virtual joystick only
-        MouseYSensitivity = 0.003 -- (Default: 0.003) For virtual joystick only
-        autoRollFactor = 2 -- (Default: 2) [Only in atmosphere] When autoRoll is engaged, this factor will increase to strength of the roll back to 0
-        rollSpeedFactor = 1.5 -- (Default: 1.5) This factor will increase/decrease the player input along the roll axis (higher value may be unstable)
-        autoRollRollThreshold = 180 -- (Default: 180) The amount of roll below which autoRoll to 0 will occur (if autoRollPreference is true)
-        minRollVelocity = 150 -- (Default: 150) Min velocity, in m/s, over which autorolling can occur
-        TrajectoryAlignmentStrength = 0.002 -- (Default: 0.002) How strongly AP tries to align your velocity vector to the target when not in orbit, recommend 0.002
-        torqueFactor = 2 -- (Default: 2) Force factor applied to reach rotationSpeed (higher value may be unstable)
-        pitchSpeedFactor = 0.8 -- (Default: 0.8) For keyboard control, affects rate of pitch change
-        yawSpeedFactor = 1 -- (Default: 1) For keyboard control, affects rate of yaw change
-        brakeSpeedFactor = 3 -- (Default: 3) When braking, this factor will increase the brake force by brakeSpeedFactor * velocity
-        brakeFlatFactor = 1 -- (Default: 1) When braking, this factor will increase the brake force by a flat brakeFlatFactor * velocity direction> (higher value may be unstable)
-        DampingMultiplier = 40 -- (Default: 40) How strongly autopilot dampens when nearing the correct orientation
-        apTickRate = 0.0166667 -- (Default: 0.0166667) Set the Tick Rate for your autopilot features. 0.016667 is effectively 60 fps and the default value. 0.03333333 is 30 fps.
-        hudTickRate = 0.0666667 -- (Default: 0.0666667) Set the tick rate for your HUD. Default is 4 times slower than apTickRate
-        ExtraEscapeThrust = 0.0 -- (Default: 0.0) Set this to some value (start low till you know your ship) to apply extra thrust between 10% and 0.05% atmosphere while using AtmoSpeedLimit.
-        ExtraLongitudeTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "forward faster major" These will be added to the engines that are control by longitude.
-        ExtraLateralTags = "none" -- (Default: "none") Enter any extra lateral tags you use inside '' seperated by space, i.e. "left right" These will be added to the engines that are control by lateral.
-        ExtraVerticalTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "up down" These will be added to the engines that are control by vertical.
-        savableVariablesPhysics = {speedChangeLarge={set=function (i)speedChangeLarge=i end,get=function() return speedChangeLarge end}, speedChangeSmall={set=function (i)speedChangeSmall=i end,get=function() return speedChangeSmall end}, MouseXSensitivity={set=function (i)MouseXSensitivity=i end,get=function() return MouseXSensitivity end}, MouseYSensitivity={set=function (i)MouseYSensitivity=i end,get=function() return MouseYSensitivity end}, autoRollFactor={set=function (i)autoRollFactor=i end,get=function() return autoRollFactor end},
-        rollSpeedFactor={set=function (i)rollSpeedFactor=i end,get=function() return rollSpeedFactor end}, autoRollRollThreshold={set=function (i)autoRollRollThreshold=i end,get=function() return autoRollRollThreshold end}, minRollVelocity={set=function (i)minRollVelocity=i end,get=function() return minRollVelocity end}, TrajectoryAlignmentStrength={set=function (i)TrajectoryAlignmentStrength=i end,get=function() return TrajectoryAlignmentStrength end},
-        torqueFactor={set=function (i)torqueFactor=i end,get=function() return torqueFactor end}, pitchSpeedFactor={set=function (i)pitchSpeedFactor=i end,get=function() return pitchSpeedFactor end}, yawSpeedFactor={set=function (i)yawSpeedFactor=i end,get=function() return yawSpeedFactor end}, brakeSpeedFactor={set=function (i)brakeSpeedFactor=i end,get=function() return brakeSpeedFactor end}, brakeFlatFactor={set=function (i)brakeFlatFactor=i end,get=function() return brakeFlatFactor end}, DampingMultiplier={set=function (i)DampingMultiplier=i end,get=function() return DampingMultiplier end}, 
-        apTickRate={set=function (i)apTickRate=i end,get=function() return apTickRate end},  hudTickRate={set=function (i)hudTickRate=i end,get=function() return hudTickRate end}, ExtraEscapeThrust={set=function (i)ExtraEscapeThrust=i end,get=function() return ExtraEscapeThrust end}, 
-        ExtraLongitudeTags={set=function (i)ExtraLongitudeTags=i end,get=function() return ExtraLongitudeTags end}, ExtraLateralTags={set=function (i)ExtraLateralTags=i end,get=function() return ExtraLateralTags end}, ExtraVerticalTags={set=function (i)ExtraVerticalTags=i end,get=function() return ExtraVerticalTags end}}
+    speedChangeLarge = 5.0 -- (Default: 5) The speed change that occurs when you tap speed up/down or mousewheel, default is 5%
+    speedChangeSmall = 1.0 -- (Default: 1) the speed change that occurs while you hold speed up/down, default is 1%
+    MouseXSensitivity = 0.003 -- (Default: 0.003) For virtual joystick only
+    MouseYSensitivity = 0.003 -- (Default: 0.003) For virtual joystick only
+    autoRollFactor = 2 -- (Default: 2) [Only in atmosphere] When autoRoll is engaged, this factor will increase to strength of the roll back to 0
+    rollSpeedFactor = 1.5 -- (Default: 1.5) This factor will increase/decrease the player input along the roll axis (higher value may be unstable)
+    autoRollRollThreshold = 180 -- (Default: 180) The amount of roll below which autoRoll to 0 will occur (if autoRollPreference is true)
+    minRollVelocity = 150 -- (Default: 150) Min velocity, in m/s, over which autorolling can occur
+    TrajectoryAlignmentStrength = 0.002 -- (Default: 0.002) How strongly AP tries to align your velocity vector to the target when not in orbit, recommend 0.002
+    torqueFactor = 2 -- (Default: 2) Force factor applied to reach rotationSpeed (higher value may be unstable)
+    pitchSpeedFactor = 0.8 -- (Default: 0.8) For keyboard control, affects rate of pitch change
+    yawSpeedFactor = 1 -- (Default: 1) For keyboard control, affects rate of yaw change
+    brakeSpeedFactor = 3 -- (Default: 3) When braking, this factor will increase the brake force by brakeSpeedFactor * velocity
+    brakeFlatFactor = 1 -- (Default: 1) When braking, this factor will increase the brake force by a flat brakeFlatFactor * velocity direction> (higher value may be unstable)
+    DampingMultiplier = 40 -- (Default: 40) How strongly autopilot dampens when nearing the correct orientation
+    apTickRate = 0.0166667 -- (Default: 0.0166667) Set the Tick Rate for your autopilot features. 0.016667 is effectively 60 fps and the default value. 0.03333333 is 30 fps.
+    hudTickRate = 0.0666667 -- (Default: 0.0666667) Set the tick rate for your HUD. Default is 4 times slower than apTickRate
+    ExtraEscapeThrust = 0.0 -- (Default: 0.0) Set this to some value (start low till you know your ship) to apply extra thrust between 10% and 0.05% atmosphere while using AtmoSpeedLimit.
+    ExtraLongitudeTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "forward faster major" These will be added to the engines that are control by longitude.
+    ExtraLateralTags = "none" -- (Default: "none") Enter any extra lateral tags you use inside '' seperated by space, i.e. "left right" These will be added to the engines that are control by lateral.
+    ExtraVerticalTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "up down" These will be added to the engines that are control by vertical.
+    savableVariablesPhysics = {speedChangeLarge={set=function (i)speedChangeLarge=i end,get=function() return speedChangeLarge end}, speedChangeSmall={set=function (i)speedChangeSmall=i end,get=function() return speedChangeSmall end}, MouseXSensitivity={set=function (i)MouseXSensitivity=i end,get=function() return MouseXSensitivity end}, MouseYSensitivity={set=function (i)MouseYSensitivity=i end,get=function() return MouseYSensitivity end}, autoRollFactor={set=function (i)autoRollFactor=i end,get=function() return autoRollFactor end},
+    rollSpeedFactor={set=function (i)rollSpeedFactor=i end,get=function() return rollSpeedFactor end}, autoRollRollThreshold={set=function (i)autoRollRollThreshold=i end,get=function() return autoRollRollThreshold end}, minRollVelocity={set=function (i)minRollVelocity=i end,get=function() return minRollVelocity end}, TrajectoryAlignmentStrength={set=function (i)TrajectoryAlignmentStrength=i end,get=function() return TrajectoryAlignmentStrength end},
+    torqueFactor={set=function (i)torqueFactor=i end,get=function() return torqueFactor end}, pitchSpeedFactor={set=function (i)pitchSpeedFactor=i end,get=function() return pitchSpeedFactor end}, yawSpeedFactor={set=function (i)yawSpeedFactor=i end,get=function() return yawSpeedFactor end}, brakeSpeedFactor={set=function (i)brakeSpeedFactor=i end,get=function() return brakeSpeedFactor end}, brakeFlatFactor={set=function (i)brakeFlatFactor=i end,get=function() return brakeFlatFactor end}, DampingMultiplier={set=function (i)DampingMultiplier=i end,get=function() return DampingMultiplier end}, 
+    apTickRate={set=function (i)apTickRate=i end,get=function() return apTickRate end},  hudTickRate={set=function (i)hudTickRate=i end,get=function() return hudTickRate end}, ExtraEscapeThrust={set=function (i)ExtraEscapeThrust=i end,get=function() return ExtraEscapeThrust end}, 
+    ExtraLongitudeTags={set=function (i)ExtraLongitudeTags=i end,get=function() return ExtraLongitudeTags end}, ExtraLateralTags={set=function (i)ExtraLateralTags=i end,get=function() return ExtraLateralTags end}, ExtraVerticalTags={set=function (i)ExtraVerticalTags=i end,get=function() return ExtraVerticalTags end}}
 
-    -- Auto Variable declarations that store status of ship on databank. Do not edit directly here unless you know what you are doing, these change as ship flies.
+-- Auto Variable declarations that store status of ship on databank. Do not edit directly here unless you know what you are doing, these change as ship flies.
     -- NOTE: autoVariables below must contain any variable that needs to be saved/loaded from databank system
-        BrakeToggleStatus = BrakeToggleDefault
-        VertTakeOffEngine = false 
-        BrakeIsOn = false
-        RetrogradeIsOn = false
-        ProgradeIsOn = false
-        Autopilot = false
-        TurnBurn = false
-        AltitudeHold = false
-        BrakeLanding = false
-        AutoTakeoff = false
-        Reentry = false
-        VertTakeOff = false
-        HoldAltitude = 1000 -- In case something goes wrong, give this a decent start value
-        AutopilotAccelerating = false
-        AutopilotRealigned = false
-        AutopilotBraking = false
-        AutopilotCruising = false
-        AutopilotEndSpeed = 0
-        AutopilotStatus = "Aligning"
-        AutopilotPlanetGravity = 0
-        PrevViewLock = 1
-        AutopilotTargetName = "None"
-        AutopilotTargetCoords = nil
-        AutopilotTargetIndex = 0
-        GearExtended = nil
-        TotalDistanceTravelled = 0.0
-        TotalFlightTime = 0
-        SavedLocations = {}
-        VectorToTarget = false    
-        LocationIndex = 0
-        LastMaxBrake = 0
-        LockPitch = nil
-        LastMaxBrakeInAtmo = 0
-        AntigravTargetAltitude = 1000
-        LastStartTime = 0
-        SpaceTarget = false
-        LeftAmount = 0
-        IntoOrbit = false
-        iphCondition = "All"
-        stablized = true
-        UseExtra = "Off"
-        LastVersionUpdate = 0.000
-        saveRoute = {}
-        autoVariables = {VertTakeOff={set=function (i)VertTakeOff=i end,get=function() return VertTakeOff end}, VertTakeOffEngine={set=function (i)VertTakeOffEngine=i end,get=function() return VertTakeOffEngine end},SpaceTarget={set=function (i)SpaceTarget=i end,get=function() return SpaceTarget end},BrakeToggleStatus={set=function (i)BrakeToggleStatus=i end,get=function() return BrakeToggleStatus end}, BrakeIsOn={set=function (i)BrakeIsOn=i end,get=function() return BrakeIsOn end}, RetrogradeIsOn={set=function (i)RetrogradeIsOn=i end,get=function() return RetrogradeIsOn end}, ProgradeIsOn={set=function (i)ProgradeIsOn=i end,get=function() return ProgradeIsOn end},
-        Autopilot={set=function (i)Autopilot=i end,get=function() return Autopilot end}, TurnBurn={set=function (i)TurnBurn=i end,get=function() return TurnBurn end}, AltitudeHold={set=function (i)AltitudeHold=i end,get=function() return AltitudeHold end}, BrakeLanding={set=function (i)BrakeLanding=i end,get=function() return BrakeLanding end},
-        Reentry={set=function (i)Reentry=i end,get=function() return Reentry end}, AutoTakeoff={set=function (i)AutoTakeoff=i end,get=function() return AutoTakeoff end}, HoldAltitude={set=function (i)HoldAltitude=i end,get=function() return HoldAltitude end}, AutopilotAccelerating={set=function (i)AutopilotAccelerating=i end,get=function() return AutopilotAccelerating end}, AutopilotBraking={set=function (i)AutopilotBraking=i end,get=function() return AutopilotBraking end},
-        AutopilotCruising={set=function (i)AutopilotCruising=i end,get=function() return AutopilotCruising end}, AutopilotRealigned={set=function (i)AutopilotRealigned=i end,get=function() return AutopilotRealigned end}, AutopilotEndSpeed={set=function (i)AutopilotEndSpeed=i end,get=function() return AutopilotEndSpeed end}, AutopilotStatus={set=function (i)AutopilotStatus=i end,get=function() return AutopilotStatus end},
-        AutopilotPlanetGravity={set=function (i)AutopilotPlanetGravity=i end,get=function() return AutopilotPlanetGravity end}, PrevViewLock={set=function (i)PrevViewLock=i end,get=function() return PrevViewLock end}, AutopilotTargetName={set=function (i)AutopilotTargetName=i end,get=function() return AutopilotTargetName end}, AutopilotTargetCoords={set=function (i)AutopilotTargetCoords=i end,get=function() return AutopilotTargetCoords end},
-        AutopilotTargetIndex={set=function (i)AutopilotTargetIndex=i end,get=function() return AutopilotTargetIndex end}, TotalDistanceTravelled={set=function (i)TotalDistanceTravelled=i end,get=function() return TotalDistanceTravelled end},
-        TotalFlightTime={set=function (i)TotalFlightTime=i end,get=function() return TotalFlightTime end}, SavedLocations={set=function (i)SavedLocations=i end,get=function() return SavedLocations end}, VectorToTarget={set=function (i)VectorToTarget=i end,get=function() return VectorToTarget end}, LocationIndex={set=function (i)LocationIndex=i end,get=function() return LocationIndex end}, LastMaxBrake={set=function (i)LastMaxBrake=i end,get=function() return LastMaxBrake end}, 
-        LockPitch={set=function (i)LockPitch=i end,get=function() return LockPitch end}, LastMaxBrakeInAtmo={set=function (i)LastMaxBrakeInAtmo=i end,get=function() return LastMaxBrakeInAtmo end}, AntigravTargetAltitude={set=function (i)AntigravTargetAltitude=i end,get=function() return AntigravTargetAltitude end}, LastStartTime={set=function (i)LastStartTime=i end,get=function() return LastStartTime end}, iphCondition={set=function (i)iphCondition=i end,get=function() return iphCondition end}, stablized={set=function (i)stablized=i end,get=function() return stablized end}, UseExtra={set=function (i)UseExtra=i end,get=function() return UseExtra end}, SelectedTab={set=function (i)SelectedTab=i end,get=function() return SelectedTab end}, saveRoute={set=function (i)saveRoute=i end,get=function() return saveRoute end}}
+    BrakeToggleStatus = BrakeToggleDefault
+    VertTakeOffEngine = false 
+    BrakeIsOn = false
+    RetrogradeIsOn = false
+    ProgradeIsOn = false
+    Autopilot = false
+    TurnBurn = false
+    AltitudeHold = false
+    BrakeLanding = false
+    AutoTakeoff = false
+    Reentry = false
+    VertTakeOff = false
+    HoldAltitude = 1000 -- In case something goes wrong, give this a decent start value
+    AutopilotAccelerating = false
+    AutopilotRealigned = false
+    AutopilotBraking = false
+    AutopilotCruising = false
+    AutopilotEndSpeed = 0
+    AutopilotStatus = "Aligning"
+    AutopilotPlanetGravity = 0
+    PrevViewLock = 1
+    AutopilotTargetName = "None"
+    AutopilotTargetCoords = nil
+    AutopilotTargetIndex = 0
+    GearExtended = nil
+    TotalDistanceTravelled = 0.0
+    TotalFlightTime = 0
+    SavedLocations = {}
+    VectorToTarget = false    
+    LocationIndex = 0
+    LastMaxBrake = 0
+    LockPitch = nil
+    LastMaxBrakeInAtmo = 0
+    AntigravTargetAltitude = 1000
+    LastStartTime = 0
+    SpaceTarget = false
+    LeftAmount = 0
+    IntoOrbit = false
+    iphCondition = "All"
+    stablized = true
+    UseExtra = "Off"
+    LastVersionUpdate = 0.000
+    saveRoute = {}
+    apRoute = {}
+    autoVariables = {VertTakeOff={set=function (i)VertTakeOff=i end,get=function() return VertTakeOff end}, VertTakeOffEngine={set=function (i)VertTakeOffEngine=i end,get=function() return VertTakeOffEngine end},SpaceTarget={set=function (i)SpaceTarget=i end,get=function() return SpaceTarget end},BrakeToggleStatus={set=function (i)BrakeToggleStatus=i end,get=function() return BrakeToggleStatus end}, BrakeIsOn={set=function (i)BrakeIsOn=i end,get=function() return BrakeIsOn end}, RetrogradeIsOn={set=function (i)RetrogradeIsOn=i end,get=function() return RetrogradeIsOn end}, ProgradeIsOn={set=function (i)ProgradeIsOn=i end,get=function() return ProgradeIsOn end},
+    Autopilot={set=function (i)Autopilot=i end,get=function() return Autopilot end}, TurnBurn={set=function (i)TurnBurn=i end,get=function() return TurnBurn end}, AltitudeHold={set=function (i)AltitudeHold=i end,get=function() return AltitudeHold end}, BrakeLanding={set=function (i)BrakeLanding=i end,get=function() return BrakeLanding end},
+    Reentry={set=function (i)Reentry=i end,get=function() return Reentry end}, AutoTakeoff={set=function (i)AutoTakeoff=i end,get=function() return AutoTakeoff end}, HoldAltitude={set=function (i)HoldAltitude=i end,get=function() return HoldAltitude end}, AutopilotAccelerating={set=function (i)AutopilotAccelerating=i end,get=function() return AutopilotAccelerating end}, AutopilotBraking={set=function (i)AutopilotBraking=i end,get=function() return AutopilotBraking end},
+    AutopilotCruising={set=function (i)AutopilotCruising=i end,get=function() return AutopilotCruising end}, AutopilotRealigned={set=function (i)AutopilotRealigned=i end,get=function() return AutopilotRealigned end}, AutopilotEndSpeed={set=function (i)AutopilotEndSpeed=i end,get=function() return AutopilotEndSpeed end}, AutopilotStatus={set=function (i)AutopilotStatus=i end,get=function() return AutopilotStatus end},
+    AutopilotPlanetGravity={set=function (i)AutopilotPlanetGravity=i end,get=function() return AutopilotPlanetGravity end}, PrevViewLock={set=function (i)PrevViewLock=i end,get=function() return PrevViewLock end}, AutopilotTargetName={set=function (i)AutopilotTargetName=i end,get=function() return AutopilotTargetName end}, AutopilotTargetCoords={set=function (i)AutopilotTargetCoords=i end,get=function() return AutopilotTargetCoords end},
+    AutopilotTargetIndex={set=function (i)AutopilotTargetIndex=i end,get=function() return AutopilotTargetIndex end}, TotalDistanceTravelled={set=function (i)TotalDistanceTravelled=i end,get=function() return TotalDistanceTravelled end},
+    TotalFlightTime={set=function (i)TotalFlightTime=i end,get=function() return TotalFlightTime end}, SavedLocations={set=function (i)SavedLocations=i end,get=function() return SavedLocations end}, VectorToTarget={set=function (i)VectorToTarget=i end,get=function() return VectorToTarget end}, LocationIndex={set=function (i)LocationIndex=i end,get=function() return LocationIndex end}, LastMaxBrake={set=function (i)LastMaxBrake=i end,get=function() return LastMaxBrake end}, 
+    LockPitch={set=function (i)LockPitch=i end,get=function() return LockPitch end}, LastMaxBrakeInAtmo={set=function (i)LastMaxBrakeInAtmo=i end,get=function() return LastMaxBrakeInAtmo end}, AntigravTargetAltitude={set=function (i)AntigravTargetAltitude=i end,get=function() return AntigravTargetAltitude end}, LastStartTime={set=function (i)LastStartTime=i end,get=function() return LastStartTime end}, iphCondition={set=function (i)iphCondition=i end,get=function() return iphCondition end}, stablized={set=function (i)stablized=i end,get=function() return stablized end}, UseExtra={set=function (i)UseExtra=i end,get=function() return UseExtra end}, SelectedTab={set=function (i)SelectedTab=i end,get=function() return SelectedTab end}, saveRoute={set=function (i)saveRoute=i end,get=function() return saveRoute end},
+    apRoute={set=function (i)apRoute=i end,get=function() return apRoute end}}
 
-    -- Unsaved Globals
     local function globalDeclare(s, c, u, systime, mfloor, atmosphere) -- # is how many classes variable is in
         time = systime() -- 6
         PlayerThrottle = 0 -- 4
@@ -245,7 +244,6 @@ VERSION_NUMBER = 0.717
         rocketTanks = {} -- 2
         galaxyReference = nil -- 4
         Kinematic = nil -- 4
-        maxKinematicUp = nil -- 2
         Kep = nil -- 3
         HUD = nil -- 5
         ATLAS = nil -- 4
@@ -297,8 +295,7 @@ VERSION_NUMBER = 0.717
         apBrk = false -- 2
         alignHeading=nil -- 2
         if shield_1 then shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints()) end
-    end
-     
+    end     
     --[[ timestamped print function for debugging
         function p(msg)
             s.print(time..": "..msg)
@@ -961,7 +958,7 @@ VERSION_NUMBER = 0.717
         })
     end  
     -- ArchHUD AtlasOrdering
-    local function AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play) -- Atlas and Interplanetary functions including Update Autopilot Target
+    local function AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round) -- Atlas and Interplanetary functions including Update Autopilot Target
 
         -- Atlas functions
             local function getPlanet(position)
@@ -1188,7 +1185,7 @@ VERSION_NUMBER = 0.717
             return findAtlasIndex(atlasList, findme)
         end
 
-        function Atlas.UpdatePosition(newName, saveHeading) -- Update a saved location with new position
+        function Atlas.UpdatePosition(newName, saveHeading, saveAgg) -- Update a saved location with new position
             local function updatePosition(private)
                 local positions
                 if private then positions = privatelocations else positions = SavedLocations end
@@ -1199,6 +1196,18 @@ VERSION_NUMBER = 0.717
                         positions[index].name = newName
                         AutopilotTargetIndex = AutopilotTargetIndex - 1
                         adjustAutopilotTargetIndex()
+                    elseif saveAgg ~= nil then
+                        if saveAgg then
+                            local alt = coreAltitude
+                            if alt < 1000 then alt = 1000 end
+                            positions[index].agg = round(alt,0)
+                            msgText = positions[index].name .. " AGG Altitude:"..positions[index].agg.." saved ("..positions[index].planetname..")"
+                            return
+                        elseif saveAgg == false then 
+                            positions[index].agg = nil 
+                            msgText = positions[index].name .. " AGG Altitude cleared ("..positions[index].planetname..")"
+                            return
+                        end                        
                     else
                         local location = positions[index]
                         if saveHeading then 
@@ -2365,7 +2374,9 @@ VERSION_NUMBER = 0.717
                 local brakeStroke = defaultStroke
                 local brakeClass = defaultClass
                 if BrakeIsOn then
-                    newContent[#newContent + 1] = svgText(warningX, brakeY, "Brake Engaged", "warnings")
+                    local bkStr = ""
+                    if type(BrakeIsOn) == "string" then bkStr="-"..BrakeIsOn end
+                    newContent[#newContent + 1] = svgText(warningX, brakeY, "Brake Engaged"..bkStr, "warnings")
                     brakeFill = "#440000"
                     brakeStroke = onFill
                     brakeClass = fillClass
@@ -2422,13 +2433,12 @@ VERSION_NUMBER = 0.717
                     aggFill = "#00DD00"
                     aggStroke = onFill
                     aggClass = fillClass
-                    if mabs(coreAltitude - antigrav.getBaseAltitude()) < 501 then
-                        newContent[#newContent + 1] = svgText(warningX, apY+15, stringf("Target Altitude: %d Singularity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), "warn")
-                    else
-                        newContent[#newContent + 1] = svgText( warningX, apY+15, stringf("Target Altitude: %d Singluarity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), "warnings")
-                    end
-                elseif Autopilot and AutopilotTargetName ~= "None" then
-                    newContent[#newContent + 1] = svgText(warningX, apY+20,  "Autopilot "..AutopilotStatus, "warn")
+                    local aggWarn = "warnings"
+                    if mabs(coreAltitude - antigrav.getBaseAltitude()) < 501 then aggWarn = "warn" end
+                        newContent[#newContent + 1] = svgText(warningX, apY+40, stringf("Target Altitude: %d Singularity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), aggWarn)
+                end
+                if Autopilot and AutopilotTargetName ~= "None" then
+                    newContent[#newContent + 1] = svgText(warningX, apY,  "Autopilot "..AutopilotStatus, "warn")
                 elseif LockPitch ~= nil then
                     newContent[#newContent + 1] = svgText(warningX, apY+20, stringf("LockedPitch: %d", mfloor(LockPitch)), "warn")
                 elseif followMode then
@@ -2450,7 +2460,7 @@ VERSION_NUMBER = 0.717
                             newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..displayText, "warn")
                         end
                         if BrakeIsOn and not VertTakeOff then
-                            newContent[#newContent + 1] = svgText( warningX, apY + 50,"Throttle Up and Disengage Brake For Takeoff", "crit")
+                            newContent[#newContent + 1] = svgText( warningX, apY + 80,"Throttle Up and Disengage Brake For Takeoff", "crit")
                         end
                     else
                         newContent[#newContent + 1] = svgText(warningX, apY, "Altitude Hold: ".. displayText, "warn")
@@ -2472,8 +2482,9 @@ VERSION_NUMBER = 0.717
                 end
                 if BrakeLanding then
                     if StrongBrakes then
-                        local str = "Brake-Landing"
-                        if alignHeading then str = str..": Aligning" end
+                        local str = "Brake Landing"
+                        if alignHeading then str = str.."-Aligning" end
+                        if apBrk then str = str.."-Drift Limited" end
                         newContent[#newContent + 1] = svgText(warningX, apY, str, "warnings")
                     else
                         newContent[#newContent + 1] = svgText(warningX, apY, "Coast-Landing", "warnings")
@@ -2509,7 +2520,7 @@ VERSION_NUMBER = 0.717
                     end
                 end
                 if VectorToTarget and not IntoOrbit then
-                    newContent[#newContent + 1] = svgText(warningX, apY+35, VectorStatus, "warn")
+                    newContent[#newContent + 1] = svgText(warningX, apY+60, VectorStatus, "warn")
                 end
                 local boardersFill = "#111100"
                 local boardersStroke = defaultStroke
@@ -3534,8 +3545,8 @@ VERSION_NUMBER = 0.717
                     AutoTakeoff = false
                 end
     
-                local function UpdatePosition(heading)
-                    ATLAS.UpdatePosition(nil, heading)
+                local function UpdatePosition(heading, saveAGG)
+                    ATLAS.UpdatePosition(nil, heading, saveAGG)
                 end
                 local function ClearCurrentPosition()
                     -- So AutopilotTargetIndex is special and not a real index.  We have to do this by hand.
@@ -3573,7 +3584,7 @@ VERSION_NUMBER = 0.717
                             play("folOn","F")
                         else
                             play("folOff","F")
-                            BrakeIsOn = true
+                            BrakeIsOn = "Follow Off"
                             autoRoll = autoRollPreference
                             GearExtended = OldGearExtended
                             if GearExtended then
@@ -3692,6 +3703,11 @@ VERSION_NUMBER = 0.717
                     function() return CustomTarget.heading ~= nil end, 
                     function() if CustomTarget.heading ~= nil then UpdatePosition(false) else UpdatePosition(true) end end, 
                     function() return AutopilotTargetIndex > 0 and CustomTarget ~= nil
+                    end)
+                MakeButton("Save AGG Alt", "Clear AGG Alt", 200, apbutton.height, apbutton.x + apbutton.width + 30, apbutton.y + apbutton.height*2 + 40,
+                    function() return CustomTarget.agg ~= nil end, 
+                    function() if CustomTarget.agg ~= nil then UpdatePosition(nil, false) else UpdatePosition(nil, true) end end, 
+                    function() return AutopilotTargetIndex > 0 and CustomTarget ~= nil and antigrav
                     end)
                 MakeButton("Clear Position", "Clear Position", 200, apbutton.height, apbutton.x - 200 - 30, apbutton.y,
                     function()
@@ -4843,7 +4859,6 @@ VERSION_NUMBER = 0.717
             local OrbitTargetSet = false
             local OrbitTargetPlanet = nil
             local OrbitTicks = 0
-            local apRoute = {}
             local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in. Also used in hudclass
             local lastMaxBrakeAtG = nil
             local mousePause = false
@@ -4851,7 +4866,6 @@ VERSION_NUMBER = 0.717
             local reentryMode = false
             local pitchInput2 = 0
             local yawInput2 = 0
-            local brakeInput = 0
             local rollInput2 = 0
             local targetRoll = 0
             local VtPitch = 0
@@ -5005,7 +5019,7 @@ VERSION_NUMBER = 0.717
                     local ignoreCollision = AutoTakeoff and (velMag < 42 or abvGndDet ~= -1)
                     local apAction = (AltitudeHold or VectorToTarget or LockPitch or Autopilot)
                     if apAction and not ignoreCollision and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
-                            BrakeIsOn = true
+                            BrakeIsOn = "Collision"
                             apRoute = {}
                             AP.cmdThrottle(0)
                             if AltitudeHold then AP.ToggleAltitudeHold() end
@@ -5166,7 +5180,7 @@ VERSION_NUMBER = 0.717
     
             local gravity = planet:getGravity(c.getConstructWorldPos()):len() * coreMass
             targetRoll = 0
-            maxKinematicUp = c.getMaxKinematicsParametersAlongAxis("ground", c.getConstructOrientationUp())[1]
+            local maxKinematicUp = c.getMaxKinematicsParametersAlongAxis("ground", c.getConstructOrientationUp())[1]
     
             if sysIsVwLock() == 0 then
                 if isRemote() == 1 and holdingShift then
@@ -5236,7 +5250,7 @@ VERSION_NUMBER = 0.717
     
             if inAtmo and atmosDensity > 0.09 then
                 if velMag > (adjustedAtmoSpeedLimit / 3.6) and not AtmoSpeedAssist and not speedLimitBreaking then
-                        BrakeIsOn = true
+                        BrakeIsOn = "SpdLmt"
                         speedLimitBreaking  = true
                 elseif not AtmoSpeedAssist and speedLimitBreaking then
                     if velMag < (adjustedAtmoSpeedLimit / 3.6) then
@@ -5244,12 +5258,6 @@ VERSION_NUMBER = 0.717
                         speedLimitBreaking = false
                     end
                 end    
-            end
-    
-            if BrakeIsOn then
-                brakeInput = 1
-            else
-                brakeInput = 0
             end
     
             if ProgradeIsOn then
@@ -5325,10 +5333,10 @@ VERSION_NUMBER = 0.717
                         upAmount = 15
                         BrakeIsOn = false
                     elseif vSpd > 0 then
-                        BrakeIsOn = true
+                        BrakeIsOn = "VTO Limit"
                         upAmount = 0
                     elseif vSpd < -30 then
-                        BrakeIsOn = true
+                        BrakeIsOn = "VTO Fall"
                         upAmount = 15
                     elseif coreAltitude >= targetAltitude then
                         if antigravOn then 
@@ -5336,7 +5344,7 @@ VERSION_NUMBER = 0.717
                                 AP.ToggleVerticalTakeoff()
     
                             else
-                                BrakeIsOn = true
+                                BrakeIsOn = "VTO Complete"
                                 VertTakeOff = false
                             end
                             msgText = "Takeoff complete. Singularity engaged"
@@ -5834,7 +5842,7 @@ VERSION_NUMBER = 0.717
                                 if pvpDist < lastPvPDist and pvpDist > 2000 then
                                     AP.ToggleAutopilot()
                                     msgText = "Autopilot cancelled to prevent crossing PvP Line" 
-                                    BrakeIsOn=true
+                                    BrakeIsOn = "PvP Prevent"
                                     lastPvPDist = pvpDist
                                 else
                                     lastPvPDist = pvpDist
@@ -5852,8 +5860,7 @@ VERSION_NUMBER = 0.717
                     end
                 elseif AutopilotBraking then
                     if AutopilotStatus ~= "Orbiting to Target" then
-                        BrakeIsOn = true
-                        brakeInput = 1
+                        BrakeIsOn = "AP Brk"
                     end
                     if TurnBurn then
                         AP.cmdThrottle(1,true) -- This stays 100 to not mess up our calculations
@@ -5872,14 +5879,16 @@ VERSION_NUMBER = 0.717
                     end
                     if (CustomTarget and CustomTarget.planetname == "Space" and velMag < 50) then
                         if #apRoute>0 then
-                            BrakeIsOn = false
-                            AP.ToggleAutopilot()
-                            AP.ToggleAutopilot()
-                            return
+                            table.remove(apRoute,1)
+                            if #apRoute>0 then
+                                BrakeIsOn = false
+                                AP.ToggleAutopilot()
+                                AP.ToggleAutopilot()
+                                return
+                            end
                         end
                         finishAutopilot("Autopilot complete, arrived at space location")
-                        BrakeIsOn = true
-                        brakeInput = 1
+                        BrakeIsOn = "Space Arrival"
                         -- We only aim for endSpeed even if going straight in, because it gives us a smoother transition to alignment
                     elseif (CustomTarget and CustomTarget.planetname ~= "Space") and velMag <= endSpeed and (orbit.apoapsis == nil or orbit.periapsis == nil or orbit.apoapsis.altitude <= 0 or orbit.periapsis.altitude <= 0) then
                         -- They aren't in orbit, that's a problem if we wanted to do anything other than reenter.  Reenter regardless.                  
@@ -5917,7 +5926,7 @@ VERSION_NUMBER = 0.717
                                 end
                             else
                                 finishAutopilot("Autopilot completed, setting orbit", true)
-                                brakeInput = 0
+                                BrakeIsOn = false
                             end
                         end
                     elseif AutopilotStatus == "Circularizing" then
@@ -5936,7 +5945,7 @@ VERSION_NUMBER = 0.717
                             if pvpDist < lastPvPDist and pvpDist > 2000 then 
                                 AP.ToggleAutopilot()
                                 msgText = "Autopilot cancelled to prevent crossing PvP Line" 
-                                BrakeIsOn=true
+                                BrakeIsOn = "Prevent PvP"
                                 lastPvPDist = pvpDist
                             else
                                 lastPvPDist = pvpDist
@@ -6000,7 +6009,6 @@ VERSION_NUMBER = 0.717
                 Autopilot = false
                 TargetSet = false
                 AutopilotStatus = "Aligning" -- Disable autopilot and reset
-                brakeInput = 0
                 AP.cmdThrottle(0)
                 apThrottleSet = false
                 ProgradeIsOn = true
@@ -6040,7 +6048,7 @@ VERSION_NUMBER = 0.717
                     targetPitch = -20
                 else
                     -- if not onShip then
-                    BrakeIsOn = true
+                    BrakeIsOn = "Follow"
                     -- end
                     targetPitch = 0
                 end
@@ -6111,7 +6119,7 @@ VERSION_NUMBER = 0.717
                 -- Or 100m above and -30m/s vspeed.  So (Hold-Core) - vspd
                 -- Scenario 1: Hold-c = -100.  Scen2: Hold-c = 100
                 -- 1: 100-30 = 70     2: -100--30 = -70
-    
+                if not ExternalAGG and antigravOn and not Reentry and HoldAltitude < antigrav.getBaseAltitude() then HoldAltitude = antigrav.getBaseAltitude() end
                 local altDiff = (HoldAltitude - coreAltitude) - vSpd -- Maybe a multiplier for vSpd here...
                 -- This may be better to smooth evenly regardless of HoldAltitude.  Let's say, 2km scaling?  Should be very smooth for atmo
                 -- Even better if we smooth based on their velocity
@@ -6128,11 +6136,6 @@ VERSION_NUMBER = 0.717
                     -- I.e. we have a lot of power and need to really get out of atmo with that power instead of feeding it to speed
                     -- Scaled in a way that no change up to 10% atmo, then from 10% to 0% scales to *20 and *2
                     targetPitch = (utils.smoothstep(altDiff, -minmax*uclamp(20 - 19*atmosDensity*10,1,20), minmax*uclamp(20 - 19*atmosDensity*10,1,20)) - 0.5) * 2 * MaxPitch * uclamp(2 - atmosDensity*10,1,2) * velMultiplier
-                    --if coreAltitude > HoldAltitude and targetPitch == -85 then
-                    --    BrakeIsOn = true
-                    --else
-                    --    BrakeIsOn = false
-                    --end
                 end
     
                 if not AltitudeHold then
@@ -6168,14 +6171,14 @@ VERSION_NUMBER = 0.717
                     end
                     if throttleMode then
                         if velMag > ReentrySpeed/3.6 and not freeFallHeight then
-                            BrakeIsOn = true
+                            BrakeIsOn = "Reentry Limit"
                         else
                             BrakeIsOn = false
                         end
                     else
                         BrakeIsOn = false
                     end
-                    if vSpd > 0 then BrakeIsOn = true end
+                    if vSpd > 0 then BrakeIsOn = "Reentry vSpd" end
                     if not reentryMode then
                         targetPitch = -80
                         if coreAltitude < (planet.surfaceMaxAltitude+(planet.atmosphereThickness-planet.surfaceMaxAltitude)*0.25) then
@@ -6327,9 +6330,12 @@ VERSION_NUMBER = 0.717
                                 (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99  or VectorStatus == "Finalizing Approach")) then 
                             VectorStatus = "Finalizing Approach" 
                             if #apRoute>0 then
-                                AP.ToggleAutopilot()
-                                AP.ToggleAutopilot()
-                                return
+                                table.remove(apRoute,1)
+                                if #apRoute>0 then
+                                    AP.ToggleAutopilot()
+                                    AP.ToggleAutopilot()
+                                    return
+                                end
                             end
                             AP.cmdThrottle(0) -- Kill throttle in case they weren't in cruise
                             if AltitudeHold then
@@ -6338,7 +6344,7 @@ VERSION_NUMBER = 0.717
                                 -- end
                                 VectorToTarget = true -- But keep this on
                             end
-                            BrakeIsOn = true
+                            BrakeIsOn = "AP Finalizing"
                         elseif not AutoTakeoff then
                             BrakeIsOn = false
                         end
@@ -6348,7 +6354,6 @@ VERSION_NUMBER = 0.717
                             apBrk = true
                             if CustomTarget.heading then alignHeading = CustomTarget.heading else alignHeading = nil end
                             VectorToTarget = false
-                            if AutopilotTargetName == "STARTINGPOINT" then ATLAS.ClearCurrentPosition() end
                             VectorStatus = "Proceeding to Waypoint"
                             collisionAlertStatus = false
                         end
@@ -6405,31 +6410,32 @@ VERSION_NUMBER = 0.717
                 if BrakeLanding then
                     targetPitch = 0
                     local aggBase = false
-                    if not ExternalAGG and antigravOn then aggBase = antigrav.getBaseAltitude() end
+                    local absHspd = math.abs(hSpd)
+                    if not ExternalAGG and antigravOn then 
+                        aggBase = antigrav.getBaseAltitude() 
+                        if (aggBase < planet.surfaceMaxAltitude and CustomTarget == nil) or
+                           (CustomTarget ~= nil and planet:getAltitude(CustomTarget.position) > aggBase) then 
+                            aggBase = false 
+                        end
+                    end
                     if alignHeading then
-                        if math.abs(hSpd) < 0.05 then
-                            if vSpd > -brakeLandingRate then BrakeIsOn = false else BrakeIsOn = true end
-                            if AlignToWorldVector(alignHeading, 0.0001) then 
+                        if absHspd < 0.05 then
+                            if vSpd > -brakeLandingRate then BrakeIsOn = false else BrakeIsOn = "BL Align BLR" end
+                            if AlignToWorldVector(alignHeading, 0.001) then 
                                 alignHeading = nil 
                                 autoRoll = autoRollPreference 
                             else
                                 pitchInput2 = 0
                                 autoRoll = true
-    
                             end
                         else
-                            BrakeIsOn = true
-                        end
-                        if aggBase and (coreAltitude - aggBase) < 100 then
-                            BrakeIsOn = true
+                            BrakeIsOn = "BL Align Hzn"
                         end
                     else
                         local skipLandingRate = false
                         local distanceToStop = 30 
     
-    
-                        if maxKinematicUp ~= nil and maxKinematicUp > 0 then
-    
+                        if absHspd < 10 and maxKinematicUp ~= nil and maxKinematicUp > 0 then
                             -- Funny enough, LastMaxBrakeInAtmo has stuff done to it to convert to a flat value
                             -- But we need the instant one back, to know how good we are at braking at this exact moment
                             local atmos = uclamp(atmosDensity,0.4,2) -- Assume at least 40% atmo when they land, to keep things fast in low atmo
@@ -6466,37 +6472,25 @@ VERSION_NUMBER = 0.717
                                 --if LandingGearGroundHeight == 0 then
                                 stopDistance = (stopDistance+15+(velMag*deltaTick))*1.1 -- Add leeway for large ships with forcefields or landing gear, and for lag
                                 -- And just bad math I guess
-                                local knownAltitude = (CustomTarget ~= nil and planet:getAltitude(CustomTarget.position) > 0 and CustomTarget.safe)
-    
-                                if knownAltitude then
-                                    local targetAltitude
-                                    if aggBase and aggBase < coreAltitude then
-                                        targetAltitude = aggBase
-                                    else
-                                        targetAltitude = planet:getAltitude(CustomTarget.position)
-                                    end
-                                    local distanceToGround = coreAltitude - targetAltitude - 100 -- Try to aim for like 100m above the ground, give it lots of time
-                                    -- We don't have to squeeze out the little bits of performance
-                                    local targetVec = CustomTarget.position - worldPos
-                                    local horizontalDistance = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
-    
-                                    if horizontalDistance > 100 then
-                                        -- We are too far off, don't trust our altitude data
-                                        knownAltitude = false
-                                    elseif distanceToGround <= stopDistance or stopDistance == -1 then
-                                        BrakeIsOn = true
+                                local knownAltitude = (apBrk and CustomTarget ~= nil and planet:getAltitude(CustomTarget.position) > 0 and CustomTarget.safe)
+                                local targetAltitude = nil
+                                if aggBase and aggBase < coreAltitude then
+                                    targetAltitude = aggBase
+                                elseif knownAltitude then
+                                    targetAltitude = planet:getAltitude(CustomTarget.position) + 1000 -- Try to aim for like 1000m above the target, give it lots of time
+                                    if coreAltitude < targetAltitude then targetAltitude = nil end
+                                elseif coreAltitude > planet.surfaceMaxAltitude then
+                                    targetAltitude = planet.surfaceMaxAltitude
+                                end
+                                if targetAltitude ~= nil then
+                                    local distanceToGround = coreAltitude - targetAltitude 
+                                    if distanceToGround <= stopDistance or stopDistance == -1 then
+                                        BrakeIsOn = "BL Stop Dist"
                                         skipLandingRate = true
                                     else
                                         BrakeIsOn = false
                                         skipLandingRate = true
                                     end
-                                elseif CalculateBrakeLandingSpeed then
-                                    if stopDistance >= distanceToStop then -- 10% padding
-                                        BrakeIsOn = true
-                                    else
-                                        BrakeIsOn = false
-                                    end
-                                    skipLandingRate = true
                                 end
                             end
                         end
@@ -6508,11 +6502,13 @@ VERSION_NUMBER = 0.717
                         stablized = true
     
                         groundDistance = abvGndDet
-                        if groundDistance == -1 and aggBase and (coreAltitude - aggBase) < 100 then
-                            BrakeLanding = false
-                            BrakeIsOn = true
-                            autoRoll = autoRollPreference 
-                            apBrk = false
+                        if groundDistance == -1 and aggBase and mabs(coreAltitude - aggBase) < 100 then
+                            if not alignHeading then
+                                BrakeLanding = false
+                                autoRoll = autoRollPreference 
+                                apBrk = false
+                            end
+                            BrakeIsOn = "BL AGG Comp"
                         elseif groundDistance > -1 then 
                                 if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading then -- Or if they start going back up
                                     BrakeLanding = false
@@ -6524,36 +6520,38 @@ VERSION_NUMBER = 0.717
                                     end
                                     navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                                     upAmount = 0
-                                    BrakeIsOn = true
+                                    BrakeIsOn = "BL Complete"
                                     autoRoll = autoRollPreference 
                                     apBrk = false
                                 else
-                                    BrakeIsOn = true
+                                    BrakeIsOn = "BL Slowing"
                                 end
-                        elseif StrongBrakes and (constructVelocity:normalize():dot(-up) < 0.999) then
-                            BrakeIsOn = true
-                            AlignToWorldVector()
-                        elseif (vSpd < -brakeLandingRate and not skipLandingRate) or (math.abs(hSpd) > 0.05 and apBrk) then
-                            BrakeIsOn = true
                         elseif not skipLandingRate then
-                            BrakeIsOn = false
+                            if StrongBrakes and (constructVelocity:normalize():dot(-up) < 0.999) then
+                                BrakeIsOn = "BL Strong"
+                                AlignToWorldVector()
+                            elseif absHspd > 10 or (absHspd > 0.05 and apBrk) then
+                                BrakeIsOn = "BL hSpd"
+                            elseif vSpd < -brakeLandingRate then
+                                BrakeIsOn = "BL BLR"
+                            else
+                                BrakeIsOn = false
+                            end
                         end
-                    end 
+                    end
                 end
                 if AutoTakeoff or spaceLaunch then
                     local intersectBody, nearSide, farSide
                     if AutopilotTargetCoords ~= nil then
                         intersectBody, nearSide, farSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (AutopilotTargetCoords-worldPos):normalize(), function(body) return (body.radius+body.noAtmosphericDensityAltitude) end)
                     end
-                    if antigravOn then
+                    if antigravOn and not spaceLaunch then
                         if coreAltitude >= (HoldAltitude-50) then
                             AutoTakeoff = false
                             if not Autopilot and not VectorToTarget then
-                                BrakeIsOn = true
+                                BrakeIsOn = "ATO Agg Arrive"
                                 AP.cmdThrottle(0)
                             end
-                        else
-                            HoldAltitude = antigrav.getBaseAltitude()
                         end
                     elseif mabs(targetPitch) < 15 and (coreAltitude/HoldAltitude) > 0.75 then
                         AutoTakeoff = false -- No longer in ascent
@@ -6569,7 +6567,7 @@ VERSION_NUMBER = 0.717
                             AP.cmdThrottle(0)
                         elseif spaceLaunch then
                             AP.cmdThrottle(0)
-                            BrakeIsOn = true
+                            BrakeIsOn = "ATO Space"
                         end --coreAltitude > 75000
                     elseif spaceLaunch and atmosDensity == 0 and autopilotTargetPlanet ~= nil and (intersectBody == nil or intersectBody.name == autopilotTargetPlanet.name) then
                         Autopilot = true
@@ -6678,7 +6676,7 @@ VERSION_NUMBER = 0.717
                 GearExtended = false
                 Nav.control.retractLandingGears()
                 navCom:setTargetGroundAltitude(TargetHoverHeight) 
-                BrakeIsOn = true
+                BrakeIsOn = "VTO Takeoff"
             end
             VertTakeOff = not VertTakeOff
         end
@@ -6744,7 +6742,6 @@ VERSION_NUMBER = 0.717
                 if #apRoute>0 and not finalLand then 
                     AutopilotTargetIndex = getIndex(apRoute[1])
                     ATLAS.UpdateAutopilotTarget()
-                    table.remove(apRoute,1)
                     msgText = "Route Autopilot in Progress"
                     local targetVec = CustomTarget.position - worldPos
                     local distanceToTarget = targetVec:project_on_plane(worldVertical):len()
@@ -6754,10 +6751,11 @@ VERSION_NUMBER = 0.717
                 end
                 ATLAS.UpdateAutopilotTarget() -- Make sure we're updated
                 AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
-                if SaveStartingLocation and #apRoute==0 and AutopilotTargetName ~= "STARTINGPOINT" and ATLAS.findAtlasIndex(SavedLocations, "STARTINGPOINT") == -1 and abvGndDet > -1 then 
-                    ATLAS.AddNewLocation("STARTINGPOINT", worldPos, false, true) 
-                end
                 if CustomTarget ~= nil then
+                    if CustomTarget.agg and not ExternalAGG and antigrav then
+                        if not antigravOn then AP.ToggleAntigrav() end
+                        AntigravTargetAltitude = CustomTarget.agg
+                    end
                     LockPitch = nil
                     SpaceTarget = (CustomTarget.planetname == "Space")
                     if SpaceTarget then
@@ -6947,7 +6945,7 @@ VERSION_NUMBER = 0.717
                     if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
                     GearExtended = false
                     Nav.control.retractLandingGears()
-                    BrakeIsOn = true
+                    BrakeIsOn = "ATO Hold"
                     navCom:setTargetGroundAltitude(TargetHoverHeight)
                     if VertTakeOffEngine and UpVertAtmoEngine then 
                         AP.ToggleVerticalTakeoff()
@@ -6962,7 +6960,16 @@ VERSION_NUMBER = 0.717
                     end
                     if VertTakeOff then AP.ToggleVerticalTakeoff() end
                 end
-                if spaceLaunch then HoldAltitude = 100000 end
+                if antigravOn and not ExternalAGG then 
+                    local gBA = antigrav.getBaseAltitude()
+                    if CustomTarget.agg and CustomTarget.agg > coreAltitude then 
+                        HoldAltitude = CustomTarget.agg
+                    else
+                        HoldAltitude = gBA
+                    end
+                    if mabs(coreAltitude-gBA) < 50 then BrakeIsOn = "AGG Hold" end
+                end
+                if spaceLaunch then HoldAltitude = 200000 end
             else
                 play("altOff","AH")
                 if IntoOrbit then AP.ToggleIntoOrbit() end
@@ -7012,9 +7019,13 @@ VERSION_NUMBER = 0.717
             upAmount = 0
         end
     
-        function ap.BrakeToggle() -- Toggle brakes on and off
+        function ap.BrakeToggle(strBk) -- Toggle brakes on and off
             -- Toggle brakes
-            BrakeIsOn = not BrakeIsOn
+            if not BrakeIsOn then
+                if strBk then BrakeIsOn = strBk else BrakeIsOn = true end
+            else
+                BrakeIsOn = false
+            end
             if BrakeLanding then
                 BrakeLanding = false
                 autoRoll = autoRollPreference
@@ -7054,7 +7065,9 @@ VERSION_NUMBER = 0.717
                 autoRoll = true
                 BrakeIsOn = false
                 HoldAltitude = planet.surfaceMaxAltitude + ReEntryHeight
-                if HoldAltitude > planet.spaceEngineMinAltitude then HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude end
+                if HoldAltitude > planet.spaceEngineMinAltitude then 
+                    HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude 
+                end
                 local text = getDistanceDisplayString(HoldAltitude)
                 msgText = "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text 
                 play("glide","RE")
@@ -7318,7 +7331,8 @@ VERSION_NUMBER = 0.717
             local finalPitchInput = uclamp(pitchInput + pitchInput2 + s.getControlDeviceForwardInput(),-1,1)
             local finalRollInput = uclamp(rollInput + rollInput2 + s.getControlDeviceYawInput(),-1,1)
             local finalYawInput = uclamp((yawInput + yawInput2) - s.getControlDeviceLeftRightInput(),-1,1)
-            local finalBrakeInput = brakeInput
+            
+            local finalBrakeInput = (BrakeIsOn and 1) or 0
     
             -- Axis
             worldVertical = vec3(c.getWorldVertical()) -- along gravity
@@ -7608,7 +7622,7 @@ VERSION_NUMBER = 0.717
     
                 -- Auto Navigation (Cruise Control)
                 if (autoNavigationAcceleration:len() > constants.epsilon) then -- This means it's in cruise
-                    if (brakeInput ~= 0 or autoNavigationUseBrake or mabs(constructVelocityDir:dot(constructForward)) < 0.5)
+                    if (finalBrakeInput ~= 0 or autoNavigationUseBrake or mabs(constructVelocityDir:dot(constructForward)) < 0.5)
                     then
                         autoNavigationEngineTags = autoNavigationEngineTags .. ', brake'
                     end
@@ -7778,8 +7792,8 @@ VERSION_NUMBER = 0.717
                             AutoTakeoff = false
                             VertTakeOff = false
                             AltitudeHold = false
+                            if BrakeLanding then apBrk = not apBrk end
                             BrakeLanding = true
-                            apBrk = false
                             autoRoll = true
                             GearExtended = false -- Don't actually toggle the gear yet though
                         else
@@ -7787,9 +7801,10 @@ VERSION_NUMBER = 0.717
                                 play("grOut","LG",1)
                                 Nav.control.extendLandingGears()                            
                             end
+                            apBrk = false
                             navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                             if inAtmo then
-                                BrakeIsOn = true
+                                BrakeIsOn = "Landing"
                             end
                         end
                     end
@@ -8040,11 +8055,11 @@ VERSION_NUMBER = 0.717
                 end
             elseif action == "brake" then
                 if BrakeToggleStatus or AltIsOn then
-                    AP.BrakeToggle()
+                    AP.BrakeToggle("Manual")
                 elseif not BrakeIsOn then
-                    AP.BrakeToggle() -- Trigger the cancellations
+                    AP.BrakeToggle("Manual") -- Trigger the cancellations
                 else
-                    BrakeIsOn = true -- Should never happen
+                    BrakeIsOn = "Manual" -- Should never happen
                 end
             elseif action == "lalt" then
                 toggleView = true
@@ -8289,7 +8304,7 @@ VERSION_NUMBER = 0.717
                     "/iphWP - displays current IPH target's ::pos waypoint in lua chat\n"..
                     "/resist 0.15, 0.15, 0.15, 0.15 - Sets shield resistance distribution of the floating 60% extra available, usable once per minute\n"..
                     "/deletewp - Deletes current selected custom wp\n"..
-                    "/createPrivate (all) - dumps private lcoations to logfile and screen to cut and paste to privatelocations.lua, all if present will make it include all databank locations."
+                    "/createPrivate (all) - dumps private lcoations to screen if present to cut and paste to privatelocations.lua, all if present will make it include all databank locations."
             i = string.find(text, " ")
             command = text
             if i ~= nil then
@@ -8412,19 +8427,16 @@ VERSION_NUMBER = 0.717
                 msgStr = #privatelocations.."-Private "
                 if arguement == "all" then
                     for k,v in pairs(SavedLocations) do
-                        if v.name ~= "STARTINGPOINT" then
-                            saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
-                                                "name = '*"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
-                            if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
-                            if v.safe then saveStr = saveStr.."safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
-                        end
+                        saveStr = saveStr.. "{position = {x = "..v.position.x..", y = "..v.position.y..", z = "..v.position.z.."},\n "..
+                                            "name = '*"..v.name.."',\n planetname = '"..v.planetname.."',\n gravity = "..v.gravity..",\n"
+                        if v.heading then saveStr = saveStr.."heading = {x = "..v.heading.x..", y = "..v.heading.y..", z = "..v.heading.z.."},\n" end
+                        if v.safe then saveStr = saveStr.." safe = true},\n" else saveStr = saveStr.."safe = false},\n" end
                     end
                     msgStr = msgStr..#SavedLocations.."-Public "
                 end
                 saveStr = saveStr.."}\n return privatelocations"
-                s.logInfo("PRIVATELOCATIONS:"..saveStr)
                 if screenHud_1 then screenHud_1.setHTML(saveStr) end
-                msgText = msgStr.."locations dumped to logfile and screen if present.\n Cut and paste to privatelocations.lua to use"
+                msgText = msgStr.."locations dumped to screen if present.\n Cut and paste to privatelocations.lua to use"
                 msgTimer = 7
             end
         end
@@ -8542,12 +8554,12 @@ VERSION_NUMBER = 0.717
                 if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
                 if type ~= nil then
                     if type == 2 then
-                        s.logInfo("sound_loop|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
+                        --s.logInfo("sound_loop|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
                     else
-                        s.logInfo("sound_notification|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
+                        --s.logInfo("sound_notification|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
                     end
                 else
-                    s.logInfo("sound_q|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
+                    --s.logInfo("sound_q|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
                 end
             end
             local function svgText(x, y, text, class, style) -- processes a svg text string, saves code lines by doing it this way
@@ -8671,7 +8683,6 @@ VERSION_NUMBER = 0.717
                         antigrav.setBaseAltitude(AntigravTargetAltitude)
                     end
                     if pcall(require, "autoconf/custom/archhud/privatelocations") then
-                        privatelocations = require("autoconf/custom/archhud/privatelocations")
                         if #privatelocations>0 then customlocations = addTable(customlocations, privatelocations) end
                     end
                     VectorStatus = "Proceeding to Waypoint"
@@ -8853,7 +8864,7 @@ VERSION_NUMBER = 0.717
                     end
                     -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
                     if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 50) then
-                        BrakeIsOn = true
+                        BrakeIsOn = "Startup"
                         GearExtended = true
                         if hasGear then
                             Nav.control.extendLandingGears()
@@ -8863,11 +8874,6 @@ VERSION_NUMBER = 0.717
                     end
     
                     navCom:setTargetGroundAltitude(targetGroundAltitude)
-    
-                    -- Store their max kinematic parameters in ship-up direction for use in brake-landing
-                    if inAtmo and abvGndDet ~= -1 then 
-                        maxKinematicUp = c.getMaxKinematicsParametersAlongAxis("ground", c.getConstructOrientationUp())[1]
-                    end
     
                     WasInAtmo = inAtmo
     
@@ -8951,7 +8957,7 @@ VERSION_NUMBER = 0.717
                     Kinematic = Kinematics(Nav, c, u, s, msqrt, mabs)
                     Kep = Keplers(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
     
-                    ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play)
+                    ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round)
                 end
     
             SetupComplete = false
