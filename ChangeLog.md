@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.720
+- Replaced solarsystem.json with waypointer.json for those who want AR in atmo (EasternGamer script, place on PB, link to core and ArchHUD databank (optional))
+
 Version 1.719 - Panacea Sound Support
 - Fixed HUD to support sounds under Panacea.  To use you must download and extract the updated archHudSoundPack.zip to
 the Documents\NQ\DualUniverse\audio folder (might need to create audio folder).  This will create a subfolder named 
