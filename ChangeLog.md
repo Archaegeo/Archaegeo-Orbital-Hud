@@ -1,6 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 0.718 - AGG, Route, Brake Landing, Pre Panacea
+Version 1.719 - Panacea Sound Support
+- Fixed HUD to support sounds under Panacea.  To use you must download and extract the updated archHudSoundPack.zip to
+the Documents\NQ\DualUniverse\audio folder (might need to create audio folder).  This will create a subfolder named 
+archHUD which must be renamed (to prevent others from playing sounds in it).  Once you rename it, in game in seat, 
+use /G soundFolder NameOfFolder
+
+Version 1.718 - AGG, Route, Brake Landing, Pre Panacea
 - Enhance: Brake Landing from high altitudes will now be MUCH faster till you reach a specific height. 
     For Unknown Altitude landings (you hit G while flying), this occurs down to the max surface altitude of the planet you are on. 
     Then `brakeLandingRate` will take over.  For Known locations, `brakeLandingRate` will takeover 1000m over the target location.
@@ -22,8 +28,7 @@ Version 0.718 - AGG, Route, Brake Landing, Pre Panacea
 
 AGG Scenarios
 NOTE: Alt-4 to a WP with a Saved AGG Altitude (new Feature) will turn on AGG (if off), set the target height to the saved value, and use that height.
-NOTE: Anytime AGG is on and Altitude Hold is engaged, Hold Altitude will be set to current base agg altitude and change with it 
-    if agg altitude is changing and its above current altitude.
+NOTE: Anytime AGG is on and Altitude Hold is engaged, Hold Altitude will be set to current base agg altitude and change with it if agg altitude is changing.
 - 1) On ground, AGG off, Alt-4 to same planet WP.  User throttles up and released brake, normal takeoff.  Turn on AGG prior to arrival:
     a) Current height above AGG height, Brake Landing use AGG height as target landing height and turn off with brake on at that height.
     b) If current height is below AGG height, ship will do normal brake landing.
@@ -36,8 +41,7 @@ NOTE: Anytime AGG is on and Altitude Hold is engaged, Hold Altitude will be set 
 - 7) In Air at AGG height, Alt-4 to another planet.
 - Note: Alt-6 from ground with AGG on takes off to AGG height. Alt-6-6 is same as Alt-6 with AGG on intentionally.
 
-
-Version 0.717 - Enable Space engines to work in <10% atmo with no Atmo engines
+Version 1.717 - Enable Space engines to work in <10% atmo with no Atmo engines
 - FEATURE: Space Engines will now work in atmosphere if no atmosphere engines are attached, down to normal 9.89% (they turn off at 9.9% normally)
 - NEW: axiscommandoverride.lua file contains the override function to support the above feature.
 NOTE - This is correcting a vanilla DU issue.
@@ -46,17 +50,23 @@ NOTE - This is correcting a vanilla DU issue.
     found in axiscommandoverride.lua
 - FIX: Issue with landing when aligning.
 
-Version 0.716 - Shield, AGG, and Cleanup
+Version 1.716 - Shield, Cleanup, and AGG.
 - FEATURE: Hud will adjust shield resists once per minute to the ratio of damage done if shield percent remaining is < `AutoShieldPercent`
-- NEW: User variable `AutoShieldPercent` (Default: 90) Automatically adjusts shield resists once per minute if shield percent is less than this value.
+- NEW: User variable `AutoShieldPercent` (Default: 0) Automatically adjusts shield resists once per minute if shield percent is less than this value. (0 means off)
 - NEW: shieldclass.lua file and class in standalone
 - FEATURE: If ExternalAGG is off, and AGG is activated, Brake Landing will use AGG Current Base Height for landing altitude if it is below current altitude (vice ground).
 - ENHANCE: Added `Aligning` after Brake Landing if ship is aligning.
 - CLEANUP: radarclass.lua and shieldclass.lua are only looked for if a radar or shield are slotted
 - CLEANUP: Removed variables from globals.lua that are not user variables and that are not used outside of one class.
 - CLEANUP: Moved onFlush to apclass from baseclass
+- FIX: STARTINGPOINT saves as a known location.
+- FIX: STARTINGPOINT does not save out to privatelocations.lua dump (it does save to databank which is intentional)
+- FIX: Saved locations gravity will all use same value going forward (core.g()) (update locations you care about, value is not used at this time)
+- FIX: Double tapping G during Autopilot Brake Landing to turn off and back on Brake Landing will clear the limit on horizontal speed (Brakes on less)
+    For when you want to get down faster and don't care about accuracy as much.w
 
-Version 0.715
+
+Version 1.715
 - CHANGE: Routes now save location name vice index number.  This means routes will continue to work if you add or remove 
     locations not in the route from the custom waypoints.  This does mean old saved routes will no longer function.
 - CHANGE: /createPrivate now takes and arguement of all, if all is used, it saves private and databank locations to the 
@@ -65,17 +75,17 @@ Version 0.715
 - FIX: Added check for SetupComplete to prevent user input prior to hud finishing loading.  (prevents bugs)
 - FIX: Made private locations save heading if present
 
-Version 0.714
+Version 1.714 - Urgent fix for `ExtraEscapeThrust`
 - FIX: Prevent `ExtraEscapeThrust` being applied during Reentry or if vSpd < -50 m/s.
 
-Version 0.713
+Version 1.713
 - CHANGE: If `ExtraEscapeThrust` > 0 then AtmoSpeedLimit when <10% atmosphere will now slowly increase actual speed till you hit 0.05% atmosphere where it turns off completely.
     (Formula of extra speed in m/s:  addThrust = (0.1 - atmosDensity)*adjustedAtmoSpeedLimit*ExtraEscapeThrust)
 - USERSETTING: New variable `ExtraEscapeThrust` defaults to 0.  If set to > 0, the above CHANGE takes effect.  This is in physics area meaning tweak
     slowly cause large changes might burn you up
 - FIX: Fixed time remaining on fuel bars, been gone since 1.707 :(
 
-Version 0.712 - Landing Alignment, Starting Point, and Relativism
+Version 1.712 - Landing Alignment, Starting Point, and Relativism
 - FEATURE: For any custom save point (private or databank) you can select it in IPH and hold shift to choose Save Heading button.
     This will save the current heading of your ship to the currently selected IPH WP.  Anytime you AP to a waypoint with a saved heading
     the ship will try to align to that heading after it finalizes braking as it begins landing. Hitting A or D (manual yaw) will 
@@ -90,12 +100,13 @@ Version 0.712 - Landing Alignment, Starting Point, and Relativism
 - FIX: Adjusted alignment requirements when arriving at a planet to be less strict before establishing orbit.
 - FIX: /createPrivate now adds line breaks to the log/screen dump to make a readable cut and paste for easy editing.
 
-Version 0.711 - PrivateLocations and Databank together.
-- OVERHAUL: PrivateLocations (only works with require file of privatelocations.lua)
+Version 1.711 - PrivateLocations and Databank together.
+- OVERHAUL: PrivateLocations
     - If privatelocations.lua exists, both Private locations and databank locations are used.  Only databank locations are saved.
     - Private locations have a * at the start of their name in the IPH. (any existing privatelocations.lua files will need * added to start of each name field)
     - When adding a location with /addlocation name ::pos{} if name starts with * it is added to private locations.
     - Locations added via the Save button will be added as databank locations.  You can then use /iphWP to get the ::pos and the /addlocation command to add it to private then Clear the databank entry.
+    - Use /setname to change names of private or databank locations. Private names should start with *.  Do not use /setname to try to change a databank to a private, use /addlocation as shown above.
     - Use /createPrivate command to output privatelocations in a ready format to logfile or screenHud_1 to cut and paste into a privatelocations.lua
     - Remember clearing a private location does not remove it from the privatelocations.lua file, you must use the /createPrivate command as shown in previous line.
 - REMOVED: `PrivateLocations` user setting
@@ -103,52 +114,54 @@ Version 0.711 - PrivateLocations and Databank together.
 - FIX: When using AGG, hitting alt-spacebar or alt-c to change height will no longer turn off brakes. (AGG moves at same vSpeed brakes or not)
 - FIX: Remove outputting privatelocation from /iphWP.
 
-Version 0.710 - Screen support
+Version 1.710 - Screen support
 - Added initial screen support, not required but if a screen is manually slotted it will be available in hud as screenHud_1
 - Added /createPrivate command.  If used will dump all customlocations to logfile (till Panacea) and screenHud_1 (if present)
     in a format that can be cut and pasted into a privatelocations.lua file.  For screen, right click screen->advanced->edit
     and copy the material in local text = "" to privatelocations.lua.  For Logfile, find PRIVATELOCATIONS: and copy everything
     after that up to "<\message>" to privatelocations.lua.  See privatelocations.sample for example.
+NOTE: If privatelocations.lua exists, the custom saved locations in it will override databank custom saved locations when you sit down.
 - Moved more things into hudclass.lua that belong there out of baseclass.lua
 
-Version 0.709 - Feature - PrivateLocations (Modular version only)
+Version 1.709 - Feature - PrivateLocations (Modular version only)
 - (MODULAR ONLY) If privatelocations.lua exists in the require folder, they are loaded instead of locations on databank.
     USES:   1) Prevents theft of custom wp locations by aggressors who take your ship and use repair feature.
             2) Use same locations on all ships using ArchHUD without copying databank by sharing privatelocations.lua file.
             3) Share locations with others by giving them your privatelocations.lua file.
-    NOTE: X, Y, and Z must be in world coordinates.  See the privatelocations.sample file for examples.
-    NOTE: Using privatelocations does NOT overwrite your databank custom locations unless you turn off `PrivateLocations` before standing  up.
+NOTE: X, Y, and Z must be in world coordinates.  See the privatelocations.sample file for examples.
+NOTE: Using privatelocations does NOT overwrite your databank custom locations unless you turn off `PrivateLocations` before standing  up.
 - Modified /iphWP command to output both ::pos and world X, Y, Z to lua chat window and to logfile after word PRIVATELOCATION.
-    ** Logfile ability will go away with Panacea patch. ** 
-    (privatelocations.lua can be populated by copying the info in the logfile between [] after PRIVATELOCATIONS: including the {} and replacing
+    Logfile ability will go away with Panacea patch.
+    (privatelocations.lua can be populated by copying the info between [] after PRIVATELOCATIONS: including the {} and replacing
         colons (:) with equal (=) and removing all quotes (") before an equal (=) (i.e. "postion": should be position =))
 - User variable: `PrivateLocations` - Default false.  If true, locations do not save to databank when you stand up.
 - Enhance: Fuel usage will print out to lua chat when you exit seat for easy of tracking.
 - If not flying in AtmoSpeedAssist, speedChangeLarge is divided by 10 to lower mousewheel throttle adjust rate.
 
-Version 0.708 - New Feature, Major Fix.
+Version 1.708 - New Feature, Major Fix.
+- FEATURE: INFO panel now shows amount of atmo, space, and rocket fuel used during current flight session.
+NOTE: To be accurate `ContainerOptimization` and `FuelTankOptimization` settings must be set to values of person who placed tanks.
+- CHANGE: Added `ShouldCheckDamage` button to Control panel above Settings button.
+- CHANGE: `ShouldCheckDamage` now defaults to false.  Recommend turning to false unless you are flying a smaller ship (<2-300 elements) or if you suspect you have damage.
+- FIX (MAJOR): Fixed issue with ArchHUD flooding logfile with warnings about `setAxisCommandValue` being used in flush.
 
-- FEATURE: INFO panel now shows amount of atmo, space, and rocket fuel used during current flight session. NOTE: To be accurate ContainerOptimization and FuelTankOptimization settings must be set to values of person who placed tanks.
-- CHANGE: Added ShouldCheckDamage button to Control panel above Settings button.
-- CHANGE: ShouldCheckDamage now defaults to false. Recommend turning to false unless you are flying a smaller ship (<2-300 elements) or if you suspect you have damage.
-- FIX (MAJOR): Fixed issue with ArchHUD flooding logfile with warnings about setAxisCommandValue being used in flush.
-
-Version 0.7071 
+Version 1.7071 
 - FIX: Fixed mouse speed control to be more reliable.
 `speedChangeLarge` = 5 -- (Default: 5) The speed change that occurs when you tap speed up/down(R/T) or mousewheel, default is 5%
 `speedChangeSmall` = 1 -- (Default: 1) the speed change that occurs while you hold speed up/down(R/T), default is 1%
 - FIX: /copydatabank command not working.
 - CHANGE: Parachute "deploy" at slightly higher height on parachute re-entry.
 
-Version 0.707 - Finish MAJOR Refactor of ArchHUD.lua
-- Mirror code in Modular version.  All control code is in classes now.
+Version 1.707 - Finish MAJOR Refactor of ArchHUD.lua
+- All code removed from ArchHUD.lua into the various modular files.  ArchHUD.lua is 8kb now and just handles the initial structure and loading of requires.
+This requires a replacement of all require files.
 - Fixed gyro support in controlclass.lua
 - Fixed/Improved: Glide Re-Entry and Parachute Re-Entry
 Glide re-entry works like normal.  Parachute re-entry works again and pops the chute at an altitude equal to
 (planet.surfaceMaxAltitude+(planet.atmosphereThickness-planet.surfaceMaxAltitude)*0.2), bring your brown pants.
 
-Version 0.706 - Refactor and final modular class definitions
-    (Recopy all files, existing databank should function normally)
+Version 1.706 - Refactor and final modular class definitions
+(Recopy all files, existing databank should function normally)
 - Moved JayleBrake functions and AtlasClass to atlasclass.lua modular file.
 - Refactor: User global variables now minimize shrinking Standalone by 15k minimized. NO END USER IMPACT
     Scripters will notice the format in for databank stored globals in the list variables has changed.
@@ -161,7 +174,7 @@ Version 1.705 (Changed version numbers on Standalone to 0.705 to reflect version
 - Removed LastVersionUpdate support (developer use)
 NOTE: Throughout code, system, core, and unit have been replaced by s, c and u for space saving in Standalone and consistency in Modular.
 
-Version 1.504
+Version 1.704 - AP Route Support
 - New Featue: Route support - Load, Clear, Save 1 route.
 To Setup:  Select a custom wp in IPH.  Press ALT-SHIFT-8 to add it to route.  Keep selecting custom wps and adding to route.
 To Save: Click Save Route button
@@ -173,36 +186,76 @@ Holding SHIFT with a loaded route will display the route or remaining legs if al
 NOTE: If a route is loaded, alt-4 (and AP Button) will ignore IPH selected target and perform the route instead.
 NOTE: Route is based off of IPH index position of wp when route created, if you add or remove (not update) custom wp's, 
     route could become invalid.
+NOTE: Standalone version (1.5204) might unload from seat for some people
 
-Version 1.503
-- Add ControlClass to handle start/stop/loop and inputText
+Version 1.7031 - New ControlClass.  All code now readable lua
+(all requires updated for consistancy, update all)
+- As of this version, in the modular version all code including the ArchHUD.conf is no longer minimized
+- create controlclass.lua to contain in readable lua all start, stop, loop, and inputText controls.
+- Standalone version (ArchHUDGFN.conf) is now version 1.503
 
-Version 1.5202
-- Restructure RADARCLASS to support modularizaion.
+Version 1.7021 - Radar Class modularization
+(hudclass.lua, apclass.lua, globals.lua and radarclass.lua (NEW) updated)
+- Restructure RADARCLASS to support modularizaion and override
 - FIX: Fixed issue with virtual joystick when NOT in SCOPE mode.
 
-Version 1.5201
-- Added SCOPE Feature
+Version 1.701 - SCOPE feature - View of all planets in space around you.
+(Updates to hudclass.lua, apclass.lua, globals.lua and base ArchHUD.lua)
+- New Feature: SCOPE - To use, hold SHIFT and mouseover SCOPE in upper left, release shift to "click"
+This will show you all planets in your ship's field of view.  Control the view by maneuvering your ship.
+You can zoom in by holding SHIFT and mousing over +. Zoom out by mousing over - or 0 while holding shift.  
+While zoomed in you can get info on the distance to your cursor.
+- FIX: Prevent hud being off due to settings view when exiting seat preventing hud on return to seat.
 - Fixed Alt-3 to swap to complete vanilla view hiding everything unless `hideHudOnToggleWidgets` is false.  Will still show vSpd Meter if `AlwaysVSpd` is true.
 - User variable `DisplayOdometer` is back default true, set to false to hide top bar (but not the upper left tab buttons)
 - Setting `circleRad` to 0 will make NavBall go away.  Setting `fuelX` and `fuelY` to 0 will make fuel bars go away.  Etc for other positions.
 
-Version 1.5162
-- Updated to match Modular changes to hudclass and apclass for localization.
+Version 1.700
+- Update to increment version number to clean point after rollback from 1.606 to 1.604
+- Include fuel cell appeareance and flightStyle tags.
 
-Version 1.5161
-- FEATURE: Changed fuel tank display to color code bars by type and to put a small gap between types. (Thanks Zrips!)
-- Fix: Show buttons when in keyboard mode with freelook toggle off, use Alt-SHIFT to see buttons.
+Version 1.604 - Localization of main .conf and require files
+- MANDATORY UPDATE: hudclass.lua, apclass.lua, customapclass.lua and customhudclass.lua (If using modular)
+
+Version 1.603 - Override Function support for require files
+(Default hudclass.lua and apclass.lua updated)
+- FEATURE: Provided support for Override require files to override specific functions without changing the default require file. (Thanks Davemane42 for format)
+To Use: Uncomment the line at the bottom of the default require file, then put things in the custom/override file.  See files for more info.
+This is an advanced flexibilty feature that is provided for those who want to change stuff in the default require files but not lose their
+changes when the default files are updated.
+- hudclass.lua FEATURE: Changed fuel tank display to color code bars by type and to put a small gap between types. (Thanks Zrips!)
+- hudclass.lua FIX: Fixed issue with buttons not being showable if in keyboard mode and freelook toggle is off.  (Hold alt-shift to see buttons)
+- apclass.lua: Moved more AP features out of .conf into apclass.lua, exposing a lot more to end user modification if they wish.
 - Removed user variable `WipeDamage` and its code support since a repair unit can roll back a databank to last autosnapshot.
-- Moved functions into AP class to mirror apclass.lua in Modular.
 
-Version 1.516 - Dynamic Orbitg panel.
-- New Feature - Dynamic Orbit Panel.  When the Orbit panel is selected, it is now dynamic, showing more when in atmo, going to orbit, and if you escape orbit, the galaxy.
-- Fix typo in hudclass that caused formatting errors for > 1920x1080.
-- Updated code internally to match Modular version for ease of keeping both branches active.
+Version 1.602 - New Dynamic Orbit Map
+REMINDER - For GEForce Now you need to use the provided ArchHUDGFN.conf standalone version which will install with the modular version.
+It has a version number when loaded of 1.51X+ where the modular one is 1.6XX+
+- New Feature - Dynamic Orbit Panel. When the Orbit panel is selected, it is now dynamic, showing more when in atmo, going to orbit, and if you escape orbit, the galaxy.
+- hudclass.lua FIX: Typo in hudclass.lua that caused text not to line up properly up top at higher resolutions.
+- New Folder on github: RequireRepository - has working replacements for the require files.
+
+Version 1.600 - Modularization of ArchHUD for easy user changes. DOES NOT WORK ON GEFORCE NOW (use 1.515 for GFN)
+- Major overhaul to code structure to support modularization. NOTE: Change to any "require" file does not require recompiling or reloading
+of the autoconf file.  "Require" files are loaded each time you get into the seat.
+PROS:
+    + Allows users to easily modify or replace anything in the require files
+    + Allows for easy updating without needing to recompile autoconf
+    + In plain "lua" vice minimized so easy to understand and modify.
+    + Error reports are much easier to analyze and track.
+CONS:
+    - Cannot be used on Geforce Now.  Continue to use the GeForce Now version (1.515)
+The following "require" files have been created:
+    * globals.lua - Has all user settings in it for easy modification and contain different position settings for 1920x1080 and 2560x1440.
+    * apclass.lua - This is the file that has all of the Autopilot handling
+    * hudclass.lua - This contains all of the material dealing with the appearance of the hud and buttons
+    * hudclassOrig.lua - This is the previous look to the hud. Just rename it to hudclass.lua to have it be in effect.
+    * globals2560x1440.lua - This is an example globals set up for 2560x1440 resolution.  Just rename it to globals.lua to have it be in effect.
+To USE:  Download the ArchHUD.zip on the Release page and extract it in your %ProgramData%\Dual Universe\Game\data\lua\autoconf\custom directory.
+This should create an `ArchHUD.conf` like normal, and a subfolder named `archhud` that has the 3 require files in it.
+NOTE: When extracting ZIP file, be sure to check option to keep directory structure if available.
 
 Version 1.515 - MAJOR Update to HUD appears (Thanks Dimencia!!)
-NOTE NOTE NOTE - This is the version that works on GeForce Now.  Single file install on seat.
 - Major: Change to appearance of HUD
 - Removed depreciated user settings of `showHelp`, `ShowOdometer`, and `DisplayOrbit`
 - Fix: Moved Toggle shield from `LALT-LSHIFT-5` to `LALT-LSHIFT-7` - This lets `LALT-LSHIFT-5` work again to set locked pitch to 

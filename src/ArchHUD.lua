@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.718
+VERSION_NUMBER = 0.719
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -8552,15 +8552,7 @@ VERSION_NUMBER = 0.718
             end
             local function play(sound, ID, type)
                 if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
-                if type ~= nil then
-                    if type == 2 then
-                        --s.logInfo("sound_loop|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
-                    else
-                        --s.logInfo("sound_notification|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
-                    end
-                else
-                    --s.logInfo("sound_q|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
-                end
+                s.playSound(soundFolder.."/"..sound..".mp3")
             end
             local function svgText(x, y, text, class, style) -- processes a svg text string, saves code lines by doing it this way
                 if class == nil then class = "" end
