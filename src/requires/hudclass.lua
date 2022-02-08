@@ -709,6 +709,51 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 -- Display MaxGameVelocity above the throttle
                 newContent[#newContent + 1] = svgText(throtPosX+10, y1-40, "LIMIT: ".. mfloor(MaxGameVelocity*3.6+0.5) .. " km/h", "dim txtstart")
             end
+
+            -- Draw some bars.  Between 0-10% atmo, it draws two, otherwise only space or only atmo
+
+            -- If brake is engaged, we need to know how much brake force is being applied
+            -- So that when we read the acceleration, we can add that as if it weren't going against us, and we should get the engine acceleration as if we weren't braking
+
+            -- This might work, but jdecode(u.getData()).currentBrake might be better, if it has a value like that.
+            local brakeMaxNewtons, brakePercent = (atmosDensity > 0 and (LastMaxBrakeInAtmo * uclamp(velMag/100,0.1,1) * atmos) or (LastMaxBrake)), (BrakeIsOn > 0 and BrakeIsOn or brakeInput2)
+            local kinematicParams, newtons = c.getMaxKinematicsParametersAlongAxis("thrust analog longitudinal", constructForward), core.getWorldAcceleration():dot(constructForward)*coreMass + brakeMaxNewtons * brakePercent
+            local forwardAtmoThrustPercent,forwardSpaceThrustPercent = newtons/kinematicParams[1]*uclamp(velMag/100,0.1,1)*atmosDensity,newtons/kinematicParams[3]
+            -- This is a value between 0 and 1, which can be multiplied into some maxHeight and Y
+
+            local barDrawString, atmoBarColor, spaceBarColor, brakeBarColor, barStartX, barWidth = '<rect width="%f" height="%f" x="%f" y="%f" class="brightstroke" style="stroke-width:1;fill:%s;" />'
+                , "rgb(50, 250, 250)", "rgb(150, 0, 150)", "rgb(255, 0, 0)", throtPosX-7, 8
+            -- The container is width 7, but we can't divide that in two; the container is thick, though, and we can probably overlap it no problem
+            -- Consider making the container wider so this can go wider
+
+            if atmosDensity > 0 and atmosDensity < 0.0989 and forwardAtmoThrustPercent > 0 and forwardSpaceThrustPercent > 0 then
+                barWidth = barWidth/2 -- Each bar takes up half if we show both
+            end
+
+            -- Note that since throtPosX and Y are already scaled to resolution, all this already is too
+
+            -- Avoid drawing unless we have something to draw, in case it helps performance at all
+            if atmosDensity > 0 and forwardAtmoThrustPercent > 0 then
+                -- Draw from the bottom... calculate the Y value to draw it at.  IDK if we did it on purpose, but it's 100px tall at 100%
+                local atmoBarHeight = 100*forwardAtmoThrustPercent
+                local atmoBarY = throtPosY+50 - atmoBarHeight
+                newContent[#newContent + 1] = stringf(barDrawString,
+                                            barWidth, atmoBarHeight, barStartX, atmoBarY, atmoBarColor)
+                barStartX = barStartX + barWidth -- Setup for space, if we're drawing it
+            end
+            if atmosDensity <= 0.0989 and forwardSpaceThrustPercent > 0 then
+                local spaceBarHeight = 100*forwardSpaceThrustPercent
+                local spaceBarY = throtPosY+50 - spaceBarHeight
+                newContent[#newContent + 1] = stringf(barDrawString,
+                                            barWidth, spaceBarHeight, barStartX, spaceBarY, spaceBarColor)
+            end
+            if brakePercent > 0 then -- And hell, let's try a brake bar in the middle of it (which will be in the middle of both, or one, but all will always be visible)
+                local brakeBarHeight = 100*brakePercent
+                local brakeBarY = throtPosY+50 - brakeBarHeight
+                -- TODO: Un-hardcode this 4 and 2?  Will take up more space.  This is half of the original barWidth, and x= barStartX+origBarWidth/2-origBarWidth/4
+                newContent[#newContent + 1] = stringf(barDrawString,
+                                            4, brakeBarHeight, barStartX+2, brakeBarY, brakeBarColor)
+            end
         end
 
         local function DrawSpeed(newContent, spd)
