@@ -94,15 +94,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         end
         local function play(sound, ID, type)
             if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
-            if type ~= nil then
-                if type == 2 then
-                    --s.logInfo("sound_loop|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
-                else
-                    --s.logInfo("sound_notification|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
-                end
-            else
-                --s.logInfo("sound_q|audiopacks/"..soundFolder.."/"..sound.."|"..ID.."|"..soundVolume)
-            end
+            s.playSound(soundFolder.."/"..sound..".mp3")
         end
         local function svgText(x, y, text, class, style) -- processes a svg text string, saves code lines by doing it this way
             if class == nil then class = "" end
