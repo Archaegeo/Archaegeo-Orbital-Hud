@@ -112,9 +112,10 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                     if radars[1].hasMatchingTransponder(id) == 1 then
                         table.insert(friendlies,id)
                     end
+
                     local cType = radars[1].getConstructType(id)
                     if CollisionSystem then
-                        if sz > 27 or cType == "static" or cType == "space" then
+                        if (sz > 27 or AbandonedRadar) or cType == "static" or cType == "space" then
                             static = static + 1
                             local name = radars[1].getConstructName(id)
                             local construct = contacts[id]
@@ -127,7 +128,15 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                                 updateVariables(construct, distance, wp) 
                                 count2 = count2 + 1
                             end
-                            if construct.center then table.insert(knownContacts, construct) end
+                            if construct.center then 
+                                if AbandonedRadar and radars[1].isConstructAbandoned(id) == 1 and not construct.abandoned then
+                                    play("abRdr", "RD")
+                                    s.print("Abandoned Construct: "..name.." ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
+                                    msgText = "Abandoned Radar Contact detected"
+                                    construct.abandoned = true
+                                end
+                                table.insert(knownContacts, construct) 
+                            end
                         end
                         count = count + 1
                         if (nearPlanet and count > 700 or count2 > 70) or (not nearPlanet and count > 300 or count2 > 30) then
@@ -137,7 +146,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                     end
                 end
                 numKnown = #knownContacts
-                if numKnown > 0 and velMag > 20 then 
+                if numKnown > 0 and (velMag > 20 or BrakeLanding) then 
                     local body, far, near, vect
                     local innerCount = 0
                     local galxRef = galaxyReference:getPlanetarySystem(0)
@@ -146,7 +155,10 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                         coroutine.yield()
                         local innerList = { table.unpack(knownContacts, innerCount, math.min(innerCount + 75, numKnown)) }
                         body, far, near = galxRef:castIntersections(worldPos, vect, nil, nil, innerList, true)
-                        if body and near then collisionTarget = {body, far, near} break end
+                        if body and near then 
+                            collisionTarget = {body, far, near} 
+                            break 
+                        end
                         innerCount = innerCount + 75
                     end
                     if not body then collisionTarget = nil end
