@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.719
+VERSION_NUMBER = 0.720
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -16,40 +16,41 @@ VERSION_NUMBER = 0.719
     userControlScheme = "virtual joystick" -- (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard". This can be set by holding SHIFT and clicking the button in lower left of main Control buttons view.
     soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder with sound files in it. Must be changed from archHUD to prevent other scripts making your PC play sounds.
 -- True/False variables
-    -- NOTE: saveableVariablesBoolean below must contain any True/False variables that needs to be saved/loaded from databank.
+        -- NOTE: saveableVariablesBoolean below must contain any True/False variables that needs to be saved/loaded from databank.
 
-    freeLookToggle = true -- (Default: true) Set to false for vanilla DU free look behavior.
-    BrakeToggleDefault = true -- (Default: true) Whether your brake toggle is on/off by default. Can be adjusted in the button menu. False is vanilla DU brakes.
-    RemoteFreeze = false -- (Default: false) Whether or not to freeze your character in place when using a remote controller.
-    RemoteHud = false --  (Default: false) Whether you want to see the full normal HUD while in remote mode.
-    brightHud = false -- (Default: false) Enable to prevent hud hiding when in freelook.
-    VanillaRockets = false -- (Default: false) If on, rockets behave like vanilla
-    InvertMouse = false -- (Default: false) If true, then when controlling flight mouse Y axis is inverted (pushing up noses plane down) Does not affect selecting buttons or camera.
-    autoRollPreference = false -- (Default: false) [Only in atmosphere] - When the pilot stops rolling, flight model will try to get back to horizontal (no roll)
-    ExternalAGG = false -- (Default: false) Toggle On if using an external AGG system. If on will prevent this HUD from doing anything with AGG.
-    UseSatNav = false -- (Default: false) Toggle on if using Trog SatNav script. This will provide SatNav support.
-    ShouldCheckDamage = false -- (Default: true) Whether or not damage checks are performed. Disable for performance improvement on very large ships or if using external Damage Report and you do not want the built in info.
-    AtmoSpeedAssist = true -- (Default: true) Whether or not atmospheric speeds should be limited to a maximum of AtmoSpeedLimit (Hud built in speed limiter)
-    ForceAlignment = false -- (Default: false) Whether velocity vector alignment should be forced when in Altitude Hold (needed for ships that drift alignment in altitude hold mode due to poor inertial matrix)
-    DisplayDeadZone = true -- (Default: true) Virtual Joystick Mode: Set this to false to not display deadzone circle while in virtual joystick mode.
-    showHud = true -- (Default: true) False to hide the HUD screen and only use HUD Autopilot features (AP via ALT+# keys)
-    hideHudOnToggleWidgets = true --  (Default: true) Uncheck to keep showing HUD when you toggle on the vanilla widgets via ALT+3. Note, hiding the HUD with Alt+3 gives a lot of FPS back in laggy areas, so leave true normally.
-    ShiftShowsRemoteButtons = true -- (Default: true) Whether or not pressing Shift in remote controller mode shows you the buttons (otherwise no access to them)
-    SetWaypointOnExit = false -- (Default: true) Set to false to not set a waypoint when you exit hud. True helps find your ship in crowded locations when you get out of seat.
-    AlwaysVSpd = false -- (Default: false) Set to true to make vertical speed meter stay on screen when you alt-3 widget mode.
-    BarFuelDisplay = true -- (Default: true) Set to false to use old non-bar fuel display
-    voices = true -- (Default: true) Set to false to disable voice sounds when using sound pack
-    alerts = true -- (Default: true) Set to false to disable alert sounds when using sound pack
-    CollisionSystem = true -- (Default: true) If True, system will provide collision alerts and abort vector to target if conditions met.
-    AutoShieldToggle = true -- (Default: true) If true, system will toggle Shield off in safe space and on in PvP space automagically.
-    PreventPvP = true -- (Default: true) If true, system will stop you before crossing from safe to pvp space while in autopilot.
-    DisplayOdometer = true -- (Default: true) If false the top odometer bar of information will be hidden.
+        freeLookToggle = true -- (Default: true) Set to false for vanilla DU free look behavior.
+        BrakeToggleDefault = true -- (Default: true) Whether your brake toggle is on/off by default. Can be adjusted in the button menu. False is vanilla DU brakes.
+        RemoteFreeze = false -- (Default: false) Whether or not to freeze your character in place when using a remote controller.
+        RemoteHud = false --  (Default: false) Whether you want to see the full normal HUD while in remote mode.
+        brightHud = false -- (Default: false) Enable to prevent hud hiding when in freelook.
+        VanillaRockets = false -- (Default: false) If on, rockets behave like vanilla
+        InvertMouse = false -- (Default: false) If true, then when controlling flight mouse Y axis is inverted (pushing up noses plane down) Does not affect selecting buttons or camera.
+        autoRollPreference = false -- (Default: false) [Only in atmosphere] - When the pilot stops rolling, flight model will try to get back to horizontal (no roll)
+        ExternalAGG = false -- (Default: false) Toggle On if using an external AGG system. If on will prevent this HUD from doing anything with AGG.
+        UseSatNav = false -- (Default: false) Toggle on if using Trog SatNav script. This will provide SatNav support.
+        ShouldCheckDamage = false -- (Default: true) Whether or not damage checks are performed. Disable for performance improvement on very large ships or if using external Damage Report and you do not want the built in info.
+        AtmoSpeedAssist = true -- (Default: true) Whether or not atmospheric speeds should be limited to a maximum of AtmoSpeedLimit (Hud built in speed limiter)
+        ForceAlignment = false -- (Default: false) Whether velocity vector alignment should be forced when in Altitude Hold (needed for ships that drift alignment in altitude hold mode due to poor inertial matrix)
+        DisplayDeadZone = true -- (Default: true) Virtual Joystick Mode: Set this to false to not display deadzone circle while in virtual joystick mode.
+        showHud = true -- (Default: true) False to hide the HUD screen and only use HUD Autopilot features (AP via ALT+# keys)
+        hideHudOnToggleWidgets = true --  (Default: true) Uncheck to keep showing HUD when you toggle on the vanilla widgets via ALT+3. Note, hiding the HUD with Alt+3 gives a lot of FPS back in laggy areas, so leave true normally.
+        ShiftShowsRemoteButtons = true -- (Default: true) Whether or not pressing Shift in remote controller mode shows you the buttons (otherwise no access to them)
+        SetWaypointOnExit = false -- (Default: true) Set to false to not set a waypoint when you exit hud. True helps find your ship in crowded locations when you get out of seat.
+        AlwaysVSpd = false -- (Default: false) Set to true to make vertical speed meter stay on screen when you alt-3 widget mode.
+        BarFuelDisplay = true -- (Default: true) Set to false to use old non-bar fuel display
+        voices = true -- (Default: true) Set to false to disable voice sounds when using sound pack
+        alerts = true -- (Default: true) Set to false to disable alert sounds when using sound pack
+        CollisionSystem = true -- (Default: true) If True, system will provide collision alerts and abort vector to target if conditions met.
+        AbandonedRadar = false -- (Default: false) If true, and CollisionSystem is true, all radar contacts will be checked for abandoned status.
+        AutoShieldToggle = true -- (Default: true) If true, system will toggle Shield off in safe space and on in PvP space automagically.
+        PreventPvP = true -- (Default: true) If true, system will stop you before crossing from safe to pvp space while in autopilot.
+        DisplayOdometer = true -- (Default: true) If false the top odometer bar of information will be hidden.
 
-    saveableVariablesBoolean = {userControlScheme={set=function (i)userControlScheme=i end,get=function() return userControlScheme end}, soundFolder={set=function (i)soundFolder=i end,get=function() return soundFolder end}, freeLookToggle={set=function (i)freeLookToggle=i end,get=function() return freeLookToggle end}, BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}, RemoteFreeze={set=function (i)RemoteFreeze=i end,get=function() return RemoteFreeze end}, brightHud={set=function (i)brightHud=i end,get=function() return brightHud end}, RemoteHud={set=function (i)RemoteHud=i end,get=function() return RemoteHud end}, VanillaRockets={set=function (i)VanillaRockets=i end,get=function() return VanillaRockets end},
-    InvertMouse={set=function (i)InvertMouse=i end,get=function() return InvertMouse end}, autoRollPreference={set=function (i)autoRollPreference=i end,get=function() return autoRollPreference end}, ExternalAGG={set=function (i)ExternalAGG=i end,get=function() return ExternalAGG end}, UseSatNav={set=function (i)UseSatNav=i end,get=function() return UseSatNav end}, ShouldCheckDamage={set=function (i)ShouldCheckDamage=i end,get=function() return ShouldCheckDamage end}, 
-    AtmoSpeedAssist={set=function (i)AtmoSpeedAssist=i end,get=function() return AtmoSpeedAssist end}, ForceAlignment={set=function (i)ForceAlignment=i end,get=function() return ForceAlignment end}, DisplayDeadZone={set=function (i)DisplayDeadZone=i end,get=function() return DisplayDeadZone end}, showHud={set=function (i)showHud=i end,get=function() return showHud end}, hideHudOnToggleWidgets={set=function (i)hideHudOnToggleWidgets=i end,get=function() return hideHudOnToggleWidgets end}, 
-    ShiftShowsRemoteButtons={set=function (i)ShiftShowsRemoteButtons=i end,get=function() return ShiftShowsRemoteButtons end}, SetWaypointOnExit={set=function (i)SetWaypointOnExit=i end,get=function() return SetWaypointOnExit end}, AlwaysVSpd={set=function (i)AlwaysVSpd=i end,get=function() return AlwaysVSpd end}, BarFuelDisplay={set=function (i)BarFuelDisplay=i end,get=function() return BarFuelDisplay end}, 
-    voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end}, DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end}}
+        saveableVariablesBoolean = {userControlScheme={set=function (i)userControlScheme=i end,get=function() return userControlScheme end}, soundFolder={set=function (i)soundFolder=i end,get=function() return soundFolder end}, freeLookToggle={set=function (i)freeLookToggle=i end,get=function() return freeLookToggle end}, BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}, RemoteFreeze={set=function (i)RemoteFreeze=i end,get=function() return RemoteFreeze end}, brightHud={set=function (i)brightHud=i end,get=function() return brightHud end}, RemoteHud={set=function (i)RemoteHud=i end,get=function() return RemoteHud end}, VanillaRockets={set=function (i)VanillaRockets=i end,get=function() return VanillaRockets end},
+        InvertMouse={set=function (i)InvertMouse=i end,get=function() return InvertMouse end}, autoRollPreference={set=function (i)autoRollPreference=i end,get=function() return autoRollPreference end}, ExternalAGG={set=function (i)ExternalAGG=i end,get=function() return ExternalAGG end}, UseSatNav={set=function (i)UseSatNav=i end,get=function() return UseSatNav end}, ShouldCheckDamage={set=function (i)ShouldCheckDamage=i end,get=function() return ShouldCheckDamage end}, 
+        AtmoSpeedAssist={set=function (i)AtmoSpeedAssist=i end,get=function() return AtmoSpeedAssist end}, ForceAlignment={set=function (i)ForceAlignment=i end,get=function() return ForceAlignment end}, DisplayDeadZone={set=function (i)DisplayDeadZone=i end,get=function() return DisplayDeadZone end}, showHud={set=function (i)showHud=i end,get=function() return showHud end}, hideHudOnToggleWidgets={set=function (i)hideHudOnToggleWidgets=i end,get=function() return hideHudOnToggleWidgets end}, 
+        ShiftShowsRemoteButtons={set=function (i)ShiftShowsRemoteButtons=i end,get=function() return ShiftShowsRemoteButtons end}, SetWaypointOnExit={set=function (i)SetWaypointOnExit=i end,get=function() return SetWaypointOnExit end}, AlwaysVSpd={set=function (i)AlwaysVSpd=i end,get=function() return AlwaysVSpd end}, BarFuelDisplay={set=function (i)BarFuelDisplay=i end,get=function() return BarFuelDisplay end}, 
+        voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AbandonedRadar={set=function (i)AbandonedRadar=i end,get=function() return AbandonedRadar end},AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end}, DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end}}
 
 -- Ship Handling variables
     -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank system
@@ -1366,9 +1367,10 @@ VERSION_NUMBER = 0.719
                         if radars[1].hasMatchingTransponder(id) == 1 then
                             table.insert(friendlies,id)
                         end
+    
                         local cType = radars[1].getConstructType(id)
                         if CollisionSystem then
-                            if sz > 27 or cType == "static" or cType == "space" then
+                            if (sz > 27 or AbandonedRadar) or cType == "static" or cType == "space" then
                                 static = static + 1
                                 local name = radars[1].getConstructName(id)
                                 local construct = contacts[id]
@@ -1381,7 +1383,15 @@ VERSION_NUMBER = 0.719
                                     updateVariables(construct, distance, wp) 
                                     count2 = count2 + 1
                                 end
-                                if construct.center then table.insert(knownContacts, construct) end
+                                if construct.center then 
+                                    if AbandonedRadar and radars[1].isConstructAbandoned(id) == 1 and not construct.abandoned then
+                                        play("abRdr", "RD")
+                                        s.print("Abandoned Construct: "..name.." ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
+                                        msgText = "Abandoned Radar Contact detected"
+                                        construct.abandoned = true
+                                    end
+                                    table.insert(knownContacts, construct) 
+                                end
                             end
                             count = count + 1
                             if (nearPlanet and count > 700 or count2 > 70) or (not nearPlanet and count > 300 or count2 > 30) then
@@ -1391,7 +1401,7 @@ VERSION_NUMBER = 0.719
                         end
                     end
                     numKnown = #knownContacts
-                    if numKnown > 0 and velMag > 20 then 
+                    if numKnown > 0 and (velMag > 20 or BrakeLanding) then 
                         local body, far, near, vect
                         local innerCount = 0
                         local galxRef = galaxyReference:getPlanetarySystem(0)
@@ -1400,7 +1410,10 @@ VERSION_NUMBER = 0.719
                             coroutine.yield()
                             local innerList = { table.unpack(knownContacts, innerCount, math.min(innerCount + 75, numKnown)) }
                             body, far, near = galxRef:castIntersections(worldPos, vect, nil, nil, innerList, true)
-                            if body and near then collisionTarget = {body, far, near} break end
+                            if body and near then 
+                                collisionTarget = {body, far, near} 
+                                break 
+                            end
                             innerCount = innerCount + 75
                         end
                         if not body then collisionTarget = nil end
@@ -5004,6 +5017,7 @@ VERSION_NUMBER = 0.719
                 end
             end
             local AutopilotPaused = false
+            local initBL = false
     
         function ap.showWayPoint(planet, coordinates, dontSet)
             return showWaypoint(planet, coordinates, dontSet)
@@ -6408,6 +6422,15 @@ VERSION_NUMBER = 0.719
                 local groundDistance = -1
     
                 if BrakeLanding then
+                    if not initBL then
+                        if not throttleMode then
+                            AP.cmdThrottle(0)
+                        end
+                        navCom:setTargetGroundAltitude(500)
+                        navCom:activateGroundEngineAltitudeStabilization(500)
+                        stablized = true
+                        initBL = true
+                    end
                     targetPitch = 0
                     local aggBase = false
                     local absHspd = math.abs(hSpd)
@@ -6477,29 +6500,36 @@ VERSION_NUMBER = 0.719
                                 if aggBase and aggBase < coreAltitude then
                                     targetAltitude = aggBase
                                 elseif knownAltitude then
-                                    targetAltitude = planet:getAltitude(CustomTarget.position) + 1000 -- Try to aim for like 1000m above the target, give it lots of time
-                                    if coreAltitude < targetAltitude then targetAltitude = nil end
+                                    targetAltitude = planet:getAltitude(CustomTarget.position) + 250 -- Try to aim for like 500m above the target, give it lots of time
                                 elseif coreAltitude > planet.surfaceMaxAltitude then
                                     targetAltitude = planet.surfaceMaxAltitude
                                 end
+                                if collisionTarget then
+                                    local collAlt = planet:getAltitude(collisionTarget[1].center)
+                                    if targetAltitude then 
+                                        if collAlt > targetAltitude then 
+                                            targetAltitude = collAlt 
+                                        end 
+                                    else 
+                                        targetAltitude = collAlt 
+                                    end
+                                end
                                 if targetAltitude ~= nil then
                                     local distanceToGround = coreAltitude - targetAltitude 
-                                    if distanceToGround <= stopDistance or stopDistance == -1 then
-                                        BrakeIsOn = "BL Stop Dist"
-                                        skipLandingRate = true
+                                    skipLandingRate = true
+                                    if distanceToGround <= stopDistance or stopDistance == -1 or (absHspd > 0.05 and apBrk) then
+                                        if (absHspd > 0.05 and apBrk) then
+                                            BrakeIsOn = "BL AP Hzn"
+                                        else
+                                            BrakeIsOn = "BL Stop Dist"
+                                        end
                                     else
                                         BrakeIsOn = false
-                                        skipLandingRate = true
                                     end
                                 end
                             end
                         end
-                        if not throttleMode then
-                            AP.cmdThrottle(0)
-                        end
-                        navCom:setTargetGroundAltitude(500)
-                        navCom:activateGroundEngineAltitudeStabilization(500)
-                        stablized = true
+    
     
                         groundDistance = abvGndDet
                         if groundDistance == -1 and aggBase and mabs(coreAltitude - aggBase) < 100 then
@@ -6539,6 +6569,8 @@ VERSION_NUMBER = 0.719
                             end
                         end
                     end
+                else
+                    initBL = false
                 end
                 if AutoTakeoff or spaceLaunch then
                     local intersectBody, nearSide, farSide
