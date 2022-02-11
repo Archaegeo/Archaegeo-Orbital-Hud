@@ -190,6 +190,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
         end
         local AutopilotPaused = false
+        local initBL = false
 
     function ap.showWayPoint(planet, coordinates, dontSet)
         return showWaypoint(planet, coordinates, dontSet)
@@ -1594,6 +1595,15 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             local groundDistance = -1
 
             if BrakeLanding then
+                if not initBL then
+                    if not throttleMode then
+                        AP.cmdThrottle(0)
+                    end
+                    navCom:setTargetGroundAltitude(500)
+                    navCom:activateGroundEngineAltitudeStabilization(500)
+                    stablized = true
+                    initBL = true
+                end
                 targetPitch = 0
                 local aggBase = false
                 local absHspd = math.abs(hSpd)
@@ -1663,29 +1673,36 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                             if aggBase and aggBase < coreAltitude then
                                 targetAltitude = aggBase
                             elseif knownAltitude then
-                                targetAltitude = planet:getAltitude(CustomTarget.position) + 1000 -- Try to aim for like 1000m above the target, give it lots of time
-                                if coreAltitude < targetAltitude then targetAltitude = nil end
+                                targetAltitude = planet:getAltitude(CustomTarget.position) + 250 -- Try to aim for like 500m above the target, give it lots of time
                             elseif coreAltitude > planet.surfaceMaxAltitude then
                                 targetAltitude = planet.surfaceMaxAltitude
                             end
+                            if collisionTarget then
+                                local collAlt = planet:getAltitude(collisionTarget[1].center)
+                                if targetAltitude then 
+                                    if collAlt > targetAltitude then 
+                                        targetAltitude = collAlt 
+                                    end 
+                                else 
+                                    targetAltitude = collAlt 
+                                end
+                            end
                             if targetAltitude ~= nil then
                                 local distanceToGround = coreAltitude - targetAltitude 
-                                if distanceToGround <= stopDistance or stopDistance == -1 then
-                                    BrakeIsOn = "BL Stop Dist"
-                                    skipLandingRate = true
+                                skipLandingRate = true
+                                if distanceToGround <= stopDistance or stopDistance == -1 or (absHspd > 0.05 and apBrk) then
+                                    if (absHspd > 0.05 and apBrk) then
+                                        BrakeIsOn = "BL AP Hzn"
+                                    else
+                                        BrakeIsOn = "BL Stop Dist"
+                                    end
                                 else
                                     BrakeIsOn = false
-                                    skipLandingRate = true
                                 end
                             end
                         end
                     end
-                    if not throttleMode then
-                        AP.cmdThrottle(0)
-                    end
-                    navCom:setTargetGroundAltitude(500)
-                    navCom:activateGroundEngineAltitudeStabilization(500)
-                    stablized = true
+
 
                     groundDistance = abvGndDet
                     if groundDistance == -1 and aggBase and mabs(coreAltitude - aggBase) < 100 then
@@ -1725,6 +1742,8 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                         end
                     end
                 end
+            else
+                initBL = false
             end
             if AutoTakeoff or spaceLaunch then
                 local intersectBody, nearSide, farSide
