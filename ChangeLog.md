@@ -3,9 +3,9 @@
 Version 1.720 - Abandonded Construct Notification, Radar Brake Landing
 - Feature: If `CollisionSystem` is true then during Brake Landing any contact detected below the ship will have its altitude used as brake landing height.
 - Feature: If `AbandonedRadar` is true and `CollisionSystem` is true, then all radar contacts will be checked for abandoned status.  Any found will provide a 
-    voice alert and print out the calculated ::pos{} to lua chat.  (Thanks to Wulfrick for the idea)
+    (optional) voice alert and print out the calculated ::pos{} to lua chat.  (Thanks to Wulfrick for the idea)
 - New: `AbandonedRadar` user variable. (Default: false) If true, and CollisionSystem is true, all radar contacts will be checked for abandoned status.
-- New: `abRdr.mp3` added to sound pack to support new Abandoned feature.
+- (Optional) New: `abRdr.mp3` added to sound pack to support new Abandoned feature. YOU WILL NEED TO GRAB THE NEW SOUNDPACK (or at least this file out of it and add to existing)
 NOTE: In crowded areas Abandoned hunting could have a large impact as all contacts are triangulated instead of all statics and M+ dynamics.  Leave False if not hunting.
 - Replaced solarsystem.json with waypointer.json for those who want AR in atmo (EasternGamer script, place on PB, link to core and ArchHUD databank (optional))
 
