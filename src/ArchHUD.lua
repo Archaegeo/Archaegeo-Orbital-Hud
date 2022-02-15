@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.721
+VERSION_NUMBER = 0.722
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -4410,6 +4410,7 @@ VERSION_NUMBER = 0.721
                 local halfResolutionX = round(resolutionWidth / 2,0)
                 local halfResolutionY = round(resolutionHeight / 2,0)
             local newContent = {}
+            if userScreen then newContent[#newContent + 1] = userScreen end
             --local t0 = s.getTime()
             HUD.HUDPrologue(newContent)
             if showHud then
@@ -4454,8 +4455,6 @@ VERSION_NUMBER = 0.721
                         Animating = true
                         newContent[#newContent + 1] = [[</svg></body>]] -- Uh what.. okay...
                         u.setTimer("animateTick", 0.5)
-                        local content = table.concat(newContent, "")
-                        s.setScreen(content)
                     elseif Animated then
                         local collapsedContent = table.concat(newContent, "")
                         newContent = {}
@@ -9043,7 +9042,7 @@ VERSION_NUMBER = 0.721
                 u.setTimer("fiveSecond", 5) 
                 if shield_1 then u.setTimer("shieldTick", apTickRate) end
                 if userOnStart then
-                    userOnStart(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
+                    userOnStart(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
                 end
                 play("start","SU")
             end)
@@ -9082,7 +9081,7 @@ VERSION_NUMBER = 0.721
                     s.setScreen(content) 
                 end
                 if userOnUpdate then
-                    userOnUpdate(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
+                    userOnUpdate(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
                 end
                 LastContent = content
             end
@@ -9092,7 +9091,7 @@ VERSION_NUMBER = 0.721
             if SetupComplete then
                 AP.onFlush()
                 if userOnFlush then
-                    userOnFlush(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
+                    userOnFlush(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
                 end
             end
         end
@@ -9131,7 +9130,7 @@ VERSION_NUMBER = 0.721
             if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
             s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank"))
             if userOnStop then
-                userOnStop(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
+                userOnStop(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
             end
             play("stop","SU")
         end
@@ -9140,7 +9139,7 @@ VERSION_NUMBER = 0.721
             if SetupComplete then
                 CONTROL.startControl(action)
                 if userControlStart then
-                    userControlStart(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, action)
+                    userControlStart(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, action)
                 end
             end
         end
@@ -9149,7 +9148,7 @@ VERSION_NUMBER = 0.721
             if SetupComplete then
                 CONTROL.stopControl(action)
                 if userControlStop then
-                    userControlStop(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, action)
+                    userControlStop(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, action)
                 end
             end
         end
@@ -9158,7 +9157,7 @@ VERSION_NUMBER = 0.721
             if SetupComplete then
                 CONTROL.loopControl(action)
                 if userControlLoop then
-                    userControlLoop(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, action)
+                    userControlLoop(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, action)
                 end
             end
         end
@@ -9167,7 +9166,7 @@ VERSION_NUMBER = 0.721
             if SetupComplete then
                 CONTROL.inputTextControl(text)
                 if userControlInput then
-                    userControlInput(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, text)
+                    userControlInput(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, text)
                 end
             end
         end
@@ -9175,14 +9174,14 @@ VERSION_NUMBER = 0.721
         function program.radarEnter(id)
             RADAR.onEnter(id)
             if userRadarEnter then
-                userRadarEnter(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, id)
+                userRadarEnter(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, id)
             end
         end
     
         function program.radarLeave(id)
             RADAR.onLeave(id)
             if userRadarLeave then
-                userRadarLeave(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, id)
+                userRadarLeave(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, id)
             end
         end
     
@@ -9212,7 +9211,7 @@ VERSION_NUMBER = 0.721
                 RADAR.ContactTick()
             end
             if userOnTick then
-                userOnTick(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, timerId)
+                userOnTick(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, timerId)
             end
         end
     
