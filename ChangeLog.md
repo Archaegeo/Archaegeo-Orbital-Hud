@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.723
+- FIX: Fixed override checks for apclass, hudclass, radarclass, and controlclass to occur without needing to uncomment line.
+NOTE: It looks for `customapclass.lau`, `customhudclass.lua`, `customradarclass.lua`, and `customcontrolclass.lua`,  inside
+the `aautoconf/custom/archhud/custom/` directory.  These files are for OVERRIDING functions in the parent class.
+- FIX: Moved userclass.lua to RequireRepository on the github so it doesnt overwrite custom ones written by users.
+NOTE: So you use the customXXclass.lua's to override functions, you use userclass.lua to add functionality.
+
 Version 1.722
 - Enhance: AddOn - Added `userScreen` - If set, userScreen is added to the setScreen diplay info.
 - Remove extra `hover` variable from call and receive of userclass functions

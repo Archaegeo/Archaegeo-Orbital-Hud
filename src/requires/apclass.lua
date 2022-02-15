@@ -2888,8 +2888,11 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
     end
     abvGndDet = AboveGroundLevel()
 
-    -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
-    --for k,v in pairs(require("autoconf/custom/archhud/custom/customapclass")) do ap[k] = v end 
+    -- TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS THE FOLLOWING FILE MUST BE PRESENT
+    local _, apOverride = pcall(require, "autoconf/custom/archhud/custom/customapclass")
+    if type(apOverride) == "table" then
+        for k,v in pairs(apOverride) do ap[k] = v end 
+    end
 
     return ap
 end

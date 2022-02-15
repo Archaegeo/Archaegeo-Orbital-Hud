@@ -318,7 +318,11 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
         pickType()
     end
     UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
-    -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
-    --for k,v in pairs(require("autoconf/custom/archhud/custom/customradarclass")) do Radar[k] = v end 
+
+    -- TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS THE FOLLOWING FILE MUST BE PRESENT
+    local _, radarOverride = pcall(require, "autoconf/custom/archhud/custom/customradarclass")
+    if type(radarOverride) == "table" then
+        for k,v in pairs(radarOverride) do Radar[k] = v end 
+    end    
     return Radar
 end 
