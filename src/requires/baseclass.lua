@@ -552,6 +552,9 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             u.setTimer("tenthSecond", 1/10)
             u.setTimer("fiveSecond", 5) 
             if shield_1 then u.setTimer("shieldTick", apTickRate) end
+            if userOnStart then
+                userOnStart(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
+            end
             play("start","SU")
         end)
         coroutine.resume(beginSetup)
@@ -588,6 +591,9 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             if not Animating and content ~= LastContent then
                 s.setScreen(content) 
             end
+            if userOnUpdate then
+                userOnUpdate(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
+            end
             LastContent = content
         end
     end
@@ -595,6 +601,9 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
     function program.onFlush()
         if SetupComplete then
             AP.onFlush()
+            if userOnFlush then
+                userOnFlush(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
+            end
         end
     end
 
@@ -631,39 +640,60 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         end
         if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
         s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank"))
+        if userOnStop then
+            userOnStop(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
+        end
         play("stop","SU")
     end
 
     function program.controlStart(action)
         if SetupComplete then
             CONTROL.startControl(action)
+            if userControlStart then
+                userControlStart(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, action)
+            end
         end
     end
 
     function program.controlStop(action)
         if SetupComplete then
             CONTROL.stopControl(action)
+            if userControlStop then
+                userControlStop(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, action)
+            end
         end
     end
 
     function program.controlLoop(action)
         if SetupComplete then
             CONTROL.loopControl(action)
+            if userControlLoop then
+                userControlLoop(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, action)
+            end
         end
     end
 
     function program.controlInput(text)
         if SetupComplete then
             CONTROL.inputTextControl(text)
+            if userControlInput then
+                userControlInput(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, text)
+            end
         end
     end
 
     function program.radarEnter(id)
         RADAR.onEnter(id)
+        if userRadarEnter then
+            userRadarEnter(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, id)
+        end
     end
 
     function program.radarLeave(id)
         RADAR.onLeave(id)
+        if userRadarLeave then
+            userRadarLeave(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, id)
+        end
     end
 
     function program.onTick(timerId)
@@ -690,6 +720,9 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             CONTROL.tagTick()
         elseif timerId == "contact" then
             RADAR.ContactTick()
+        end
+        if userOnTick then
+            userOnTick(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, hover, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, timerId)
         end
     end
 
