@@ -1,3 +1,6 @@
+-- NOTE: If userMessage is set, it is added to the svg displayed by the main hud's setScreen call.
+
+
 function userOnStart(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
     --Startup stuff would go here, called at end of normal startup
 end

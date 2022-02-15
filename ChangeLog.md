@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.722
+- Enhance: AddOn - Added `userScreen` - If set, userScreen is added to the setScreen diplay info.
 - Remove extra `hover` variable from call and receive of userclass functions
 
 Version 1.721 - Userclass (AddOns) support

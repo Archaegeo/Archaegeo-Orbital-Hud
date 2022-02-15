@@ -2855,6 +2855,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                                             halfResolutionX, halfResolutionY, simulatedX, simulatedY)
         end
         newContent[#newContent + 1] = [[</svg></body>]]
+        if userScreen then newContent[#newContent + 1] = userScreen end
         content = table.concat(newContent, "")
     end
 
