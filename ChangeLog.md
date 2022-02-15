@@ -1,5 +1,17 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.721 - Userclass (AddOns) support
+- Feature (MODULAR ONLY): if `userclass.lua` is present in the `archhud` subfolder with other requires, it will be loaded during startup.
+    At the end of the normal script events (startup, flush, update, stop, control start/stop/loop, radar enter/leave, tick)  
+    the script will check if the associated function exists from userclass and if present will call the function with the slotted variables
+    passed (since they are not considered global for some reason). This will allow users to add on any additional functionality they wish 
+    An example userclass.lua is provided but does nothing.  
+    Note: This is not meant for overriding portions of an existin class (already supported) nor for replacing a class (you can do that if you wish)
+    Note: In the passed variables, c = core, u = unit, s = system 
+- Enhance: Abandoned message will indicate type of contact found.
+NOTE: Abandonded ::pos accuracy is intentionally off to be sure to catch as many as possible rather than worry with 2m accuracy.
+You can change this at line 132 in radarclass.lua by adding `and construct.skipCalc` to the if line if desired.
+
 Version 1.720 - Abandonded Construct Notification, Radar Brake Landing
 - Feature: If `CollisionSystem` is true then during Brake Landing any contact detected below the ship will have its altitude used as brake landing height.
 - Feature: If `AbandonedRadar` is true and `CollisionSystem` is true, then all radar contacts will be checked for abandoned status.  Any found will provide a 

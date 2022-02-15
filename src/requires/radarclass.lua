@@ -131,8 +131,8 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                             if construct.center then 
                                 if AbandonedRadar and radars[1].isConstructAbandoned(id) == 1 and not construct.abandoned then
                                     play("abRdr", "RD")
-                                    s.print("Abandoned Construct: "..name.." ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
-                                    msgText = "Abandoned Radar Contact detected"
+                                    s.print("Abandoned Construct: "..name.." ("..cType..") ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
+                                    msgText = "Abandoned Radar Contact ("..cType..") detected"
                                     construct.abandoned = true
                                 end
                                 table.insert(knownContacts, construct) 
