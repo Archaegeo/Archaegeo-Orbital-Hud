@@ -1,6 +1,6 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.721 - Userclass support
+Version 1.721 - Userclass (AddOns) support
 - Feature (MODULAR ONLY): if `userclass.lua` is present in the `archhud` subfolder with other requires, it will be loaded during startup.
     At the end of the normal script events (startup, flush, update, stop, control start/stop/loop, radar enter/leave, tick)  
     the script will check if the associated function exists from userclass and if present will call the function with the slotted variables
