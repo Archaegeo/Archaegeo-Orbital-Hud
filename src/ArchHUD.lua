@@ -20,7 +20,7 @@ pcall(require, "autoconf/custom/archhud/axiscommandoverride")
 pcall(require,"autoconf/custom/archhud/userclass")
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.721
+VERSION_NUMBER = 1.722
 
 globalDeclare(s, c, u, s.getTime, math.floor, u.getAtmosphereDensity) -- Variables that need to be Global and are declared in globals.lua due to use across multple modules where there values can change.
 

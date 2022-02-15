@@ -2822,8 +2822,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                     Animating = true
                     newContent[#newContent + 1] = [[</svg></body>]] -- Uh what.. okay...
                     u.setTimer("animateTick", 0.5)
-                    local content = table.concat(newContent, "")
-                    s.setScreen(content)
                 elseif Animated then
                     local collapsedContent = table.concat(newContent, "")
                     newContent = {}
