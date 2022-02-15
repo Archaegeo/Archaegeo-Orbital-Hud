@@ -3,6 +3,7 @@
 Version 1.722
 - Enhance: AddOn - Added `userScreen` - If set, userScreen is added to the setScreen diplay info.
 - Remove extra `hover` variable from call and receive of userclass functions
+- Example waypointeruserclass.lua in the RequireRepositor at github, rename to userclass.lua and put in archhud with other requires to have built in waypointer.
 
 Version 1.721 - Userclass (AddOns) support
 - Feature (MODULAR ONLY): if `userclass.lua` is present in the `archhud` subfolder with other requires, it will be loaded during startup.
