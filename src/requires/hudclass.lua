@@ -2778,6 +2778,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local halfResolutionX = round(resolutionWidth / 2,0)
             local halfResolutionY = round(resolutionHeight / 2,0)
         local newContent = {}
+        if userScreen then newContent[#newContent + 1] = userScreen end
         --local t0 = s.getTime()
         HUD.HUDPrologue(newContent)
         if showHud then
@@ -2822,8 +2823,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                     Animating = true
                     newContent[#newContent + 1] = [[</svg></body>]] -- Uh what.. okay...
                     u.setTimer("animateTick", 0.5)
-                    local content = table.concat(newContent, "")
-                    s.setScreen(content)
                 elseif Animated then
                     local collapsedContent = table.concat(newContent, "")
                     newContent = {}
