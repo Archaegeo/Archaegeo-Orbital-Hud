@@ -1927,6 +1927,10 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if atmosDensity > 0 then
                     HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude
                     play("11","EP")
+                    apDoubleClick = -1
+                    if Autopilot or VectorToTarget or IntoOrbit then 
+                        return 
+                    end
                 else
                     msgText = "No space engines detected, Orbital Hop not supported"
                     return
