@@ -945,9 +945,14 @@
         for k, v in pairs(customlocations) do
             table.insert(atlas[0], v)
         end
+        
+        if userAtlas then 
+            for k,v in pairs(userAtlas) do Atlas[k] = v end 
+        end 
 
         UpdateAtlasLocationsList()
         if AutopilotTargetIndex > #AtlasOrdered then AutopilotTargetIndex=0 end
         Atlas.UpdateAutopilotTarget()
+
         return Atlas
     end

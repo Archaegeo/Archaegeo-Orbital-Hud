@@ -1,47 +1,76 @@
--- NOTE: If userScreen is set, it is added to the svg displayed by the main hud's setScreen call.
+--[[
+    Below here is used to add new functions or override functions in the various require files in the hud 
+
+    To override a function, it must have the same .Name as the existing function but have the table userName shown here
+
+    For example, in baseclass.lua, the stop function is called program.onStop.  
+    To override or add to it here, you would name it function userBase.onStop (see example below).  You would need to copy the base
+    function to keep all functionality.  Then you could add code before, after, or changed.
+
+    This require file is looked for and loaded after all other require classes.
+--]]
+
+-- IMPORTANT NOTE: If a global variable named userScreen is set anywhere, it is added to the svg displayed by the main hud's setScreen call without needing to change other hudclass functions.
+    userScreen = nil -- If userScreen is set anywhere, it is added to the svg displayed by the main hud's setScreen call without needing to change other hudclass functions.
+
+    userBase = {} -- baseclass.lua override
+    userRadar = {} -- radarclass.lua override
+    userAP = {} -- apclass.lua override
+    userAtlas = {} -- atlasclass.lua override
+    userControl = {} -- controlclass.lua override
+    userHud = {} -- hudclass.lua override
+    userShield = {} -- shieldclass.lua override
+
+-- EXAMPLES
+    --[[
+        -- This is an an example of how modify an existing function (onStop from baseclass.lua).  First you copy the entire function, then you modify it as desired.
+            function userBase.onStop()
+                _autoconf.hideCategoryPanels()
+                if antigrav ~= nil  and not ExternalAGG then
+                    antigrav.hide()
+                end
+                if warpdrive ~= nil then
+                    warpdrive.hide()
+                end
+                c.hide()
+                Nav.control.switchOffHeadlights()
+                -- Open door and extend ramp if available
+                if door and (atmosDensity > 0 or (atmosDensity == 0 and coreAltitude < 10000)) then
+                    for _, v in pairs(door) do
+                        v.toggle()
+                    end
+                end
+                if switch then
+                    for _, v in pairs(switch) do
+                        v.toggle()
+                    end
+                end
+                if forcefield and (atmosDensity > 0 or (atmosDensity == 0 and coreAltitude < 10000)) then
+                    for _, v in pairs(forcefield) do
+                        v.toggle()
+                    end
+                end
+                showHud = oldShowHud
+                SaveDataBank()
+                if button then
+                    button.activate()
+                end
+                if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
+                s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank"))
+                play("stop","SU")
+            end
+    --]]
+
+    --[[
+        function userRadar.onEnter(id) -- This example completely replaces the existing Radar.onEnter function in radarclass.lua and also calls a newly created function (Special()).
+            p("Hello: "..id)
+            RADAR.Special()
+        end
+        function userRadar.Special() -- Would add a new function to the radar class called special that is called by the above overriden onEnter
+            p("Working")
+        end
+    --]]
 
 
-function userOnStart(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
-    --Startup stuff would go here, called at end of normal startup
-end
 
-function userOnFlush(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
-    --Flush code goes here, called at end of normal flush - Remember only flight physics stuff should go in OnFlush.
-end
 
-function userOnUpdate(Nav, c, u, s, atlas, radar_1, radar_2, vBooster,  antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
-    -- Update code goes here, called at end of normal update. - Remember onUpdate executes 60 times per second or your FPS rate, whichever is lower.
-end
-
-function userOnStop(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
-    -- on Stop code goes here, called at end of normal onStop
-end
-
-function userControlStart(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, action)
-    -- Control start event, called when a user key is pressed, action is the key. - This will NOT override but will support addition action for a key.
-end
-
-function userControlLoop(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, action)
-    -- Control start event, called when a user key is held down, action is the key - This will NOT override but will support addition action for a key
-end
-
-function userControlStop(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, action)
-    -- Control stop event, called when a user key is released, action is the key - This will NOT override but will support addition action for a key
-end
-
-function userControlInput(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, text)
-    -- Control Input event, called when user types in lua chat, text is the typed input
-end
-
-function userRadarEnter(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, id)
-    -- Called if active radar gets an OnEnter event (something detected), id is the passed detection
-end
-
-function userRadarLeave(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, id)
-    -- Called if active radar gets an OnLeave event (something detected), id is the passed detection
-end
-
-function userOnTick(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, timerId)
-    -- Called when a tick that has been set up (unit.setTimer("tickName", ticktime)) fires, timerId is the tick name
-    -- example:  if timerId == "myTickName" then do things end
-end

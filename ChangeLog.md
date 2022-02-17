@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.723 - More refactoring for perfomance and cleanliness.
+- FIX: Alt 4-4 without any space engines will now default to 11% atmo vice telling you no orbital hop.
+- FIX: While AGG is on, Alt Hold (Alt-6 and Alt-6-6) will not auto apply brakes if already at altitude of AGG but moving more than 72k/hr
+- REFACTOR: Override and AddOns are now handled in the userclass.lua file.  See the file provided for example usage and instructions.
+    You can now override or addon to any of the classes.
+
 Version 1.722
 - Enhance: AddOn - Added `userScreen` - If set, userScreen is added to the setScreen diplay info.
 - Remove extra `hover` variable from call and receive of userclass functions

@@ -1924,10 +1924,18 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         local routeOrbit = false
         if (time - apDoubleClick) < 1.5 and atmosDensity > 0 then
             if not SpaceEngines then
-                msgText = "No space engines detected, Orbital Hop not supported"
-                return
-            end
-            if planet.hasAtmosphere then
+                if atmosDensity > 0 then
+                    HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude
+                    play("11","EP")
+                    apDoubleClick = -1
+                    if Autopilot or VectorToTarget or IntoOrbit then 
+                        return 
+                    end
+                else
+                    msgText = "No space engines detected, Orbital Hop not supported"
+                    return
+                end
+            elseif planet.hasAtmosphere then
                 if atmosDensity > 0 then
                     HoldAltitude = planet.noAtmosphericDensityAltitude + LowOrbitHeight
                     play("orH","OH")
@@ -2172,7 +2180,10 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 else
                     HoldAltitude = gBA
                 end
-                if mabs(coreAltitude-gBA) < 50 then BrakeIsOn = "AGG Hold" end
+                if mabs(coreAltitude-gBA) < 50 and velMag < 20 then 
+                    BrakeIsOn = "AGG Hold" 
+                    AP.cmdThrottle(0)
+                end
             end
             if spaceLaunch then HoldAltitude = 200000 end
         else
@@ -2886,10 +2897,12 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
         end
     end
-    abvGndDet = AboveGroundLevel()
 
-    -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
-    --for k,v in pairs(require("autoconf/custom/archhud/custom/customapclass")) do ap[k] = v end 
+    if userAP then 
+        for k,v in pairs(userAP) do ap[k] = v end 
+    end   
+
+    abvGndDet = AboveGroundLevel()
 
     return ap
 end

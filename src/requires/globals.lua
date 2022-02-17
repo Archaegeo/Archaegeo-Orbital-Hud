@@ -196,7 +196,7 @@
         apRoute={set=function (i)apRoute=i end,get=function() return apRoute end}}
 
 -- Unsaved Globals
-local function globalDeclare(s, c, u, systime, mfloor, atmosphere) -- # is how many classes variable is in
+function globalDeclare(s, c, u, systime, mfloor, atmosphere) -- # is how many classes variable is in
     time = systime() -- 6
     PlayerThrottle = 0 -- 4
     brakeInput2 = 0 -- 2
@@ -287,5 +287,3 @@ local function globalDeclare(s, c, u, systime, mfloor, atmosphere) -- # is how m
     alignHeading=nil -- 2
     if shield_1 then shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints()) end
 end
-
-return globalDeclare
