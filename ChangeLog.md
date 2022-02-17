@@ -1,14 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.723
+Version 1.723 - More refactoring for perfomance and cleanliness.
 - FIX: Alt 4-4 without any space engines will now default to 11% atmo vice telling you no orbital hop.
-- FIX: Fix Alt Hold (Alt-6 and Alt-6-6) to not auto apply brakes if already at altitude of AGG but moving more than 72k/hr
-- FIX: Fixed override checks for apclass, hudclass, radarclass, and controlclass to occur without needing to uncomment line.
-NOTE: It looks for `customapclass.lau`, `customhudclass.lua`, `customradarclass.lua`, and `customcontrolclass.lua`,  inside
-the `autoconf/custom/archhud/custom/` directory.  These files are for OVERRIDING functions in the parent class.
-- FIX: Moved userclass.lua to RequireRepository on the github so it doesnt overwrite custom ones during an update.
-- FIX: Moved example override files to RequireRepository on the github so it doesnt overwrite custom ones during an update
-NOTE: So you use the customXXclass.lua's to override functions, you use userclass.lua to add functionality.
+- FIX: While AGG is on, Alt Hold (Alt-6 and Alt-6-6) will not auto apply brakes if already at altitude of AGG but moving more than 72k/hr
+- REFACTOR: Override and AddOns are now handled in the userclass.lua file.  See the file provided for example usage and instructions.
+    You can now override or addon to any of the classes.
 
 Version 1.722
 - Enhance: AddOn - Added `userScreen` - If set, userScreen is added to the setScreen diplay info.

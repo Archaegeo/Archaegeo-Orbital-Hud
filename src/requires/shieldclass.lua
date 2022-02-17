@@ -49,5 +49,9 @@ function ShieldClass(shield_1, stringmatch, mfloor) -- Everything related to rad
         if shield_1.getShieldHitpoints()<shield_1.getMaxShieldHitpoints() then shield_1.startVenting() msgText="Shields Venting Enabled - NO SHIELDS WHILE VENTING" else msgText="Shields already at max hitpoints" end
     end
 
+    if userShield then 
+        for k,v in pairs(userShield) do Shield[k] = v end 
+    end  
+
     return Shield
 end

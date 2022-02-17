@@ -762,11 +762,9 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
         u.stopTimer("tagTick")
     end
 
-    -- TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS THE FOLLOWING FILE MUST BE PRESENT
-    local _, ccOverride = pcall(require, "autoconf/custom/archhud/custom/customcontrolclass")
-    if type(ccOverride) == "table" then
-        for k,v in pairs(ccOverride) do Control[k] = v end 
-    end    
+    if userControl then 
+        for k,v in pairs(userControl) do Control[k] = v end 
+    end  
 
     return Control
 end

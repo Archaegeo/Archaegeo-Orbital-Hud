@@ -3188,11 +3188,9 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         Buttons = ControlButtons
     end
 
-    -- TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS THE FOLLOWING FILE MUST BE PRESENT
-    local _, hudOverride = pcall(require, "autoconf/custom/archhud/custom/customhudclass")
-    if type(hudOverride) == "table" then
-        for k,v in pairs(hudOverride) do Hud[k] = v end 
-    end   
+    if userHud then 
+        for k,v in pairs(userHud) do Hud[k] = v end 
+    end  
 
     return Hud
 end
