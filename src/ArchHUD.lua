@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.722
+VERSION_NUMBER = 0.723
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -1246,10 +1246,15 @@ VERSION_NUMBER = 0.722
         for k, v in pairs(customlocations) do
             table.insert(atlas[0], v)
         end
+        
+        if userAtlas then 
+            for k,v in pairs(userAtlas) do Atlas[k] = v end 
+        end 
 
         UpdateAtlasLocationsList()
         if AutopilotTargetIndex > #AtlasOrdered then AutopilotTargetIndex=0 end
         Atlas.UpdateAutopilotTarget()
+
         return Atlas
     end
     -- ArchHUD classes  
@@ -1573,8 +1578,11 @@ VERSION_NUMBER = 0.722
             pickType()
         end
         UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
-        -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
-        --for k,v in pairs(require("autoconf/custom/archhud/custom/customradarclass")) do Radar[k] = v end 
+    
+        if userRadar then 
+            for k,v in pairs(userRadar) do Radar[k] = v end 
+        end   
+    
         return Radar
     end 
     local function ShieldClass(shield_1, stringmatch, mfloor) -- Everything related to radar but draw data passed to HUD Class.
@@ -1627,6 +1635,10 @@ VERSION_NUMBER = 0.722
             if vcd > 0 then msgText="Cannot vent again for "..vcd.." seconds" return end
             if shield_1.getShieldHitpoints()<shield_1.getMaxShieldHitpoints() then shield_1.startVenting() msgText="Shields Venting Enabled - NO SHIELDS WHILE VENTING" else msgText="Shields already at max hitpoints" end
         end
+    
+        if userShield then 
+            for k,v in pairs(userShield) do Shield[k] = v end 
+        end  
     
         return Shield
     end
@@ -4819,9 +4831,11 @@ VERSION_NUMBER = 0.722
             ControlsButtons() -- Set up all the pushable buttons.
             Buttons = ControlButtons
         end
-        
-        -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
-        --for k,v in pairs(require("autoconf/custom/archhud/custom/customhudclass")) do Hud[k] = v end 
+    
+        if userHud then 
+            for k,v in pairs(userHud) do Hud[k] = v end 
+        end  
+    
         return Hud
     end
     local function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
@@ -6750,10 +6764,18 @@ VERSION_NUMBER = 0.722
             local routeOrbit = false
             if (time - apDoubleClick) < 1.5 and atmosDensity > 0 then
                 if not SpaceEngines then
-                    msgText = "No space engines detected, Orbital Hop not supported"
-                    return
-                end
-                if planet.hasAtmosphere then
+                    if atmosDensity > 0 then
+                        HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude
+                        play("11","EP")
+                        apDoubleClick = -1
+                        if Autopilot or VectorToTarget or IntoOrbit then 
+                            return 
+                        end
+                    else
+                        msgText = "No space engines detected, Orbital Hop not supported"
+                        return
+                    end
+                elseif planet.hasAtmosphere then
                     if atmosDensity > 0 then
                         HoldAltitude = planet.noAtmosphericDensityAltitude + LowOrbitHeight
                         play("orH","OH")
@@ -6998,7 +7020,10 @@ VERSION_NUMBER = 0.722
                     else
                         HoldAltitude = gBA
                     end
-                    if mabs(coreAltitude-gBA) < 50 then BrakeIsOn = "AGG Hold" end
+                    if mabs(coreAltitude-gBA) < 50 and velMag < 20 then 
+                        BrakeIsOn = "AGG Hold" 
+                        AP.cmdThrottle(0)
+                    end
                 end
                 if spaceLaunch then HoldAltitude = 200000 end
             else
@@ -7712,10 +7737,12 @@ VERSION_NUMBER = 0.722
                 end
             end
         end
-        abvGndDet = AboveGroundLevel()
     
-        -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
-        --for k,v in pairs(require("autoconf/custom/archhud/custom/customapclass")) do ap[k] = v end 
+        if userAP then 
+            for k,v in pairs(userAP) do ap[k] = v end 
+        end   
+    
+        abvGndDet = AboveGroundLevel()
     
         return ap
     end
@@ -8482,8 +8509,10 @@ VERSION_NUMBER = 0.722
             msgText = "Extra Engine Tags: "..UseExtra 
             u.stopTimer("tagTick")
         end
-        -- UNCOMMENT BELOW LINE TO ACTIVATE A CUSTOM OVERRIDE FILE TO OVERRIDE SPECIFIC FUNCTIONS
-        --for k,v in pairs(require("autoconf/custom/archhud/custom/customcontrolclass")) do Control[k] = v end 
+    
+        if userControl then 
+            for k,v in pairs(userControl) do Control[k] = v end 
+        end  
     
         return Control
     end
@@ -9041,9 +9070,6 @@ VERSION_NUMBER = 0.722
                 u.setTimer("tenthSecond", 1/10)
                 u.setTimer("fiveSecond", 5) 
                 if shield_1 then u.setTimer("shieldTick", apTickRate) end
-                if userOnStart then
-                    userOnStart(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
-                end
                 play("start","SU")
             end)
             coroutine.resume(beginSetup)
@@ -9080,9 +9106,6 @@ VERSION_NUMBER = 0.722
                 if not Animating and content ~= LastContent then
                     s.setScreen(content) 
                 end
-                if userOnUpdate then
-                    userOnUpdate(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
-                end
                 LastContent = content
             end
         end
@@ -9090,9 +9113,6 @@ VERSION_NUMBER = 0.722
         function program.onFlush()
             if SetupComplete then
                 AP.onFlush()
-                if userOnFlush then
-                    userOnFlush(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
-                end
             end
         end
     
@@ -9129,60 +9149,39 @@ VERSION_NUMBER = 0.722
             end
             if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
             s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank"))
-            if userOnStop then
-                userOnStop(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1)
-            end
             play("stop","SU")
         end
     
         function program.controlStart(action)
             if SetupComplete then
                 CONTROL.startControl(action)
-                if userControlStart then
-                    userControlStart(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, action)
-                end
             end
         end
     
         function program.controlStop(action)
             if SetupComplete then
                 CONTROL.stopControl(action)
-                if userControlStop then
-                    userControlStop(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, action)
-                end
             end
         end
     
         function program.controlLoop(action)
             if SetupComplete then
                 CONTROL.loopControl(action)
-                if userControlLoop then
-                    userControlLoop(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, action)
-                end
             end
         end
     
         function program.controlInput(text)
             if SetupComplete then
                 CONTROL.inputTextControl(text)
-                if userControlInput then
-                    userControlInput(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, text)
-                end
             end
         end
     
         function program.radarEnter(id)
             RADAR.onEnter(id)
-            if userRadarEnter then
-                userRadarEnter(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, id)
-            end
         end
     
         function program.radarLeave(id)
             RADAR.onLeave(id)
-            if userRadarLeave then
-                userRadarLeave(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, id)
-            end
         end
     
         function program.onTick(timerId)
@@ -9210,10 +9209,11 @@ VERSION_NUMBER = 0.722
             elseif timerId == "contact" then
                 RADAR.ContactTick()
             end
-            if userOnTick then
-                userOnTick(Nav, c, u, s, atlas, radar_1, radar_2, vBooster, antigrav, hover, shield_1, warpdrive, weapon, dbHud_1, dbHud_2, gyro, screenHud_1, timerId)
-            end
         end
+    
+        if userBase then 
+            for k,v in pairs(userBase) do program[k] = v end 
+        end  
     
         return program
     end
