@@ -1513,7 +1513,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
 
                     -- Just fudge it arbitrarily by 5% so that we get some feathering for better accuracy
                     -- Make it think it will take longer to brake than it will
-                    if (not spaceLaunch and not Reentry and distanceToTarget <= brakeDistance and -- + (velMag*deltaTick)/2
+                    if (not spaceLaunch and not AutoTakeoff and not Reentry and (distanceToTarget <= brakeDistance and targetVec:len() < planet.radius) and 
                             (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99  or VectorStatus == "Finalizing Approach")) then 
                         VectorStatus = "Finalizing Approach" 
                         if #apRoute>0 then
@@ -1535,11 +1535,15 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                     elseif not AutoTakeoff then
                         BrakeIsOn = false
                     end
-                if (VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget))) then
+                    if (VectorStatus == "Finalizing Approach" and (hSpd < 0.1 or distanceToTarget < 0.1 or (LastDistanceToTarget ~= nil and LastDistanceToTarget < distanceToTarget))) then
                         play("bklOn","BL")
                         BrakeLanding = true 
                         apBrk = true
-                        if CustomTarget.heading then alignHeading = CustomTarget.heading else alignHeading = nil end
+                        if CustomTarget.heading then 
+                            alignHeading = CustomTarget.heading 
+                        else 
+                            alignHeading = nil 
+                        end
                         VectorToTarget = false
                         VectorStatus = "Proceeding to Waypoint"
                         collisionAlertStatus = false
