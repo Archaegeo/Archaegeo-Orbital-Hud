@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.724
+Version 1.724 - MAJOR REFACTOR ON AP
+- Moved almost all AP functionality thats allowed into flush to allow for better performance.
 - Fix: Brake Landing starting during a low orbit hop somewhen target is on opposite side of planet.
 
 Version 1.723 - More refactoring for perfomance and cleanliness.
