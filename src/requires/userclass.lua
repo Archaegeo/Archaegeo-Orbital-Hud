@@ -21,7 +21,21 @@
     userHud = {} -- hudclass.lua override
     userShield = {} -- shieldclass.lua override
 
--- EXAMPLES
+-- ADDON FUNCTIONALITY FOR THE FOUR MAIN EVENTS, CALLED AT END OF EVENT
+    function userBase.ExtraOnStart()
+        -- Code you want executed at end of Startup
+    end
+    function userBase.ExtraOnStop()
+        -- Code you want executed at end of Shutdown
+    end
+    function userBase.ExtraOnUpdate()
+        -- Code you want executed at end of Update
+    end
+    function userBase.ExtraOnFlush()
+        -- Code you want executed at end of Flush
+    end
+
+-- EXAMPLES OF OVERRIDE FUNCTIONALITY
     --[[
         -- This is an an example of how modify an existing function (onStop from baseclass.lua).  First you copy the entire function, then you modify it as desired.
             function userBase.onStop()
@@ -57,6 +71,7 @@
                 end
                 if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
                 s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank"))
+                if userBase then PROGRAM.ExtraOnStop() end
                 play("stop","SU")
             end
     --]]

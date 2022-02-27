@@ -1,7 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.724 - MAJOR REFACTOR ON AP
-- Moved almost all AP functionality thats allowed into flush to allow for better performance.
+Version 1.724 - MAJOR REFACTOR OF AP FOR RELIABILITY
+- Moved almost all AP functionality thats allowed into flush to allow for more reliable performance.
+- Added support for user extra functionality for OnStart, OnStop, OnFlush, and OnUpdate - This is instead of 
+overriding the base functions and is called when the normal function finishes.  See userclass.lua for more.
 - Fix: Brake Landing starting during a low orbit hop somewhen target is on opposite side of planet.
 
 Version 1.723 - More refactoring for perfomance and cleanliness.

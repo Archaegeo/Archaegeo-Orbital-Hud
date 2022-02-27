@@ -45,7 +45,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         local sudi = false
         local sudv = ""
         local sba = false
-        local atlasupdate = false
+        local aptoggle = false
         local myAutopilotTarget=""
         local function GetAutopilotBrakeDistanceAndTime(speed)
             -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
@@ -260,7 +260,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                         if LockPitch then AP.ToggleLockPitch() end
                         msgText = "Autopilot Cancelled due to possible collision"
                         if VectorToTarget or Autopilot then 
-                            AP.ToggleAutopilot()
+                            if not aptoggle then aptoggle = true end
                         end
                         StrongBrakes = true
                         BrakeLanding = true
@@ -349,9 +349,8 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             Nav.control.extendLandingGears()
             eLL = false
         end 
-        if atlasupdate then
-            ATLAS.UpdateAutopilotTarget()
-            atlasupdate = false
+        if aptoggle then
+            AP.ToggleAutopilot(aptoggle)
         end
     end
 
@@ -489,7 +488,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             if 0.5 * Nav:maxForceForward() / c.g() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
             if #apRoute>0 and not finalLand then 
                 AutopilotTargetIndex = getIndex(apRoute[1])
-                atlasupdate = true
+                ATLAS.UpdateAutopilotTarget()
                 msgText = "Route Autopilot in Progress"
                 local targetVec = CustomTarget.position - worldPos
                 local distanceToTarget = targetVec:project_on_plane(worldVertical):len()
@@ -497,7 +496,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                     routeOrbit=true
                 end
             end
-            atlasupdate = true -- Make sure we're updated
+            ATLAS.UpdateAutopilotTarget()
             AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
             if CustomTarget ~= nil then
                 if CustomTarget.agg and not ExternalAGG and antigrav then
@@ -576,9 +575,11 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 spaceLaunch = true
                 AP.ToggleAltitudeHold()
             end
+            aptoggle = false
         else
             play("apOff", "AP")
             AP.ResetAutopilots(1)
+            if aptoggle == 2 then aptoggle = true end
         end
     end
 
@@ -950,7 +951,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if AtlasOrdered[i].name == myAutopilotTarget then
                     AutopilotTargetIndex = i
                     s.print("Index = "..AutopilotTargetIndex.." "..AtlasOrdered[i].name)          
-                    atlasupdate = true
+                    ATLAS.UpdateAutopilotTarget()
                     dbHud_1.setStringValue("SPBAutopilotTargetName", "SatNavNotChanged")
                     break            
                 end     
@@ -1260,7 +1261,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 AP.BrakeToggle()
             end
             if Autopilot then
-                AP.ToggleAutopilot()
+                if not aptoggle then aptoggle = true end
             end
         end
         LastIsWarping = isWarping
@@ -1324,13 +1325,13 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 finalLand = true
             else
                 spaceLand = false
-                AP.ToggleAutopilot()
+                if not aptoggle then aptoggle = true end
             end
         end
 
         if finalLand and CustomTarget and (coreAltitude < (HoldAltitude + 250) and coreAltitude > (HoldAltitude - 250)) and ((velMag*3.6) > (adjustedAtmoSpeedLimit-250)) and mabs(vSpd) < 25 and atmosDensity >= 0.1
             and (CustomTarget.position-worldPos):len() > 2000 + coreAltitude then -- Only engage if far enough away to be able to turn back for it
-                AP.ToggleAutopilot()
+                if not aptoggle then aptoggle = true end
             finalLand = false
         end
 
@@ -1857,7 +1858,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                     if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                             if pvpDist < lastPvPDist and pvpDist > 2000 then
-                                AP.ToggleAutopilot()
+                                if not aptoggle then aptoggle = true end
                                 msgText = "Autopilot cancelled to prevent crossing PvP Line" 
                                 BrakeIsOn = "PvP Prevent"
                                 lastPvPDist = pvpDist
@@ -1897,11 +1898,10 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 end
                 if (CustomTarget and CustomTarget.planetname == "Space" and velMag < 50) then
                     if #apRoute>0 then
-                        table.remove(apRoute,1)
+                        if not aptoggle then table.remove(apRoute,1) end
                         if #apRoute>0 then
                             BrakeIsOn = false
-                            AP.ToggleAutopilot()
-                            AP.ToggleAutopilot()
+                            if not aptoggle then aptoggle = 2 end
                             return
                         end
                     end
@@ -1961,7 +1961,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                     if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                         if pvpDist < lastPvPDist and pvpDist > 2000 then 
-                            AP.ToggleAutopilot()
+                            if not aptoggle then aptoggle = true end
                             msgText = "Autopilot cancelled to prevent crossing PvP Line" 
                             BrakeIsOn = "Prevent PvP"
                             lastPvPDist = pvpDist
@@ -2318,10 +2318,9 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                             (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99  or VectorStatus == "Finalizing Approach")) then 
                         VectorStatus = "Finalizing Approach" 
                         if #apRoute>0 then
-                            table.remove(apRoute,1)
+                            if not aptoggle then table.remove(apRoute,1) end
                             if #apRoute>0 then
-                                AP.ToggleAutopilot()
-                                AP.ToggleAutopilot()
+                                if not aptoggle then aptoggle = 2 end
                                 return
                             end
                         end

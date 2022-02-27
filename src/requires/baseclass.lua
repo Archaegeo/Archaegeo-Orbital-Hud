@@ -552,6 +552,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             u.setTimer("tenthSecond", 1/10)
             u.setTimer("fiveSecond", 5) 
             if shield_1 then u.setTimer("shieldTick", apTickRate) end
+            if userBase then PROGRAM.ExtraOnStart() end
             play("start","SU")
         end)
         coroutine.resume(beginSetup)
@@ -589,12 +590,14 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                 s.setScreen(content) 
             end
             LastContent = content
+            if userBase then PROGRAM.ExtraOnUpdate() end
         end
     end
 
     function program.onFlush()
         if SetupComplete then
             AP.onFlush()
+            if userBase then PROGRAM.ExtraOnFlush() end
         end
     end
 
@@ -631,6 +634,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         end
         if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
         s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank"))
+        if userBase then PROGRAM.ExtraOnStop() end
         play("stop","SU")
     end
 
