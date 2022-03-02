@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.724
+VERSION_NUMBER = 0.725
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -2488,7 +2488,7 @@ VERSION_NUMBER = 0.724
                             newContent[#newContent + 1] = svgText( warningX, apY + 80,"Throttle Up and Disengage Brake For Takeoff", "crit")
                         end
                     else
-                        newContent[#newContent + 1] = svgText(warningX, apY, "Altitude Hold: ".. displayText, "warn")
+                        newContent[#newContent + 1] = svgText(warningX, apY, "Altitude Hold: ".. stringf("%.1fm", HoldAltitude), "warn")
                     end
                 end
                 if VertTakeOff and (antigrav ~= nil and antigrav) then
@@ -5199,7 +5199,7 @@ VERSION_NUMBER = 0.724
             orbitPitch = nil
             orbitRoll = nil
             OrbitTicks = 0
-            if atmosDensity == 0 then
+            if not inAtmo then
                 if IntoOrbit then
                     play("orOff", "AP")
                     IntoOrbit = false
@@ -5296,9 +5296,9 @@ VERSION_NUMBER = 0.724
                 end
             end
             local routeOrbit = false
-            if (time - apDoubleClick) < 1.5 and atmosDensity > 0 then
+            if (time - apDoubleClick) < 1.5 and inAtmo then
                 if not SpaceEngines then
-                    if atmosDensity > 0 then
+                    if inAtmo then
                         HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude
                         play("11","EP")
                         apDoubleClick = -1
@@ -5310,7 +5310,7 @@ VERSION_NUMBER = 0.724
                         return
                     end
                 elseif planet.hasAtmosphere then
-                    if atmosDensity > 0 then
+                    if inAtmo then
                         HoldAltitude = planet.noAtmosphericDensityAltitude + LowOrbitHeight
                         play("orH","OH")
                     end
@@ -5347,7 +5347,7 @@ VERSION_NUMBER = 0.724
                     SpaceTarget = (CustomTarget.planetname == "Space")
                     if SpaceTarget then
                         play("apSpc", "AP")
-                        if atmosDensity ~= 0 then 
+                        if inAtmo then 
                             spaceLaunch = true
                             AP.ToggleAltitudeHold()
                         else
@@ -5355,7 +5355,7 @@ VERSION_NUMBER = 0.724
                         end
                     elseif planet.name  == CustomTarget.planetname then
                         StrongBrakes = true
-                        if atmosDensity > 0 then
+                        if inAtmo then
                             if not VectorToTarget then
                                 play("vtt", "AP")
                                 ToggleVectorToTarget(SpaceTarget)
@@ -5382,14 +5382,14 @@ VERSION_NUMBER = 0.724
                         play("apP", "AP")
                         RetrogradeIsOn = false
                         ProgradeIsOn = false
-                        if atmosDensity ~= 0 then 
+                        if inAtmo then 
                             spaceLaunch = true
                             AP.ToggleAltitudeHold() 
                         else
                             Autopilot = true
                         end
                     end
-                elseif atmosDensity == 0 then -- Planetary autopilot
+                elseif not inAtmo then -- Planetary autopilot
                     if CustomTarget == nil and (autopilotTargetPlanet.name == planet.name and nearPlanet) and not IntoOrbit then
                         WaypointSet = false
                         OrbitAchieved = false
@@ -5484,7 +5484,7 @@ VERSION_NUMBER = 0.724
         function ap.ToggleAltitudeHold()  -- Toggle Altitude Hold mode on and off
             if (time - ahDoubleClick) < 1.5 then
                 if planet.hasAtmosphere  then
-                    if atmosDensity > 0 then
+                    if inAtmo then
     
                         HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude
                         play("11","EP")
@@ -5505,7 +5505,7 @@ VERSION_NUMBER = 0.724
             else
                 ahDoubleClick = time
             end
-            if nearPlanet and atmosDensity == 0 then
+            if nearPlanet and not inAtmo then
                 OrbitTargetOrbit = coreAltitude
                 OrbitTargetSet = true
                 orbitAligned = true
@@ -5698,7 +5698,7 @@ VERSION_NUMBER = 0.724
                         mousePause = false
                     end
                 elseif AltIsOn then
-                    if atmosDensity > 0 or Reentry then
+                    if inAtmo or Reentry then
                         adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
                     elseif Autopilot then
                         MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 8333.00)
@@ -5962,11 +5962,11 @@ VERSION_NUMBER = 0.724
                 -- autoRoll on AND adjustedRoll is big enough AND player is not rolling
                 local currentRollDelta = mabs(targetRoll-adjustedRoll)
                 if ((( ProgradeIsOn or Reentry or BrakeLanding or spaceLand or AltitudeHold or IntoOrbit) and currentRollDelta > 0) or
-                    (atmosDensity > 0.0 and currentRollDelta < autoRollRollThreshold and autoRollPreference))  
+                    (inAtmo and currentRollDelta < autoRollRollThreshold and autoRollPreference))  
                     and finalRollInput == 0 and mabs(adjustedPitch) < 85 then
                     local targetRollDeg = targetRoll
                     local rollFactor = autoRollFactor
-                    if atmosDensity == 0 then
+                    if not inAtmo then
                         rollFactor = rollFactor/4 -- Better or worse, you think?
                         targetRoll = 0 -- Always roll to 0 out of atmo
                         targetRollDeg = 0
@@ -5990,7 +5990,8 @@ VERSION_NUMBER = 0.724
     
         -- Start old APTick Code 
     
-            inAtmo = (atmosphere() > 0)
+            inAtmo = false or (coreAltitude < planet.noAtmosphericDensityAltitude )
+    
             atmosDensity = atmosphere()
             coreAltitude = c.getAltitude()
             abvGndDet = AboveGroundLevel()
@@ -6043,8 +6044,8 @@ VERSION_NUMBER = 0.724
             if sivl == 0 then
                 if isRemote() == 1 and holdingShift then
                     if not Animating then
-                        simulatedX = uclamp(simulatedX + deltaX,-resolutionWidth/2,resolutionWidth/2)
-                        simulatedY = uclamp(simulatedY + deltaY,-resolutionHeight/2,resolutionHeight/2)
+                        simulatedX = uclamp(simulatedX + deltaX/2,-resolutionWidth/2,resolutionWidth/2)
+                        simulatedY = uclamp(simulatedY + deltaY/2,-resolutionHeight/2,resolutionHeight/2)
                     end
                 else
                     simulatedX = 0
@@ -6052,8 +6053,8 @@ VERSION_NUMBER = 0.724
                     -- Except of course autopilot, which is later.
                 end
             else
-                simulatedX = uclamp(simulatedX + deltaX,-resolutionWidth/2,resolutionWidth/2)
-                simulatedY = uclamp(simulatedY + deltaY,-resolutionHeight/2,resolutionHeight/2)
+                simulatedX = uclamp(simulatedX + deltaX/2,-resolutionWidth/2,resolutionWidth/2)
+                simulatedY = uclamp(simulatedY + deltaY/2,-resolutionHeight/2,resolutionHeight/2)
                 distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
                 if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                     local dx,dy = 1,1
@@ -6106,7 +6107,7 @@ VERSION_NUMBER = 0.724
             end
             LastIsWarping = isWarping
     
-            if inAtmo and atmosDensity > 0.09 then
+            if atmosDensity > 0.09 then
                 if velMag > (adjustedAtmoSpeedLimit / 3.6) and not AtmoSpeedAssist and not speedLimitBreaking then
                         BrakeIsOn = "SpdLmt"
                         speedLimitBreaking  = true
@@ -6158,7 +6159,7 @@ VERSION_NUMBER = 0.724
             end
     
             if not ProgradeIsOn and spaceLand and not IntoOrbit then 
-                if atmosDensity == 0 then 
+                if not inAtmo then 
                     if spaceLand ~= 2 then reentryMode = true end
                     AP.BeginReentry()
                     spaceLand = false
@@ -6220,7 +6221,7 @@ VERSION_NUMBER = 0.724
                         VtPitch = 0
                         BrakeIsOn = false
                         upAmount = 20
-                    elseif atmosDensity < 0.08 and atmosDensity > 0 then
+                    elseif atmosDensity < 0.08 and inAtmo then
                         BrakeIsOn = false
                         if SpaceEngineVertDn then
                             VtPitch = 0
@@ -6258,6 +6259,15 @@ VERSION_NUMBER = 0.724
             end
     
             if IntoOrbit then
+                local function orbitCheck()
+                    if (orbit.periapsis.altitude >= OrbitTargetOrbit*0.99 and orbit.apoapsis.altitude >= OrbitTargetOrbit*0.99 and 
+                                orbit.periapsis.altitude < orbit.apoapsis.altitude and orbit.periapsis.altitude*1.05 >= orbit.apoapsis.altitude) and 
+                                mabs(OrbitTargetOrbit - coreAltitude) < 1000 then
+                        return true
+                    else
+                        return false
+                    end
+                end
                 local targetVec
                 local yawAligned = false
                 local orbitHeightString = getDistanceDisplayString(OrbitTargetOrbit)
@@ -6327,7 +6337,9 @@ VERSION_NUMBER = 0.724
                         local brakeDistance, _ =  Kinematic.computeDistanceAndTime(velMag, adjustedAtmoSpeedLimit/3.6, coreMass, 0, 0, LastMaxBrake)
                         if OrbitAchieved and targetVec:len() > 15000+brakeDistance+coreAltitude then -- Triggers when we get close to passing it or within 15km+height I guess
                             orbitMsg = "Orbiting to Target"
-                            if (coreAltitude - 100) <= OrbitTargetPlanet.noAtmosphericDensityAltitude or  (travelTime> orbit.timeToPeriapsis and  orbit.periapsis.altitude  < OrbitTargetPlanet.noAtmosphericDensityAltitude) then 
+                            if (coreAltitude - 100) <= OrbitTargetPlanet.noAtmosphericDensityAltitude or  (travelTime> orbit.timeToPeriapsis and  orbit.periapsis.altitude  < OrbitTargetPlanet.noAtmosphericDensityAltitude) or 
+                                (not orbitCheck() and orbit.eccentricity > 0.1) then 
+                                msgText = "Re-Aligning Orbit"
                                 OrbitAchieved = false 
                             end
                         elseif OrbitAchieved or targetVec:len() < 15000+brakeDistance+coreAltitude then
@@ -6346,8 +6358,7 @@ VERSION_NUMBER = 0.724
                     end
                     if orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.eccentricity < 1 and coreAltitude > OrbitTargetOrbit*0.9 and coreAltitude < OrbitTargetOrbit*1.4 then
                         if orbit.apoapsis ~= nil then
-                            if (orbit.periapsis.altitude >= OrbitTargetOrbit*0.99 and orbit.apoapsis.altitude >= OrbitTargetOrbit*0.99 and 
-                                orbit.periapsis.altitude < orbit.apoapsis.altitude and orbit.periapsis.altitude*1.05 >= orbit.apoapsis.altitude) or OrbitAchieved then -- This should get us a stable orbit within 10% with the way we do it
+                            if orbitCheck() or OrbitAchieved then -- This should get us a stable orbit within 10% with the way we do it
                                 if OrbitAchieved then
                                     BrakeIsOn = false
                                     cmdT = 0
@@ -6431,7 +6442,7 @@ VERSION_NUMBER = 0.724
                 end
             end
     
-            if Autopilot and atmosDensity == 0 and not spaceLand then
+            if Autopilot and not inAtmo and not spaceLand then
                 local function finishAutopilot(msg, orbit)
                     s.print(msg)
                     BrakeIsOn = false
@@ -6859,7 +6870,7 @@ VERSION_NUMBER = 0.724
                     -- If it's not aligned yet, don't try to burn yet.
                 end
                 -- If we accidentally hit atmo while autopiloting to a custom target, cancel it and go straight to pulling up
-            elseif Autopilot and (CustomTarget ~= nil and CustomTarget.planetname ~= "Space" and atmosDensity > 0) then
+            elseif Autopilot and (CustomTarget ~= nil and CustomTarget.planetname ~= "Space" and inAtmo) then
                 msgText = "Autopilot complete, starting reentry"
                 play("apCom", "AP")
                 AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
@@ -6933,7 +6944,7 @@ VERSION_NUMBER = 0.724
                 else
                     curBrake = LastMaxBrake
                 end
-                if atmosDensity < 0.01 then
+                if not inAtmo then
                     curBrake = LastMaxBrake -- Assume space brakes
                 end
     
@@ -6967,7 +6978,7 @@ VERSION_NUMBER = 0.724
                 if AutoTakeoff then velMultiplier = uclamp(velMag/100,0.1,1) end
                 local targetPitch = (utils.smoothstep(altDiff, -minmax, minmax) - 0.5) * 2 * MaxPitch * velMultiplier
     
-                            -- atmosDensity == 0 and
+                            -- not inAtmo and
                 if not Reentry and not spaceLand and not VectorToTarget and constructForward:dot(constructVelocity:normalize()) < 0.99 then
                     -- Widen it up and go much harder based on atmo level if we're exiting atmo and velocity is keeping up with the nose
                     -- I.e. we have a lot of power and need to really get out of atmo with that power instead of feeding it to speed
@@ -7045,7 +7056,7 @@ VERSION_NUMBER = 0.724
                 if velMag > minAutopilotSpeed and not spaceLaunch and not VectorToTarget and not BrakeLanding and ForceAlignment then -- When do we even need this, just alt hold? lol
                     AlignToWorldVector(vec3(constructVelocity))
                 end
-                if ReversalIsOn or ((VectorToTarget or spaceLaunch) and AutopilotTargetIndex > 0 and atmosDensity > 0.01) then
+                if ReversalIsOn or ((VectorToTarget or spaceLaunch) and AutopilotTargetIndex > 0 and inAtmo) then
                     local targetVec
                     if ReversalIsOn then
                         if type(ReversalIsOn) == "table" then
@@ -7065,7 +7076,7 @@ VERSION_NUMBER = 0.724
     
                     local targetYaw = math.deg(signedRotationAngle(worldVertical:normalize(),constructVelocity,targetVec))*2
                     local rollRad = math.rad(mabs(adjustedRoll))
-                    if velMag > minRollVelocity and atmosDensity > 0.01 then
+                    if velMag > minRollVelocity and inAtmo then
                         local rollminmax = 1000+velMag -- Roll should taper off within 1km instead of 100m because it's aggressive
                         -- And should also very aggressively use vspd so it can counteract high rates of ascent/descent
                         -- Otherwise this matches the formula to calculate targetPitch
@@ -7116,7 +7127,7 @@ VERSION_NUMBER = 0.724
                         return
                     end
     
-                    if not stalling and velMag > minRollVelocity and atmosDensity > 0.01 then
+                    if not stalling and velMag > minRollVelocity and inAtmo then
                         if (yawPID == nil) then
                             yawPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
                         end
@@ -7126,13 +7137,13 @@ VERSION_NUMBER = 0.724
                     elseif (inAtmo and abvGndDet > -1 or velMag < minRollVelocity) then
     
                         AlignToWorldVector(targetVec) -- Point to the target if on the ground and 'stalled'
-                    elseif stalling and atmosDensity > 0.01 then
+                    elseif stalling and inAtmo then
                         -- Do this if we're yaw stalling
-                        if (currentYaw < -YawStallAngle or currentYaw > YawStallAngle) and atmosDensity > 0.01 then
+                        if (currentYaw < -YawStallAngle or currentYaw > YawStallAngle) and inAtmo then
                             AlignToWorldVector(constructVelocity) -- Otherwise try to pull out of the stall, and let it pitch into it
                         end
                         -- Only do this if we're stalled for pitch
-                        if (currentPitch < -PitchStallAngle or currentPitch > PitchStallAngle) and atmosDensity > 0.01 then
+                        if (currentPitch < -PitchStallAngle or currentPitch > PitchStallAngle) and inAtmo then
                             targetPitch = uclamp(adjustedPitch-currentPitch,adjustedPitch - PitchStallAngle*0.80, adjustedPitch + PitchStallAngle*0.80) -- Just try to get within un-stalling range to not bounce too much
                         end
                     end
@@ -7190,7 +7201,7 @@ VERSION_NUMBER = 0.724
                         end
                         LastDistanceToTarget = distanceToTarget
                     end
-                elseif VectorToTarget and atmosDensity == 0 and HoldAltitude > planet.noAtmosphericDensityAltitude and not (spaceLaunch or Reentry) then
+                elseif VectorToTarget and not inAtmo and HoldAltitude > planet.noAtmosphericDensityAltitude and not (spaceLaunch or Reentry) then
                     if CustomTarget ~= nil and autopilotTargetPlanet.name == planet.name then
                         local targetVec = CustomTarget.position - worldPos
                         local targetAltitude = planet:getAltitude(CustomTarget.position)
@@ -7218,7 +7229,7 @@ VERSION_NUMBER = 0.724
                 end
     
                 -- Altitude hold and AutoTakeoff orbiting
-                if atmosDensity == 0 and (AltitudeHold and HoldAltitude > planet.noAtmosphericDensityAltitude) and not (spaceLaunch or IntoOrbit or Reentry ) then
+                if not inAtmo and (AltitudeHold and HoldAltitude > planet.noAtmosphericDensityAltitude) and not (spaceLaunch or IntoOrbit or Reentry ) then
                     if not OrbitAchieved and not IntoOrbit then
                         OrbitTargetOrbit = HoldAltitude -- If AP/VectorToTarget, AP already set this.  
                         OrbitTargetSet = true
@@ -7229,7 +7240,7 @@ VERSION_NUMBER = 0.724
                     end
                 end
     
-                if stalling and atmosDensity > 0.01 and abvGndDet == -1 and velMag > minRollVelocity and VectorStatus ~= "Finalizing Approach" then
+                if stalling and inAtmo and abvGndDet == -1 and velMag > minRollVelocity and VectorStatus ~= "Finalizing Approach" then
                     AlignToWorldVector(constructVelocity) -- Otherwise try to pull out of the stall, and let it pitch into it
                     targetPitch = uclamp(adjustedPitch-currentPitch,adjustedPitch - PitchStallAngle*0.80, adjustedPitch + PitchStallAngle*0.80) -- Just try to get within un-stalling range to not bounce too much
                 end
@@ -7418,7 +7429,7 @@ VERSION_NUMBER = 0.724
                             cmdT = 0
                             BrakeIsOn = "ATO Space"
                         end --coreAltitude > 75000
-                    elseif spaceLaunch and atmosDensity == 0 and autopilotTargetPlanet ~= nil and (intersectBody == nil or intersectBody.name == autopilotTargetPlanet.name) then
+                    elseif spaceLaunch and not inAtmo and autopilotTargetPlanet ~= nil and (intersectBody == nil or intersectBody.name == autopilotTargetPlanet.name) then
                         Autopilot = true
                         spaceLaunch = false
                         AltitudeHold = false
@@ -7434,15 +7445,15 @@ VERSION_NUMBER = 0.724
                 local onGround = abvGndDet > -1
                 local pitchToUse = adjustedPitch
     
-                if (VectorToTarget or spaceLaunch or ReversalIsOn) and not onGround and velMag > minRollVelocity and atmosDensity > 0.01 then
+                if (VectorToTarget or spaceLaunch or ReversalIsOn) and not onGround and velMag > minRollVelocity and inAtmo then
                     local rollRad = math.rad(mabs(adjustedRoll))
                     pitchToUse = adjustedPitch*mabs(math.cos(rollRad))+currentPitch*math.sin(rollRad)
                 end
                 -- TODO: These clamps need to be related to roll and YawStallAngle, we may be dealing with yaw?
                 local pitchDiff = uclamp(targetPitch-pitchToUse, -PitchStallAngle*0.80, PitchStallAngle*0.80)
-                if atmosDensity < 0.01 and VectorToTarget then
+                if not inAtmo and VectorToTarget then
                     pitchDiff = uclamp(targetPitch-pitchToUse, -85, MaxPitch) -- I guess
-                elseif atmosDensity < 0.01 then
+                elseif not inAtmo then
                     pitchDiff = uclamp(targetPitch-pitchToUse, -MaxPitch, MaxPitch) -- I guess
                 end
                 if (((mabs(adjustedRoll) < 5 or VectorToTarget or ReversalIsOn)) or BrakeLanding or onGround or AltitudeHold) then
@@ -7525,7 +7536,7 @@ VERSION_NUMBER = 0.724
                 end
                 brakePID:inject(constructVelocity:len() - (adjustedAtmoSpeedLimit/3.6) - addThrust) 
                 local calculatedBrake = uclamp(brakePID:get(),0,1)
-                if (atmosDensity > 0 and vSpd < -80) or atmosDensity > 0.005 then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
+                if (inAtmo and vSpd < -80) or atmosDensity > 0.005 then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
                     brakeInput2 = calculatedBrake
                 end
                 --if calculatedThrottle < 0 then
@@ -8401,7 +8412,7 @@ VERSION_NUMBER = 0.724
             elseif command == "/addlocation" or string.find(text, "::pos") ~= nil then
                 local temp = false
                 local savename = "0-Temp"
-                if arguement == nil or arguement == "" then
+                if arguement == nil or arguement == "" or command ~= "/addlocation" then
                     arguement = command
                     temp = true
                 end
@@ -8992,7 +9003,6 @@ VERSION_NUMBER = 0.724
                             planet.name = planet.name[1]
                     
                             planet.noAtmosphericDensityAltitude = planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
-                            if planet.name == "Lacobus" then planet.noAtmosphericDensityAltitude = 12510 end
                             planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness)
                                     
                             planet.planetarySystemId = galaxyId
@@ -9022,6 +9032,7 @@ VERSION_NUMBER = 0.724
                     Kep = Keplers(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
     
                     ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round)
+                    planet = galaxyReference[0]:closestBody(c.getConstructWorldPos())
                 end
     
             SetupComplete = false
@@ -9075,13 +9086,13 @@ VERSION_NUMBER = 0.724
                 -- Start timers
                 coroutine.yield()
     
-                u.setTimer("apTick", apTickRate)
-                if radar_1 then u.setTimer("radarTick", apTickRate) end
+                u.setTimer("apTick", 0.0166667)
+                if radar_1 then u.setTimer("radarTick", 0.0166667) end
                 u.setTimer("hudTick", hudTickRate)
                 u.setTimer("oneSecond", 1)
                 u.setTimer("tenthSecond", 1/10)
                 u.setTimer("fiveSecond", 5) 
-                if shield_1 then u.setTimer("shieldTick", apTickRate) end
+                if shield_1 then u.setTimer("shieldTick", 0.0166667) end
                 if userBase then PROGRAM.ExtraOnStart() end
                 play("start","SU")
             end)
