@@ -1,5 +1,15 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.725
+- Fix: Fixed mouse cursor rate when using Buttons or virtual joystick due to new flush calculations.
+- Enhance: Prevent low Orbit hops resulting in drifting on out to space.  Orbit will re-establish if you drift out of orbit 
+    (line turns purple and you exceed initial orbit height) while orbiting to target.
+- Change: Altitude Hold altitude will show in meters, not rounded (for ease of comparison with AGG height and others)
+- Change: Atmosphere is now determined by the official atlas.lua in all cases as NQ determined that even though planets like 
+    Thades has atmosphere() report > 0 till 39000 it is negligble at 31200.  This means alt-4-4 will work on planets like 
+    Thades now and your low orbit height will be lower on some planets.
+- Fix: Issue with planet not being set causing error when sitting down (deep space issue)
+
 Version 1.724 - MAJOR REFACTOR OF AP FOR RELIABILITY
 - Moved almost all AP functionality thats allowed into flush to allow for more reliable performance.
 - Added support for user extra functionality for OnStart, OnStop, OnFlush, and OnUpdate - This is instead of 

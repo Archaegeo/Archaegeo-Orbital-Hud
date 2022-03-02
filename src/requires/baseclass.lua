@@ -462,7 +462,6 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                         planet.name = planet.name[1]
                 
                         planet.noAtmosphericDensityAltitude = planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
-                        if planet.name == "Lacobus" then planet.noAtmosphericDensityAltitude = 12510 end
                         planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness)
                                 
                         planet.planetarySystemId = galaxyId
@@ -492,6 +491,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                 Kep = Keplers(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
 
                 ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round)
+                planet = galaxyReference[0]:closestBody(c.getConstructWorldPos())
             end
 
         SetupComplete = false
@@ -545,13 +545,13 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             -- Start timers
             coroutine.yield()
 
-            u.setTimer("apTick", apTickRate)
-            if radar_1 then u.setTimer("radarTick", apTickRate) end
+            u.setTimer("apTick", 0.0166667)
+            if radar_1 then u.setTimer("radarTick", 0.0166667) end
             u.setTimer("hudTick", hudTickRate)
             u.setTimer("oneSecond", 1)
             u.setTimer("tenthSecond", 1/10)
             u.setTimer("fiveSecond", 5) 
-            if shield_1 then u.setTimer("shieldTick", apTickRate) end
+            if shield_1 then u.setTimer("shieldTick", 0.0166667) end
             if userBase then PROGRAM.ExtraOnStart() end
             play("start","SU")
         end)

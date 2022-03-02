@@ -641,7 +641,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
         elseif command == "/addlocation" or string.find(text, "::pos") ~= nil then
             local temp = false
             local savename = "0-Temp"
-            if arguement == nil or arguement == "" then
+            if arguement == nil or arguement == "" or command ~= "/addlocation" then
                 arguement = command
                 temp = true
             end
