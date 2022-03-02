@@ -844,7 +844,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                         newContent[#newContent + 1] = svgText( warningX, apY + 80,"Throttle Up and Disengage Brake For Takeoff", "crit")
                     end
                 else
-                    newContent[#newContent + 1] = svgText(warningX, apY, "Altitude Hold: ".. displayText, "warn")
+                    newContent[#newContent + 1] = svgText(warningX, apY, "Altitude Hold: ".. stringf("%.1fm", HoldAltitude), "warn")
                 end
             end
             if VertTakeOff and (antigrav ~= nil and antigrav) then
