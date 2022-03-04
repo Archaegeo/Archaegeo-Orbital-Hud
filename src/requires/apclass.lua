@@ -102,6 +102,10 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
             local hovGndDet = hoverDetectGround()  
             local groundDistance = -1
+            if antigrav and antigrav.getState() == 1 and not ExternalAGG and velMag < minAutopilotSpeed then
+                local diffAgg = mabs(coreAltitude - antigrav.getBaseAltitude())
+                if diffAgg < 50 then return diffAgg end
+            end
             if telemeter_1 then 
                 groundDistance = telemeter_1.getDistance()
             end
@@ -711,12 +715,13 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
             if antigravOn and not ExternalAGG then 
                 local gBA = antigrav.getBaseAltitude()
-                if CustomTarget.agg and CustomTarget.agg > coreAltitude then 
+                if VectorToTarget and CustomTarget.agg and CustomTarget.agg > coreAltitude then 
                     HoldAltitude = CustomTarget.agg
-                else
+                elseif AutoTakeoff then
                     HoldAltitude = gBA
                 end
-                if mabs(coreAltitude-gBA) < 50 and velMag < 20 then 
+                if mabs(coreAltitude-gBA) < 100 and velMag < 20 then 
+                    HoldAltitude = gBA
                     BrakeIsOn = "AGG Hold"
                     cmdT = 0 
                 end
@@ -2127,7 +2132,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             -- Or 100m above and -30m/s vspeed.  So (Hold-Core) - vspd
             -- Scenario 1: Hold-c = -100.  Scen2: Hold-c = 100
             -- 1: 100-30 = 70     2: -100--30 = -70
-            if not ExternalAGG and antigravOn and not Reentry and HoldAltitude < antigrav.getBaseAltitude() then HoldAltitude = antigrav.getBaseAltitude() end
+            --if not ExternalAGG and antigravOn and not Reentry and HoldAltitude < antigrav.getBaseAltitude() then p("HERE3") HoldAltitude = antigrav.getBaseAltitude() end
             local altDiff = (HoldAltitude - coreAltitude) - vSpd -- Maybe a multiplier for vSpd here...
             -- This may be better to smooth evenly regardless of HoldAltitude.  Let's say, 2km scaling?  Should be very smooth for atmo
             -- Even better if we smooth based on their velocity
@@ -2442,6 +2447,9 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                     else
                         BrakeIsOn = "BL Align Hzn"
                     end
+                    if aggBase and mabs(coreAltitude - aggBase) < 250 then
+                        BrakeIsOn = "AGG Align"
+                    end
                 else
                     local skipLandingRate = false
                     local distanceToStop = 30 
@@ -2520,14 +2528,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
 
 
                     groundDistance = abvGndDet
-                    if groundDistance == -1 and aggBase and mabs(coreAltitude - aggBase) < 100 then
-                        if not alignHeading then
-                            BrakeLanding = false
-                            autoRoll = autoRollPreference 
-                            apBrk = false
-                        end
-                        BrakeIsOn = "BL AGG Comp"
-                    elseif groundDistance > -1 then 
+                    if groundDistance > -1 then 
                             if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading then -- Or if they start going back up
                                 BrakeLanding = false
                                 AltitudeHold = false
@@ -2566,7 +2567,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                     intersectBody, nearSide, farSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (AutopilotTargetCoords-worldPos):normalize(), function(body) return (body.radius+body.noAtmosphericDensityAltitude) end)
                 end
                 if antigravOn and not spaceLaunch then
-                    if coreAltitude >= (HoldAltitude-50) then
+                    if coreAltitude >= (HoldAltitude-50) and velMag > minAutopilotSpeed then
                         AutoTakeoff = false
                         if not Autopilot and not VectorToTarget then
                             BrakeIsOn = "ATO Agg Arrive"
