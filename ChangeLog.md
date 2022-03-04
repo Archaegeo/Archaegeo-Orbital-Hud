@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.726
+- Enhance: AGG on, if not moving, agg base altitude will be treated like ground level by hud.
+- Fix: AGG on, will not avoid braking if still aligning on AP arrival.
+- Fix: AGG on, Alt-Hold settting to current singularity height if not already in alt-hold
+- Fix: AGG on, Alt-C and Alt-Spacebar will lock alt-hold to AGG Target if they start within 10m (fixed alt-c not working)
+- Fix: AGG on, Parked at AGG height, will not release brakes when you alt-4 (acts like takeoff, throttle up and disengage brakes)
+
 Version 1.725
 - Fix: Fixed mouse cursor rate when using Buttons or virtual joystick due to new flush calculations.
 - Enhance: Prevent low Orbit hops resulting in drifting on out to space.  Orbit will re-establish if you drift out of orbit 
