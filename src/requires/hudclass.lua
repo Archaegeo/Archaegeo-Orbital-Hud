@@ -93,6 +93,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local tankMassEmpty = 4
             local tankLastMass = 5
             local tankLastTime = 6
+            local tankSlotIndex = 7
             local slottedTankType = ""
             local slottedTanks = 0
             local fuelUpdateDelay = (mfloor(1 / apTickRate) * 2)*hudTickRate
@@ -128,8 +129,8 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             slottedTanks = _G[slottedTankType .. "_size"]
             if (#tankTable > 0) then
                 for i = 1, #tankTable do
-                    local name = string.sub(tankTable[i][tankName], 1, 12)
-                    local slottedIndex = 0
+                    local name = tankTable[i][tankName]
+                    local slottedIndex = tankTable[i][tankSlotIndex]
                     for j = 1, slottedTanks do
                         if tankTable[i][tankName] == jdecode(u[slottedTankType .. "_" .. j].getData()).name then
                             slottedIndex = j
@@ -151,10 +152,9 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                         end
 
                         if slottedIndex ~= 0 then
-                            fuelPercentTable[i] = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
-                                                    .percentage
-                            fuelTimeLeftTable[i] = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
-                                                    .timeLeft
+                            local slotData = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
+                            fuelPercentTable[i] = slotData.percentage
+                            fuelTimeLeftTable[i] = slotData.timeLeft
                             if fuelTimeLeftTable[i] == "n/a" then
                                 fuelTimeLeftTable[i] = 0
                             end
@@ -2337,12 +2337,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
 
 
         if isRemote() == 0 or RemoteHud then
-            -- Draw this in freelook now that it's less intrusive
-            if nearPlanet then -- use real pitch, roll, and heading
-                DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
-            else -- use Relative Pitch and Relative Yaw
-                DrawRollLines (newContent, centerX, centerY, roll, bottomText, nearPlanet)
-            end
             if not IsInFreeLook() or brightHud then
                 if nearPlanet then -- use real pitch, roll, and heading
                     DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
@@ -3163,7 +3157,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         HUD.UpdatePipe()
         HUD.ExtraData(newContent)
         lastOdometerOutput = table.concat(newContent, "")
-        collectgarbage("collect")
     end
 
     function Hud.AnimateTick()
