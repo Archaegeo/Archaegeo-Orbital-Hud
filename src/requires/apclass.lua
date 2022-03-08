@@ -1,4 +1,4 @@
-function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
+function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, radar_1,
     mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
     navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq,
     getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)  
@@ -47,6 +47,8 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         local sba = false
         local aptoggle = false
         local myAutopilotTarget=""
+        local parseRadar = false
+
         local function GetAutopilotBrakeDistanceAndTime(speed)
             -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
             -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
@@ -248,38 +250,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 return false
             end
         end
-        local function checkCollision()
-            if collisionTarget and not BrakeLanding then
-                local body = collisionTarget[1]
-                local far, near = collisionTarget[2],collisionTarget[3] 
-                local collisionDistance = math.min(far, near or far)
-                local collisionTime = collisionDistance/velMag
-                local ignoreCollision = AutoTakeoff and (velMag < 42 or abvGndDet ~= -1)
-                local apAction = (AltitudeHold or VectorToTarget or LockPitch or Autopilot)
-                if apAction and not ignoreCollision and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
-                        BrakeIsOn = "Collision"
-                        apRoute = {}
-                        cmdT = 0
-                        if AltitudeHold then AP.ToggleAltitudeHold() end
-                        if LockPitch then AP.ToggleLockPitch() end
-                        msgText = "Autopilot Cancelled due to possible collision"
-                        if VectorToTarget or Autopilot then 
-                            if not aptoggle then aptoggle = true end
-                        end
-                        StrongBrakes = true
-                        BrakeLanding = true
-                        autoRoll = true
-                end
-                if collisionTime < 11 then 
-                    collisionAlertStatus = body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2)
-                else
-                    collisionAlertStatus = body.name.." collision "..FormatTimeString(collisionTime)
-                end
-                if collisionTime < 6 then play("alarm","AL",2) end
-            else
-                collisionAlertStatus = false
-            end
-        end
 
     function ap.clearAll()
         AutopilotAccelerating = false
@@ -354,7 +324,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             eLL = false
         end 
         if aptoggle then
-            AP.ToggleAutopilot(aptoggle)
+            AP.ToggleAutopilot()
         end
     end
 
@@ -749,6 +719,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             HoldAltitude = coreAltitude
             TargetSet = false
             apBrk = false
+            AutopilotStatus = "Aligning"
         end
         VectorToTarget = false
         AutoTakeoff = false
@@ -1068,6 +1039,40 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 return pitch
             end
 
+            local function checkCollision()
+                if collisionTarget and not BrakeLanding then
+                    local body = collisionTarget[1]
+                    local far, near = collisionTarget[2],collisionTarget[3] 
+                    local collisionDistance = math.min(far, near or far)
+                    local collisionTime = collisionDistance/velMag
+                    local ignoreCollision = AutoTakeoff and (velMag < 42 or abvGndDet ~= -1)
+                    local apAction = (AltitudeHold or VectorToTarget or LockPitch or Autopilot)
+                    if apAction and not ignoreCollision and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
+                        p("HERE1")
+                        BrakeIsOn = "Collision"
+                        apRoute = {}
+                        cmdT = 0
+                        if AltitudeHold then AP.ToggleAltitudeHold() end
+                        if LockPitch then AP.ToggleLockPitch() end
+                        msgText = "Autopilot Cancelled due to possible collision"
+                        s.print(body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2))
+                        AP.ResetAutopilots(1)
+                        StrongBrakes = true
+                        if inAtmo then BrakeLanding = true end
+                        autoRoll = true
+                        p("HERE2")
+                    end
+                    if collisionTime < 11 then 
+                        collisionAlertStatus = body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2)
+                    else
+                        collisionAlertStatus = body.name.." collision "..FormatTimeString(collisionTime)
+                    end
+                    if collisionTime < 6 then play("alarm","AL",2) end
+                else
+                    collisionAlertStatus = false
+                end
+            end
+
         if antigrav and not ExternalAGG then
             if not antigravOn and antigrav.getBaseAltitude() ~= AntigravTargetAltitude then 
                 sba = AntigravTargetAltitude
@@ -1162,8 +1167,13 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         abvGndDet = AboveGroundLevel()
         time = systime()
         lastApTickTime = time
-
-        if CollisionSystem then checkCollision() end
+        if radar_1 then
+            parseRadar = not parseRadar
+            if parseRadar then 
+                RADAR.UpdateRadar() 
+            end
+            if CollisionSystem then checkCollision() end
+        end
 
         if antigrav then
             antigravOn = (antigrav.getState() == 1)
@@ -1874,7 +1884,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                     if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                             if pvpDist < lastPvPDist and pvpDist > 2000 then
-                                if not aptoggle then aptoggle = true end
+                                AP.ResetAutopilots(1)
                                 msgText = "Autopilot cancelled to prevent crossing PvP Line" 
                                 BrakeIsOn = "PvP Prevent"
                                 lastPvPDist = pvpDist
@@ -2433,6 +2443,8 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                        (CustomTarget ~= nil and planet:getAltitude(CustomTarget.position) > aggBase) then 
                         aggBase = false 
                     end
+                else
+                    aggBase = false
                 end
                 if alignHeading then
                     if absHspd < 0.05 then
@@ -2532,12 +2544,14 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                             if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading then -- Or if they start going back up
                                 BrakeLanding = false
                                 AltitudeHold = false
-                                GearExtended = true
-                                if hasGear then
-                                    eLL = true
-                                    play("grOut","LG",1)
+                                if not aggBase then
+                                    GearExtended = true
+                                    if hasGear then
+                                        eLL = true
+                                        play("grOut","LG",1)
+                                    end
+                                    navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                                 end
-                                navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                                 upAmount = 0
                                 BrakeIsOn = "BL Complete"
                                 autoRoll = autoRollPreference 

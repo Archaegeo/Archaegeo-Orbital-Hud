@@ -6,7 +6,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
         local friendlies = {}
         local sizeMap = { XS = 13, S = 27, M = 55, L = 110, XL = 221}
         local knownContacts = {}
-        local radarContacts
+        local radarContacts = 0
         local target
         local data
         local numKnown
@@ -44,27 +44,6 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                 return t2
                 end
             end
-
-            local function getTrueWorldPos()
-                local function getLocalToWorldConverter()
-                    local v1 = c.getConstructWorldOrientationRight()
-                    local v2 = c.getConstructWorldOrientationForward()
-                    local v3 = c.getConstructWorldOrientationUp()
-                    local v1t = library.systemResolution3(v1, v2, v3, {1,0,0})
-                    local v2t = library.systemResolution3(v1, v2, v3, {0,1,0})
-                    local v3t = library.systemResolution3(v1, v2, v3, {0,0,1})
-                    return function(cref)
-                        return library.systemResolution3(v1t, v2t, v3t, cref)
-                    end
-                end
-                local cal = getLocalToWorldConverter()
-                local cWorldPos = c.getConstructWorldPos()
-                local pos = c.getElementPositionById(1)
-                local offsetPosition = {pos[1] , pos[2] , pos[3] }
-                local adj = cal(offsetPosition)
-                local adjPos = {cWorldPos[1] - adj[1], cWorldPos[2] - adj[2], cWorldPos[3] - adj[3]}
-                return adjPos
-            end
             
             local function updateVariables(construct, d, wp) -- Thanks to EasternGamer and Dimencia
                 local pts = construct.pts
@@ -80,11 +59,14 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                         y = y + ref[2]
                         z = z + ref[3]
                         local newPos = vec3(x,y,z)
-                        if not construct.lastPos then
-                            construct.center = newPos
-                        elseif (construct.lastPos - newPos):len() < 2 then
-                            construct.center = newPos
-                            construct.skipCalc = true
+                        construct.center = newPos
+                        if construct.lastPos then
+                            if (construct.lastPos - newPos):len() < 2 then
+                                local dtt = (newPos - vec3(wp)):len()
+                                if mabs(dtt - d) < 10 then
+                                    construct.skipCalc = true
+                                end
+                            end
                         end
                         construct.lastPos = newPos
                     end
@@ -102,7 +84,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
             local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
          
             if radarContacts > 0 then
-                local wp = getTrueWorldPos()
+                local wp = {worldPos["x"],worldPos["y"],worldPos["z"]}  --getTrueWorldPos()
                 local count, count2 = 0, 0
                 static, numKnown = 0, 0
                 for v in contactData do
@@ -113,8 +95,8 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                         table.insert(friendlies,id)
                     end
 
-                    local cType = radars[1].getConstructType(id)
                     if CollisionSystem then
+                        local cType = radars[1].getConstructType(id)
                         if (sz > 27 or AbandonedRadar) or cType == "static" or cType == "space" then
                             static = static + 1
                             local name = radars[1].getConstructName(id)
@@ -125,16 +107,15 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                                 construct = contacts[id]
                             end
                             if not construct.skipCalc then 
-                                updateVariables(construct, distance, wp) 
-                                count2 = count2 + 1
-                            end
-                            if construct.center then 
-                                if AbandonedRadar and radars[1].isConstructAbandoned(id) == 1 and not construct.abandoned then
+                                updateVariables(construct, distance, wp)
+                                if AbandonedRadar and not construct.abandoned and radars[1].isConstructAbandoned(id) == 1 and construct.center then
                                     play("abRdr", "RD")
-                                    s.print("Abandoned Construct: "..name.." ("..cType..") ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
+                                    s.print("Abandoned Construct: "..name.." ("..cType..") rough ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
                                     msgText = "Abandoned Radar Contact ("..cType..") detected"
                                     construct.abandoned = true
                                 end
+                                count2 = count2 + 1
+                            else
                                 table.insert(knownContacts, construct) 
                             end
                         end

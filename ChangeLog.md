@@ -1,5 +1,15 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.727 - Radar Refactor
+- Move radar to once every other flush call performance.  Greatly improved accuracy and timing to resolve position.
+- Fix: Radar known position.  Now only true if target pos if within 10m of radar distance to target 
+    It was reporting true on first check before due to the abandonded check.
+- Fix: Fixed collision action while collision detected in space.  Should no longer continue trying to AP and then collide over and over.
+NOTE: If your max brake distance > 2SU (radar range) or it doesnt resolve the contact in time (due to high speed) to brake, 
+    you'll still get warning to kiss your butt goodbye.
+- Fix: Fixed issue with `PreventPvP` not completely cancelling Autopilot when triggered approaching PvP line.
+
+
 Version 1.726
 - Enhance: AGG on, if not moving, agg base altitude will be treated like ground level by hud.
 - Fix: AGG on, will not avoid braking if still aligning on AP arrival.
