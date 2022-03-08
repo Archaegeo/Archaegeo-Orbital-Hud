@@ -389,20 +389,16 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                     s.freeze(0)
                 end
                 if hasGear then
-                    GearExtended = (Nav.control.isAnyLandingGearExtended() == 1)
-                    if GearExtended then
+                    if abvGndDet ~= -1 then
                         Nav.control.extendLandingGears()
                     else
                         Nav.control.retractLandingGears()
                     end
+                    GearExtended = (Nav.control.isAnyLandingGearExtended() == 1)
                 end
                 -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
                 if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 50) then
                     BrakeIsOn = "Startup"
-                    GearExtended = true
-                    if hasGear then
-                        Nav.control.extendLandingGears()
-                    end
                 else
                     BrakeIsOn = false
                 end
@@ -515,7 +511,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             ProcessElements()
             coroutine.yield() -- Give it some time to breathe before we do the rest
 
-            AP = APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1,
+            AP = APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, radar_1, 
                 mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
                 navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq, 
                 getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)
@@ -686,8 +682,6 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             HUD.hudtick()
         elseif timerId == "apTick" then -- Timer for all autopilot functions
             AP.APTick()
-        elseif timerId == "radarTick" then
-            RADAR.UpdateRadar()
         elseif timerId == "shieldTick" then
             SHIELD.shieldTick()
         elseif timerId == "tagTick" then
