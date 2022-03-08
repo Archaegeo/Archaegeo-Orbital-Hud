@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.726
+VERSION_NUMBER = 0.727
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -1266,7 +1266,7 @@ VERSION_NUMBER = 0.726
             local friendlies = {}
             local sizeMap = { XS = 13, S = 27, M = 55, L = 110, XL = 221}
             local knownContacts = {}
-            local radarContacts
+            local radarContacts = 0
             local target
             local data
             local numKnown
@@ -1304,27 +1304,6 @@ VERSION_NUMBER = 0.726
                     return t2
                     end
                 end
-    
-                local function getTrueWorldPos()
-                    local function getLocalToWorldConverter()
-                        local v1 = c.getConstructWorldOrientationRight()
-                        local v2 = c.getConstructWorldOrientationForward()
-                        local v3 = c.getConstructWorldOrientationUp()
-                        local v1t = library.systemResolution3(v1, v2, v3, {1,0,0})
-                        local v2t = library.systemResolution3(v1, v2, v3, {0,1,0})
-                        local v3t = library.systemResolution3(v1, v2, v3, {0,0,1})
-                        return function(cref)
-                            return library.systemResolution3(v1t, v2t, v3t, cref)
-                        end
-                    end
-                    local cal = getLocalToWorldConverter()
-                    local cWorldPos = c.getConstructWorldPos()
-                    local pos = c.getElementPositionById(1)
-                    local offsetPosition = {pos[1] , pos[2] , pos[3] }
-                    local adj = cal(offsetPosition)
-                    local adjPos = {cWorldPos[1] - adj[1], cWorldPos[2] - adj[2], cWorldPos[3] - adj[3]}
-                    return adjPos
-                end
                 
                 local function updateVariables(construct, d, wp) -- Thanks to EasternGamer and Dimencia
                     local pts = construct.pts
@@ -1340,11 +1319,14 @@ VERSION_NUMBER = 0.726
                             y = y + ref[2]
                             z = z + ref[3]
                             local newPos = vec3(x,y,z)
-                            if not construct.lastPos then
-                                construct.center = newPos
-                            elseif (construct.lastPos - newPos):len() < 2 then
-                                construct.center = newPos
-                                construct.skipCalc = true
+                            construct.center = newPos
+                            if construct.lastPos then
+                                if (construct.lastPos - newPos):len() < 2 then
+                                    local dtt = (newPos - vec3(wp)):len()
+                                    if mabs(dtt - d) < 10 then
+                                        construct.skipCalc = true
+                                    end
+                                end
                             end
                             construct.lastPos = newPos
                         end
@@ -1362,7 +1344,7 @@ VERSION_NUMBER = 0.726
                 local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
              
                 if radarContacts > 0 then
-                    local wp = getTrueWorldPos()
+                    local wp = {worldPos["x"],worldPos["y"],worldPos["z"]}  --getTrueWorldPos()
                     local count, count2 = 0, 0
                     static, numKnown = 0, 0
                     for v in contactData do
@@ -1373,8 +1355,8 @@ VERSION_NUMBER = 0.726
                             table.insert(friendlies,id)
                         end
     
-                        local cType = radars[1].getConstructType(id)
                         if CollisionSystem then
+                            local cType = radars[1].getConstructType(id)
                             if (sz > 27 or AbandonedRadar) or cType == "static" or cType == "space" then
                                 static = static + 1
                                 local name = radars[1].getConstructName(id)
@@ -1385,16 +1367,15 @@ VERSION_NUMBER = 0.726
                                     construct = contacts[id]
                                 end
                                 if not construct.skipCalc then 
-                                    updateVariables(construct, distance, wp) 
-                                    count2 = count2 + 1
-                                end
-                                if construct.center then 
-                                    if AbandonedRadar and radars[1].isConstructAbandoned(id) == 1 and not construct.abandoned then
+                                    updateVariables(construct, distance, wp)
+                                    if AbandonedRadar and not construct.abandoned and radars[1].isConstructAbandoned(id) == 1 and construct.center then
                                         play("abRdr", "RD")
-                                        s.print("Abandoned Construct: "..name.." ("..cType..") ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
+                                        s.print("Abandoned Construct: "..name.." ("..cType..") rough ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
                                         msgText = "Abandoned Radar Contact ("..cType..") detected"
                                         construct.abandoned = true
                                     end
+                                    count2 = count2 + 1
+                                else
                                     table.insert(knownContacts, construct) 
                                 end
                             end
@@ -1584,7 +1565,7 @@ VERSION_NUMBER = 0.726
         end   
     
         return Radar
-    end 
+    end
     local function ShieldClass(shield_1, stringmatch, mfloor) -- Everything related to radar but draw data passed to HUD Class.
         local Shield = {}
         local RCD = shield_1.getResistancesCooldown()
@@ -4838,7 +4819,7 @@ VERSION_NUMBER = 0.726
     
         return Hud
     end
-    local function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
+    local function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, radar_1,
         mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
         navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq,
         getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)  
@@ -4887,6 +4868,8 @@ VERSION_NUMBER = 0.726
             local sba = false
             local aptoggle = false
             local myAutopilotTarget=""
+            local parseRadar = false
+    
             local function GetAutopilotBrakeDistanceAndTime(speed)
                 -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
                 -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
@@ -5088,38 +5071,6 @@ VERSION_NUMBER = 0.726
                     return false
                 end
             end
-            local function checkCollision()
-                if collisionTarget and not BrakeLanding then
-                    local body = collisionTarget[1]
-                    local far, near = collisionTarget[2],collisionTarget[3] 
-                    local collisionDistance = math.min(far, near or far)
-                    local collisionTime = collisionDistance/velMag
-                    local ignoreCollision = AutoTakeoff and (velMag < 42 or abvGndDet ~= -1)
-                    local apAction = (AltitudeHold or VectorToTarget or LockPitch or Autopilot)
-                    if apAction and not ignoreCollision and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
-                            BrakeIsOn = "Collision"
-                            apRoute = {}
-                            cmdT = 0
-                            if AltitudeHold then AP.ToggleAltitudeHold() end
-                            if LockPitch then AP.ToggleLockPitch() end
-                            msgText = "Autopilot Cancelled due to possible collision"
-                            if VectorToTarget or Autopilot then 
-                                if not aptoggle then aptoggle = true end
-                            end
-                            StrongBrakes = true
-                            BrakeLanding = true
-                            autoRoll = true
-                    end
-                    if collisionTime < 11 then 
-                        collisionAlertStatus = body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2)
-                    else
-                        collisionAlertStatus = body.name.." collision "..FormatTimeString(collisionTime)
-                    end
-                    if collisionTime < 6 then play("alarm","AL",2) end
-                else
-                    collisionAlertStatus = false
-                end
-            end
     
         function ap.clearAll()
             AutopilotAccelerating = false
@@ -5194,7 +5145,7 @@ VERSION_NUMBER = 0.726
                 eLL = false
             end 
             if aptoggle then
-                AP.ToggleAutopilot(aptoggle)
+                AP.ToggleAutopilot()
             end
         end
     
@@ -5589,6 +5540,7 @@ VERSION_NUMBER = 0.726
                 HoldAltitude = coreAltitude
                 TargetSet = false
                 apBrk = false
+                AutopilotStatus = "Aligning"
             end
             VectorToTarget = false
             AutoTakeoff = false
@@ -5908,6 +5860,40 @@ VERSION_NUMBER = 0.726
                     return pitch
                 end
     
+                local function checkCollision()
+                    if collisionTarget and not BrakeLanding then
+                        local body = collisionTarget[1]
+                        local far, near = collisionTarget[2],collisionTarget[3] 
+                        local collisionDistance = math.min(far, near or far)
+                        local collisionTime = collisionDistance/velMag
+                        local ignoreCollision = AutoTakeoff and (velMag < 42 or abvGndDet ~= -1)
+                        local apAction = (AltitudeHold or VectorToTarget or LockPitch or Autopilot)
+                        if apAction and not ignoreCollision and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
+                            p("HERE1")
+                            BrakeIsOn = "Collision"
+                            apRoute = {}
+                            cmdT = 0
+                            if AltitudeHold then AP.ToggleAltitudeHold() end
+                            if LockPitch then AP.ToggleLockPitch() end
+                            msgText = "Autopilot Cancelled due to possible collision"
+                            s.print(body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2))
+                            AP.ResetAutopilots(1)
+                            StrongBrakes = true
+                            if inAtmo then BrakeLanding = true end
+                            autoRoll = true
+                            p("HERE2")
+                        end
+                        if collisionTime < 11 then 
+                            collisionAlertStatus = body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2)
+                        else
+                            collisionAlertStatus = body.name.." collision "..FormatTimeString(collisionTime)
+                        end
+                        if collisionTime < 6 then play("alarm","AL",2) end
+                    else
+                        collisionAlertStatus = false
+                    end
+                end
+    
             if antigrav and not ExternalAGG then
                 if not antigravOn and antigrav.getBaseAltitude() ~= AntigravTargetAltitude then 
                     sba = AntigravTargetAltitude
@@ -6002,8 +5988,13 @@ VERSION_NUMBER = 0.726
             abvGndDet = AboveGroundLevel()
             time = systime()
             lastApTickTime = time
-    
-            if CollisionSystem then checkCollision() end
+            if radar_1 then
+                parseRadar = not parseRadar
+                if parseRadar then 
+                    RADAR.UpdateRadar() 
+                end
+                if CollisionSystem then checkCollision() end
+            end
     
             if antigrav then
                 antigravOn = (antigrav.getState() == 1)
@@ -6714,7 +6705,7 @@ VERSION_NUMBER = 0.726
                     if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                         if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                                 if pvpDist < lastPvPDist and pvpDist > 2000 then
-                                    if not aptoggle then aptoggle = true end
+                                    AP.ResetAutopilots(1)
                                     msgText = "Autopilot cancelled to prevent crossing PvP Line" 
                                     BrakeIsOn = "PvP Prevent"
                                     lastPvPDist = pvpDist
@@ -7273,6 +7264,8 @@ VERSION_NUMBER = 0.726
                            (CustomTarget ~= nil and planet:getAltitude(CustomTarget.position) > aggBase) then 
                             aggBase = false 
                         end
+                    else
+                        aggBase = false
                     end
                     if alignHeading then
                         if absHspd < 0.05 then
@@ -7372,12 +7365,14 @@ VERSION_NUMBER = 0.726
                                 if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading then -- Or if they start going back up
                                     BrakeLanding = false
                                     AltitudeHold = false
-                                    GearExtended = true
-                                    if hasGear then
-                                        eLL = true
-                                        play("grOut","LG",1)
+                                    if not aggBase then
+                                        GearExtended = true
+                                        if hasGear then
+                                            eLL = true
+                                            play("grOut","LG",1)
+                                        end
+                                        navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                                     end
-                                    navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                                     upAmount = 0
                                     BrakeIsOn = "BL Complete"
                                     autoRoll = autoRollPreference 
@@ -8931,20 +8926,16 @@ VERSION_NUMBER = 0.726
                         s.freeze(0)
                     end
                     if hasGear then
-                        GearExtended = (Nav.control.isAnyLandingGearExtended() == 1)
-                        if GearExtended then
+                        if abvGndDet ~= -1 then
                             Nav.control.extendLandingGears()
                         else
                             Nav.control.retractLandingGears()
                         end
+                        GearExtended = (Nav.control.isAnyLandingGearExtended() == 1)
                     end
                     -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
                     if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 50) then
                         BrakeIsOn = "Startup"
-                        GearExtended = true
-                        if hasGear then
-                            Nav.control.extendLandingGears()
-                        end
                     else
                         BrakeIsOn = false
                     end
@@ -9057,7 +9048,7 @@ VERSION_NUMBER = 0.726
                 ProcessElements()
                 coroutine.yield() -- Give it some time to breathe before we do the rest
     
-                AP = APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1,
+                AP = APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, radar_1, 
                     mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
                     navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq, 
                     getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)
@@ -9228,8 +9219,6 @@ VERSION_NUMBER = 0.726
                 HUD.hudtick()
             elseif timerId == "apTick" then -- Timer for all autopilot functions
                 AP.APTick()
-            elseif timerId == "radarTick" then
-                RADAR.UpdateRadar()
             elseif timerId == "shieldTick" then
                 SHIELD.shieldTick()
             elseif timerId == "tagTick" then
