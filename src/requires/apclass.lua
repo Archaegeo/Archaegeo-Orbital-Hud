@@ -1272,7 +1272,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 AP.BrakeToggle()
             end
             if Autopilot then
-                if not aptoggle then aptoggle = true end
+                AP.ResetAutopilots(1)
             end
         end
         LastIsWarping = isWarping

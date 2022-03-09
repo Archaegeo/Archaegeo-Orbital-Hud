@@ -4,6 +4,7 @@ Version 1.728 - HUD efficiency improvements (many thanks to Dimencia)
 - Updated hud actions for better efficiency including mouse movement.
 - Updated virtual joystick responsiveness.
 - Removed `apTickRate` user variable as no longer applicable.
+- Fix: Fixed AP not resetting after warp arrival.
 
 Version 1.727 - Radar Refactor
 - Move radar to once every other flush call performance.  Greatly improved accuracy and timing to resolve position.
