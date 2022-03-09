@@ -428,7 +428,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                     s.freeze(0)
                 end
                 if hasGear then
-                    if abvGndDet ~= -1 then
+                    if abvGndDet ~= -1 and not antigravOn then
                         Nav.control.extendLandingGears()
                     else
                         Nav.control.retractLandingGears()

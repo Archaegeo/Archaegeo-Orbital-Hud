@@ -48,6 +48,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         local aptoggle = false
         local myAutopilotTarget=""
         local parseRadar = false
+        local lastMouseTime = 0
 
         local function GetAutopilotBrakeDistanceAndTime(speed)
             -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
@@ -1048,7 +1049,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                     local ignoreCollision = AutoTakeoff and (velMag < 42 or abvGndDet ~= -1)
                     local apAction = (AltitudeHold or VectorToTarget or LockPitch or Autopilot)
                     if apAction and not ignoreCollision and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
-                        p("HERE1")
                         BrakeIsOn = "Collision"
                         apRoute = {}
                         cmdT = 0
@@ -1060,7 +1060,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                         StrongBrakes = true
                         if inAtmo then BrakeLanding = true end
                         autoRoll = true
-                        p("HERE2")
                     end
                     if collisionTime < 11 then 
                         collisionAlertStatus = body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2)
@@ -1198,7 +1197,14 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         stalling = inAtmo and currentYaw < -YawStallAngle or currentYaw > YawStallAngle or currentPitch < -PitchStallAngle or currentPitch > PitchStallAngle
         local deltaX = s.getMouseDeltaX()
         local deltaY = s.getMouseDeltaY()
-
+        
+        if lastMouseTime then
+            local elapsed = systime()-lastMouseTime
+            -- Aim for 60fps?
+            deltaX = deltaX * (elapsed/0.016)
+            deltaY = deltaY * (elapsed/0.016)
+        end
+        lastMouseTime = systime()
         if InvertMouse and not holdingShift then deltaY = -deltaY end
         yawInput2 = 0
         rollInput2 = 0
@@ -1230,7 +1236,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         else
             simulatedX = uclamp(simulatedX + deltaX/2,-resolutionWidth/2,resolutionWidth/2)
             simulatedY = uclamp(simulatedY + deltaY/2,-resolutionHeight/2,resolutionHeight/2)
-            distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
+            mouseDistance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
             if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                 local dx,dy = 1,1
                 if SelectedTab == "SCOPE" then
@@ -1239,20 +1245,9 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if userControlScheme == "virtual joystick" then -- Virtual Joystick
                     -- Do navigation things
 
-                    if simulatedX > 0 and simulatedX > DeadZone then
-                        yawInput2 = yawInput2 - (simulatedX - DeadZone) * MouseXSensitivity * dx
-                    elseif simulatedX < 0 and simulatedX < (DeadZone * -1) then
-                        yawInput2 = yawInput2 - (simulatedX + DeadZone) * MouseXSensitivity * dx
-                    else
-                        yawInput2 = 0
-                    end
-
-                    if simulatedY > 0 and simulatedY > DeadZone then
-                        pitchInput2 = pitchInput2 - (simulatedY - DeadZone) * MouseYSensitivity * dy
-                    elseif simulatedY < 0 and simulatedY < (DeadZone * -1) then
-                        pitchInput2 = pitchInput2 - (simulatedY + DeadZone) * MouseYSensitivity * dy
-                    else
-                        pitchInput2 = 0
+                    if mouseDistance > DeadZone then
+                        yawInput2 = yawInput2 - (uclamp(mabs(simulatedX)-DeadZone,0,resolutionWidth/2)*utils.sign(simulatedX)) * MouseXSensitivity * dx
+                        pitchInput2 = pitchInput2 - (uclamp(mabs(simulatedY)-DeadZone,0,resolutionHeight/2)*utils.sign(simulatedY)) * MouseYSensitivity * dy
                     end
                 else
                     simulatedX = 0

@@ -1,5 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.728 - HUD efficiency improvements (many thanks to Dimencia)
+- Updated hud actions for better efficiency including mouse movement.
+- Updated virtual joystick responsiveness.
+- Removed `apTickRate` user variable as no longer applicable.
+
 Version 1.727 - Radar Refactor
 - Move radar to once every other flush call performance.  Greatly improved accuracy and timing to resolve position.
 - Fix: Radar known position.  Now only true if target pos if within 10m of radar distance to target 

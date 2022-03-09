@@ -127,7 +127,6 @@
         brakeSpeedFactor = 3 -- (Default: 3) When braking, this factor will increase the brake force by brakeSpeedFactor * velocity
         brakeFlatFactor = 1 -- (Default: 1) When braking, this factor will increase the brake force by a flat brakeFlatFactor * velocity direction> (higher value may be unstable)
         DampingMultiplier = 40 -- (Default: 40) How strongly autopilot dampens when nearing the correct orientation
-        apTickRate = 0.0166667 -- (Default: 0.0166667) Set the Tick Rate for your autopilot features. 0.016667 is effectively 60 fps and the default value. 0.03333333 is 30 fps.
         hudTickRate = 0.0666667 -- (Default: 0.0666667) Set the tick rate for your HUD. Default is 4 times slower than apTickRate
         ExtraEscapeThrust = 0.0 -- (Default: 0.0) Set this to some value (start low till you know your ship) to apply extra thrust between 10% and 0.05% atmosphere while using AtmoSpeedLimit.
         ExtraLongitudeTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "forward faster major" These will be added to the engines that are control by longitude.
@@ -136,7 +135,7 @@
         savableVariablesPhysics = {speedChangeLarge={set=function (i)speedChangeLarge=i end,get=function() return speedChangeLarge end}, speedChangeSmall={set=function (i)speedChangeSmall=i end,get=function() return speedChangeSmall end}, MouseXSensitivity={set=function (i)MouseXSensitivity=i end,get=function() return MouseXSensitivity end}, MouseYSensitivity={set=function (i)MouseYSensitivity=i end,get=function() return MouseYSensitivity end}, autoRollFactor={set=function (i)autoRollFactor=i end,get=function() return autoRollFactor end},
         rollSpeedFactor={set=function (i)rollSpeedFactor=i end,get=function() return rollSpeedFactor end}, autoRollRollThreshold={set=function (i)autoRollRollThreshold=i end,get=function() return autoRollRollThreshold end}, minRollVelocity={set=function (i)minRollVelocity=i end,get=function() return minRollVelocity end}, TrajectoryAlignmentStrength={set=function (i)TrajectoryAlignmentStrength=i end,get=function() return TrajectoryAlignmentStrength end},
         torqueFactor={set=function (i)torqueFactor=i end,get=function() return torqueFactor end}, pitchSpeedFactor={set=function (i)pitchSpeedFactor=i end,get=function() return pitchSpeedFactor end}, yawSpeedFactor={set=function (i)yawSpeedFactor=i end,get=function() return yawSpeedFactor end}, brakeSpeedFactor={set=function (i)brakeSpeedFactor=i end,get=function() return brakeSpeedFactor end}, brakeFlatFactor={set=function (i)brakeFlatFactor=i end,get=function() return brakeFlatFactor end}, DampingMultiplier={set=function (i)DampingMultiplier=i end,get=function() return DampingMultiplier end}, 
-        apTickRate={set=function (i)apTickRate=i end,get=function() return apTickRate end},  hudTickRate={set=function (i)hudTickRate=i end,get=function() return hudTickRate end}, ExtraEscapeThrust={set=function (i)ExtraEscapeThrust=i end,get=function() return ExtraEscapeThrust end}, 
+        hudTickRate={set=function (i)hudTickRate=i end,get=function() return hudTickRate end}, ExtraEscapeThrust={set=function (i)ExtraEscapeThrust=i end,get=function() return ExtraEscapeThrust end}, 
         ExtraLongitudeTags={set=function (i)ExtraLongitudeTags=i end,get=function() return ExtraLongitudeTags end}, ExtraLateralTags={set=function (i)ExtraLateralTags=i end,get=function() return ExtraLateralTags end}, ExtraVerticalTags={set=function (i)ExtraVerticalTags=i end,get=function() return ExtraVerticalTags end}}
 
     -- Auto Variable declarations that store status of ship on databank. Do not edit directly here unless you know what you are doing, these change as ship flies.
@@ -284,6 +283,7 @@ function globalDeclare(s, c, u, systime, mfloor, atmosphere) -- # is how many cl
     privatelocations = {} -- 3
     customlocations = {} -- 2
     apBrk = false -- 2
-    alignHeading=nil -- 2
+    alignHeading = nil -- 2
+    mouseDistance = 0 -- 2
     if shield_1 then shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints()) end
 end

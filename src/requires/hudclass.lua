@@ -95,8 +95,8 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local tankLastTime = 6
             local tankSlotIndex = 7
             local slottedTankType = ""
-            local slottedTanks = 0
-            local fuelUpdateDelay = (mfloor(1 / apTickRate) * 2)*hudTickRate
+            local slottedTanks = 0        
+            local fuelUpdateDelay = 120.0*hudTickRate
             local fuelTimeLeftR = {}
             local fuelPercentR = {}
             local fuelTimeLeftS = {}
@@ -2635,7 +2635,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
 
         -- Local Functions for hudTick
             local function DrawCursorLine(newContent)
-                local strokeColor = mfloor(uclamp((distance / (resolutionWidth / 4)) * 255, 0, 255))
+                local strokeColor = mfloor(uclamp((mouseDistance / (resolutionWidth / 4)) * 255, 0, 255))
                 newContent[#newContent + 1] = stringf(
                                                 "<line x1='0' y1='0' x2='%fpx' y2='%fpx' style='stroke:rgb(%d,%d,%d);stroke-width:2;transform:translate(50%%, 50%%)' />",
                                                 simulatedX, simulatedY, mfloor(PrimaryR + 0.5) + strokeColor,
@@ -2836,7 +2836,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         else
             if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                 CheckButtons()
-                if distance > DeadZone then -- Draw a line to the cursor from the screen center
+                if mouseDistance > DeadZone then -- Draw a line to the cursor from the screen center
                     -- Note that because SVG lines fucking suck, we have to do a translate and they can't use calc in their params
                     if DisplayDeadZone then DrawCursorLine(newContent) end
                 end
@@ -2965,6 +2965,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 SetupInterplanetaryPanel()
             end
             if AutopilotTargetName ~= nil then
+                local targetDistance
                 local customLocation = CustomTarget ~= nil
                 local planetMaxMass = 0.5 * LastMaxBrakeInAtmo /
                     (autopilotTargetPlanet:getGravity(
@@ -2975,9 +2976,9 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                     '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "unit":""}')
                 travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
                 if customLocation and not Autopilot then -- If in autopilot, keep this displaying properly
-                    distance = (worldPos - CustomTarget.position):len()
+                    targetDistance = (worldPos - CustomTarget.position):len()
                 else
-                    distance = (AutopilotTargetCoords - worldPos):len() -- Don't show our weird variations
+                    targetDistance = (AutopilotTargetCoords - worldPos):len() -- Don't show our weird variations
                 end
                 if not TurnBurn then
                     brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(velMag)
@@ -2986,7 +2987,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                     brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(velMag)
                     maxBrakeDistance, maxBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
                 end
-                local displayText = getDistanceDisplayString(distance)
+                local displayText = getDistanceDisplayString(targetDistance)
                 sysUpData(widgetDistanceText, '{"label": "distance", "value": "' .. displayText
                     .. '"}')
                 sysUpData(widgetTravelTimeText, '{"label": "Travel Time", "value": "' ..
