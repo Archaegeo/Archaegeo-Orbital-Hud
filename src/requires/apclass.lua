@@ -48,6 +48,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         local aptoggle = false
         local myAutopilotTarget=""
         local parseRadar = false
+        local lastMouseTime = 0
 
         local function GetAutopilotBrakeDistanceAndTime(speed)
             -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
@@ -295,6 +296,15 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
     end
 
     function ap.APTick()
+        local wheel = s.getMouseWheel()
+
+        if wheel > 0 then
+            AP.changeSpd()
+        elseif wheel < 0 then
+            AP.changeSpd(true)
+        else
+            mousePause = true
+        end
         sivl = sysIsVwLock()
         if swp then 
             s.setWaypoint(swp) 
@@ -320,7 +330,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             cmdC = -1 
         end
         if eLL then
-            Nav.control.extendLandingGears()
+            CONTROL.landingGear()
             eLL = false
         end 
         if aptoggle then
@@ -663,11 +673,10 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             LockPitch = nil
             OrbitAchieved = false
             if abvGndDet ~= -1 and velMag < 20 then
+                CONTROL.landingGear()
                 play("lfs", "LS")
                 AutoTakeoff = true
                 if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
-                GearExtended = false
-                Nav.control.retractLandingGears()
                 BrakeIsOn = "ATO Hold"
                 navCom:setTargetGroundAltitude(TargetHoverHeight)
                 if VertTakeOffEngine and UpVertAtmoEngine then 
@@ -934,7 +943,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
         end
     end
-
+    
     function ap.onFlush()
         -- Local functions for onFlush
             local function composeAxisAccelerationFromTargetSpeedV(commandAxis, targetSpeed)
@@ -1048,7 +1057,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                     local ignoreCollision = AutoTakeoff and (velMag < 42 or abvGndDet ~= -1)
                     local apAction = (AltitudeHold or VectorToTarget or LockPitch or Autopilot)
                     if apAction and not ignoreCollision and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
-                        p("HERE1")
                         BrakeIsOn = "Collision"
                         apRoute = {}
                         cmdT = 0
@@ -1060,7 +1068,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                         StrongBrakes = true
                         if inAtmo then BrakeLanding = true end
                         autoRoll = true
-                        p("HERE2")
                     end
                     if collisionTime < 11 then 
                         collisionAlertStatus = body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2)
@@ -1078,7 +1085,10 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 sba = AntigravTargetAltitude
             end
         end
-
+        if sEFC then
+            Nav:setEngineForceCommand('hover', vec3(), 1)
+            sEFC = false
+        end
         throttleMode = (navCom:getAxisCommandType(0) == axisCommandType.byThrottle)
 
         -- validate params
@@ -1167,6 +1177,13 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         abvGndDet = AboveGroundLevel()
         time = systime()
         lastApTickTime = time
+
+        if GearExtended and abvGndDet > -1 and (abvGndDet - 3) < LandingGearGroundHeight then
+            if navCom.targetGroundAltitudeActivated then 
+                navCom:deactivateGroundEngineAltitudeStabilization()
+            end
+        end        
+
         if radar_1 then
             parseRadar = not parseRadar
             if parseRadar then 
@@ -1178,15 +1195,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         if antigrav then
             antigravOn = (antigrav.getState() == 1)
         end
-        local wheel = s.getMouseWheel()
 
-        if wheel > 0 then
-            AP.changeSpd()
-        elseif wheel < 0 then
-            AP.changeSpd(true)
-        else
-            mousePause = true
-        end
 
         local MousePitchFactor = 1 -- Mouse control only
         local MouseYawFactor = 1 -- Mouse control only
@@ -1198,7 +1207,14 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         stalling = inAtmo and currentYaw < -YawStallAngle or currentYaw > YawStallAngle or currentPitch < -PitchStallAngle or currentPitch > PitchStallAngle
         local deltaX = s.getMouseDeltaX()
         local deltaY = s.getMouseDeltaY()
-
+        
+        if lastMouseTime then
+            local elapsed = systime()-lastMouseTime
+            -- Aim for 60fps?
+            deltaX = deltaX * (elapsed/0.016)
+            deltaY = deltaY * (elapsed/0.016)
+        end
+        lastMouseTime = systime()
         if InvertMouse and not holdingShift then deltaY = -deltaY end
         yawInput2 = 0
         rollInput2 = 0
@@ -1230,7 +1246,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         else
             simulatedX = uclamp(simulatedX + deltaX/2,-resolutionWidth/2,resolutionWidth/2)
             simulatedY = uclamp(simulatedY + deltaY/2,-resolutionHeight/2,resolutionHeight/2)
-            distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
+            mouseDistance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
             if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                 local dx,dy = 1,1
                 if SelectedTab == "SCOPE" then
@@ -1239,20 +1255,9 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if userControlScheme == "virtual joystick" then -- Virtual Joystick
                     -- Do navigation things
 
-                    if simulatedX > 0 and simulatedX > DeadZone then
-                        yawInput2 = yawInput2 - (simulatedX - DeadZone) * MouseXSensitivity * dx
-                    elseif simulatedX < 0 and simulatedX < (DeadZone * -1) then
-                        yawInput2 = yawInput2 - (simulatedX + DeadZone) * MouseXSensitivity * dx
-                    else
-                        yawInput2 = 0
-                    end
-
-                    if simulatedY > 0 and simulatedY > DeadZone then
-                        pitchInput2 = pitchInput2 - (simulatedY - DeadZone) * MouseYSensitivity * dy
-                    elseif simulatedY < 0 and simulatedY < (DeadZone * -1) then
-                        pitchInput2 = pitchInput2 - (simulatedY + DeadZone) * MouseYSensitivity * dy
-                    else
-                        pitchInput2 = 0
+                    if mouseDistance > DeadZone then
+                        yawInput2 = yawInput2 - (uclamp(mabs(simulatedX)-DeadZone,0,resolutionWidth/2)*utils.sign(simulatedX)) * MouseXSensitivity * dx
+                        pitchInput2 = pitchInput2 - (uclamp(mabs(simulatedY)-DeadZone,0,resolutionHeight/2)*utils.sign(simulatedY)) * MouseYSensitivity * dy
                     end
                 else
                     simulatedX = 0
@@ -1277,7 +1282,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 AP.BrakeToggle()
             end
             if Autopilot then
-                if not aptoggle then aptoggle = true end
+                AP.ResetAutopilots(1)
             end
         end
         LastIsWarping = isWarping
@@ -2545,11 +2550,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                                 BrakeLanding = false
                                 AltitudeHold = false
                                 if not aggBase then
-                                    GearExtended = true
-                                    if hasGear then
-                                        eLL = true
-                                        play("grOut","LG",1)
-                                    end
+                                    eLL = true
                                     navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                                 end
                                 upAmount = 0
@@ -2714,9 +2715,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             if (inAtmo and vSpd < -80) or atmosDensity > 0.005 then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
                 brakeInput2 = calculatedBrake
             end
-            --if calculatedThrottle < 0 then
-            --    brakeInput2 = brakeInput2 + mabs(calculatedThrottle)
-            --end
             if brakeInput2 > 0 then
                 if ThrottleLimited and calculatedThrottle == 0.01 and not ThrottleValue then
                     ThrottleValue = 0 -- We clamped it to >0 before but, if braking and it was at that clamp, 0 is good.

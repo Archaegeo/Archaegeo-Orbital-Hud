@@ -7,7 +7,50 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
     local currentHoldAltModifier = holdAltitudeButtonModifier
     local currentAggModifier = antiGravButtonModifier
     local clearAllCheck = time
- 
+
+    function Control.landingGear()
+        GearExtended = not GearExtended
+        if GearExtended then
+            VectorToTarget = false
+            LockPitch = nil
+            AP.cmdThrottle(0)
+            if vBooster or hover then 
+                if inAtmo and abvGndDet == -1 then
+                    play("bklOn", "BL")
+                    StrongBrakes = true -- We don't care about this anymore
+                    Reentry = false
+                    AutoTakeoff = false
+                    VertTakeOff = false
+                    AltitudeHold = false
+                    if BrakeLanding then apBrk = not apBrk end
+                    BrakeLanding = true
+                    autoRoll = true
+                    GearExtended = false -- Don't actually toggle the gear yet though
+                else
+                    if hasGear then
+                        play("grOut","LG",1)
+                        Nav.control.extendLandingGears()                            
+                    end
+                    apBrk = false
+                    navCom:setTargetGroundAltitude(LandingGearGroundHeight)
+                    if inAtmo then
+                        BrakeIsOn = "Landing"
+                    end
+                end
+            end
+            if hasGear and not BrakeLanding and not (vBooster or hover) then
+                play("grOut","LG",1)
+                Nav.control.extendLandingGears() -- Actually extend
+            end
+        else
+            if hasGear then
+                play("grIn","LG",1)
+                Nav.control.retractLandingGears()
+            end
+            navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
+            if stablized then navCom:setTargetGroundAltitude(TargetHoverHeight) end
+        end
+    end
     function Control.startControl(action)
         -- Local function for onActionStart items in more than one
             local function groundAltStart(down)
@@ -56,6 +99,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                         end
                     end
                 else
+                    if not down and abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 then CONTROL.landingGear() end
                     navCom:updateTargetGroundAltitudeFromActionStart(mult*1.0)
                 end
             end
@@ -89,46 +133,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                 end                
             end
         if action == "gear" then
-            GearExtended = not GearExtended
-            if GearExtended then
-                VectorToTarget = false
-                LockPitch = nil
-                AP.cmdThrottle(0)
-                if vBooster or hover then 
-                    if inAtmo and abvGndDet == -1 then
-                        play("bklOn", "BL")
-                        StrongBrakes = true -- We don't care about this anymore
-                        Reentry = false
-                        AutoTakeoff = false
-                        VertTakeOff = false
-                        AltitudeHold = false
-                        if BrakeLanding then apBrk = not apBrk end
-                        BrakeLanding = true
-                        autoRoll = true
-                        GearExtended = false -- Don't actually toggle the gear yet though
-                    else
-                        if hasGear then
-                            play("grOut","LG",1)
-                            Nav.control.extendLandingGears()                            
-                        end
-                        apBrk = false
-                        navCom:setTargetGroundAltitude(LandingGearGroundHeight)
-                        if inAtmo then
-                            BrakeIsOn = "Landing"
-                        end
-                    end
-                end
-                if hasGear and not BrakeLanding and not (vBooster or hover) then
-                    play("grOut","LG",1)
-                    Nav.control.extendLandingGears() -- Actually extend
-                end
-            else
-                if hasGear then
-                    play("grIn","LG",1)
-                    Nav.control.retractLandingGears()
-                end
-                navCom:setTargetGroundAltitude(TargetHoverHeight)
-            end
+            CONTROL.landingGear()
         elseif action == "light" then
             if Nav.control.isAnyHeadlightSwitchedOn() == 1 then
                 Nav.control.switchOffHeadlights()
@@ -169,6 +174,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                 LeftAmount = -1
         elseif action == "up" then
             upAmount = upAmount + 1
+            if abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 then CONTROL.landingGear() end
             navCom:deactivateGroundEngineAltitudeStabilization()
             navCom:updateCommandFromActionStart(axisCommandId.vertical, 1.0)
         elseif action == "down" then
@@ -333,7 +339,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             else
                 msgText = "Coupled Mode - Ground Stabilization on"
                 navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                Nav:setEngineForceCommand('hover', vec3(), 1)
+                sEFC = true
                 play("gsOn", "GS") 
             end
         elseif action == "option9" then
@@ -473,14 +479,14 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             navCom:updateCommandFromActionStop(axisCommandId.vertical, -1.0)
             if stablized then 
                 navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                Nav:setEngineForceCommand('hover', vec3(), 1) 
+                sEFC = true
             end
         elseif action == "down" then
             upAmount = 0
             navCom:updateCommandFromActionStop(axisCommandId.vertical, 1.0)
             if stablized then 
                 navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                Nav:setEngineForceCommand('hover', vec3(), 1) 
+                sEFC = true 
             end
         elseif action == "groundaltitudeup" then
             groundAltStop()
