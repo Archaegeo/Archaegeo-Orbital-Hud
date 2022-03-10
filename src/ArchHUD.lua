@@ -8,49 +8,49 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.727
+VERSION_NUMBER = 0.728
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
-    useTheseSettings = false --  Change this to true to override databank saved settings
-    userControlScheme = "virtual joystick" -- (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard". This can be set by holding SHIFT and clicking the button in lower left of main Control buttons view.
-    soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder with sound files in it. Must be changed from archHUD to prevent other scripts making your PC play sounds.
+useTheseSettings = false --  Change this to true to override databank saved settings
+userControlScheme = "virtual joystick" -- (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard". This can be set by holding SHIFT and clicking the button in lower left of main Control buttons view.
+soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder with sound files in it. Must be changed from archHUD to prevent other scripts making your PC play sounds.
 -- True/False variables
-        -- NOTE: saveableVariablesBoolean below must contain any True/False variables that needs to be saved/loaded from databank.
+    -- NOTE: saveableVariablesBoolean below must contain any True/False variables that needs to be saved/loaded from databank.
 
-        freeLookToggle = true -- (Default: true) Set to false for vanilla DU free look behavior.
-        BrakeToggleDefault = true -- (Default: true) Whether your brake toggle is on/off by default. Can be adjusted in the button menu. False is vanilla DU brakes.
-        RemoteFreeze = false -- (Default: false) Whether or not to freeze your character in place when using a remote controller.
-        RemoteHud = false --  (Default: false) Whether you want to see the full normal HUD while in remote mode.
-        brightHud = false -- (Default: false) Enable to prevent hud hiding when in freelook.
-        VanillaRockets = false -- (Default: false) If on, rockets behave like vanilla
-        InvertMouse = false -- (Default: false) If true, then when controlling flight mouse Y axis is inverted (pushing up noses plane down) Does not affect selecting buttons or camera.
-        autoRollPreference = false -- (Default: false) [Only in atmosphere] - When the pilot stops rolling, flight model will try to get back to horizontal (no roll)
-        ExternalAGG = false -- (Default: false) Toggle On if using an external AGG system. If on will prevent this HUD from doing anything with AGG.
-        UseSatNav = false -- (Default: false) Toggle on if using Trog SatNav script. This will provide SatNav support.
-        ShouldCheckDamage = false -- (Default: true) Whether or not damage checks are performed. Disable for performance improvement on very large ships or if using external Damage Report and you do not want the built in info.
-        AtmoSpeedAssist = true -- (Default: true) Whether or not atmospheric speeds should be limited to a maximum of AtmoSpeedLimit (Hud built in speed limiter)
-        ForceAlignment = false -- (Default: false) Whether velocity vector alignment should be forced when in Altitude Hold (needed for ships that drift alignment in altitude hold mode due to poor inertial matrix)
-        DisplayDeadZone = true -- (Default: true) Virtual Joystick Mode: Set this to false to not display deadzone circle while in virtual joystick mode.
-        showHud = true -- (Default: true) False to hide the HUD screen and only use HUD Autopilot features (AP via ALT+# keys)
-        hideHudOnToggleWidgets = true --  (Default: true) Uncheck to keep showing HUD when you toggle on the vanilla widgets via ALT+3. Note, hiding the HUD with Alt+3 gives a lot of FPS back in laggy areas, so leave true normally.
-        ShiftShowsRemoteButtons = true -- (Default: true) Whether or not pressing Shift in remote controller mode shows you the buttons (otherwise no access to them)
-        SetWaypointOnExit = false -- (Default: true) Set to false to not set a waypoint when you exit hud. True helps find your ship in crowded locations when you get out of seat.
-        AlwaysVSpd = false -- (Default: false) Set to true to make vertical speed meter stay on screen when you alt-3 widget mode.
-        BarFuelDisplay = true -- (Default: true) Set to false to use old non-bar fuel display
-        voices = true -- (Default: true) Set to false to disable voice sounds when using sound pack
-        alerts = true -- (Default: true) Set to false to disable alert sounds when using sound pack
-        CollisionSystem = true -- (Default: true) If True, system will provide collision alerts and abort vector to target if conditions met.
-        AbandonedRadar = false -- (Default: false) If true, and CollisionSystem is true, all radar contacts will be checked for abandoned status.
-        AutoShieldToggle = true -- (Default: true) If true, system will toggle Shield off in safe space and on in PvP space automagically.
-        PreventPvP = true -- (Default: true) If true, system will stop you before crossing from safe to pvp space while in autopilot.
-        DisplayOdometer = true -- (Default: true) If false the top odometer bar of information will be hidden.
+    freeLookToggle = true -- (Default: true) Set to false for vanilla DU free look behavior.
+    BrakeToggleDefault = true -- (Default: true) Whether your brake toggle is on/off by default. Can be adjusted in the button menu. False is vanilla DU brakes.
+    RemoteFreeze = false -- (Default: false) Whether or not to freeze your character in place when using a remote controller.
+    RemoteHud = false --  (Default: false) Whether you want to see the full normal HUD while in remote mode.
+    brightHud = false -- (Default: false) Enable to prevent hud hiding when in freelook.
+    VanillaRockets = false -- (Default: false) If on, rockets behave like vanilla
+    InvertMouse = false -- (Default: false) If true, then when controlling flight mouse Y axis is inverted (pushing up noses plane down) Does not affect selecting buttons or camera.
+    autoRollPreference = false -- (Default: false) [Only in atmosphere] - When the pilot stops rolling, flight model will try to get back to horizontal (no roll)
+    ExternalAGG = false -- (Default: false) Toggle On if using an external AGG system. If on will prevent this HUD from doing anything with AGG.
+    UseSatNav = false -- (Default: false) Toggle on if using Trog SatNav script. This will provide SatNav support.
+    ShouldCheckDamage = false -- (Default: true) Whether or not damage checks are performed. Disable for performance improvement on very large ships or if using external Damage Report and you do not want the built in info.
+    AtmoSpeedAssist = true -- (Default: true) Whether or not atmospheric speeds should be limited to a maximum of AtmoSpeedLimit (Hud built in speed limiter)
+    ForceAlignment = false -- (Default: false) Whether velocity vector alignment should be forced when in Altitude Hold (needed for ships that drift alignment in altitude hold mode due to poor inertial matrix)
+    DisplayDeadZone = true -- (Default: true) Virtual Joystick Mode: Set this to false to not display deadzone circle while in virtual joystick mode.
+    showHud = true -- (Default: true) False to hide the HUD screen and only use HUD Autopilot features (AP via ALT+# keys)
+    hideHudOnToggleWidgets = true --  (Default: true) Uncheck to keep showing HUD when you toggle on the vanilla widgets via ALT+3. Note, hiding the HUD with Alt+3 gives a lot of FPS back in laggy areas, so leave true normally.
+    ShiftShowsRemoteButtons = true -- (Default: true) Whether or not pressing Shift in remote controller mode shows you the buttons (otherwise no access to them)
+    SetWaypointOnExit = false -- (Default: true) Set to false to not set a waypoint when you exit hud. True helps find your ship in crowded locations when you get out of seat.
+    AlwaysVSpd = false -- (Default: false) Set to true to make vertical speed meter stay on screen when you alt-3 widget mode.
+    BarFuelDisplay = true -- (Default: true) Set to false to use old non-bar fuel display
+    voices = true -- (Default: true) Set to false to disable voice sounds when using sound pack
+    alerts = true -- (Default: true) Set to false to disable alert sounds when using sound pack
+    CollisionSystem = true -- (Default: true) If True, system will provide collision alerts and abort vector to target if conditions met.
+    AbandonedRadar = false -- (Default: false) If true, and CollisionSystem is true, all radar contacts will be checked for abandoned status.
+    AutoShieldToggle = true -- (Default: true) If true, system will toggle Shield off in safe space and on in PvP space automagically.
+    PreventPvP = true -- (Default: true) If true, system will stop you before crossing from safe to pvp space while in autopilot.
+    DisplayOdometer = true -- (Default: true) If false the top odometer bar of information will be hidden.
 
-        saveableVariablesBoolean = {userControlScheme={set=function (i)userControlScheme=i end,get=function() return userControlScheme end}, soundFolder={set=function (i)soundFolder=i end,get=function() return soundFolder end}, freeLookToggle={set=function (i)freeLookToggle=i end,get=function() return freeLookToggle end}, BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}, RemoteFreeze={set=function (i)RemoteFreeze=i end,get=function() return RemoteFreeze end}, brightHud={set=function (i)brightHud=i end,get=function() return brightHud end}, RemoteHud={set=function (i)RemoteHud=i end,get=function() return RemoteHud end}, VanillaRockets={set=function (i)VanillaRockets=i end,get=function() return VanillaRockets end},
-        InvertMouse={set=function (i)InvertMouse=i end,get=function() return InvertMouse end}, autoRollPreference={set=function (i)autoRollPreference=i end,get=function() return autoRollPreference end}, ExternalAGG={set=function (i)ExternalAGG=i end,get=function() return ExternalAGG end}, UseSatNav={set=function (i)UseSatNav=i end,get=function() return UseSatNav end}, ShouldCheckDamage={set=function (i)ShouldCheckDamage=i end,get=function() return ShouldCheckDamage end}, 
-        AtmoSpeedAssist={set=function (i)AtmoSpeedAssist=i end,get=function() return AtmoSpeedAssist end}, ForceAlignment={set=function (i)ForceAlignment=i end,get=function() return ForceAlignment end}, DisplayDeadZone={set=function (i)DisplayDeadZone=i end,get=function() return DisplayDeadZone end}, showHud={set=function (i)showHud=i end,get=function() return showHud end}, hideHudOnToggleWidgets={set=function (i)hideHudOnToggleWidgets=i end,get=function() return hideHudOnToggleWidgets end}, 
-        ShiftShowsRemoteButtons={set=function (i)ShiftShowsRemoteButtons=i end,get=function() return ShiftShowsRemoteButtons end}, SetWaypointOnExit={set=function (i)SetWaypointOnExit=i end,get=function() return SetWaypointOnExit end}, AlwaysVSpd={set=function (i)AlwaysVSpd=i end,get=function() return AlwaysVSpd end}, BarFuelDisplay={set=function (i)BarFuelDisplay=i end,get=function() return BarFuelDisplay end}, 
-        voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AbandonedRadar={set=function (i)AbandonedRadar=i end,get=function() return AbandonedRadar end},AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end}, DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end}}
+    saveableVariablesBoolean = {userControlScheme={set=function (i)userControlScheme=i end,get=function() return userControlScheme end}, soundFolder={set=function (i)soundFolder=i end,get=function() return soundFolder end}, freeLookToggle={set=function (i)freeLookToggle=i end,get=function() return freeLookToggle end}, BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}, RemoteFreeze={set=function (i)RemoteFreeze=i end,get=function() return RemoteFreeze end}, brightHud={set=function (i)brightHud=i end,get=function() return brightHud end}, RemoteHud={set=function (i)RemoteHud=i end,get=function() return RemoteHud end}, VanillaRockets={set=function (i)VanillaRockets=i end,get=function() return VanillaRockets end},
+    InvertMouse={set=function (i)InvertMouse=i end,get=function() return InvertMouse end}, autoRollPreference={set=function (i)autoRollPreference=i end,get=function() return autoRollPreference end}, ExternalAGG={set=function (i)ExternalAGG=i end,get=function() return ExternalAGG end}, UseSatNav={set=function (i)UseSatNav=i end,get=function() return UseSatNav end}, ShouldCheckDamage={set=function (i)ShouldCheckDamage=i end,get=function() return ShouldCheckDamage end}, 
+    AtmoSpeedAssist={set=function (i)AtmoSpeedAssist=i end,get=function() return AtmoSpeedAssist end}, ForceAlignment={set=function (i)ForceAlignment=i end,get=function() return ForceAlignment end}, DisplayDeadZone={set=function (i)DisplayDeadZone=i end,get=function() return DisplayDeadZone end}, showHud={set=function (i)showHud=i end,get=function() return showHud end}, hideHudOnToggleWidgets={set=function (i)hideHudOnToggleWidgets=i end,get=function() return hideHudOnToggleWidgets end}, 
+    ShiftShowsRemoteButtons={set=function (i)ShiftShowsRemoteButtons=i end,get=function() return ShiftShowsRemoteButtons end}, SetWaypointOnExit={set=function (i)SetWaypointOnExit=i end,get=function() return SetWaypointOnExit end}, AlwaysVSpd={set=function (i)AlwaysVSpd=i end,get=function() return AlwaysVSpd end}, BarFuelDisplay={set=function (i)BarFuelDisplay=i end,get=function() return BarFuelDisplay end}, 
+    voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AbandonedRadar={set=function (i)AbandonedRadar=i end,get=function() return AbandonedRadar end},AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end}, DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end}}
 
 -- Ship Handling variables
     -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank system
@@ -68,7 +68,7 @@ VERSION_NUMBER = 0.727
     SpaceSpeedLimit = 30000 -- (Default: 30000) Space speed limit in KM/H. If you hit this speed and are NOT in active autopilot, engines will turn off to prevent using all fuel (30000 means they wont turn off)
     AutoTakeoffAltitude = 1000 -- (Default: 1000) How high above your ground height AutoTakeoff tries to put you
     TargetHoverHeight = 50 -- (Default: 50) Hover height above ground when G used to lift off, 50 is above all max hover heights.
-    LandingGearGroundHeight = 0 -- (Default: 0) Set to AGL-1 when on ground (or 0). Will help prevent ship landing on ground then bouncing back up to landing gear height. If too high, engines will not turn off
+    LandingGearGroundHeight = 0 -- (Default: 0) Set to AGL when on ground. Will help prevent ship landing on ground then bouncing back up to landing gear height. 
     ReEntryHeight = 100000 -- (Default: 100000) Height above a planets maximum surface altitude used for re-entry, if height exceeds min space engine height, then 11% atmo is used instead. (100000 means 11% is used)
     MaxGameVelocity = 8333.00 -- (Default: 8333.00) Max speed for your autopilot in m/s, do not go above 8333.055 (30000 km/hr), can be reduced to save fuel. Some ships will not turn off engines if 8333.055 is used.
     AutopilotInterplanetaryThrottle = 1.0 -- (Default: 1.0) How much throttle, 0.0 to 1.0, you want it to use when in autopilot to another planet while reaching MaxGameVelocity
@@ -138,7 +138,6 @@ VERSION_NUMBER = 0.727
     brakeSpeedFactor = 3 -- (Default: 3) When braking, this factor will increase the brake force by brakeSpeedFactor * velocity
     brakeFlatFactor = 1 -- (Default: 1) When braking, this factor will increase the brake force by a flat brakeFlatFactor * velocity direction> (higher value may be unstable)
     DampingMultiplier = 40 -- (Default: 40) How strongly autopilot dampens when nearing the correct orientation
-    apTickRate = 0.0166667 -- (Default: 0.0166667) Set the Tick Rate for your autopilot features. 0.016667 is effectively 60 fps and the default value. 0.03333333 is 30 fps.
     hudTickRate = 0.0666667 -- (Default: 0.0666667) Set the tick rate for your HUD. Default is 4 times slower than apTickRate
     ExtraEscapeThrust = 0.0 -- (Default: 0.0) Set this to some value (start low till you know your ship) to apply extra thrust between 10% and 0.05% atmosphere while using AtmoSpeedLimit.
     ExtraLongitudeTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "forward faster major" These will be added to the engines that are control by longitude.
@@ -147,7 +146,7 @@ VERSION_NUMBER = 0.727
     savableVariablesPhysics = {speedChangeLarge={set=function (i)speedChangeLarge=i end,get=function() return speedChangeLarge end}, speedChangeSmall={set=function (i)speedChangeSmall=i end,get=function() return speedChangeSmall end}, MouseXSensitivity={set=function (i)MouseXSensitivity=i end,get=function() return MouseXSensitivity end}, MouseYSensitivity={set=function (i)MouseYSensitivity=i end,get=function() return MouseYSensitivity end}, autoRollFactor={set=function (i)autoRollFactor=i end,get=function() return autoRollFactor end},
     rollSpeedFactor={set=function (i)rollSpeedFactor=i end,get=function() return rollSpeedFactor end}, autoRollRollThreshold={set=function (i)autoRollRollThreshold=i end,get=function() return autoRollRollThreshold end}, minRollVelocity={set=function (i)minRollVelocity=i end,get=function() return minRollVelocity end}, TrajectoryAlignmentStrength={set=function (i)TrajectoryAlignmentStrength=i end,get=function() return TrajectoryAlignmentStrength end},
     torqueFactor={set=function (i)torqueFactor=i end,get=function() return torqueFactor end}, pitchSpeedFactor={set=function (i)pitchSpeedFactor=i end,get=function() return pitchSpeedFactor end}, yawSpeedFactor={set=function (i)yawSpeedFactor=i end,get=function() return yawSpeedFactor end}, brakeSpeedFactor={set=function (i)brakeSpeedFactor=i end,get=function() return brakeSpeedFactor end}, brakeFlatFactor={set=function (i)brakeFlatFactor=i end,get=function() return brakeFlatFactor end}, DampingMultiplier={set=function (i)DampingMultiplier=i end,get=function() return DampingMultiplier end}, 
-    apTickRate={set=function (i)apTickRate=i end,get=function() return apTickRate end},  hudTickRate={set=function (i)hudTickRate=i end,get=function() return hudTickRate end}, ExtraEscapeThrust={set=function (i)ExtraEscapeThrust=i end,get=function() return ExtraEscapeThrust end}, 
+    hudTickRate={set=function (i)hudTickRate=i end,get=function() return hudTickRate end}, ExtraEscapeThrust={set=function (i)ExtraEscapeThrust=i end,get=function() return ExtraEscapeThrust end}, 
     ExtraLongitudeTags={set=function (i)ExtraLongitudeTags=i end,get=function() return ExtraLongitudeTags end}, ExtraLateralTags={set=function (i)ExtraLateralTags=i end,get=function() return ExtraLateralTags end}, ExtraVerticalTags={set=function (i)ExtraVerticalTags=i end,get=function() return ExtraVerticalTags end}}
 
 -- Auto Variable declarations that store status of ship on databank. Do not edit directly here unless you know what you are doing, these change as ship flies.
@@ -295,6 +294,8 @@ VERSION_NUMBER = 0.727
         customlocations = {} -- 2
         apBrk = false -- 2
         alignHeading=nil -- 2
+        mouseDistance = 0 -- 2
+        sEFC = false -- 2
         if shield_1 then shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints()) end
     end     
     --[[ timestamped print function for debugging
@@ -1718,9 +1719,10 @@ VERSION_NUMBER = 0.727
                 local tankMassEmpty = 4
                 local tankLastMass = 5
                 local tankLastTime = 6
+                local tankSlotIndex = 7
                 local slottedTankType = ""
-                local slottedTanks = 0
-                local fuelUpdateDelay = (mfloor(1 / apTickRate) * 2)*hudTickRate
+                local slottedTanks = 0        
+                local fuelUpdateDelay = 120.0*hudTickRate
                 local fuelTimeLeftR = {}
                 local fuelPercentR = {}
                 local fuelTimeLeftS = {}
@@ -1753,8 +1755,8 @@ VERSION_NUMBER = 0.727
                 slottedTanks = _G[slottedTankType .. "_size"]
                 if (#tankTable > 0) then
                     for i = 1, #tankTable do
-                        local name = string.sub(tankTable[i][tankName], 1, 12)
-                        local slottedIndex = 0
+                        local name = tankTable[i][tankName]
+                        local slottedIndex = tankTable[i][tankSlotIndex]
                         for j = 1, slottedTanks do
                             if tankTable[i][tankName] == jdecode(u[slottedTankType .. "_" .. j].getData()).name then
                                 slottedIndex = j
@@ -1776,10 +1778,9 @@ VERSION_NUMBER = 0.727
                             end
     
                             if slottedIndex ~= 0 then
-                                fuelPercentTable[i] = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
-                                                        .percentage
-                                fuelTimeLeftTable[i] = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
-                                                        .timeLeft
+                                local slotData = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
+                                fuelPercentTable[i] = slotData.percentage
+                                fuelTimeLeftTable[i] = slotData.timeLeft
                                 if fuelTimeLeftTable[i] == "n/a" then
                                     fuelTimeLeftTable[i] = 0
                                 end
@@ -2420,8 +2421,10 @@ VERSION_NUMBER = 0.727
                     else
                         newContent[#newContent + 1] = svgText(warningX, gearY, "Landed (G: Takeoff)", "warnings")
                     end
+                end
+                if abvGndDet > -1 and (not antigravOn or coreAltitude < 100) then 
                     local displayText = getDistanceDisplayString(Nav:getTargetGroundAltitude())
-                    newContent[#newContent + 1] = svgText(warningX, hoverY,"Hover Height: ".. displayText,"warn")
+                    newContent[#newContent + 1] = svgText(warningX, hoverY,"Hover Height: ".. displayText,"warn") 
                 end
                 local rocketFill = "#000011"
                 local rocketStroke = defaultStroke
@@ -3962,12 +3965,6 @@ VERSION_NUMBER = 0.727
     
     
             if isRemote() == 0 or RemoteHud then
-                -- Draw this in freelook now that it's less intrusive
-                if nearPlanet then -- use real pitch, roll, and heading
-                    DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
-                else -- use Relative Pitch and Relative Yaw
-                    DrawRollLines (newContent, centerX, centerY, roll, bottomText, nearPlanet)
-                end
                 if not IsInFreeLook() or brightHud then
                     if nearPlanet then -- use real pitch, roll, and heading
                         DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
@@ -4266,7 +4263,7 @@ VERSION_NUMBER = 0.727
     
             -- Local Functions for hudTick
                 local function DrawCursorLine(newContent)
-                    local strokeColor = mfloor(uclamp((distance / (resolutionWidth / 4)) * 255, 0, 255))
+                    local strokeColor = mfloor(uclamp((mouseDistance / (resolutionWidth / 4)) * 255, 0, 255))
                     newContent[#newContent + 1] = stringf(
                                                     "<line x1='0' y1='0' x2='%fpx' y2='%fpx' style='stroke:rgb(%d,%d,%d);stroke-width:2;transform:translate(50%%, 50%%)' />",
                                                     simulatedX, simulatedY, mfloor(PrimaryR + 0.5) + strokeColor,
@@ -4467,7 +4464,7 @@ VERSION_NUMBER = 0.727
             else
                 if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                     CheckButtons()
-                    if distance > DeadZone then -- Draw a line to the cursor from the screen center
+                    if mouseDistance > DeadZone then -- Draw a line to the cursor from the screen center
                         -- Note that because SVG lines fucking suck, we have to do a translate and they can't use calc in their params
                         if DisplayDeadZone then DrawCursorLine(newContent) end
                     end
@@ -4596,6 +4593,7 @@ VERSION_NUMBER = 0.727
                     SetupInterplanetaryPanel()
                 end
                 if AutopilotTargetName ~= nil then
+                    local targetDistance
                     local customLocation = CustomTarget ~= nil
                     local planetMaxMass = 0.5 * LastMaxBrakeInAtmo /
                         (autopilotTargetPlanet:getGravity(
@@ -4606,9 +4604,9 @@ VERSION_NUMBER = 0.727
                         '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "unit":""}')
                     travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
                     if customLocation and not Autopilot then -- If in autopilot, keep this displaying properly
-                        distance = (worldPos - CustomTarget.position):len()
+                        targetDistance = (worldPos - CustomTarget.position):len()
                     else
-                        distance = (AutopilotTargetCoords - worldPos):len() -- Don't show our weird variations
+                        targetDistance = (AutopilotTargetCoords - worldPos):len() -- Don't show our weird variations
                     end
                     if not TurnBurn then
                         brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(velMag)
@@ -4617,7 +4615,7 @@ VERSION_NUMBER = 0.727
                         brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(velMag)
                         maxBrakeDistance, maxBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
                     end
-                    local displayText = getDistanceDisplayString(distance)
+                    local displayText = getDistanceDisplayString(targetDistance)
                     sysUpData(widgetDistanceText, '{"label": "distance", "value": "' .. displayText
                         .. '"}')
                     sysUpData(widgetTravelTimeText, '{"label": "Travel Time", "value": "' ..
@@ -4788,7 +4786,6 @@ VERSION_NUMBER = 0.727
             HUD.UpdatePipe()
             HUD.ExtraData(newContent)
             lastOdometerOutput = table.concat(newContent, "")
-            collectgarbage("collect")
         end
     
         function Hud.AnimateTick()
@@ -4869,6 +4866,7 @@ VERSION_NUMBER = 0.727
             local aptoggle = false
             local myAutopilotTarget=""
             local parseRadar = false
+            local lastMouseTime = 0
     
             local function GetAutopilotBrakeDistanceAndTime(speed)
                 -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
@@ -5116,6 +5114,15 @@ VERSION_NUMBER = 0.727
         end
     
         function ap.APTick()
+            local wheel = s.getMouseWheel()
+    
+            if wheel > 0 then
+                AP.changeSpd()
+            elseif wheel < 0 then
+                AP.changeSpd(true)
+            else
+                mousePause = true
+            end
             sivl = sysIsVwLock()
             if swp then 
                 s.setWaypoint(swp) 
@@ -5141,7 +5148,7 @@ VERSION_NUMBER = 0.727
                 cmdC = -1 
             end
             if eLL then
-                Nav.control.extendLandingGears()
+                CONTROL.landingGear()
                 eLL = false
             end 
             if aptoggle then
@@ -5484,11 +5491,10 @@ VERSION_NUMBER = 0.727
                 LockPitch = nil
                 OrbitAchieved = false
                 if abvGndDet ~= -1 and velMag < 20 then
+                    CONTROL.landingGear()
                     play("lfs", "LS")
                     AutoTakeoff = true
                     if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
-                    GearExtended = false
-                    Nav.control.retractLandingGears()
                     BrakeIsOn = "ATO Hold"
                     navCom:setTargetGroundAltitude(TargetHoverHeight)
                     if VertTakeOffEngine and UpVertAtmoEngine then 
@@ -5755,7 +5761,7 @@ VERSION_NUMBER = 0.727
                 end
             end
         end
-    
+        
         function ap.onFlush()
             -- Local functions for onFlush
                 local function composeAxisAccelerationFromTargetSpeedV(commandAxis, targetSpeed)
@@ -5869,7 +5875,6 @@ VERSION_NUMBER = 0.727
                         local ignoreCollision = AutoTakeoff and (velMag < 42 or abvGndDet ~= -1)
                         local apAction = (AltitudeHold or VectorToTarget or LockPitch or Autopilot)
                         if apAction and not ignoreCollision and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
-                            p("HERE1")
                             BrakeIsOn = "Collision"
                             apRoute = {}
                             cmdT = 0
@@ -5881,7 +5886,6 @@ VERSION_NUMBER = 0.727
                             StrongBrakes = true
                             if inAtmo then BrakeLanding = true end
                             autoRoll = true
-                            p("HERE2")
                         end
                         if collisionTime < 11 then 
                             collisionAlertStatus = body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2)
@@ -5899,7 +5903,10 @@ VERSION_NUMBER = 0.727
                     sba = AntigravTargetAltitude
                 end
             end
-    
+            if sEFC then
+                Nav:setEngineForceCommand('hover', vec3(), 1)
+                sEFC = false
+            end
             throttleMode = (navCom:getAxisCommandType(0) == axisCommandType.byThrottle)
     
             -- validate params
@@ -5988,6 +5995,13 @@ VERSION_NUMBER = 0.727
             abvGndDet = AboveGroundLevel()
             time = systime()
             lastApTickTime = time
+    
+            if GearExtended and abvGndDet > -1 and (abvGndDet - 3) < LandingGearGroundHeight then
+                if navCom.targetGroundAltitudeActivated then 
+                    navCom:deactivateGroundEngineAltitudeStabilization()
+                end
+            end        
+    
             if radar_1 then
                 parseRadar = not parseRadar
                 if parseRadar then 
@@ -5999,15 +6013,7 @@ VERSION_NUMBER = 0.727
             if antigrav then
                 antigravOn = (antigrav.getState() == 1)
             end
-            local wheel = s.getMouseWheel()
     
-            if wheel > 0 then
-                AP.changeSpd()
-            elseif wheel < 0 then
-                AP.changeSpd(true)
-            else
-                mousePause = true
-            end
     
             local MousePitchFactor = 1 -- Mouse control only
             local MouseYawFactor = 1 -- Mouse control only
@@ -6019,7 +6025,14 @@ VERSION_NUMBER = 0.727
             stalling = inAtmo and currentYaw < -YawStallAngle or currentYaw > YawStallAngle or currentPitch < -PitchStallAngle or currentPitch > PitchStallAngle
             local deltaX = s.getMouseDeltaX()
             local deltaY = s.getMouseDeltaY()
-    
+            
+            if lastMouseTime then
+                local elapsed = systime()-lastMouseTime
+                -- Aim for 60fps?
+                deltaX = deltaX * (elapsed/0.016)
+                deltaY = deltaY * (elapsed/0.016)
+            end
+            lastMouseTime = systime()
             if InvertMouse and not holdingShift then deltaY = -deltaY end
             yawInput2 = 0
             rollInput2 = 0
@@ -6051,7 +6064,7 @@ VERSION_NUMBER = 0.727
             else
                 simulatedX = uclamp(simulatedX + deltaX/2,-resolutionWidth/2,resolutionWidth/2)
                 simulatedY = uclamp(simulatedY + deltaY/2,-resolutionHeight/2,resolutionHeight/2)
-                distance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
+                mouseDistance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
                 if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                     local dx,dy = 1,1
                     if SelectedTab == "SCOPE" then
@@ -6060,20 +6073,9 @@ VERSION_NUMBER = 0.727
                     if userControlScheme == "virtual joystick" then -- Virtual Joystick
                         -- Do navigation things
     
-                        if simulatedX > 0 and simulatedX > DeadZone then
-                            yawInput2 = yawInput2 - (simulatedX - DeadZone) * MouseXSensitivity * dx
-                        elseif simulatedX < 0 and simulatedX < (DeadZone * -1) then
-                            yawInput2 = yawInput2 - (simulatedX + DeadZone) * MouseXSensitivity * dx
-                        else
-                            yawInput2 = 0
-                        end
-    
-                        if simulatedY > 0 and simulatedY > DeadZone then
-                            pitchInput2 = pitchInput2 - (simulatedY - DeadZone) * MouseYSensitivity * dy
-                        elseif simulatedY < 0 and simulatedY < (DeadZone * -1) then
-                            pitchInput2 = pitchInput2 - (simulatedY + DeadZone) * MouseYSensitivity * dy
-                        else
-                            pitchInput2 = 0
+                        if mouseDistance > DeadZone then
+                            yawInput2 = yawInput2 - (uclamp(mabs(simulatedX)-DeadZone,0,resolutionWidth/2)*utils.sign(simulatedX)) * MouseXSensitivity * dx
+                            pitchInput2 = pitchInput2 - (uclamp(mabs(simulatedY)-DeadZone,0,resolutionHeight/2)*utils.sign(simulatedY)) * MouseYSensitivity * dy
                         end
                     else
                         simulatedX = 0
@@ -6098,7 +6100,7 @@ VERSION_NUMBER = 0.727
                     AP.BrakeToggle()
                 end
                 if Autopilot then
-                    if not aptoggle then aptoggle = true end
+                    AP.ResetAutopilots(1)
                 end
             end
             LastIsWarping = isWarping
@@ -7366,11 +7368,7 @@ VERSION_NUMBER = 0.727
                                     BrakeLanding = false
                                     AltitudeHold = false
                                     if not aggBase then
-                                        GearExtended = true
-                                        if hasGear then
-                                            eLL = true
-                                            play("grOut","LG",1)
-                                        end
+                                        eLL = true
                                         navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                                     end
                                     upAmount = 0
@@ -7535,9 +7533,6 @@ VERSION_NUMBER = 0.727
                 if (inAtmo and vSpd < -80) or atmosDensity > 0.005 then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
                     brakeInput2 = calculatedBrake
                 end
-                --if calculatedThrottle < 0 then
-                --    brakeInput2 = brakeInput2 + mabs(calculatedThrottle)
-                --end
                 if brakeInput2 > 0 then
                     if ThrottleLimited and calculatedThrottle == 0.01 and not ThrottleValue then
                         ThrottleValue = 0 -- We clamped it to >0 before but, if braking and it was at that clamp, 0 is good.
@@ -7774,7 +7769,50 @@ VERSION_NUMBER = 0.727
         local currentHoldAltModifier = holdAltitudeButtonModifier
         local currentAggModifier = antiGravButtonModifier
         local clearAllCheck = time
-     
+    
+        function Control.landingGear()
+            GearExtended = not GearExtended
+            if GearExtended then
+                VectorToTarget = false
+                LockPitch = nil
+                AP.cmdThrottle(0)
+                if vBooster or hover then 
+                    if inAtmo and abvGndDet == -1 then
+                        play("bklOn", "BL")
+                        StrongBrakes = true -- We don't care about this anymore
+                        Reentry = false
+                        AutoTakeoff = false
+                        VertTakeOff = false
+                        AltitudeHold = false
+                        if BrakeLanding then apBrk = not apBrk end
+                        BrakeLanding = true
+                        autoRoll = true
+                        GearExtended = false -- Don't actually toggle the gear yet though
+                    else
+                        if hasGear then
+                            play("grOut","LG",1)
+                            Nav.control.extendLandingGears()                            
+                        end
+                        apBrk = false
+                        navCom:setTargetGroundAltitude(LandingGearGroundHeight)
+                        if inAtmo then
+                            BrakeIsOn = "Landing"
+                        end
+                    end
+                end
+                if hasGear and not BrakeLanding and not (vBooster or hover) then
+                    play("grOut","LG",1)
+                    Nav.control.extendLandingGears() -- Actually extend
+                end
+            else
+                if hasGear then
+                    play("grIn","LG",1)
+                    Nav.control.retractLandingGears()
+                end
+                navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
+                if stablized then navCom:setTargetGroundAltitude(TargetHoverHeight) end
+            end
+        end
         function Control.startControl(action)
             -- Local function for onActionStart items in more than one
                 local function groundAltStart(down)
@@ -7823,6 +7861,7 @@ VERSION_NUMBER = 0.727
                             end
                         end
                     else
+                        if not down and abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 then CONTROL.landingGear() end
                         navCom:updateTargetGroundAltitudeFromActionStart(mult*1.0)
                     end
                 end
@@ -7856,46 +7895,7 @@ VERSION_NUMBER = 0.727
                     end                
                 end
             if action == "gear" then
-                GearExtended = not GearExtended
-                if GearExtended then
-                    VectorToTarget = false
-                    LockPitch = nil
-                    AP.cmdThrottle(0)
-                    if vBooster or hover then 
-                        if inAtmo and abvGndDet == -1 then
-                            play("bklOn", "BL")
-                            StrongBrakes = true -- We don't care about this anymore
-                            Reentry = false
-                            AutoTakeoff = false
-                            VertTakeOff = false
-                            AltitudeHold = false
-                            if BrakeLanding then apBrk = not apBrk end
-                            BrakeLanding = true
-                            autoRoll = true
-                            GearExtended = false -- Don't actually toggle the gear yet though
-                        else
-                            if hasGear then
-                                play("grOut","LG",1)
-                                Nav.control.extendLandingGears()                            
-                            end
-                            apBrk = false
-                            navCom:setTargetGroundAltitude(LandingGearGroundHeight)
-                            if inAtmo then
-                                BrakeIsOn = "Landing"
-                            end
-                        end
-                    end
-                    if hasGear and not BrakeLanding and not (vBooster or hover) then
-                        play("grOut","LG",1)
-                        Nav.control.extendLandingGears() -- Actually extend
-                    end
-                else
-                    if hasGear then
-                        play("grIn","LG",1)
-                        Nav.control.retractLandingGears()
-                    end
-                    navCom:setTargetGroundAltitude(TargetHoverHeight)
-                end
+                CONTROL.landingGear()
             elseif action == "light" then
                 if Nav.control.isAnyHeadlightSwitchedOn() == 1 then
                     Nav.control.switchOffHeadlights()
@@ -7936,6 +7936,7 @@ VERSION_NUMBER = 0.727
                     LeftAmount = -1
             elseif action == "up" then
                 upAmount = upAmount + 1
+                if abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 then CONTROL.landingGear() end
                 navCom:deactivateGroundEngineAltitudeStabilization()
                 navCom:updateCommandFromActionStart(axisCommandId.vertical, 1.0)
             elseif action == "down" then
@@ -8100,7 +8101,7 @@ VERSION_NUMBER = 0.727
                 else
                     msgText = "Coupled Mode - Ground Stabilization on"
                     navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                    Nav:setEngineForceCommand('hover', vec3(), 1)
+                    sEFC = true
                     play("gsOn", "GS") 
                 end
             elseif action == "option9" then
@@ -8240,14 +8241,14 @@ VERSION_NUMBER = 0.727
                 navCom:updateCommandFromActionStop(axisCommandId.vertical, -1.0)
                 if stablized then 
                     navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                    Nav:setEngineForceCommand('hover', vec3(), 1) 
+                    sEFC = true
                 end
             elseif action == "down" then
                 upAmount = 0
                 navCom:updateCommandFromActionStop(axisCommandId.vertical, 1.0)
                 if stablized then 
                     navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                    Nav:setEngineForceCommand('hover', vec3(), 1) 
+                    sEFC = true 
                 end
             elseif action == "groundaltitudeup" then
                 groundAltStop()
@@ -8778,6 +8779,9 @@ VERSION_NUMBER = 0.727
     
                     local eleName = c.getElementNameById
                     local checkTanks = (fuelX ~= 0 and fuelY ~= 0)
+                    local slottedTanksAtmo = _G["atmofueltank_size"]
+                    local slottedTanksSpace = _G["spacefueltank_size"]
+                    local slottedTanksRocket = _G["rocketfueltank_size"]
                     for k in pairs(elementsID) do --Look for space engines, landing gear, fuel tanks if not slotted and c size
                         local type = c.getElementTypeById(elementsID[k])
                         if stringmatch(type, '^.*Atmospheric Engine$') then
@@ -8834,8 +8838,20 @@ VERSION_NUMBER = 0.727
                                     vanillaMaxVolume = vanillaMaxVolume + (vanillaMaxVolume * (fuelTankHandlingAtmo * 0.2))
                                 end
                                 vanillaMaxVolume =  CalculateFuelVolume(curMass, vanillaMaxVolume)
-                                atmoTanks[#atmoTanks + 1] = {elementsID[k], eleName(elementsID[k]),
-                                                            vanillaMaxVolume, massEmpty, curMass, curTime}
+                                
+                                local name = eleName(elementsID[k])
+                                
+                                local slottedIndex = 0
+                                for j = 1, slottedTanksAtmo do
+                                    if name == jdecode(u["atmofueltank_" .. j].getData()).name then
+                                        slottedIndex = j
+                                        break
+                                    end
+                                end
+                                
+                                local tank = {elementsID[k], string.sub(name, 1, 12),
+                                                            vanillaMaxVolume, massEmpty, curMass, curTime, slottedIndex}
+                                atmoTanks[#atmoTanks + 1] = tank
                             end
                             if (type == "Rocket Fuel Tank") then
                                 local vanillaMaxVolume = 320
@@ -8855,8 +8871,20 @@ VERSION_NUMBER = 0.727
                                     vanillaMaxVolume = vanillaMaxVolume + (vanillaMaxVolume * (fuelTankHandlingRocket * 0.1))
                                 end
                                 vanillaMaxVolume =  CalculateFuelVolume(curMass, vanillaMaxVolume)
-                                rocketTanks[#rocketTanks + 1] = {elementsID[k], eleName(elementsID[k]),
-                                                                vanillaMaxVolume, massEmpty, curMass, curTime}
+                                
+                                local name = eleName(elementsID[k])
+                                
+                                local slottedIndex = 0
+                                for j = 1, slottedTanksRocket do
+                                    if name == jdecode(u["rocketfueltank_" .. j].getData()).name then
+                                        slottedIndex = j
+                                        break
+                                    end
+                                end
+                                
+                                local tank = {elementsID[k], string.sub(name, 1, 12),
+                                                            vanillaMaxVolume, massEmpty, curMass, curTime, slottedIndex}
+                                rocketTanks[#rocketTanks + 1] = tank
                             end
                             if (type == "Space Fuel Tank") then
                                 local vanillaMaxVolume = 600
@@ -8876,8 +8904,20 @@ VERSION_NUMBER = 0.727
                                     vanillaMaxVolume = vanillaMaxVolume + (vanillaMaxVolume * (fuelTankHandlingSpace * 0.2))
                                 end
                                 vanillaMaxVolume =  CalculateFuelVolume(curMass, vanillaMaxVolume)
-                                spaceTanks[#spaceTanks + 1] = {elementsID[k], eleName(elementsID[k]),
-                                                            vanillaMaxVolume, massEmpty, curMass, curTime}
+                                
+                                local name = eleName(elementsID[k])
+                                
+                                local slottedIndex = 0
+                                for j = 1, slottedTanksSpace do
+                                    if name == jdecode(u["spacefueltank_" .. j].getData()).name then
+                                        slottedIndex = j
+                                        break
+                                    end
+                                end
+                                
+                                local tank = {elementsID[k], string.sub(name, 1, 12),
+                                                            vanillaMaxVolume, massEmpty, curMass, curTime, slottedIndex}
+                                spaceTanks[#spaceTanks + 1] = tank
                             end
                         end
                     end
@@ -8926,13 +8966,13 @@ VERSION_NUMBER = 0.727
                         s.freeze(0)
                     end
                     if hasGear then
-                        if abvGndDet ~= -1 then
+                        if abvGndDet ~= -1 and not antigravOn then
                             Nav.control.extendLandingGears()
                         else
                             Nav.control.retractLandingGears()
                         end
-                        GearExtended = (Nav.control.isAnyLandingGearExtended() == 1)
                     end
+                    GearExtended = (Nav.control.isAnyLandingGearExtended() == 1) or ((abvGndDet - 3) < LandingGearGroundHeight)
                     -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
                     if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 50) then
                         BrakeIsOn = "Startup"
