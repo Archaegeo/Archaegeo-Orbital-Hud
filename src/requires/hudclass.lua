@@ -795,8 +795,10 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 else
                     newContent[#newContent + 1] = svgText(warningX, gearY, "Landed (G: Takeoff)", "warnings")
                 end
+            end
+            if abvGndDet > -1 then 
                 local displayText = getDistanceDisplayString(Nav:getTargetGroundAltitude())
-                newContent[#newContent + 1] = svgText(warningX, hoverY,"Hover Height: ".. displayText,"warn")
+                newContent[#newContent + 1] = svgText(warningX, hoverY,"Hover Height: ".. displayText,"warn") 
             end
             local rocketFill = "#000011"
             local rocketStroke = defaultStroke

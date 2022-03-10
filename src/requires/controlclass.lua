@@ -48,7 +48,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                 Nav.control.retractLandingGears()
             end
             navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-            if stabilized then navCom:setTargetGroundAltitude(TargetHoverHeight) end
+            if stablized then navCom:setTargetGroundAltitude(TargetHoverHeight) end
         end
     end
     function Control.startControl(action)
