@@ -296,6 +296,15 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
     end
 
     function ap.APTick()
+        local wheel = s.getMouseWheel()
+
+        if wheel > 0 then
+            AP.changeSpd()
+        elseif wheel < 0 then
+            AP.changeSpd(true)
+        else
+            mousePause = true
+        end
         sivl = sysIsVwLock()
         if swp then 
             s.setWaypoint(swp) 
@@ -321,7 +330,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             cmdC = -1 
         end
         if eLL then
-            Nav.control.extendLandingGears()
+            CONTROL.landingGear()
             eLL = false
         end 
         if aptoggle then
@@ -664,11 +673,10 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             LockPitch = nil
             OrbitAchieved = false
             if abvGndDet ~= -1 and velMag < 20 then
+                CONTROL.landingGear()
                 play("lfs", "LS")
                 AutoTakeoff = true
                 if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
-                GearExtended = false
-                Nav.control.retractLandingGears()
                 BrakeIsOn = "ATO Hold"
                 navCom:setTargetGroundAltitude(TargetHoverHeight)
                 if VertTakeOffEngine and UpVertAtmoEngine then 
@@ -1166,6 +1174,13 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         abvGndDet = AboveGroundLevel()
         time = systime()
         lastApTickTime = time
+
+        if GearExtended and abvGndDet > -1 and (abvGndDet - 3) < LandingGearGroundHeight then
+            if navCom.targetGroundAltitudeActivated then 
+                navCom:deactivateGroundEngineAltitudeStabilization()
+            end
+        end        
+
         if radar_1 then
             parseRadar = not parseRadar
             if parseRadar then 
@@ -1177,15 +1192,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         if antigrav then
             antigravOn = (antigrav.getState() == 1)
         end
-        local wheel = s.getMouseWheel()
 
-        if wheel > 0 then
-            AP.changeSpd()
-        elseif wheel < 0 then
-            AP.changeSpd(true)
-        else
-            mousePause = true
-        end
 
         local MousePitchFactor = 1 -- Mouse control only
         local MouseYawFactor = 1 -- Mouse control only
@@ -2540,11 +2547,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                                 BrakeLanding = false
                                 AltitudeHold = false
                                 if not aggBase then
-                                    GearExtended = true
-                                    if hasGear then
-                                        eLL = true
-                                        play("grOut","LG",1)
-                                    end
+                                    eLL = true
                                     navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                                 end
                                 upAmount = 0
@@ -2709,9 +2712,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             if (inAtmo and vSpd < -80) or atmosDensity > 0.005 then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
                 brakeInput2 = calculatedBrake
             end
-            --if calculatedThrottle < 0 then
-            --    brakeInput2 = brakeInput2 + mabs(calculatedThrottle)
-            --end
             if brakeInput2 > 0 then
                 if ThrottleLimited and calculatedThrottle == 0.01 and not ThrottleValue then
                     ThrottleValue = 0 -- We clamped it to >0 before but, if braking and it was at that clamp, 0 is good.

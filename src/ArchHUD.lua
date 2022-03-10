@@ -1,6 +1,6 @@
 require 'src.slots'
 
-local Nav = Navigator.new(system, core, unit)
+Nav = Navigator.new(system, core, unit)
 local atlas = require("atlas")
 --
 function p(msg)

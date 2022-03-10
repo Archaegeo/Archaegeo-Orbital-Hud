@@ -433,8 +433,8 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                     else
                         Nav.control.retractLandingGears()
                     end
-                    GearExtended = (Nav.control.isAnyLandingGearExtended() == 1)
                 end
+                GearExtended = (Nav.control.isAnyLandingGearExtended() == 1) or ((abvGndDet - 3) < LandingGearGroundHeight)
                 -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
                 if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 50) then
                     BrakeIsOn = "Startup"

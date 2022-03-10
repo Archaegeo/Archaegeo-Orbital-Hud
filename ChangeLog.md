@@ -5,6 +5,12 @@ Version 1.728 - HUD efficiency improvements (many thanks to Dimencia)
 - Updated virtual joystick responsiveness.
 - Removed `apTickRate` user variable as no longer applicable.
 - Fix: Fixed AP not resetting after warp arrival.
+- Fix: Fixed longtime issue with boosters/hovers not turning off when landed on some ships.  `LandingGearGroundHeight` should now be set
+equal to AGL (shown below altitude) when fully landed.  When the ship senses you are within 5M of that height it will completely
+shut off hovers/boosters till you hit G, alt-4, alt-6, alt-spacebar, mousewheel up or some other form of taking off.
+Note: `TargetHoverHeight` still controls how high you go up when you take off from landed.
+- Fix: Fixed mousewheel throttle control being too erratic (move check back to aptick instead of flush)
+- Fix: userclass.lua renamed to userclass.example to prevent overwrite when updating.
 
 Version 1.727 - Radar Refactor
 - Move radar to once every other flush call performance.  Greatly improved accuracy and timing to resolve position.
