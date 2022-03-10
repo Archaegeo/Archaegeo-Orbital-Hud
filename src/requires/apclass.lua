@@ -943,7 +943,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
         end
     end
-
+    
     function ap.onFlush()
         -- Local functions for onFlush
             local function composeAxisAccelerationFromTargetSpeedV(commandAxis, targetSpeed)
@@ -1085,7 +1085,10 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 sba = AntigravTargetAltitude
             end
         end
-
+        if sEFC then
+            Nav:setEngineForceCommand('hover', vec3(), 1)
+            sEFC = false
+        end
         throttleMode = (navCom:getAxisCommandType(0) == axisCommandType.byThrottle)
 
         -- validate params

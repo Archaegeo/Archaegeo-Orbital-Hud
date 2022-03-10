@@ -285,5 +285,6 @@ function globalDeclare(s, c, u, systime, mfloor, atmosphere) -- # is how many cl
     apBrk = false -- 2
     alignHeading = nil -- 2
     mouseDistance = 0 -- 2
+    sEFC = false -- 2
     if shield_1 then shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints()) end
 end

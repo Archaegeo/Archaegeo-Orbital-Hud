@@ -339,7 +339,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             else
                 msgText = "Coupled Mode - Ground Stabilization on"
                 navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                Nav:setEngineForceCommand('hover', vec3(), 1)
+                sEFC = true
                 play("gsOn", "GS") 
             end
         elseif action == "option9" then
@@ -479,14 +479,14 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             navCom:updateCommandFromActionStop(axisCommandId.vertical, -1.0)
             if stablized then 
                 navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                Nav:setEngineForceCommand('hover', vec3(), 1) 
+                sEFC = true
             end
         elseif action == "down" then
             upAmount = 0
             navCom:updateCommandFromActionStop(axisCommandId.vertical, 1.0)
             if stablized then 
                 navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                Nav:setEngineForceCommand('hover', vec3(), 1) 
+                sEFC = true 
             end
         elseif action == "groundaltitudeup" then
             groundAltStop()

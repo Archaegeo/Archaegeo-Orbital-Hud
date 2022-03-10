@@ -796,7 +796,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                     newContent[#newContent + 1] = svgText(warningX, gearY, "Landed (G: Takeoff)", "warnings")
                 end
             end
-            if abvGndDet > -1 then 
+            if abvGndDet > -1 and (not antigravOn or coreAltitude < 100) then 
                 local displayText = getDistanceDisplayString(Nav:getTargetGroundAltitude())
                 newContent[#newContent + 1] = svgText(warningX, hoverY,"Hover Height: ".. displayText,"warn") 
             end

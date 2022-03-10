@@ -337,7 +337,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
 							local name = eleName(elementsID[k])
 							
 							local slottedIndex = 0
-							for j = 1, slottedTanksAtmo do
+							for j = 1, slottedTanksRocket do
 								if name == jdecode(u["rocketfueltank_" .. j].getData()).name then
 									slottedIndex = j
 									break
@@ -370,7 +370,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                             local name = eleName(elementsID[k])
                             
 							local slottedIndex = 0
-							for j = 1, slottedTanksAtmo do
+							for j = 1, slottedTanksSpace do
 								if name == jdecode(u["spacefueltank_" .. j].getData()).name then
 									slottedIndex = j
 									break
