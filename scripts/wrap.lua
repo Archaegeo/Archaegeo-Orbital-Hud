@@ -3336,9 +3336,9 @@ return {
   },
   withErrorHandling = {
     eventHandler = [[
-if not __wrap_lua__stopped and {scriptObject}.{method} then local ok, message = xpcall({scriptObject}.{method},__wrap_lua__traceback,{argsStrForPcall})if not ok then __wrap_lua__error(message)end end]],
-  methodHandler = [[
-if {scriptObject}.{method} then local ret = { xpcall({scriptObject}.{method},__wrap_lua__traceback,{argsStrForPcall}) }if not ret[1] then __wrap_lua__error(ret[2])end return table.unpack(ret, 2)end]],
+      if not __wrap_lua__stopped and {scriptObject}.{method} then local ok, message = xpcall({scriptObject}.{method},__wrap_lua__traceback,{argsStrForPcall})if not ok then __wrap_lua__error(message)end end]],
+   methodHandler = [[
+    if {scriptObject}.{method} then local ret = { xpcall({scriptObject}.{method},__wrap_lua__traceback,{argsStrForPcall}) }if not ret[1] then __wrap_lua__error(ret[2])end return table.unpack(ret, 2)end]],
   startEventHandler = [=[
 
 __wrap_lua__stopped = false
@@ -3346,30 +3346,14 @@ __wrap_lua__stopOnError = false
 __wrap_lua__rethrowErrorAlways = false
 __wrap_lua__rethrowErrorIfStopped = true
 __wrap_lua__printError = true
-__wrap_lua__showErrorOnScreens = true
+
 
 function __wrap_lua__error (message)
   if __wrap_lua__stopped then return end
 
-
   message = tostring(message):gsub('"%-%- |STDERROR%-EVENTHANDLER[^"]*"', 'chunk'):gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
 
   local unit = unit or self or {}
-
-  if __wrap_lua__showErrorOnScreens then
-    for _, value in pairs(unit) do
-      if type(value) == "table" and value.setCenteredText and value.setHTML then -- value is a screen
-        if message:match("\n") then
-          value.setHTML([[
-<pre style="color: white; background-color: black; font-family: Consolas,monospace; font-size: 4vh; white-space: pre-wrap; margin: 1em">
-Error: ]] .. message .. [[
-</pre>]])
-        else
-          value.setCenteredText(message)
-        end
-      end
-    end
-  end
 
   if __wrap_lua__printError and system and system.print then
     system.print("Error: " .. message:gsub("\n", "<br>"))
@@ -3397,7 +3381,7 @@ local ok, message = xpcall(function ()
 
 {startHandlerCode}
 
-
+-- error handling code added by wrap.lua
 end, __wrap_lua__traceback)
 if not ok then
   __wrap_lua__error(message)
@@ -3406,18 +3390,16 @@ end]=]
   },
   withErrorHandlingMinified = {
     eventHandler = [[
-if not __wrap_lua__stopped and {scriptObject}.{method} then local a,b=xpcall({scriptObject}.{method},__wrap_lua__traceback,{argsStrForPcall}) if not a then __wrap_lua__error(b) end end]],
+      if not __wrap_lua__stopped and {scriptObject}.{method} then local a,b=xpcall({scriptObject}.{method},__wrap_lua__traceback,{argsStrForPcall}) if not a then __wrap_lua__error(b) end end]],
   methodHandler = [[
-if {scriptObject}.{method} then local a={xpcall({scriptObject}.{method},__wrap_lua__traceback,{argsStrForPcall})} if not a[1] then __wrap_lua__error(a[2]) end return table.unpack(a, 2) end]],
+    if {scriptObject}.{method} then local a={xpcall({scriptObject}.{method},__wrap_lua__traceback,{argsStrForPcall})} if not a[1] then __wrap_lua__error(a[2]) end return table.unpack(a, 2) end]],
   startEventHandler = [=[
 __wrap_lua__stopped=false
 __wrap_lua__stopOnError=false
 __wrap_lua__rethrowErrorAlways=false
 __wrap_lua__rethrowErrorIfStopped=true
 __wrap_lua__printError=true
-__wrap_lua__showErrorOnScreens=true
-function __wrap_lua__error(a) if __wrap_lua__stopped then return end a=tostring(a):gsub('"%-%- |STDERROR%-EVENTHANDLER[^"]*"','chunk'):gsub("&","&amp;"):gsub("<","&lt;"):gsub(">","&gt;") local b=unit or self or {} if __wrap_lua__showErrorOnScreens then for _,c in pairs(b) do if type(c)=="table" and c.setCenteredText and c.setHTML then if a:match("\n") then c.setHTML([[<pre style="color: white; background-color: black; font-family: Consolas,monospace; font-size: 4vh; white-space: pre-wrap; margin: 1em">
-Error: ]]..a..[[</pre>]]) else c.setCenteredText(a) end end end end if __wrap_lua__printError and system and system.print then system.print("Error: "..a:gsub("\n","<br>")) end if __wrap_lua__stopOnError then __wrap_lua__stopped=true end if __wrap_lua__stopped and b and b.exit then b.exit() end if __wrap_lua__rethrowErrorAlways or (__wrap_lua__stopped and __wrap_lua__rethrowErrorIfStopped) then error(a) end end __wrap_lua__traceback=traceback or (debug and debug.traceback) or function(a,b)return b or a end local a,b=xpcall(function() {startHandlerCode} end,__wrap_lua__traceback) if not a then __wrap_lua__error(b) if not {scriptObject} then {scriptObject} = {} end end ]=]
+function __wrap_lua__error(a) if __wrap_lua__stopped then return end a=tostring(a):gsub('"%-%- |STDERROR%-EVENTHANDLER[^"]*"','chunk'):gsub("&","&amp;"):gsub("<","&lt;"):gsub(">","&gt;") local b=unit or self or {} if __wrap_lua__printError and system and system.print then system.print("Error: "..a:gsub("\n","<br>")) end if __wrap_lua__stopOnError then __wrap_lua__stopped=true end if __wrap_lua__stopped and b and b.exit then b.exit() end if __wrap_lua__rethrowErrorAlways or (__wrap_lua__stopped and __wrap_lua__rethrowErrorIfStopped) then error(a) end end __wrap_lua__traceback=traceback or (debug and debug.traceback) or function(a,b)return b or a end local a,b=xpcall(function() {startHandlerCode} end,__wrap_lua__traceback) if not a then __wrap_lua__error(b) if not {scriptObject} then {scriptObject} = {} end end ]=]
   }
 }
 

@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.728
+VERSION_NUMBER = 0.729
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -5491,7 +5491,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 LockPitch = nil
                 OrbitAchieved = false
                 if abvGndDet ~= -1 and velMag < 20 then
-                    CONTROL.landingGear()
+                    if GearExtended then CONTROL.landingGear() end
                     play("lfs", "LS")
                     AutoTakeoff = true
                     if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
@@ -7861,7 +7861,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             end
                         end
                     else
-                        if not down and abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 then CONTROL.landingGear() end
+                        if not down and abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 and GearExtended then CONTROL.landingGear() end
                         navCom:updateTargetGroundAltitudeFromActionStart(mult*1.0)
                     end
                 end
@@ -7936,7 +7936,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     LeftAmount = -1
             elseif action == "up" then
                 upAmount = upAmount + 1
-                if abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 then CONTROL.landingGear() end
+                if abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 and GearExtended then CONTROL.landingGear() end
                 navCom:deactivateGroundEngineAltitudeStabilization()
                 navCom:updateCommandFromActionStart(axisCommandId.vertical, 1.0)
             elseif action == "down" then

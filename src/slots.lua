@@ -19,6 +19,7 @@ spacefueltank = SpaceFuelContainer -- select=manual
 rocketfueltank = RocketFuelContainer -- select=manual
 shield = ShieldGeneratorUnit -- select=manual
 screenHud = ScreenUnit -- select=manual
+
 -- Auto-generated items from slots above (there are likely more we don't use)
 weapon_size = nil
 radar_1 = nil
