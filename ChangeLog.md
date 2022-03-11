@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.730
+- Fixed re-entry speed braking to prevent element damage.
+
 Version 1.729
 - Fix landing gear issues.
 

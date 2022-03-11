@@ -319,15 +319,22 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             sudi = false
             sudv = ""
         end
-        if cmdT ~= -1 then
-            AP.cmdThrottle(cmdT, cmdDS) 
-            cmdDS = false
-            cmdT = -1 
-        end
         if cmdC ~= -1 then 
             AP.cmdCruise(cmdC, cmdDS) 
             cmdDS = false 
             cmdC = -1 
+        end
+        if setCruiseSpeed ~= nil then
+            if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
+                navCom:setTargetSpeedCommand(axisCommandId.longitudinal, setCruiseSpeed)
+            else
+                setCruiseSpeed = nil
+            end
+        end
+        if cmdT ~= -1 then
+            AP.cmdThrottle(cmdT, cmdDS) 
+            cmdDS = false
+            cmdT = -1 
         end
         if eLL then
             CONTROL.landingGear()
@@ -890,13 +897,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 end
             end
         RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
-        if setCruiseSpeed ~= nil then
-            if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
-                cmdC = setCruiseSpeed
-            else
-                setCruiseSpeed = nil
-            end
-        end
+
     end
 
     function ap.SatNavTick()
@@ -2200,6 +2201,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if throttleMode then
                     if velMag > ReentrySpeed/3.6 and not freeFallHeight then
                         BrakeIsOn = "Reentry Limit"
+                        if PlayerThrottle > 0 then cmdT = 0 end
                     else
                         BrakeIsOn = false
                     end
@@ -2230,6 +2232,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                         reentryMode = false
                         Reentry = false
                         autoRoll = true 
+                        cmdT = 1
                     end
                 end
             end
