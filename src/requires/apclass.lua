@@ -1039,13 +1039,15 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
 
             local function getPitch(gravityDirection, forward, right)
             
-                local horizontalForward = gravityDirection:cross(right):normalize_inplace() -- Cross forward?
-                local pitch = math.acos(uclamp(horizontalForward:dot(-forward), -1, 1)) * constants.rad2deg -- acos?
+                --local horizontalForward = gravityDirection:cross(right):normalize_inplace() -- Cross forward?
+                --local pitch = math.acos(uclamp(horizontalForward:dot(-forward), -1, 1)) * constants.rad2deg -- acos?
                 
-                if horizontalForward:cross(-forward):dot(right) < 0 then
-                    pitch = -pitch
-                end -- Cross right dot forward?
-                return pitch
+                --if horizontalForward:cross(-forward):dot(right) < 0 then
+                --    pitch = -pitch
+                --end -- Cross right dot forward?
+                --return pitch
+
+                return -math.deg(signedRotationAngle(right, forward, right:cross(gravityDirection)))
             end
 
             local function checkCollision()
@@ -1125,7 +1127,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         local radianRoll = (adjustedRoll / 180) * math.pi
         local corrX = math.cos(radianRoll)
         local corrY = math.sin(radianRoll)
-        adjustedPitch = getPitch(worldVertical, constructForward, (constructRight * corrX) + (constructUp * corrY)) 
+        adjustedPitch = getPitch(worldVertical, constructForward, constructRight) 
 
         local constructVelocityDir = constructVelocity:normalize()
         local currentRollDegAbs = mabs(adjustedRoll)
@@ -2152,6 +2154,10 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             -- This may be better to smooth evenly regardless of HoldAltitude.  Let's say, 2km scaling?  Should be very smooth for atmo
             -- Even better if we smooth based on their velocity
             local minmax = 200+velMag -- Previously 500+
+
+            -- This is odd; while Reentry is true, the pitch we calculate here is never applied
+            -- So this is only for spaceLand... and spaceLand is having some odd issues with reentry
+            -- But removing it doesn't seem to help them
             if Reentry or spaceLand then minMax = 2000+velMag end -- Smoother reentries
             -- Smooth the takeoffs with a velMag multiplier that scales up to 100m/s
             local velMultiplier = 1
@@ -2159,7 +2165,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             local targetPitch = (utils.smoothstep(altDiff, -minmax, minmax) - 0.5) * 2 * MaxPitch * velMultiplier
 
                         -- not inAtmo and
-            if not Reentry and not spaceLand and not VectorToTarget and constructForward:dot(constructVelocity:normalize()) < 0.99 then
+            if not Reentry and not spaceLand and constructForward:dot(constructVelocity:normalize()) < 0.99 then
                 -- Widen it up and go much harder based on atmo level if we're exiting atmo and velocity is keeping up with the nose
                 -- I.e. we have a lot of power and need to really get out of atmo with that power instead of feeding it to speed
                 -- Scaled in a way that no change up to 10% atmo, then from 10% to 0% scales to *20 and *2
@@ -2180,59 +2186,96 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
 
             local oldInput = pitchInput2 
             if Reentry then
+						
+				-- 'Reentry' is only for approaching atmo, and is handled by Alt Hold once in atmo
+				local ReentrySpeed = mfloor(adjustedAtmoSpeedLimit)
+				-- Find the brake distance as if gravity at atmo level were applying the whole time
+				-- Previously we assumed 100% gravity, which is OK, but might be unnecessarily slow on like Feli
 
-                local ReentrySpeed = mfloor(adjustedAtmoSpeedLimit)
+				-- g = GM/R^2
+				-- atmosphereRadius includes radius + atmosphereThickness
+				local r2 = planet.atmosphereRadius * planet.atmosphereRadius
+				local maxGravity = planet.GM/r2 -- In m/s^2, standard gravity units
 
-                local brakeDistancer, brakeTimer = Kinematic.computeDistanceAndTime(velMag, ReentrySpeed/3.6, coreMass, 0, 0, LastMaxBrake - planet.gravity*9.8*coreMass)
-                brakeDistancer = brakeDistancer == -1 and 5000 or brakeDistancer
-                local distanceToTarget = coreAltitude - (planet.noAtmosphericDensityAltitude + brakeDistancer)
-                local freeFallHeight = coreAltitude > (planet.noAtmosphericDensityAltitude + brakeDistancer*1.35)
-                if freeFallHeight then
-                    targetPitch = ReEntryPitch
-                    if velMag <= ReentrySpeed/3.6 and velMag > (ReentrySpeed/3.6)-10 and mabs(constructVelocity:normalize():dot(constructForward)) > 0.9 and not throttleMode then
-                        WasInCruise = false
-                        cmdT = 1
-                    end
-                elseif (throttleMode or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= ReentrySpeed) and not freeFallHeight and not inAtmo then 
-                    cmdC = ReentrySpeed
-                    cmdDS = true
-                end
-                if throttleMode then
-                    if velMag > ReentrySpeed/3.6 and not freeFallHeight then
-                        BrakeIsOn = "Reentry Limit"
-                    else
-                        BrakeIsOn = false
-                    end
-                else
-                    BrakeIsOn = false
-                end
-                if vSpd > 0 then BrakeIsOn = "Reentry vSpd" end
-                if not reentryMode then
-                    targetPitch = -80
-                    if coreAltitude < (planet.surfaceMaxAltitude+(planet.atmosphereThickness-planet.surfaceMaxAltitude)*0.25) then
-                        msgText = "PARACHUTE DEPLOYED at "..round(coreAltitude,0)
-                        Reentry = false
-                        BrakeLanding = true
-                        StrongBrakes = true
-                        cmdT = 0
-                        targetPitch = 0
-                        autoRoll = autoRollPreference
-                    end
-                elseif planet.noAtmosphericDensityAltitude > 0 and freeFallHeight then -- 5km is good
+				-- Calculate brake distance assuming that gravity is going to work directly against our brakes the entire time
+				local brakeDistancer, brakeTimer = Kinematic.computeDistanceAndTime(velMag, ReentrySpeed/3.6, coreMass, 0, 0, LastMaxBrake - maxGravity*coreMass)
 
-                    autoRoll = true -- It shouldn't actually do it, except while aligning
-                elseif not freeFallHeight then
-                    if not inAtmo and (throttleMode or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= ReentrySpeed) then 
-                        cmdC = ReentrySpeed
-                    end
-                    if velMag < ((ReentrySpeed/3.6)+1) then
-                        BrakeIsOn = false
-                        reentryMode = false
-                        Reentry = false
-                        autoRoll = true 
-                    end
-                end
-            end
+				-- We also need to know the distance to the atmo along an intersect, not just the vertical distance like we did previously
+				-- Luckily, we have a func for that, which is supposed to only iterate on the 'list' we give it, in this containing only the one planet
+                -- castIntersections(origin, direction, sizeCalculator, bodyIds, collection, sorted)
+				local intersect, near, far = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, constructVelocity:normalize(), function(body) return (body.radius+body.noAtmosphericDensityAltitude) end, nil, {planet})
+				local atmoDistance = far
+				if near ~= nil and far ~= nil then
+					atmoDistance = math.min(near,far)
+				end
+				if not atmoDistance then -- If we're not on collision with it, use vertical distance
+					atmoDistance = coreAltitude - planet.noAtmosphericDensityAltitude
+				end
+				
+                atmoDistance = atmoDistance - 5000 -- Leave 5km for getting the vector right
+                -- So when atmoDistance < 0, we're within 5km and should be doing something different
+				
+				-- Smoothly move from -90 to target pitch as we approach to help it be in the right direction from the start
+                targetPitch = -(utils.smoothstep(atmoDistance/30000,0,1)*(90+ReEntryPitch)-ReEntryPitch)
+				
+				autoRoll = false -- It already rolled when aligning; this keeps it from freaking out if -90 makes it wobble
+
+				-- Actually nah.  Set cruise mode to the orbital speed at atmo height
+				-- An arbitrary limit to keep it from getting crazy fast
+				local escapeVel, endSpeed = Kep(planet):escapeAndOrbitalSpeed(planet.noAtmosphericDensityAltitude)
+				
+				-- If we brake at any point, set it to throttle mode at 0% until we get there
+				if atmoDistance and atmoDistance > 0 and atmoDistance <= brakeDistancer then
+					BrakeIsOn = "Reentry Limit"
+					cmdT = 0
+				else
+					BrakeIsOn = false
+				end
+				
+                -- New global, I tried a lot of ways to not have one but.  It does the job, can be moved out as local if you want
+                -- Without it, we have problems with it flickering between target speeds rapidly and then getting stuck in a wrong mode later
+				if not ReentrySpeedSet and (not atmoDistance or atmoDistance > 0) then
+					cmdC = escapeVel*3.6
+					if not throttleMode and navCom:getTargetSpeed(axisCommandId.longitudinal) == escapeVel*3.6 then
+						ReentrySpeedSet = true
+					end
+				end
+				
+				if vSpd > 0 then 
+					BrakeIsOn = "Reentry vSpd" -- They are moving away from planet
+				end-- No need to cut throttle here
+				
+				if not reentryMode then -- Parachute landing, not touching this
+					-- Except, it doesn't set a speed?  
+					targetPitch = -80
+					if coreAltitude < (planet.surfaceMaxAltitude+(planet.atmosphereThickness-planet.surfaceMaxAltitude)*0.25) then
+						msgText = "PARACHUTE DEPLOYED at "..round(coreAltitude,0)
+						Reentry = false
+						BrakeLanding = true
+						StrongBrakes = true
+						cmdT = 0
+						targetPitch = 0
+						autoRoll = autoRollPreference
+					else -- Added this else to set the speed... 
+						if (throttleMode or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= ReentrySpeed) then 
+							cmdC = ReentrySpeed
+						end
+					end 
+				elseif planet.noAtmosphericDensityAltitude > 0 then--idk why this condition needs to be here?
+					if atmoDistance and atmoDistance < 0 then -- We're within 5km
+						targetPitch = ReEntryPitch/2 -- Helps the vector get to where it needs to be within our 5km window
+						autoRoll = true
+						if (throttleMode or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= ReentrySpeed) then 
+							cmdC = ReentrySpeed
+						elseif atmoDistance < -4000 then -- swap at 1km or so, arbitrary; too early and altHold makes us dive too hard
+							BrakeIsOn = false
+							reentryMode = false
+							Reentry = false
+						end
+					end
+				end
+			
+			end
             if velMag > minAutopilotSpeed and not spaceLaunch and not VectorToTarget and not BrakeLanding and ForceAlignment then -- When do we even need this, just alt hold? lol
                 AlignToWorldVector(vec3(constructVelocity))
             end
@@ -2651,7 +2694,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
 
     -- End old APTick Code
 
-        if inAtmo and AtmoSpeedAssist and throttleMode then
+        if atmosDensity > 0 and AtmoSpeedAssist and throttleMode then
             -- This is meant to replace cruise
             -- Uses AtmoSpeedLimit as the desired speed in which to 'cruise'
             -- In atmo, if throttle is 100%, it applies a PID to throttle to try to achieve AtmoSpeedLimit
@@ -2696,7 +2739,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             local pidGet = throttlePID:get()
             calculatedThrottle = uclamp(pidGet,-1,1)
             if not ThrottleValue then 
-                if calculatedThrottle < PlayerThrottle and (atmosDensity > 0.005) then -- We can limit throttle all the way to 0.05% probably
+                if calculatedThrottle < PlayerThrottle and ((inAtmo and atmosDensity > 0.005 and vSpd > 0) or (atmosDensity > 0)) then -- Limit throttle going in, not so much out
                     ThrottleLimited = true
                     ThrottleValue = uclamp(calculatedThrottle,0.01,1)
                 else
@@ -2712,7 +2755,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
             brakePID:inject(constructVelocity:len() - (adjustedAtmoSpeedLimit/3.6) - addThrust) 
             local calculatedBrake = uclamp(brakePID:get(),0,1)
-            if (inAtmo and vSpd < -80) or atmosDensity > 0.005 then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
+            if (atmosDensity > 0 and vSpd < 0) or atmosDensity > 0.005 then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
                 brakeInput2 = calculatedBrake
             end
             if brakeInput2 > 0 then
