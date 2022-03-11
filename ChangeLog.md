@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.729
+- Fix landing gear issues.
+
 Version 1.728 - HUD efficiency improvements (many thanks to Dimencia)
 - Updated hud actions for better efficiency including mouse movement.
 - Updated virtual joystick responsiveness.
