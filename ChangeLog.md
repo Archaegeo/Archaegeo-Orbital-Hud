@@ -2,6 +2,7 @@
 
 Version 1.730
 - Fixed re-entry speed braking to prevent element damage.
+- Fixed cruise control sometimes not setting properly when AP set.
 
 Version 1.729
 - Fix landing gear issues.
