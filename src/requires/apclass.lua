@@ -673,7 +673,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             LockPitch = nil
             OrbitAchieved = false
             if abvGndDet ~= -1 and velMag < 20 then
-                CONTROL.landingGear()
+                if GearExtended then CONTROL.landingGear() end
                 play("lfs", "LS")
                 AutoTakeoff = true
                 if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end

@@ -99,7 +99,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                         end
                     end
                 else
-                    if not down and abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 then CONTROL.landingGear() end
+                    if not down and abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 and GearExtended then CONTROL.landingGear() end
                     navCom:updateTargetGroundAltitudeFromActionStart(mult*1.0)
                 end
             end
@@ -174,7 +174,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                 LeftAmount = -1
         elseif action == "up" then
             upAmount = upAmount + 1
-            if abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 then CONTROL.landingGear() end
+            if abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 and GearExtended then CONTROL.landingGear() end
             navCom:deactivateGroundEngineAltitudeStabilization()
             navCom:updateCommandFromActionStart(axisCommandId.vertical, 1.0)
         elseif action == "down" then
