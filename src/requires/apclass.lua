@@ -897,10 +897,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 end
             end
         RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
-        if atmosDensity>0 then
-            p("Atmos: "..atmosDensity.." at "..coreAltitude.."m")
-        end
-
     end
 
     function ap.SatNavTick()
