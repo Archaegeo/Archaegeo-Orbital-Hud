@@ -1,6 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.730
+Version 1.730 - Re-Entry and Atmo
+- Visited every planet with atmosphere to get actual no atmosphere height. (large difference from official atlas.lua in some cases)
+    Updated hud to use measured no atmo heights for low orbit, 11% atmo.
+    No Atmo Heights for Madis, Alioth, Thades, Talemai, Feli, Sicari, Sinnen, Teoma, Jago, Sanctuary, Lacobus, Symeon, Ion.
+    local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[100]=12511,[110]=7792,[120]=11766} 
 - Fixed re-entry speed braking to prevent element damage.
 - Fixed cruise control sometimes not setting properly when AP set.
 
