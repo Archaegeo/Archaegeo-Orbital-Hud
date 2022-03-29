@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.729
+VERSION_NUMBER = 0.730
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -4749,7 +4749,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         markers = {}
                     end
                 end
-                percentDam = mfloor((curShipHP / maxShipHP)*100)
+                percentDam = math.ceil((curShipHP / maxShipHP)*100)
                 if percentDam < 100 then
                     newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
                     colorMod = mfloor(percentDam * 2.55)
@@ -4873,17 +4873,16 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
                 local finalSpeed = AutopilotEndSpeed
                 if not Autopilot then  finalSpeed = 0 end
-                if not inAtmo then
-                    return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, 0, 0,
-                        LastMaxBrake - (AutopilotPlanetGravity * coreMass))
-                else
+                local whichBrake = LastMaxBrake
+                if inAtmo then
                     if LastMaxBrakeInAtmo and LastMaxBrakeInAtmo > 0 then
-                        return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, 0, 0,
-                                LastMaxBrakeInAtmo - (AutopilotPlanetGravity * coreMass))
+                        whichBrake = LastMaxBrakeInAtmo
                     else
                         return 0, 0
                     end
                 end
+                return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, 0, 0,
+                        whichBrake - (AutopilotPlanetGravity * coreMass))
             end
             local function GetAutopilotTBBrakeDistanceAndTime(speed)
                 local finalSpeed = AutopilotEndSpeed
@@ -5137,15 +5136,22 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 sudi = false
                 sudv = ""
             end
-            if cmdT ~= -1 then
-                AP.cmdThrottle(cmdT, cmdDS) 
-                cmdDS = false
-                cmdT = -1 
-            end
             if cmdC ~= -1 then 
                 AP.cmdCruise(cmdC, cmdDS) 
                 cmdDS = false 
                 cmdC = -1 
+            end
+            if setCruiseSpeed ~= nil then
+                if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
+                    navCom:setTargetSpeedCommand(axisCommandId.longitudinal, setCruiseSpeed)
+                else
+                    setCruiseSpeed = nil
+                end
+            end
+            if cmdT ~= -1 then
+                AP.cmdThrottle(cmdT, cmdDS) 
+                cmdDS = false
+                cmdT = -1 
             end
             if eLL then
                 CONTROL.landingGear()
@@ -5708,13 +5714,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                 end
             RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
-            if setCruiseSpeed ~= nil then
-                if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
-                    cmdC = setCruiseSpeed
-                else
-                    setCruiseSpeed = nil
-                end
-            end
         end
     
         function ap.SatNavTick()
@@ -6102,6 +6101,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 if Autopilot then
                     AP.ResetAutopilots(1)
                 end
+                cmdT = 0
             end
             LastIsWarping = isWarping
     
@@ -6567,13 +6567,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
                 
     
-                local brakeDistance, brakeTime
-                
-                if not TurnBurn then
-                    brakeDistance, brakeTime = GetAutopilotBrakeDistanceAndTime(velMag)
-                else
-                    brakeDistance, brakeTime = GetAutopilotTBBrakeDistanceAndTime(velMag)
-                end
+    
     
                 --orbit.apoapsis == nil and 
     
@@ -6638,14 +6632,19 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     AlignToWorldVector((targetCoords - worldPos):normalize())
                 end
     
-    
                 if projectedAltitude < AutopilotTargetOrbit*1.5 then
+                    AutopilotEndSpeed = adjustedAtmoSpeedLimit/3.6
                     -- Recalc end speeds for the projectedAltitude since it's reasonable... 
-                    if CustomTarget and CustomTarget.planetname == "Space" then 
-                        AutopilotEndSpeed = 0
-                    elseif CustomTarget == nil then
+                    if CustomTarget == nil then
                         _, AutopilotEndSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed(projectedAltitude)
                     end
+                end
+                local brakeDistance, brakeTime
+                
+                if not TurnBurn then
+                    brakeDistance, brakeTime = GetAutopilotBrakeDistanceAndTime(velMag)
+                else
+                    brakeDistance, brakeTime = GetAutopilotTBBrakeDistanceAndTime(velMag)
                 end
                 if Autopilot and not AutopilotAccelerating and not AutopilotCruising and not AutopilotBraking then
                     local intersectBody, atmoDistance = AP.checkLOS( (AutopilotTargetCoords-worldPos):normalize())
@@ -7018,6 +7017,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     if throttleMode then
                         if velMag > ReentrySpeed/3.6 and not freeFallHeight then
                             BrakeIsOn = "Reentry Limit"
+                            if PlayerThrottle > 0 then cmdT = 0 end
                         else
                             BrakeIsOn = false
                         end
@@ -7048,6 +7048,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             reentryMode = false
                             Reentry = false
                             autoRoll = true 
+                            cmdT = 1
                         end
                     end
                 end
@@ -8972,7 +8973,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             Nav.control.retractLandingGears()
                         end
                     end
-                    GearExtended = (Nav.control.isAnyLandingGearExtended() == 1) or ((abvGndDet - 3) < LandingGearGroundHeight)
+                    GearExtended = (Nav.control.isAnyLandingGearExtended() == 1) or (abvGndDet ~=-1 and (abvGndDet - 3) < LandingGearGroundHeight)
                     -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
                     if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 50) then
                         BrakeIsOn = "Startup"
@@ -9022,7 +9023,9 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                                 }
                     end
     
-                    local altTable = { [1]=4480, [6]=4480, [7]=6270} -- Alternate altitudes for madis, sinnen, sicari
+                    local altTable = { [1]=4480, [6]=4480, [7]=6270} -- Alternate min space engine altitudes for madis, sinnen, sicari
+                    -- No Atmo Heights for Madis, Alioth, Thades, Talemai, Feli, Sicari, Sinnen, Teoma, Jago, Sanctuary, Lacobus, Symeon, Ion.
+                    local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[100]=12511,[110]=7792,[120]=11766} 
                     for galaxyId,galaxy in pairs(atlas) do
                         -- Create a copy of Space with the appropriate SystemId for each galaxy
                         atlas[galaxyId][0] = getSpaceEntry()
@@ -9034,7 +9037,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             planet.center = vec3(planet.center)
                             planet.name = planet.name[1]
                     
-                            planet.noAtmosphericDensityAltitude = planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
+                            planet.noAtmosphericDensityAltitude = noAtmoAlt[planet.id] or planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
                             planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness)
                                     
                             planet.planetarySystemId = galaxyId
