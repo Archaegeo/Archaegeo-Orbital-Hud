@@ -55,17 +55,16 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
             local finalSpeed = AutopilotEndSpeed
             if not Autopilot then  finalSpeed = 0 end
-            if not inAtmo then
-                return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, 0, 0,
-                    LastMaxBrake - (AutopilotPlanetGravity * coreMass))
-            else
+            local whichBrake = LastMaxBrake
+            if inAtmo then
                 if LastMaxBrakeInAtmo and LastMaxBrakeInAtmo > 0 then
-                    return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, 0, 0,
-                            LastMaxBrakeInAtmo - (AutopilotPlanetGravity * coreMass))
+                    whichBrake = LastMaxBrakeInAtmo
                 else
                     return 0, 0
                 end
             end
+            return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, 0, 0,
+                    whichBrake - (AutopilotPlanetGravity * coreMass))
         end
         local function GetAutopilotTBBrakeDistanceAndTime(speed)
             local finalSpeed = AutopilotEndSpeed
@@ -319,15 +318,22 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             sudi = false
             sudv = ""
         end
-        if cmdT ~= -1 then
-            AP.cmdThrottle(cmdT, cmdDS) 
-            cmdDS = false
-            cmdT = -1 
-        end
         if cmdC ~= -1 then 
             AP.cmdCruise(cmdC, cmdDS) 
             cmdDS = false 
             cmdC = -1 
+        end
+        if setCruiseSpeed ~= nil then
+            if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
+                navCom:setTargetSpeedCommand(axisCommandId.longitudinal, setCruiseSpeed)
+            else
+                setCruiseSpeed = nil
+            end
+        end
+        if cmdT ~= -1 then
+            AP.cmdThrottle(cmdT, cmdDS) 
+            cmdDS = false
+            cmdT = -1 
         end
         if eLL then
             CONTROL.landingGear()
@@ -890,13 +896,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 end
             end
         RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
-        if setCruiseSpeed ~= nil then
-            if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
-                cmdC = setCruiseSpeed
-            else
-                setCruiseSpeed = nil
-            end
-        end
     end
 
     function ap.SatNavTick()
@@ -1284,6 +1283,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             if Autopilot then
                 AP.ResetAutopilots(1)
             end
+            cmdT = 0
         end
         LastIsWarping = isWarping
 
@@ -1749,13 +1749,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
 
             
 
-            local brakeDistance, brakeTime
-            
-            if not TurnBurn then
-                brakeDistance, brakeTime = GetAutopilotBrakeDistanceAndTime(velMag)
-            else
-                brakeDistance, brakeTime = GetAutopilotTBBrakeDistanceAndTime(velMag)
-            end
+
 
             --orbit.apoapsis == nil and 
 
@@ -1820,14 +1814,19 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 AlignToWorldVector((targetCoords - worldPos):normalize())
             end
 
-
             if projectedAltitude < AutopilotTargetOrbit*1.5 then
+                AutopilotEndSpeed = adjustedAtmoSpeedLimit/3.6
                 -- Recalc end speeds for the projectedAltitude since it's reasonable... 
-                if CustomTarget and CustomTarget.planetname == "Space" then 
-                    AutopilotEndSpeed = 0
-                elseif CustomTarget == nil then
+                if CustomTarget == nil then
                     _, AutopilotEndSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed(projectedAltitude)
                 end
+            end
+            local brakeDistance, brakeTime
+            
+            if not TurnBurn then
+                brakeDistance, brakeTime = GetAutopilotBrakeDistanceAndTime(velMag)
+            else
+                brakeDistance, brakeTime = GetAutopilotTBBrakeDistanceAndTime(velMag)
             end
             if Autopilot and not AutopilotAccelerating and not AutopilotCruising and not AutopilotBraking then
                 local intersectBody, atmoDistance = AP.checkLOS( (AutopilotTargetCoords-worldPos):normalize())
@@ -2200,6 +2199,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if throttleMode then
                     if velMag > ReentrySpeed/3.6 and not freeFallHeight then
                         BrakeIsOn = "Reentry Limit"
+                        if PlayerThrottle > 0 then cmdT = 0 end
                     else
                         BrakeIsOn = false
                     end
@@ -2230,6 +2230,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                         reentryMode = false
                         Reentry = false
                         autoRoll = true 
+                        cmdT = 1
                     end
                 end
             end

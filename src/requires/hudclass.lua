@@ -3123,7 +3123,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                     markers = {}
                 end
             end
-            percentDam = mfloor((curShipHP / maxShipHP)*100)
+            percentDam = math.ceil((curShipHP / maxShipHP)*100)
             if percentDam < 100 then
                 newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
                 colorMod = mfloor(percentDam * 2.55)

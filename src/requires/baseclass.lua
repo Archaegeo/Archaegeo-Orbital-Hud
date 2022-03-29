@@ -434,7 +434,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                         Nav.control.retractLandingGears()
                     end
                 end
-                GearExtended = (Nav.control.isAnyLandingGearExtended() == 1) or ((abvGndDet - 3) < LandingGearGroundHeight)
+                GearExtended = (Nav.control.isAnyLandingGearExtended() == 1) or (abvGndDet ~=-1 and (abvGndDet - 3) < LandingGearGroundHeight)
                 -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
                 if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 50) then
                     BrakeIsOn = "Startup"
@@ -484,7 +484,9 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                             }
                 end
 
-                local altTable = { [1]=4480, [6]=4480, [7]=6270} -- Alternate altitudes for madis, sinnen, sicari
+                local altTable = { [1]=4480, [6]=4480, [7]=6270} -- Alternate min space engine altitudes for madis, sinnen, sicari
+                -- No Atmo Heights for Madis, Alioth, Thades, Talemai, Feli, Sicari, Sinnen, Teoma, Jago, Sanctuary, Lacobus, Symeon, Ion.
+                local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[100]=12511,[110]=7792,[120]=11766} 
                 for galaxyId,galaxy in pairs(atlas) do
                     -- Create a copy of Space with the appropriate SystemId for each galaxy
                     atlas[galaxyId][0] = getSpaceEntry()
@@ -496,7 +498,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                         planet.center = vec3(planet.center)
                         planet.name = planet.name[1]
                 
-                        planet.noAtmosphericDensityAltitude = planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
+                        planet.noAtmosphericDensityAltitude = noAtmoAlt[planet.id] or planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
                         planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness)
                                 
                         planet.planetarySystemId = galaxyId
