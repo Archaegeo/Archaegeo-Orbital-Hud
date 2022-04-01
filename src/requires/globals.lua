@@ -54,12 +54,12 @@
         TargetOrbitRadius = 1.2 -- (Default: 1.2) How tight you want to orbit the planet at end of autopilot.  The smaller the value the tighter the orbit.  Value is multiple of Atmospheric Height
         LowOrbitHeight = 2000 -- (Default: 2000) Height of Orbit above top of atmospehre when using Alt-4-4 same planet autopilot or alt-6-6 in space.
         AtmoSpeedLimit = 1050 -- (Default: 1050) Speed limit in Atmosphere in km/h. AtmoSpeedAssist will cause ship to throttle back when this speed is reached.
-        SpaceSpeedLimit = 30000 -- (Default: 30000) Space speed limit in KM/H. If you hit this speed and are NOT in active autopilot, engines will turn off to prevent using all fuel (30000 means they wont turn off)
+        SpaceSpeedLimit = 60000 -- (Default: 60000) Space speed limit in KM/H. If you hit this speed and are NOT in active autopilot, engines will turn off to prevent using all fuel (60000 means they wont turn off)
         AutoTakeoffAltitude = 1000 -- (Default: 1000) How high above your ground height AutoTakeoff tries to put you
         TargetHoverHeight = 50 -- (Default: 50) Hover height above ground when G used to lift off, 50 is above all max hover heights.
         LandingGearGroundHeight = 0 -- (Default: 0) Set to AGL when on ground. Will help prevent ship landing on ground then bouncing back up to landing gear height. 
         ReEntryHeight = 100000 -- (Default: 100000) Height above a planets maximum surface altitude used for re-entry, if height exceeds min space engine height, then 11% atmo is used instead. (100000 means 11% is used)
-        MaxGameVelocity = 8333.00 -- (Default: 8333.00) Max speed for your autopilot in m/s, do not go above 8333.055 (30000 km/hr), can be reduced to save fuel. Some ships will not turn off engines if 8333.055 is used.
+        MaxGameVelocity = 16666.00 -- (Default: 8333.00) Max speed for your autopilot in m/s, do not go above 16666.66 (60000 km/hr), can be reduced to save fuel. Some ships will not turn off engines if 16666.66 is used.
         AutopilotInterplanetaryThrottle = 1.0 -- (Default: 1.0) How much throttle, 0.0 to 1.0, you want it to use when in autopilot to another planet while reaching MaxGameVelocity
         warmup = 32 -- How long it takes your space engines to warmup. Basic Space Engines, from XS to XL: 0.25,1,4,16,32. Only affects turn and burn brake calculations.
         fuelTankHandlingAtmo = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.

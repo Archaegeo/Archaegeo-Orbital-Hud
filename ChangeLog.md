@@ -1,5 +1,13 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.731 - Athena fixes
+NOTE: Be sure to use /G to change `MaxGameVelocity` to the max speed your ship can go in m/s (default 16666.66)
+NOTE: Be sure to use /G to change `SpaceSpeedLimit` to speed you want engines to stop firing if not in autopilot (default 60000)
+- Changed `MaxGameVelocity` global from 8366 m/s (30k k/hr) to 16666.66 m/s (60k k/hr)
+- Change `SpaceSpeedLimit` global from 30000 k/hr to 60000 k/hr
+- Changed C in Kinematics to 60k k/hr
+- Fix rockets stopping when in space greater than max atmo speed (non-Athena bug)
+
 Version 1.730 - Re-Entry and Atmo
 - Visited every planet with atmosphere to get actual no atmosphere height. (large difference from official atlas.lua in some cases)
     Updated hud to use measured no atmo heights for low orbit, 11% atmo.
