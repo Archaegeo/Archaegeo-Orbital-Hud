@@ -1,7 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.731 - Athena fixes
-NOTE: Be sure to use /G to change `MaxGameVelocity` to the max speed your ship can go in m/s (default 13888.87)
+NOTE: Be sure to use /G to change `MaxGameVelocity` to the max speed your ship can go (you can use km/hr with /G or its in m/s if you edit globals.lua)
 NOTE: Be sure to use /G to change `SpaceSpeedLimit` to speed you want engines to stop firing if not in autopilot (default 60000, meaning wont turn off if not in autopilot)
 - Once a second Max Speed is updated in INFO panel
 - Changed `MaxGameVelocity` global from 8366 m/s (30k k/hr) to 13888.87 m/s (50k k/hr)
