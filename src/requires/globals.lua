@@ -59,7 +59,7 @@
         TargetHoverHeight = 50 -- (Default: 50) Hover height above ground when G used to lift off, 50 is above all max hover heights.
         LandingGearGroundHeight = 0 -- (Default: 0) Set to AGL when on ground. Will help prevent ship landing on ground then bouncing back up to landing gear height. 
         ReEntryHeight = 100000 -- (Default: 100000) Height above a planets maximum surface altitude used for re-entry, if height exceeds min space engine height, then 11% atmo is used instead. (100000 means 11% is used)
-        MaxGameVelocity = 16666.00 -- (Default: 8333.00) Max speed for your autopilot in m/s, do not go above 16666.66 (60000 km/hr), can be reduced to save fuel. Some ships will not turn off engines if 16666.66 is used.
+        MaxGameVelocity = 13888.87 -- (Default: 13888.87) Max speed for your autopilot in m/s, do not go above 16666.66 (60000 km/hr), can be reduced to save fuel. Some ships will not turn off engines if 13888.88 is used.
         AutopilotInterplanetaryThrottle = 1.0 -- (Default: 1.0) How much throttle, 0.0 to 1.0, you want it to use when in autopilot to another planet while reaching MaxGameVelocity
         warmup = 32 -- How long it takes your space engines to warmup. Basic Space Engines, from XS to XL: 0.25,1,4,16,32. Only affects turn and burn brake calculations.
         fuelTankHandlingAtmo = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.

@@ -30,6 +30,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     local lastOdometerOutput = ""
     local lastTravelTime = systime()
     local repairArrows = false
+    local MaxSpeed = 0
 
     --Local Huds Functions
         -- safezone() variables
@@ -2518,11 +2519,8 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             newContent[#newContent + 1] = svgText(midX, startY+height*5, HUD.FuelUsed("atmofueltank"))
             newContent[#newContent + 1] = svgText(startX, startY+height*6, HUD.FuelUsed("spacefueltank"))
             newContent[#newContent + 1] = svgText(midX, startY+height*6, HUD.FuelUsed("rocketfueltank"))
-            if velMag > 833 then
-                local relamass = coreMass / (math.sqrt(1-(velMag/8333.33)^2))
-                local mass = relamass > 1000000 and round(relamass / 1000000,2).." kTons" or round(relamass / 1000, 2).." Tons"
-                newContent[#newContent +1] = svgText(midX, startY+height*7, stringf("Rel. Mass: %s", mass))
-            end
+            newContent[#newContent +1] = svgText(startX, startY+height*7, stringf("Set Max Speed: %s", mfloor(MaxGameVelocity*3.6+0.5)))
+            newContent[#newContent +1] = svgText(midX, startY+height*7, stringf("Actual Max Speed: %s", mfloor(MaxSpeed*3.6+0.5)))
         end
         newContent[#newContent + 1] = "</g></g>"
         return newContent
@@ -3160,6 +3158,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         HUD.UpdatePipe()
         HUD.ExtraData(newContent)
         lastOdometerOutput = table.concat(newContent, "")
+        MaxSpeed = jdecode(u.getData()).maxSpeed/3.6
     end
 
     function Hud.AnimateTick()
