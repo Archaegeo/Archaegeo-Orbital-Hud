@@ -7,7 +7,7 @@
     -- True/False variables
         -- NOTE: saveableVariablesBoolean below must contain any True/False variables that needs to be saved/loaded from databank.
 
-        freeLookToggle = true -- (Default: true) Set to false for vanilla DU free look behavior.
+        freeLookToggle = true --export: (Default: true) Set to false for vanilla DU free look behavior.
         BrakeToggleDefault = true -- (Default: true) Whether your brake toggle is on/off by default. Can be adjusted in the button menu. False is vanilla DU brakes.
         RemoteFreeze = false -- (Default: false) Whether or not to freeze your character in place when using a remote controller.
         RemoteHud = false --  (Default: false) Whether you want to see the full normal HUD while in remote mode.

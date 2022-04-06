@@ -725,7 +725,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
 
         local function DrawWarnings(newContent)
 
-            newContent[#newContent + 1] = svgText(ConvertResolutionX(1900), ConvertResolutionY(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
+            newContent[#newContent + 1] = svgText(ConvertResolutionX(150), ConvertResolutionY(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
             newContent[#newContent + 1] = [[<g class="warnings">]]
             if u.isMouseControlActivated() == 1 then
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(550), "Warning: Invalid Control Scheme Detected", "warnings")
@@ -2773,12 +2773,12 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local halfResolutionY = round(resolutionHeight / 2,0)
         local newContent = {}
         if userScreen then newContent[#newContent + 1] = userScreen end
-        --local t0 = s.getTime()
+        --local t0 = s.getArkTime()
         HUD.HUDPrologue(newContent)
         if showHud then
-            --local t0 = s.getTime()
+            --local t0 = s.getArkTime()
             HUD.UpdateHud(newContent) -- sets up Content for us
-            --_logCompute.addValue(s.getTime() - t0)
+            --_logCompute.addValue(s.getArkTime() - t0)
         else
             if AlwaysVSpd then HUD.DrawVerticalSpeed(newContent, coreAltitude) end
             HUD.DrawWarnings(newContent)

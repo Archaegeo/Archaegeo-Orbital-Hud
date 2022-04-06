@@ -21,7 +21,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         local mfloor = math.floor
         local atmosphere = u.getAtmosphereDensity
         local atan = math.atan
-        local systime = s.getTime
+        local systime = s.getArkTime
         local uclamp = utils.clamp
         local navCom = Nav.axisCommandManager
 
