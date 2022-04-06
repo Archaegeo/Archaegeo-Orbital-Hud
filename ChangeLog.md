@@ -1,6 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.731 - Athena fixes
+- RESTORED EXPORTED VARIABLES - Right click seat, choose Advanced->Edit LUA Parameters to edit globals.  
+    Remember useTheseSettings must be checked on to override variables stored on databank.
 NOTE: Be sure to use /G to change `MaxGameVelocity` to the max speed your ship can go (you can use km/hr with /G or its in m/s if you edit globals.lua)
 NOTE: Be sure to use /G to change `SpaceSpeedLimit` to speed you want engines to stop firing if not in autopilot (default 60000, meaning wont turn off if not in autopilot)
 - Once a second Max Speed is updated in INFO panel
@@ -10,6 +12,7 @@ NOTE: Be sure to use /G to change `SpaceSpeedLimit` to speed you want engines to
 - Changed C in Kinematics to 60k k/hr - (Since there appears to be no relativistic mass effect anymore)
 - Fix rockets stopping when in space greater than max atmo speed (non-Athena bug)
 - Changed getTime to getArkTime since getTime depreciated.
+- Removed globals.lua, all globals in ArchHUD.lua now for Edit Lua Parameters support
 
 Version 1.730 - Re-Entry and Atmo
 - Visited every planet with atmosphere to get actual no atmosphere height. (large difference from official atlas.lua in some cases)
