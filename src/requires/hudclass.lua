@@ -3158,7 +3158,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         HUD.UpdatePipe()
         HUD.ExtraData(newContent)
         lastOdometerOutput = table.concat(newContent, "")
-        MaxSpeed = jdecode(u.getData()).maxSpeed/3.6
+        MaxSpeed = core.getMaxSpeed()   
     end
 
     function Hud.AnimateTick()

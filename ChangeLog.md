@@ -9,7 +9,7 @@ NOTE: Be sure to use /G to change `SpaceSpeedLimit` to speed you want engines to
 - Changed `MaxGameVelocity` global from 8366 m/s (30k k/hr) to 13888.87 m/s (50k k/hr)
 - When using /G MaxGameVelocity xxxx, the xxxx is inputed in km/hr and stored in m/s.  This is to make it easy to match INFO panel Max Speed.
 - Change `SpaceSpeedLimit` global from 30000 k/hr to 50000 k/hr (meaning they will not turn off when not in AP, set lower to make engines turn off if you forget)
-- Changed C in Kinematics to 60k k/hr - (Since there appears to be no relativistic mass effect anymore)
+- Changed C in Kinematics to 100k k/hr - (Since there appears to be no relativistic mass effect anymore)
 - Fix rockets stopping when in space greater than max atmo speed (non-Athena bug)
 - Changed getTime to getArkTime since getTime depreciated.
 - Removed globals.lua, all globals in ArchHUD.lua now for Edit Lua Parameters support
