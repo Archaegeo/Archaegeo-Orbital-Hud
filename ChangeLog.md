@@ -11,6 +11,7 @@ NOTE: Be sure to use /G to change `SpaceSpeedLimit` to speed you want engines to
 - Changed C in Kinematics to 100k k/hr - (Since there appears to be no relativistic mass effect anymore)
 - Fix rockets stopping when in space greater than max atmo speed (non-Athena bug)
 - Changed getTime to getArkTime since getTime depreciated.
+- Determined actual no atmo height and min space engine for haven (15554,8437)
 
 
 Version 1.730 - Re-Entry and Atmo
