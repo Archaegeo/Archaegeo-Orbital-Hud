@@ -264,7 +264,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         AltitudeHold = false
         Reentry = false
         BrakeLanding = false
-        BrakeIsOn = false
         AutoTakeoff = false
         VertTakeOff = false
         followMode = false

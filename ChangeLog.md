@@ -12,6 +12,7 @@ NOTE: Be sure to use /G to change `SpaceSpeedLimit` to speed you want engines to
 - Fix rockets stopping when in space greater than max atmo speed (non-Athena bug)
 - Changed getTime to getArkTime since getTime depreciated.
 - Determined actual no atmo height and min space engine for haven (15554,8437)
+- Double middle mouse button (clears all AP) no long turns off brakes.
 
 
 Version 1.730 - Re-Entry and Atmo
