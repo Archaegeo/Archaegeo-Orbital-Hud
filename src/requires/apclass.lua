@@ -264,7 +264,6 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         AltitudeHold = false
         Reentry = false
         BrakeLanding = false
-        BrakeIsOn = false
         AutoTakeoff = false
         VertTakeOff = false
         followMode = false
@@ -852,7 +851,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if inAtmo or Reentry then
                     adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
                 elseif Autopilot then
-                    MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 8333.00)
+                    MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 16666.66)
                 end
             else
                 navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge/10)
@@ -1168,10 +1167,9 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         brakeInput2 = 0
 
     -- Start old APTick Code 
-
-        inAtmo = false or (coreAltitude < planet.noAtmosphericDensityAltitude )
-
         atmosDensity = atmosphere()
+        inAtmo = false or (coreAltitude < planet.noAtmosphericDensityAltitude and atmosDensity > 0.00001 )
+
         coreAltitude = c.getAltitude()
         abvGndDet = AboveGroundLevel()
         time = systime()
@@ -1269,7 +1267,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
         end
 
-        local isWarping = (velMag > 8334)
+        local isWarping = (velMag > 13888)
 
         if velMag > SpaceSpeedLimit/3.6 and not inAtmo and not Autopilot and not isWarping then
             msgText = "Space Speed Engine Shutoff reached"
@@ -2911,7 +2909,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 local throttle = u.getThrottle()
                 if AtmoSpeedAssist then throttle = PlayerThrottle*100 end
                 local targetSpeed = (throttle/100)
-                if atmosphere == 0 then
+                if not inAtmo then
                     targetSpeed = targetSpeed * MaxGameVelocity
                     if speed >= (targetSpeed * (1- maxSpeedLag)) and IsRocketOn then
                         IsRocketOn = false

@@ -30,6 +30,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     local lastOdometerOutput = ""
     local lastTravelTime = systime()
     local repairArrows = false
+    local MaxSpeed = 0
 
     --Local Huds Functions
         -- safezone() variables
@@ -724,7 +725,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
 
         local function DrawWarnings(newContent)
 
-            newContent[#newContent + 1] = svgText(ConvertResolutionX(1900), ConvertResolutionY(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
+            newContent[#newContent + 1] = svgText(ConvertResolutionX(150), ConvertResolutionY(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
             newContent[#newContent + 1] = [[<g class="warnings">]]
             if u.isMouseControlActivated() == 1 then
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(550), "Warning: Invalid Control Scheme Detected", "warnings")
@@ -2518,11 +2519,8 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             newContent[#newContent + 1] = svgText(midX, startY+height*5, HUD.FuelUsed("atmofueltank"))
             newContent[#newContent + 1] = svgText(startX, startY+height*6, HUD.FuelUsed("spacefueltank"))
             newContent[#newContent + 1] = svgText(midX, startY+height*6, HUD.FuelUsed("rocketfueltank"))
-            if velMag > 833 then
-                local relamass = coreMass / (math.sqrt(1-(velMag/8333.33)^2))
-                local mass = relamass > 1000000 and round(relamass / 1000000,2).." kTons" or round(relamass / 1000, 2).." Tons"
-                newContent[#newContent +1] = svgText(midX, startY+height*7, stringf("Rel. Mass: %s", mass))
-            end
+            newContent[#newContent +1] = svgText(startX, startY+height*7, stringf("Set Max Speed: %s", mfloor(MaxGameVelocity*3.6+0.5)))
+            newContent[#newContent +1] = svgText(midX, startY+height*7, stringf("Actual Max Speed: %s", mfloor(MaxSpeed*3.6+0.5)))
         end
         newContent[#newContent + 1] = "</g></g>"
         return newContent
@@ -2775,12 +2773,12 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local halfResolutionY = round(resolutionHeight / 2,0)
         local newContent = {}
         if userScreen then newContent[#newContent + 1] = userScreen end
-        --local t0 = s.getTime()
+        --local t0 = s.getArkTime()
         HUD.HUDPrologue(newContent)
         if showHud then
-            --local t0 = s.getTime()
+            --local t0 = s.getArkTime()
             HUD.UpdateHud(newContent) -- sets up Content for us
-            --_logCompute.addValue(s.getTime() - t0)
+            --_logCompute.addValue(s.getArkTime() - t0)
         else
             if AlwaysVSpd then HUD.DrawVerticalSpeed(newContent, coreAltitude) end
             HUD.DrawWarnings(newContent)
@@ -3009,7 +3007,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 displayText = getDistanceDisplayString(AutopilotTargetOrbit)
                 sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
                 displayText .. '"}')
-                if atmosDensity > 0 and not WasInAtmo then
+                if inAtmo and not WasInAtmo then
                     s.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
                     s.removeDataFromWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
                     s.removeDataFromWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
@@ -3024,7 +3022,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                         WasInCruise = false -- And override the thing that would reset it, in this case
                     end
                 end
-                if atmosDensity == 0 and WasInAtmo then
+                if not inAtmo and WasInAtmo then
                     if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) == 1 then
                         sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
                     if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) == 1 then
@@ -3160,6 +3158,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         HUD.UpdatePipe()
         HUD.ExtraData(newContent)
         lastOdometerOutput = table.concat(newContent, "")
+        MaxSpeed = c.getMaxSpeed()   
     end
 
     function Hud.AnimateTick()

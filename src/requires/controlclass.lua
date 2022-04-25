@@ -421,7 +421,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                     navCom:resetCommand(axisCommandId.longitudinal)
                 else
                     if inAtmo then 
-                        AP.cmdCruise(AtmoSpeedLimit) 
+                        AP.cmdCruise(adjustedAtmoSpeedLimit) 
                     else
                         AP.cmdCruise(MaxGameVelocity*3.6)
                     end
@@ -695,6 +695,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                     if varType == "number" then
                         newGlobalValue = tonum(newGlobalValue)
                         if k=="AtmoSpeedLimit" then adjustedAtmoSpeedLimit = newGlobalValue end
+                        if k=="MaxGameVelocity" then newGlobalValue = newGlobalValue/3.6 end
                     elseif varType == "boolean" then
                         if string.lower(newGlobalValue) == "true" then
                             newGlobalValue = true

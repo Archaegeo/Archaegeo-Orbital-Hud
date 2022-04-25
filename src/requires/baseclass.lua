@@ -21,7 +21,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
         local mfloor = math.floor
         local atmosphere = u.getAtmosphereDensity
         local atan = math.atan
-        local systime = s.getTime
+        local systime = s.getArkTime
         local uclamp = utils.clamp
         local navCom = Nav.axisCommandManager
 
@@ -484,9 +484,9 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                             }
                 end
 
-                local altTable = { [1]=4480, [6]=4480, [7]=6270} -- Alternate min space engine altitudes for madis, sinnen, sicari
-                -- No Atmo Heights for Madis, Alioth, Thades, Talemai, Feli, Sicari, Sinnen, Teoma, Jago, Sanctuary, Lacobus, Symeon, Ion.
-                local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[100]=12511,[110]=7792,[120]=11766} 
+                local altTable = { [1]=4480, [6]=4480, [7]=6270, [27]=8437 } -- Alternate min space engine altitudes for madis, sinnen, sicari, haven
+                -- No Atmo Heights for Madis, Alioth, Thades, Talemai, Feli, Sicari, Sinnen, Teoma, Jago, Sanctuary, Haven, Lacobus, Symeon, Ion.
+                local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[27]=15554,[100]=12511,[110]=7792,[120]=11766} 
                 for galaxyId,galaxy in pairs(atlas) do
                     -- Create a copy of Space with the appropriate SystemId for each galaxy
                     atlas[galaxyId][0] = getSpaceEntry()

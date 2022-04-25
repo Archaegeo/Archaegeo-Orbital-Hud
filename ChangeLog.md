@@ -1,5 +1,21 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.731 - Athena fixes
+NOTE: Due to file size limits for the GFN version, ArchHUD is not restoring exported variables for Edit Lua Parameters.
+NOTE: Be sure to use /G to change `MaxGameVelocity` to the max speed your ship can go (you can use km/hr with /G or its in m/s if you edit globals.lua)
+NOTE: Be sure to use /G to change `SpaceSpeedLimit` to speed you want engines to stop firing if not in autopilot (default 60000, meaning wont turn off if not in autopilot)
+- Once a second Max Speed is updated in INFO panel
+- Changed `MaxGameVelocity` global from 8366 m/s (30k k/hr) to 13888.87 m/s (50k k/hr)
+- When using /G MaxGameVelocity xxxx, the xxxx is inputed in km/hr and stored in m/s.  This is to make it easy to match INFO panel Max Speed.
+- Change `SpaceSpeedLimit` global from 30000 k/hr to 50000 k/hr (meaning they will not turn off when not in AP, set lower to make engines turn off if you forget)
+- Changed C in Kinematics to 100k k/hr - (Since there appears to be no relativistic mass effect anymore)
+- Changed getTime to getArkTime since getTime depreciated.
+- Determined actual no atmo height and min space engine for haven (15554,8437)
+- Double middle mouse button (clears all AP) no long turns off brakes. (non-Athena bug)
+- Fix rockets stopping when in space greater than max atmo speed (non-Athena bug)
+- Possible fix for finalizing landing issue (non-Athena bug)
+
+
 Version 1.730 - Re-Entry and Atmo
 - Visited every planet with atmosphere to get actual no atmosphere height. (large difference from official atlas.lua in some cases)
     Updated hud to use measured no atmo heights for low orbit, 11% atmo.
