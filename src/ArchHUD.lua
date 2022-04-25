@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.730
+VERSION_NUMBER = 0.731
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -8560,7 +8560,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local mfloor = math.floor
             local atmosphere = u.getAtmosphereDensity
             local atan = math.atan
-            local systime = s.getTime
+            local systime = s.getArkTime
             local uclamp = utils.clamp
             local navCom = Nav.axisCommandManager
     
@@ -9322,6 +9322,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         PROGRAM.radarLeave(id)
     end
 -- Execute Script
-    globalDeclare(s, c, u, s.getTime, math.floor, u.getAtmosphereDensity)
+    globalDeclare(s, c, u, s.getArkTime, math.floor, u.getAtmosphereDensity)
     PROGRAM = programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield_1, gyro, warpdrive, weapon, screenHud_1)
     script.onStart()
