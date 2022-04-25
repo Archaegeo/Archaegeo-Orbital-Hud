@@ -65,12 +65,12 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     TargetOrbitRadius = 1.2 -- (Default: 1.2) How tight you want to orbit the planet at end of autopilot.  The smaller the value the tighter the orbit.  Value is multiple of Atmospheric Height
     LowOrbitHeight = 2000 -- (Default: 2000) Height of Orbit above top of atmospehre when using Alt-4-4 same planet autopilot or alt-6-6 in space.
     AtmoSpeedLimit = 1050 -- (Default: 1050) Speed limit in Atmosphere in km/h. AtmoSpeedAssist will cause ship to throttle back when this speed is reached.
-    SpaceSpeedLimit = 30000 -- (Default: 30000) Space speed limit in KM/H. If you hit this speed and are NOT in active autopilot, engines will turn off to prevent using all fuel (30000 means they wont turn off)
+    SpaceSpeedLimit = 60000 -- (Default: 60000) Space speed limit in KM/H. If you hit this speed and are NOT in active autopilot, engines will turn off to prevent using all fuel (30000 means they wont turn off)
     AutoTakeoffAltitude = 1000 -- (Default: 1000) How high above your ground height AutoTakeoff tries to put you
     TargetHoverHeight = 50 -- (Default: 50) Hover height above ground when G used to lift off, 50 is above all max hover heights.
     LandingGearGroundHeight = 0 -- (Default: 0) Set to AGL when on ground. Will help prevent ship landing on ground then bouncing back up to landing gear height. 
     ReEntryHeight = 100000 -- (Default: 100000) Height above a planets maximum surface altitude used for re-entry, if height exceeds min space engine height, then 11% atmo is used instead. (100000 means 11% is used)
-    MaxGameVelocity = 8333.00 -- (Default: 8333.00) Max speed for your autopilot in m/s, do not go above 8333.055 (30000 km/hr), can be reduced to save fuel. Some ships will not turn off engines if 8333.055 is used.
+    MaxGameVelocity = 13888.00 -- (Default: 13888.00) Max speed for your autopilot in m/s, do not go above 13888.87 (50000 km/hr), can be reduced to save fuel. Some ships will not turn off engines if 13888.87 is used.
     AutopilotInterplanetaryThrottle = 1.0 -- (Default: 1.0) How much throttle, 0.0 to 1.0, you want it to use when in autopilot to another planet while reaching MaxGameVelocity
     warmup = 32 -- How long it takes your space engines to warmup. Basic Space Engines, from XS to XL: 0.25,1,4,16,32. Only affects turn and burn brake calculations.
     fuelTankHandlingAtmo = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
@@ -746,7 +746,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     local function Kinematics(Nav, c, u, s, msqrt, mabs) -- Part of Jaylebreak's flight files, modified slightly for hud
 
         local Kinematic = {} -- just a namespace
-        local C = 30000000 / 3600
+        local C = 100000000 / 3600
         local C2 = C * C
         local ITERATIONS = 100 -- iterations over engine "warm-up" period
     
@@ -1656,6 +1656,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         local lastOdometerOutput = ""
         local lastTravelTime = systime()
         local repairArrows = false
+        local MaxSpeed = 0
     
         --Local Huds Functions
             -- safezone() variables
@@ -2350,7 +2351,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
             local function DrawWarnings(newContent)
     
-                newContent[#newContent + 1] = svgText(ConvertResolutionX(1900), ConvertResolutionY(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
+                newContent[#newContent + 1] = svgText(ConvertResolutionX(150), ConvertResolutionY(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
                 newContent[#newContent + 1] = [[<g class="warnings">]]
                 if u.isMouseControlActivated() == 1 then
                     newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(550), "Warning: Invalid Control Scheme Detected", "warnings")
@@ -4144,11 +4145,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 newContent[#newContent + 1] = svgText(midX, startY+height*5, HUD.FuelUsed("atmofueltank"))
                 newContent[#newContent + 1] = svgText(startX, startY+height*6, HUD.FuelUsed("spacefueltank"))
                 newContent[#newContent + 1] = svgText(midX, startY+height*6, HUD.FuelUsed("rocketfueltank"))
-                if velMag > 833 then
-                    local relamass = coreMass / (math.sqrt(1-(velMag/8333.33)^2))
-                    local mass = relamass > 1000000 and round(relamass / 1000000,2).." kTons" or round(relamass / 1000, 2).." Tons"
-                    newContent[#newContent +1] = svgText(midX, startY+height*7, stringf("Rel. Mass: %s", mass))
-                end
+                newContent[#newContent +1] = svgText(startX, startY+height*7, stringf("Set Max Speed: %s", mfloor(MaxGameVelocity*3.6+0.5)))
+                newContent[#newContent +1] = svgText(midX, startY+height*7, stringf("Actual Max Speed: %s", mfloor(MaxSpeed*3.6+0.5)))
             end
             newContent[#newContent + 1] = "</g></g>"
             return newContent
@@ -4401,12 +4399,12 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 local halfResolutionY = round(resolutionHeight / 2,0)
             local newContent = {}
             if userScreen then newContent[#newContent + 1] = userScreen end
-            --local t0 = s.getTime()
+            --local t0 = s.getArkTime()
             HUD.HUDPrologue(newContent)
             if showHud then
-                --local t0 = s.getTime()
+                --local t0 = s.getArkTime()
                 HUD.UpdateHud(newContent) -- sets up Content for us
-                --_logCompute.addValue(s.getTime() - t0)
+                --_logCompute.addValue(s.getArkTime() - t0)
             else
                 if AlwaysVSpd then HUD.DrawVerticalSpeed(newContent, coreAltitude) end
                 HUD.DrawWarnings(newContent)
@@ -4635,7 +4633,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     displayText = getDistanceDisplayString(AutopilotTargetOrbit)
                     sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
                     displayText .. '"}')
-                    if atmosDensity > 0 and not WasInAtmo then
+                    if inAtmo and not WasInAtmo then
                         s.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
                         s.removeDataFromWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
                         s.removeDataFromWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
@@ -4650,7 +4648,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             WasInCruise = false -- And override the thing that would reset it, in this case
                         end
                     end
-                    if atmosDensity == 0 and WasInAtmo then
+                    if not inAtmo and WasInAtmo then
                         if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) == 1 then
                             sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
                         if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) == 1 then
@@ -4786,6 +4784,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             HUD.UpdatePipe()
             HUD.ExtraData(newContent)
             lastOdometerOutput = table.concat(newContent, "")
+            MaxSpeed = c.getMaxSpeed()   
         end
     
         function Hud.AnimateTick()
@@ -5082,7 +5081,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             AltitudeHold = false
             Reentry = false
             BrakeLanding = false
-            BrakeIsOn = false
             AutoTakeoff = false
             VertTakeOff = false
             followMode = false
@@ -5670,7 +5668,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     if inAtmo or Reentry then
                         adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
                     elseif Autopilot then
-                        MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 8333.00)
+                        MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 16666.66)
                     end
                 else
                     navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge/10)
@@ -5986,10 +5984,9 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             brakeInput2 = 0
     
         -- Start old APTick Code 
-    
-            inAtmo = false or (coreAltitude < planet.noAtmosphericDensityAltitude )
-    
             atmosDensity = atmosphere()
+            inAtmo = false or (coreAltitude < planet.noAtmosphericDensityAltitude and atmosDensity > 0.00001 )
+    
             coreAltitude = c.getAltitude()
             abvGndDet = AboveGroundLevel()
             time = systime()
@@ -6087,7 +6084,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
             end
     
-            local isWarping = (velMag > 8334)
+            local isWarping = (velMag > 13888)
     
             if velMag > SpaceSpeedLimit/3.6 and not inAtmo and not Autopilot and not isWarping then
                 msgText = "Space Speed Engine Shutoff reached"
@@ -7729,7 +7726,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     local throttle = u.getThrottle()
                     if AtmoSpeedAssist then throttle = PlayerThrottle*100 end
                     local targetSpeed = (throttle/100)
-                    if atmosphere == 0 then
+                    if not inAtmo then
                         targetSpeed = targetSpeed * MaxGameVelocity
                         if speed >= (targetSpeed * (1- maxSpeedLag)) and IsRocketOn then
                             IsRocketOn = false
@@ -8184,7 +8181,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         navCom:resetCommand(axisCommandId.longitudinal)
                     else
                         if inAtmo then 
-                            AP.cmdCruise(AtmoSpeedLimit) 
+                            AP.cmdCruise(adjustedAtmoSpeedLimit) 
                         else
                             AP.cmdCruise(MaxGameVelocity*3.6)
                         end
@@ -8458,6 +8455,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         if varType == "number" then
                             newGlobalValue = tonum(newGlobalValue)
                             if k=="AtmoSpeedLimit" then adjustedAtmoSpeedLimit = newGlobalValue end
+                            if k=="MaxGameVelocity" then newGlobalValue = newGlobalValue/3.6 end
                         elseif varType == "boolean" then
                             if string.lower(newGlobalValue) == "true" then
                                 newGlobalValue = true
@@ -9023,9 +9021,9 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                                 }
                     end
     
-                    local altTable = { [1]=4480, [6]=4480, [7]=6270} -- Alternate min space engine altitudes for madis, sinnen, sicari
-                    -- No Atmo Heights for Madis, Alioth, Thades, Talemai, Feli, Sicari, Sinnen, Teoma, Jago, Sanctuary, Lacobus, Symeon, Ion.
-                    local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[100]=12511,[110]=7792,[120]=11766} 
+                    local altTable = { [1]=4480, [6]=4480, [7]=6270, [27]=8437 } -- Alternate min space engine altitudes for madis, sinnen, sicari, haven
+                    -- No Atmo Heights for Madis, Alioth, Thades, Talemai, Feli, Sicari, Sinnen, Teoma, Jago, Sanctuary, Haven, Lacobus, Symeon, Ion.
+                    local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[27]=15554,[100]=12511,[110]=7792,[120]=11766} 
                     for galaxyId,galaxy in pairs(atlas) do
                         -- Create a copy of Space with the appropriate SystemId for each galaxy
                         atlas[galaxyId][0] = getSpaceEntry()
