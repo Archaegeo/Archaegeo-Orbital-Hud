@@ -3007,7 +3007,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 displayText = getDistanceDisplayString(AutopilotTargetOrbit)
                 sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
                 displayText .. '"}')
-                if atmosDensity > 0 and not WasInAtmo then
+                if inAtmo and not WasInAtmo then
                     s.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
                     s.removeDataFromWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
                     s.removeDataFromWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
@@ -3022,7 +3022,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                         WasInCruise = false -- And override the thing that would reset it, in this case
                     end
                 end
-                if atmosDensity == 0 and WasInAtmo then
+                if not inAtmo and WasInAtmo then
                     if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) == 1 then
                         sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
                     if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) == 1 then

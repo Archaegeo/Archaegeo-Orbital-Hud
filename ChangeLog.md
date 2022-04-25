@@ -9,10 +9,11 @@ NOTE: Be sure to use /G to change `SpaceSpeedLimit` to speed you want engines to
 - When using /G MaxGameVelocity xxxx, the xxxx is inputed in km/hr and stored in m/s.  This is to make it easy to match INFO panel Max Speed.
 - Change `SpaceSpeedLimit` global from 30000 k/hr to 50000 k/hr (meaning they will not turn off when not in AP, set lower to make engines turn off if you forget)
 - Changed C in Kinematics to 100k k/hr - (Since there appears to be no relativistic mass effect anymore)
-- Fix rockets stopping when in space greater than max atmo speed (non-Athena bug)
 - Changed getTime to getArkTime since getTime depreciated.
 - Determined actual no atmo height and min space engine for haven (15554,8437)
-- Double middle mouse button (clears all AP) no long turns off brakes.
+- Double middle mouse button (clears all AP) no long turns off brakes. (non-Athena bug)
+- Fix rockets stopping when in space greater than max atmo speed (non-Athena bug)
+- Possible fix for finalizing landing issue (non-Athena bug)
 
 
 Version 1.730 - Re-Entry and Atmo

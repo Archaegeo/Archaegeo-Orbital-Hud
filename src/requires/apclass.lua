@@ -1167,10 +1167,9 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         brakeInput2 = 0
 
     -- Start old APTick Code 
-
-        inAtmo = false or (coreAltitude < planet.noAtmosphericDensityAltitude )
-
         atmosDensity = atmosphere()
+        inAtmo = false or (coreAltitude < planet.noAtmosphericDensityAltitude and atmosDensity > 0.00001 )
+
         coreAltitude = c.getAltitude()
         abvGndDet = AboveGroundLevel()
         time = systime()
