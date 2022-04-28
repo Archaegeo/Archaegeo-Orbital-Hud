@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.731
+VERSION_NUMBER = 0.732
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -109,6 +109,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     fuelY = 700 -- (Default: 700) Y position of fuel tanks, set to 300 for non-bar style fuel display, set both fuelX and fuelY to 0 to hide fuel display
     shieldX = 1750 -- (Default: 1750) X position of shield indicator
     shieldY = 250 -- (Default: 250) Y position of shield indicator
+    radarX = 1750 -- (Default 1750) X position of radar info
+    radarY = 350 -- (Default: 350) Y position of radar info
     DeadZone = 50 -- (Default: 50) Number of pixels of deadzone at the center of the screen
     OrbitMapSize = 250 -- (Default: 250) Size of the orbit map, make sure it is divisible by 4
     OrbitMapX = 0 -- (Default: 0) X postion of Orbit Display 
@@ -117,7 +119,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
 
     savableVariablesHud = {ResolutionX={set=function (i)ResolutionX=i end,get=function() return ResolutionX end},ResolutionY={set=function (i)ResolutionY=i end,get=function() return ResolutionY end},circleRad={set=function (i)circleRad=i end,get=function() return circleRad end},SafeR={set=function (i)SafeR=i end,get=function() return SafeR end}, SafeG={set=function (i)SafeG=i end,get=function() return SafeG end}, SafeB={set=function (i)SafeB=i end,get=function() return SafeB end}, 
     PvPR={set=function (i)PvPR=i end,get=function() return PvPR end}, PvPG={set=function (i)PvPG=i end,get=function() return PvPG end}, PvPB={set=function (i)PvPB=i end,get=function() return PvPB end},centerX={set=function (i)centerX=i end,get=function() return centerX end}, centerY={set=function (i)centerY=i end,get=function() return centerY end}, throtPosX={set=function (i)throtPosX=i end,get=function() return throtPosX end}, throtPosY={set=function (i)throtPosY=i end,get=function() return throtPosY end},
-    vSpdMeterX={set=function (i)vSpdMeterX=i end,get=function() return vSpdMeterX end}, vSpdMeterY={set=function (i)vSpdMeterY=i end,get=function() return vSpdMeterY end},altMeterX={set=function (i)altMeterX=i end,get=function() return altMeterX end}, altMeterY={set=function (i)altMeterY=i end,get=function() return altMeterY end},fuelX={set=function (i)fuelX=i end,get=function() return fuelX end}, fuelY={set=function (i)fuelY=i end,get=function() return fuelY end}, shieldX={set=function (i)shieldX=i end,get=function() return shieldX end}, shieldY={set=function (i)shieldY=i end,get=function() return shieldY end}, DeadZone={set=function (i)DeadZone=i end,get=function() return DeadZone end},
+    vSpdMeterX={set=function (i)vSpdMeterX=i end,get=function() return vSpdMeterX end}, vSpdMeterY={set=function (i)vSpdMeterY=i end,get=function() return vSpdMeterY end},altMeterX={set=function (i)altMeterX=i end,get=function() return altMeterX end}, altMeterY={set=function (i)altMeterY=i end,get=function() return altMeterY end},fuelX={set=function (i)fuelX=i end,get=function() return fuelX end}, fuelY={set=function (i)fuelY=i end,get=function() return fuelY end},
+    shieldX={set=function (i)shieldX=i end,get=function() return shieldX end}, shieldY={set=function (i)shieldY=i end,get=function() return shieldY end}, radarX={set=function (i)radarX=i end,get=function() return radarX end}, radarY={set=function (i)radarY=i end,get=function() return radarY end},DeadZone={set=function (i)DeadZone=i end,get=function() return DeadZone end},
     OrbitMapSize={set=function (i)OrbitMapSize=i end,get=function() return OrbitMapSize end}, OrbitMapX={set=function (i)OrbitMapX=i end,get=function() return OrbitMapX end}, OrbitMapY={set=function (i)OrbitMapY=i end,get=function() return OrbitMapY end}, soundVolume={set=function (i)soundVolume=i end,get=function() return soundVolume end}}
 
 -- Ship flight physics variables - Change with care, can have large effects on ships performance.
@@ -296,6 +299,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         alignHeading=nil -- 2
         mouseDistance = 0 -- 2
         sEFC = false -- 2
+        MaxSpeed = c.getMaxSpeed() -- 2
         if shield_1 then shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints()) end
     end     
     --[[ timestamped print function for debugging
@@ -1347,6 +1351,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 if radarContacts > 0 then
                     local wp = {worldPos["x"],worldPos["y"],worldPos["z"]}  --getTrueWorldPos()
                     local count, count2 = 0, 0
+                    local radarDist = velMag * 10
                     static, numKnown = 0, 0
                     for v in contactData do
                         local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
@@ -1358,7 +1363,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
                         if CollisionSystem then
                             local cType = radars[1].getConstructType(id)
-                            if (sz > 27 or AbandonedRadar) or cType == "static" or cType == "space" then
+                            if (AbandonedRadar and radars[1].isConstructAbandoned(id) == 1) or (distance < radarDist and (sz > 27 or cType == "static" or cType == "space")) then
                                 static = static + 1
                                 local name = radars[1].getConstructName(id)
                                 local construct = contacts[id]
@@ -1656,7 +1661,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         local lastOdometerOutput = ""
         local lastTravelTime = systime()
         local repairArrows = false
-        local MaxSpeed = 0
+        local showWarpWidget = false
     
         --Local Huds Functions
             -- safezone() variables
@@ -4209,8 +4214,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
             -- DrawRadarInfo() variables
     
-            local radarX = ConvertResolutionX(1770)
-            local radarY = ConvertResolutionY(350)
             local friendy = ConvertResolutionY(15)
             local friendx = ConvertResolutionX(1370)
             local msg, where
@@ -4666,10 +4669,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 HideInterplanetaryPanel()
             end
             if warpdrive ~= nil then
-                if jdecode(warpdrive.getData()).destination ~= "Unknown" and jdecode(warpdrive.getData()).distance > 400000 then
-                    warpdrive.show()
-                    showWarpWidget = true
-                else
+                local warpDriveData = jdecode(warpdrive.getData())
+                if warpDriveData.destination ~= "Unknown" and warpDriveData.distance > 400000 then
+                    if not showWarpWidget then
+                        warpdrive.show()
+                        showWarpWidget = true
+                    end
+                elseif showWarpWidget then
                     warpdrive.hide()
                     showWarpWidget = false
                 end
@@ -5668,7 +5674,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     if inAtmo or Reentry then
                         adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
                     elseif Autopilot then
-                        MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 16666.66)
+                        MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, MaxSpeed-0.2)
                     end
                 else
                     navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge/10)
@@ -6084,7 +6090,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
             end
     
-            local isWarping = (velMag > 13888)
+            local isWarping = (velMag > 27777)
     
             if velMag > SpaceSpeedLimit/3.6 and not inAtmo and not Autopilot and not isWarping then
                 msgText = "Space Speed Engine Shutoff reached"
@@ -7161,7 +7167,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
                         -- Just fudge it arbitrarily by 5% so that we get some feathering for better accuracy
                         -- Make it think it will take longer to brake than it will
-                        if (not spaceLaunch and not AutoTakeoff and not Reentry and (distanceToTarget <= brakeDistance and targetVec:len() < planet.radius) and 
+                        if (HoldAltitude < planet.noAtmosphericDensityAltitude and not spaceLaunch and not AutoTakeoff and not Reentry and (distanceToTarget <= brakeDistance and targetVec:len() < planet.radius) and 
                                 (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99  or VectorStatus == "Finalizing Approach")) then 
                             VectorStatus = "Finalizing Approach" 
                             if #apRoute>0 then
@@ -8450,13 +8456,20 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 local newGlobalValue = string.sub(arguement,i+1)
                 for k, v in pairs(saveableVariables()) do
                     if k == globalVariableName then
-                        msgText = "Variable "..globalVariableName.." changed to "..newGlobalValue
                         local varType = type(v.get())
                         if varType == "number" then
                             newGlobalValue = tonum(newGlobalValue)
                             if k=="AtmoSpeedLimit" then adjustedAtmoSpeedLimit = newGlobalValue end
-                            if k=="MaxGameVelocity" then newGlobalValue = newGlobalValue/3.6 end
-                        elseif varType == "boolean" then
+                        end
+                        msgText = "Variable "..globalVariableName.." changed to "..newGlobalValue
+                        if k=="MaxGameVelocity" then 
+                            newGlobalValue = newGlobalValue/3.6
+                            if newGlobalValue > MaxSpeed-0.2 then 
+                                newGlobalValue = MaxSpeed-0.2 
+                                msgText = "Variable "..globalVariableName.." changed to "..round(newGlobalValue*3.6,1)
+                            end
+                        end
+                        if varType == "boolean" then
                             if string.lower(newGlobalValue) == "true" then
                                 newGlobalValue = true
                             else
