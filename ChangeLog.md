@@ -1,5 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.733
+- ALT-W in space, not in Autopilot, will toggle Prograde alignment
+- ALT-S in space, not in Autopilot, will toggle retrograde alignment
+- ALT-S in space, while in Autopilot, will toggle Turn and Burn braking.
+
 Version 1.732
 - RADAR CHANGE: Fixed CPU Overload due to too many radar contacts.  Triangulation is only performed if:
     1) AbandonedRadar is true and contact is abandoned OR
