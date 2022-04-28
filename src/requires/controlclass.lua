@@ -690,13 +690,20 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             local newGlobalValue = string.sub(arguement,i+1)
             for k, v in pairs(saveableVariables()) do
                 if k == globalVariableName then
-                    msgText = "Variable "..globalVariableName.." changed to "..newGlobalValue
                     local varType = type(v.get())
                     if varType == "number" then
                         newGlobalValue = tonum(newGlobalValue)
                         if k=="AtmoSpeedLimit" then adjustedAtmoSpeedLimit = newGlobalValue end
-                        if k=="MaxGameVelocity" then newGlobalValue = newGlobalValue/3.6 end
-                    elseif varType == "boolean" then
+                    end
+                    msgText = "Variable "..globalVariableName.." changed to "..newGlobalValue
+                    if k=="MaxGameVelocity" then 
+                        newGlobalValue = newGlobalValue/3.6
+                        if newGlobalValue > MaxSpeed-0.2 then 
+                            newGlobalValue = MaxSpeed-0.2 
+                            msgText = "Variable "..globalVariableName.." changed to "..round(newGlobalValue*3.6,1)
+                        end
+                    end
+                    if varType == "boolean" then
                         if string.lower(newGlobalValue) == "true" then
                             newGlobalValue = true
                         else

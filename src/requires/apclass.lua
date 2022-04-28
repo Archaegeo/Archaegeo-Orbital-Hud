@@ -851,7 +851,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if inAtmo or Reentry then
                     adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
                 elseif Autopilot then
-                    MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, 16666.66)
+                    MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, MaxSpeed-0.2)
                 end
             else
                 navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge/10)

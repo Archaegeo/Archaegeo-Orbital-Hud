@@ -30,7 +30,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     local lastOdometerOutput = ""
     local lastTravelTime = systime()
     local repairArrows = false
-    local MaxSpeed = 0
     local showWarpWidget = false
 
     --Local Huds Functions
@@ -2584,8 +2583,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
 
         -- DrawRadarInfo() variables
 
-        local radarX = ConvertResolutionX(1770)
-        local radarY = ConvertResolutionY(350)
         local friendy = ConvertResolutionY(15)
         local friendx = ConvertResolutionX(1370)
         local msg, where

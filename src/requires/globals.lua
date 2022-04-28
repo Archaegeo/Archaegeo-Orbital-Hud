@@ -98,6 +98,8 @@
     fuelY = 700 -- (Default: 700) Y position of fuel tanks, set to 300 for non-bar style fuel display, set both fuelX and fuelY to 0 to hide fuel display
     shieldX = 1750 -- (Default: 1750) X position of shield indicator
     shieldY = 250 -- (Default: 250) Y position of shield indicator
+    radarX = 1750 -- (Default 1750) X position of radar info
+    radarY = 350 -- (Default: 350) Y position of radar info
     DeadZone = 50 -- (Default: 50) Number of pixels of deadzone at the center of the screen
     OrbitMapSize = 250 -- (Default: 250) Size of the orbit map, make sure it is divisible by 4
     OrbitMapX = 0 -- (Default: 0) X postion of Orbit Display 
@@ -106,7 +108,8 @@
 
     savableVariablesHud = {ResolutionX={set=function (i)ResolutionX=i end,get=function() return ResolutionX end},ResolutionY={set=function (i)ResolutionY=i end,get=function() return ResolutionY end},circleRad={set=function (i)circleRad=i end,get=function() return circleRad end},SafeR={set=function (i)SafeR=i end,get=function() return SafeR end}, SafeG={set=function (i)SafeG=i end,get=function() return SafeG end}, SafeB={set=function (i)SafeB=i end,get=function() return SafeB end}, 
     PvPR={set=function (i)PvPR=i end,get=function() return PvPR end}, PvPG={set=function (i)PvPG=i end,get=function() return PvPG end}, PvPB={set=function (i)PvPB=i end,get=function() return PvPB end},centerX={set=function (i)centerX=i end,get=function() return centerX end}, centerY={set=function (i)centerY=i end,get=function() return centerY end}, throtPosX={set=function (i)throtPosX=i end,get=function() return throtPosX end}, throtPosY={set=function (i)throtPosY=i end,get=function() return throtPosY end},
-    vSpdMeterX={set=function (i)vSpdMeterX=i end,get=function() return vSpdMeterX end}, vSpdMeterY={set=function (i)vSpdMeterY=i end,get=function() return vSpdMeterY end},altMeterX={set=function (i)altMeterX=i end,get=function() return altMeterX end}, altMeterY={set=function (i)altMeterY=i end,get=function() return altMeterY end},fuelX={set=function (i)fuelX=i end,get=function() return fuelX end}, fuelY={set=function (i)fuelY=i end,get=function() return fuelY end}, shieldX={set=function (i)shieldX=i end,get=function() return shieldX end}, shieldY={set=function (i)shieldY=i end,get=function() return shieldY end}, DeadZone={set=function (i)DeadZone=i end,get=function() return DeadZone end},
+    vSpdMeterX={set=function (i)vSpdMeterX=i end,get=function() return vSpdMeterX end}, vSpdMeterY={set=function (i)vSpdMeterY=i end,get=function() return vSpdMeterY end},altMeterX={set=function (i)altMeterX=i end,get=function() return altMeterX end}, altMeterY={set=function (i)altMeterY=i end,get=function() return altMeterY end},fuelX={set=function (i)fuelX=i end,get=function() return fuelX end}, fuelY={set=function (i)fuelY=i end,get=function() return fuelY end},
+    shieldX={set=function (i)shieldX=i end,get=function() return shieldX end}, shieldY={set=function (i)shieldY=i end,get=function() return shieldY end}, radarX={set=function (i)radarX=i end,get=function() return radarX end}, radarY={set=function (i)radarY=i end,get=function() return radarY end},DeadZone={set=function (i)DeadZone=i end,get=function() return DeadZone end},
     OrbitMapSize={set=function (i)OrbitMapSize=i end,get=function() return OrbitMapSize end}, OrbitMapX={set=function (i)OrbitMapX=i end,get=function() return OrbitMapX end}, OrbitMapY={set=function (i)OrbitMapY=i end,get=function() return OrbitMapY end}, soundVolume={set=function (i)soundVolume=i end,get=function() return soundVolume end}}
 
 -- Ship flight physics variables - Change with care, can have large effects on ships performance.
@@ -286,5 +289,6 @@
         alignHeading = nil -- 2
         mouseDistance = 0 -- 2
         sEFC = false -- 2
+        MaxSpeed = c.getMaxSpeed() -- 2
         if shield_1 then shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints()) end
     end
