@@ -86,6 +86,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
             if radarContacts > 0 then
                 local wp = {worldPos["x"],worldPos["y"],worldPos["z"]}  --getTrueWorldPos()
                 local count, count2 = 0, 0
+                local radarDist = velMag * 10
                 static, numKnown = 0, 0
                 for v in contactData do
                     local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
@@ -97,7 +98,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
 
                     if CollisionSystem then
                         local cType = radars[1].getConstructType(id)
-                        if (sz > 27 or AbandonedRadar) or cType == "static" or cType == "space" then
+                        if (AbandonedRadar and radars[1].isConstructAbandoned(id) == 1) or (distance < radarDist and (sz > 27 or cType == "static" or cType == "space")) then
                             static = static + 1
                             local name = radars[1].getConstructName(id)
                             local construct = contacts[id]

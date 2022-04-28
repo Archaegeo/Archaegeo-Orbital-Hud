@@ -1,5 +1,15 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.732
+- RADAR CHANGE: Fixed CPU Overload due to too many radar contacts.  Triangulation is only performed if:
+    1) AbandonedRadar is true and contact is abandoned OR
+    2) Target is within 10s at current speed AND is M+ dynamic, static, or space core.
+- New globals `radarX` and `radarY` to let you move radar info.
+- Fixed erroneous Finalizing Approach during orbital hops.
+- Ships MaxSpeed in space determined every 1 second.  When changing `MaxGameVelocity` it will be limited to MaxSpeed-0.2 m/s
+    This means in space you can alt-mousewheel up to change Set max speed to actual max speed as fuel is depleted if desired.
+- Changed determination of warping to 27777m/s (100k k/hr) instead of 50k k/h
+
 Version 1.731 - Athena fixes
 NOTE: Due to file size limits for the GFN version, ArchHUD is not restoring exported variables for Edit Lua Parameters.
 NOTE: Be sure to use /G to change `MaxGameVelocity` to the max speed your ship can go (you can use km/hr with /G or its in m/s if you edit globals.lua)

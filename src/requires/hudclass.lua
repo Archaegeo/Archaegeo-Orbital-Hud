@@ -30,7 +30,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     local lastOdometerOutput = ""
     local lastTravelTime = systime()
     local repairArrows = false
-    local MaxSpeed = 0
+    local showWarpWidget = false
 
     --Local Huds Functions
         -- safezone() variables
@@ -2583,8 +2583,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
 
         -- DrawRadarInfo() variables
 
-        local radarX = ConvertResolutionX(1770)
-        local radarY = ConvertResolutionY(350)
         local friendy = ConvertResolutionY(15)
         local friendx = ConvertResolutionX(1370)
         local msg, where
@@ -3040,10 +3038,13 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             HideInterplanetaryPanel()
         end
         if warpdrive ~= nil then
-            if jdecode(warpdrive.getData()).destination ~= "Unknown" and jdecode(warpdrive.getData()).distance > 400000 then
-                warpdrive.show()
-                showWarpWidget = true
-            else
+            local warpDriveData = jdecode(warpdrive.getData())
+            if warpDriveData.destination ~= "Unknown" and warpDriveData.distance > 400000 then
+                if not showWarpWidget then
+                    warpdrive.show()
+                    showWarpWidget = true
+                end
+            elseif showWarpWidget then
                 warpdrive.hide()
                 showWarpWidget = false
             end
