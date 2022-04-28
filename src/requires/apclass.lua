@@ -1267,7 +1267,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
         end
 
-        local isWarping = (velMag > 13888)
+        local isWarping = (velMag > 27777)
 
         if velMag > SpaceSpeedLimit/3.6 and not inAtmo and not Autopilot and not isWarping then
             msgText = "Space Speed Engine Shutoff reached"
@@ -2344,7 +2344,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
 
                     -- Just fudge it arbitrarily by 5% so that we get some feathering for better accuracy
                     -- Make it think it will take longer to brake than it will
-                    if (not spaceLaunch and not AutoTakeoff and not Reentry and (distanceToTarget <= brakeDistance and targetVec:len() < planet.radius) and 
+                    if (HoldAltitude < planet.noAtmosphericDensityAltitude and not spaceLaunch and not AutoTakeoff and not Reentry and (distanceToTarget <= brakeDistance and targetVec:len() < planet.radius) and 
                             (constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99  or VectorStatus == "Finalizing Approach")) then 
                         VectorStatus = "Finalizing Approach" 
                         if #apRoute>0 then

@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.732
+- Changed determination of warping to 27777m/s (100k k/hr) instead of 50k k/h
+- Fixed erroneous Finalizing Approach during orbital hops.
+- RADAR CHANGE
+- Fixed CPU Overload due to too many radar contacts.  Triangulation is only 
+performed in atmosphere radar if within 3000m of target.
+
 Version 1.731 - Athena fixes
 NOTE: Due to file size limits for the GFN version, ArchHUD is not restoring exported variables for Edit Lua Parameters.
 NOTE: Be sure to use /G to change `MaxGameVelocity` to the max speed your ship can go (you can use km/hr with /G or its in m/s if you edit globals.lua)
