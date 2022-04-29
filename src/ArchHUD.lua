@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.732
+VERSION_NUMBER = 0.733
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -65,7 +65,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     TargetOrbitRadius = 1.2 -- (Default: 1.2) How tight you want to orbit the planet at end of autopilot.  The smaller the value the tighter the orbit.  Value is multiple of Atmospheric Height
     LowOrbitHeight = 2000 -- (Default: 2000) Height of Orbit above top of atmospehre when using Alt-4-4 same planet autopilot or alt-6-6 in space.
     AtmoSpeedLimit = 1050 -- (Default: 1050) Speed limit in Atmosphere in km/h. AtmoSpeedAssist will cause ship to throttle back when this speed is reached.
-    SpaceSpeedLimit = 60000 -- (Default: 60000) Space speed limit in KM/H. If you hit this speed and are NOT in active autopilot, engines will turn off to prevent using all fuel (30000 means they wont turn off)
+    SpaceSpeedLimit = 66000 -- (Default: 66000) Space speed limit in KM/H. If you hit this speed and are NOT in active autopilot, engines will turn off to prevent using all fuel (66000 means they wont turn off)
     AutoTakeoffAltitude = 1000 -- (Default: 1000) How high above your ground height AutoTakeoff tries to put you
     TargetHoverHeight = 50 -- (Default: 50) Hover height above ground when G used to lift off, 50 is above all max hover heights.
     LandingGearGroundHeight = 0 -- (Default: 0) Set to AGL when on ground. Will help prevent ship landing on ground then bouncing back up to landing gear height. 
@@ -7907,10 +7907,24 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     Nav.control.switchOnHeadlights()
                 end
             elseif action == "forward" then
-                pitchInput = pitchInput - 1
+                if AltIsOn and not inAtmo and not Autopilot then
+                    ProgradeIsOn = not ProgradeIsOn
+                    RetrogradeIsOn = false
+                else
+                    pitchInput = pitchInput - 1
+                end
             elseif action == "backward" then
                 if AltIsOn then
-                    assistedFlight(-constructVelocity*5000)
+                    if not inAtmo then
+                        if not Autopilot then
+                            RetrogradeIsOn = not RetrogradeIsOn
+                            ProgradeIsOn = false
+                        else
+                            TurnBurn = not TurnBurn
+                        end
+                    else
+                        assistedFlight(-constructVelocity*5000)
+                    end
                 else
                     pitchInput = pitchInput + 1
                 end
