@@ -1,5 +1,17 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.733
+- (MODULAR ONLY) Added support for a custom globals file that is executed after the default globals.lua
+    It is looked for in `autoconf/custom/archhud/custom/` and should be named userglobals.lua
+- ALT-W in space, not in Autopilot, will toggle Prograde alignment
+- ALT-S in space, not in Autopilot, will toggle retrograde alignment
+- ALT-S in space, while in Autopilot, will toggle Turn and Burn braking.
+- Changed `SpaceSpeedLimit` default to 66000 so engines do not auto turn off in space if not in AP.
+    (This limit is so if set lower and you go away from keyboard, your engines will turn off and not
+    use all your fuel)
+- Changed `MaxGameVelocity` global from 8366 m/s (30k k/hr) to 13888.87 m/s (50k k/hr) (Really this time)
+    (You can change MaxGameVelocity now by ALT-MOUSEWHEEL while in space, it will limit you to actual max speed but save if set lower)
+
 Version 1.732
 - RADAR CHANGE: Fixed CPU Overload due to too many radar contacts.  Triangulation is only performed if:
     1) AbandonedRadar is true and contact is abandoned OR

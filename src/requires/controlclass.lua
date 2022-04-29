@@ -141,10 +141,24 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                 Nav.control.switchOnHeadlights()
             end
         elseif action == "forward" then
-            pitchInput = pitchInput - 1
+            if AltIsOn and not inAtmo and not Autopilot then
+                ProgradeIsOn = not ProgradeIsOn
+                RetrogradeIsOn = false
+            else
+                pitchInput = pitchInput - 1
+            end
         elseif action == "backward" then
             if AltIsOn then
-                assistedFlight(-constructVelocity*5000)
+                if not inAtmo then
+                    if not Autopilot then
+                        RetrogradeIsOn = not RetrogradeIsOn
+                        ProgradeIsOn = false
+                    else
+                        TurnBurn = not TurnBurn
+                    end
+                else
+                    assistedFlight(-constructVelocity*5000)
+                end
             else
                 pitchInput = pitchInput + 1
             end
