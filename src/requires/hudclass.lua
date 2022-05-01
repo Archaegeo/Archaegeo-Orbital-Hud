@@ -2880,62 +2880,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 sysDestWid(panelInterplanetary)
                 panelInterplanetary = nil
             end 
-            local function GetAutopilotTravelTime()
-                if not Autopilot then
-                    if CustomTarget == nil or CustomTarget.planetname ~= planet.name then
-                        AutopilotDistance = (autopilotTargetPlanet.center - worldPos):len() -- This updates elsewhere if we're already piloting
-                    else
-                        AutopilotDistance = (CustomTarget.position - worldPos):len()
-                    end
-                end
-                local speed = velMag
-                local throttle = u.getThrottle()/100
-                if AtmoSpeedAssist then throttle = PlayerThrottle end
-                local accelDistance, accelTime =
-                    Kinematic.computeDistanceAndTime(velMag, MaxGameVelocity, -- From currently velocity to max
-                        coreMass, Nav:maxForceForward()*throttle, warmup, -- T50?  Assume none, negligible for this
-                        0) -- Brake thrust, none for this
-                -- accelDistance now has the amount of distance for which we will be accelerating
-                -- Then we need the distance we'd brake from full speed
-                -- Note that for some nearby moons etc, it may never reach full speed though.
-                local brakeDistance, brakeTime
-                if not TurnBurn then
-                    brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
-                else
-                    brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
-                end
-                local _, curBrakeTime
-                if not TurnBurn and speed > 0 then -- Will this cause problems?  Was spamming something in here was giving 0 speed and 0 accel
-                    _, curBrakeTime = AP.GetAutopilotBrakeDistanceAndTime(speed)
-                else
-                    _, curBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(speed)
-                end
-                local cruiseDistance = 0
-                local cruiseTime = 0
-                -- So, time is in seconds
-                -- If cruising or braking, use real cruise/brake values
-                if AutopilotCruising or (not Autopilot and speed > 5) then -- If already cruising, use current speed
-                    cruiseTime = Kinematic.computeTravelTime(speed, 0, AutopilotDistance)
-                elseif brakeDistance + accelDistance < AutopilotDistance then
-                    -- Add any remaining distance
-                    cruiseDistance = AutopilotDistance - (brakeDistance + accelDistance)
-                    cruiseTime = Kinematic.computeTravelTime(8333.0556, 0, cruiseDistance)
-                else
-                    local accelRatio = (AutopilotDistance - brakeDistance) / accelDistance
-                    accelDistance = AutopilotDistance - brakeDistance -- Accel until we brake
-                    
-                    accelTime = accelTime * accelRatio
-                end
-                if CustomTarget ~= nil and CustomTarget.planetname == planet.name and not Autopilot then
-                    return cruiseTime
-                elseif AutopilotBraking then
-                    return curBrakeTime
-                elseif AutopilotCruising then
-                    return cruiseTime + curBrakeTime
-                else -- If not cruising or braking, assume we'll get to max speed
-                    return accelTime + brakeTime + cruiseTime
-                end
-            end
+
         HUD.DrawTanks()
         if shield_1 then HUD.DrawShield() end
         if AutopilotTargetName ~= "None" then
@@ -2952,7 +2897,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 planetMaxMass = planetMaxMass > 1000000 and round(planetMaxMass / 1000000,2).." kTons" or round(planetMaxMass / 1000, 2).." Tons"
                 sysUpData(interplanetaryHeaderText,
                     '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "unit":""}')
-                travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
                 if customLocation and not Autopilot then -- If in autopilot, keep this displaying properly
                     targetDistance = (worldPos - CustomTarget.position):len()
                 else
@@ -3139,7 +3083,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         HUD.UpdatePipe()
         HUD.ExtraData(newContent)
         lastOdometerOutput = table.concat(newContent, "")
-        MaxSpeed = c.getMaxSpeed()   
     end
 
     function Hud.AnimateTick()
