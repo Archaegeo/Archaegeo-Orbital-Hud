@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.733
+VERSION_NUMBER = 0.734
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -2669,7 +2669,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 local helpAtmoGround = {"Alt-4: AutoTakeoff to Target"}
                 local helpAtmoAir = { "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", 
                                     "Alt-Q/E: Hard Bankroll left/right till released", "Alt-S: 180 deg bank turn"}
-                local helpSpace = {"Alt-6: Orbit at current altitude", "Alt-6-6: Orbit at LowOrbitHeight over atmosphere","G: Raise or lower landing gear"}
+                local helpSpace = {"Alt-6: Orbit at current altitude", "Alt-6-6: Orbit at LowOrbitHeight over atmosphere","G: Raise or lower landing gear", "Alt-W: Toggle prograde align", "Alt-S: Toggle retrograde align / Turn&Burn (AP)"}
                 local helpGeneral = {"", "------------------ALWAYS--------------------", "Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-Shift 1: Show passengers on board","Alt-Shift-2: Deboard passengers",
                                     "Alt-3: Toggle Vanilla Widget view", "Alt-4: Autopilot to IPH target", "Alt-Shift-3: Show docked ships","Alt-Shift-4: Undock all ships",
                                     "Alt-5: Lock Pitch at current pitch","Alt-Shift-5: Lock pitch at preset pitch","Alt-7: Toggle Collision System on and off", "Alt-8: Toggle ground stabilization (underwater flight)",
@@ -7473,7 +7473,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
         -- End old APTick Code
     
-            if inAtmo and AtmoSpeedAssist and throttleMode then
+            if (inAtmo or Reentry or finalLand) and AtmoSpeedAssist and throttleMode then
                 -- This is meant to replace cruise
                 -- Uses AtmoSpeedLimit as the desired speed in which to 'cruise'
                 -- In atmo, if throttle is 100%, it applies a PID to throttle to try to achieve AtmoSpeedLimit
@@ -7518,7 +7518,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 local pidGet = throttlePID:get()
                 calculatedThrottle = uclamp(pidGet,-1,1)
                 if not ThrottleValue then 
-                    if calculatedThrottle < PlayerThrottle and (atmosDensity > 0.005) then -- We can limit throttle all the way to 0.05% probably
+                    if calculatedThrottle < PlayerThrottle and (atmosDensity > 0.005 or Reentry or finalLand ) then -- We can limit throttle all the way to 0.05% probably
                         ThrottleLimited = true
                         ThrottleValue = uclamp(calculatedThrottle,0.01,1)
                     else
@@ -7534,7 +7534,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
                 brakePID:inject(constructVelocity:len() - (adjustedAtmoSpeedLimit/3.6) - addThrust) 
                 local calculatedBrake = uclamp(brakePID:get(),0,1)
-                if (inAtmo and vSpd < -80) or atmosDensity > 0.005 then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
+                if (inAtmo and vSpd < -80) or (atmosDensity > 0.005 or Reentry or finalLand) then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
                     brakeInput2 = calculatedBrake
                 end
                 if brakeInput2 > 0 then
@@ -9128,11 +9128,11 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 atlasSetup()
                 if radar_1 then RADAR = RadarClass(c, s, u, library, radar_1, radar_2, 
                 mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) end
-                HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
+                if HudClass then HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
                 mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
                 navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
-                getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
-                HUD.ButtonSetup()
+                getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp) end
+                if HUD then HUD.ButtonSetup() end
                 CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro, screenHud_1,
                     isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
                 if shield_1 then SHIELD = ShieldClass(shield_1, stringmatch, mfloor) end
@@ -9234,7 +9234,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 button.activate()
             end
             if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
-            s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank"))
+            if HUD then s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank")) end
             if userBase then PROGRAM.ExtraOnStop() end
             play("stop","SU")
         end
@@ -9274,17 +9274,17 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         function program.onTick(timerId)
             if timerId == "tenthSecond" then -- Timer executed ever tenth of a second
                 AP.TenthTick()
-                HUD.TenthTick()
+                if HUD then HUD.TenthTick() end
             elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
-                HUD.OneSecondTick()
+                if HUD then HUD.OneSecondTick() end
             elseif timerId == "fiveSecond" then -- Timer executed every 5 seconds (SatNav only stuff for now)
                 AP.SatNavTick()
             elseif timerId == "msgTick" then -- Timer executed whenever msgText is applied somwehere
-                HUD.MsgTick()
+                if HUD then HUD.MsgTick() end
             elseif timerId == "animateTick" then -- Timer for animation
-                HUD.AnimateTick()
+                if HUD then HUD.AnimateTick() end
             elseif timerId == "hudTick" then -- Timer for all hud updates not called elsewhere
-                HUD.hudtick()
+                if HUD then HUD.hudtick() end
             elseif timerId == "apTick" then -- Timer for all autopilot functions
                 AP.APTick()
             elseif timerId == "shieldTick" then
