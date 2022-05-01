@@ -2650,7 +2650,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
 
     -- End old APTick Code
 
-        if inAtmo and AtmoSpeedAssist and throttleMode then
+        if (inAtmo or Reentry or finalLand) and AtmoSpeedAssist and throttleMode then
             -- This is meant to replace cruise
             -- Uses AtmoSpeedLimit as the desired speed in which to 'cruise'
             -- In atmo, if throttle is 100%, it applies a PID to throttle to try to achieve AtmoSpeedLimit
@@ -2695,7 +2695,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             local pidGet = throttlePID:get()
             calculatedThrottle = uclamp(pidGet,-1,1)
             if not ThrottleValue then 
-                if calculatedThrottle < PlayerThrottle and (atmosDensity > 0.005) then -- We can limit throttle all the way to 0.05% probably
+                if calculatedThrottle < PlayerThrottle and (atmosDensity > 0.005 or Reentry or finalLand ) then -- We can limit throttle all the way to 0.05% probably
                     ThrottleLimited = true
                     ThrottleValue = uclamp(calculatedThrottle,0.01,1)
                 else
@@ -2711,7 +2711,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
             brakePID:inject(constructVelocity:len() - (adjustedAtmoSpeedLimit/3.6) - addThrust) 
             local calculatedBrake = uclamp(brakePID:get(),0,1)
-            if (inAtmo and vSpd < -80) or atmosDensity > 0.005 then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
+            if (inAtmo and vSpd < -80) or (atmosDensity > 0.005 or Reentry or finalLand) then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
                 brakeInput2 = calculatedBrake
             end
             if brakeInput2 > 0 then

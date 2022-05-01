@@ -1038,7 +1038,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             local helpAtmoGround = {"Alt-4: AutoTakeoff to Target"}
             local helpAtmoAir = { "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", 
                                 "Alt-Q/E: Hard Bankroll left/right till released", "Alt-S: 180 deg bank turn"}
-            local helpSpace = {"Alt-6: Orbit at current altitude", "Alt-6-6: Orbit at LowOrbitHeight over atmosphere","G: Raise or lower landing gear"}
+            local helpSpace = {"Alt-6: Orbit at current altitude", "Alt-6-6: Orbit at LowOrbitHeight over atmosphere","G: Raise or lower landing gear", "Alt-W: Toggle prograde align", "Alt-S: Toggle retrograde align / Turn&Burn (AP)"}
             local helpGeneral = {"", "------------------ALWAYS--------------------", "Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-Shift 1: Show passengers on board","Alt-Shift-2: Deboard passengers",
                                 "Alt-3: Toggle Vanilla Widget view", "Alt-4: Autopilot to IPH target", "Alt-Shift-3: Show docked ships","Alt-Shift-4: Undock all ships",
                                 "Alt-5: Lock Pitch at current pitch","Alt-Shift-5: Lock pitch at preset pitch","Alt-7: Toggle Collision System on and off", "Alt-8: Toggle ground stabilization (underwater flight)",

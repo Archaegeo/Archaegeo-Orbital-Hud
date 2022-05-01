@@ -70,7 +70,7 @@
                     button.activate()
                 end
                 if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
-                s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank"))
+                if HUD then s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank")) end
                 if userBase then PROGRAM.ExtraOnStop() end
                 play("stop","SU")
             end

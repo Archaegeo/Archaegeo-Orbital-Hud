@@ -1,5 +1,14 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.734 - Optional HUD!
+- (MODULAR ONLY) - Removed the need for hudclass.lua meaning you can fly without it completely or substitute your own.
+Note: To initiate execution of your own you will either need to put it in userbase.ExtraOnStart() in userclass.lua (see help in userclass.example)
+and make it call functions in your hud or define function HudClass() in your new hud.  If HudClass is defined in your new hud,
+then ArchHUD will try to execute: ButtonSetup(), FuelUsed(), TenthTick(), OneSecondTick(), MsgTick(), AnimateTick(), hudtick() which must all exist even if they 
+do nothing.
+- Fixed speed overshoot when shifting from cruise to throttle mode during AP re-entry.
+- Added HELP window info for ALT-W/S while in space.
+
 Version 1.733
 - (MODULAR ONLY) Added support for a custom globals file that is executed after the default globals.lua
     It is looked for in `autoconf/custom/archhud/custom/` and should be named userglobals.lua
