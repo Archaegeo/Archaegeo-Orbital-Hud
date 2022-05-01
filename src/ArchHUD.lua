@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.734
+VERSION_NUMBER = 0.735
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -1664,25 +1664,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         local showWarpWidget = false
     
         --Local Huds Functions
-            -- safezone() variables
-                local safeWorldPos = vec3({13771471,7435803,-128971})
-                local safeRadius = 18000000
-                local szradius = 500000
-                local distsz, distp = math.huge
-                local szsafe 
-            local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
-                distsz = vec3(WorldPos):dist(safeWorldPos)
-                if distsz < safeRadius then  
-                    return true, mabs(distsz - safeRadius)
-                end 
-                distp = vec3(WorldPos):dist(vec3(planet.center))
-                if distp < szradius then szsafe = true else szsafe = false end
-                if mabs(distp - szradius) < mabs(distsz - safeRadius) then 
-                    return szsafe, mabs(distp - szradius)
-                else
-                    return szsafe, mabs(distsz - safeRadius)
-                end
-            end
     
             local function ConvertResolutionX (v)
                 if resolutionWidth == 1920 then 
@@ -3848,7 +3829,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
     
         function Hud.HUDPrologue(newContent)
-            notPvPZone, pvpDist = safeZone(worldPos)
             if not notPvPZone then -- misnamed variable, fix later
                 PrimaryR = PvPR
                 PrimaryG = PvPG
@@ -4531,62 +4511,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     sysDestWid(panelInterplanetary)
                     panelInterplanetary = nil
                 end 
-                local function GetAutopilotTravelTime()
-                    if not Autopilot then
-                        if CustomTarget == nil or CustomTarget.planetname ~= planet.name then
-                            AutopilotDistance = (autopilotTargetPlanet.center - worldPos):len() -- This updates elsewhere if we're already piloting
-                        else
-                            AutopilotDistance = (CustomTarget.position - worldPos):len()
-                        end
-                    end
-                    local speed = velMag
-                    local throttle = u.getThrottle()/100
-                    if AtmoSpeedAssist then throttle = PlayerThrottle end
-                    local accelDistance, accelTime =
-                        Kinematic.computeDistanceAndTime(velMag, MaxGameVelocity, -- From currently velocity to max
-                            coreMass, Nav:maxForceForward()*throttle, warmup, -- T50?  Assume none, negligible for this
-                            0) -- Brake thrust, none for this
-                    -- accelDistance now has the amount of distance for which we will be accelerating
-                    -- Then we need the distance we'd brake from full speed
-                    -- Note that for some nearby moons etc, it may never reach full speed though.
-                    local brakeDistance, brakeTime
-                    if not TurnBurn then
-                        brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
-                    else
-                        brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
-                    end
-                    local _, curBrakeTime
-                    if not TurnBurn and speed > 0 then -- Will this cause problems?  Was spamming something in here was giving 0 speed and 0 accel
-                        _, curBrakeTime = AP.GetAutopilotBrakeDistanceAndTime(speed)
-                    else
-                        _, curBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(speed)
-                    end
-                    local cruiseDistance = 0
-                    local cruiseTime = 0
-                    -- So, time is in seconds
-                    -- If cruising or braking, use real cruise/brake values
-                    if AutopilotCruising or (not Autopilot and speed > 5) then -- If already cruising, use current speed
-                        cruiseTime = Kinematic.computeTravelTime(speed, 0, AutopilotDistance)
-                    elseif brakeDistance + accelDistance < AutopilotDistance then
-                        -- Add any remaining distance
-                        cruiseDistance = AutopilotDistance - (brakeDistance + accelDistance)
-                        cruiseTime = Kinematic.computeTravelTime(8333.0556, 0, cruiseDistance)
-                    else
-                        local accelRatio = (AutopilotDistance - brakeDistance) / accelDistance
-                        accelDistance = AutopilotDistance - brakeDistance -- Accel until we brake
-                        
-                        accelTime = accelTime * accelRatio
-                    end
-                    if CustomTarget ~= nil and CustomTarget.planetname == planet.name and not Autopilot then
-                        return cruiseTime
-                    elseif AutopilotBraking then
-                        return curBrakeTime
-                    elseif AutopilotCruising then
-                        return cruiseTime + curBrakeTime
-                    else -- If not cruising or braking, assume we'll get to max speed
-                        return accelTime + brakeTime + cruiseTime
-                    end
-                end
+    
             HUD.DrawTanks()
             if shield_1 then HUD.DrawShield() end
             if AutopilotTargetName ~= "None" then
@@ -4603,7 +4528,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     planetMaxMass = planetMaxMass > 1000000 and round(planetMaxMass / 1000000,2).." kTons" or round(planetMaxMass / 1000, 2).." Tons"
                     sysUpData(interplanetaryHeaderText,
                         '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "unit":""}')
-                    travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
                     if customLocation and not Autopilot then -- If in autopilot, keep this displaying properly
                         targetDistance = (worldPos - CustomTarget.position):len()
                     else
@@ -4790,7 +4714,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             HUD.UpdatePipe()
             HUD.ExtraData(newContent)
             lastOdometerOutput = table.concat(newContent, "")
-            MaxSpeed = c.getMaxSpeed()   
         end
     
         function Hud.AnimateTick()
@@ -4873,6 +4796,25 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local parseRadar = false
             local lastMouseTime = 0
     
+            -- safezone() variables
+                local safeWorldPos = vec3({13771471,7435803,-128971})
+                local safeRadius = 18000000
+                local szradius = 500000
+                local distsz, distp = math.huge
+                local szsafe 
+            local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
+                distsz = vec3(WorldPos):dist(safeWorldPos)
+                if distsz < safeRadius then  
+                    return true, mabs(distsz - safeRadius)
+                end 
+                distp = vec3(WorldPos):dist(vec3(planet.center))
+                if distp < szradius then szsafe = true else szsafe = false end
+                if mabs(distp - szradius) < mabs(distsz - safeRadius) then 
+                    return szsafe, mabs(distp - szradius)
+                else
+                    return szsafe, mabs(distsz - safeRadius)
+                end
+            end
             local function GetAutopilotBrakeDistanceAndTime(speed)
                 -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
                 -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
@@ -5692,6 +5634,65 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         end
     
         function ap.TenthTick()
+            local function GetAutopilotTravelTime()
+                if not Autopilot then
+                    if CustomTarget == nil or CustomTarget.planetname ~= planet.name then
+                        AutopilotDistance = (autopilotTargetPlanet.center - worldPos):len() -- This updates elsewhere if we're already piloting
+                    else
+                        AutopilotDistance = (CustomTarget.position - worldPos):len()
+                    end
+                end
+                local speed = velMag
+                local throttle = u.getThrottle()/100
+                if AtmoSpeedAssist then throttle = PlayerThrottle end
+                local accelDistance, accelTime =
+                    Kinematic.computeDistanceAndTime(velMag, MaxGameVelocity, -- From currently velocity to max
+                        coreMass, Nav:maxForceForward()*throttle, warmup, -- T50?  Assume none, negligible for this
+                        0) -- Brake thrust, none for this
+                -- accelDistance now has the amount of distance for which we will be accelerating
+                -- Then we need the distance we'd brake from full speed
+                -- Note that for some nearby moons etc, it may never reach full speed though.
+                local brakeDistance, brakeTime
+                if not TurnBurn then
+                    brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
+                else
+                    brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
+                end
+                local _, curBrakeTime
+                if not TurnBurn and speed > 0 then -- Will this cause problems?  Was spamming something in here was giving 0 speed and 0 accel
+                    _, curBrakeTime = AP.GetAutopilotBrakeDistanceAndTime(speed)
+                else
+                    _, curBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(speed)
+                end
+                local cruiseDistance = 0
+                local cruiseTime = 0
+                -- So, time is in seconds
+                -- If cruising or braking, use real cruise/brake values
+                if AutopilotCruising or (not Autopilot and speed > 5) then -- If already cruising, use current speed
+                    cruiseTime = Kinematic.computeTravelTime(speed, 0, AutopilotDistance)
+                elseif brakeDistance + accelDistance < AutopilotDistance then
+                    -- Add any remaining distance
+                    cruiseDistance = AutopilotDistance - (brakeDistance + accelDistance)
+                    cruiseTime = Kinematic.computeTravelTime(8333.0556, 0, cruiseDistance)
+                else
+                    local accelRatio = (AutopilotDistance - brakeDistance) / accelDistance
+                    accelDistance = AutopilotDistance - brakeDistance -- Accel until we brake
+                    
+                    accelTime = accelTime * accelRatio
+                end
+                if CustomTarget ~= nil and CustomTarget.planetname == planet.name and not Autopilot then
+                    return cruiseTime
+                elseif AutopilotBraking then
+                    return curBrakeTime
+                elseif AutopilotCruising then
+                    return cruiseTime + curBrakeTime
+                else -- If not cruising or braking, assume we'll get to max speed
+                    return accelTime + brakeTime + cruiseTime
+                end
+            end
+            notPvPZone, pvpDist = safeZone(worldPos)
+            MaxSpeed = c.getMaxSpeed()  
+            travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
                 local function RefreshLastMaxBrake(gravity, force)
                     if gravity == nil then
                         gravity = c.g()
