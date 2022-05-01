@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.735 - Fix for Optional Hud
+- Missed one item needed for pvp determination that was in hudclass.lua, fixed.
+
 Version 1.734 - Optional HUD!
 - (MODULAR ONLY) - Removed the need for hudclass.lua meaning you can fly without it completely or substitute your own.
 Note: To initiate execution of your own you will either need to put it in userbase.ExtraOnStart() in userclass.lua (see help in userclass.example)

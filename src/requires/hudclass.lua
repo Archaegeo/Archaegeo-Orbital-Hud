@@ -33,25 +33,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     local showWarpWidget = false
 
     --Local Huds Functions
-        -- safezone() variables
-            local safeWorldPos = vec3({13771471,7435803,-128971})
-            local safeRadius = 18000000
-            local szradius = 500000
-            local distsz, distp = math.huge
-            local szsafe 
-        local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
-            distsz = vec3(WorldPos):dist(safeWorldPos)
-            if distsz < safeRadius then  
-                return true, mabs(distsz - safeRadius)
-            end 
-            distp = vec3(WorldPos):dist(vec3(planet.center))
-            if distp < szradius then szsafe = true else szsafe = false end
-            if mabs(distp - szradius) < mabs(distsz - safeRadius) then 
-                return szsafe, mabs(distp - szradius)
-            else
-                return szsafe, mabs(distsz - safeRadius)
-            end
-        end
 
         local function ConvertResolutionX (v)
             if resolutionWidth == 1920 then 
@@ -2217,7 +2198,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
 
 
     function Hud.HUDPrologue(newContent)
-        notPvPZone, pvpDist = safeZone(worldPos)
         if not notPvPZone then -- misnamed variable, fix later
             PrimaryR = PvPR
             PrimaryG = PvPG

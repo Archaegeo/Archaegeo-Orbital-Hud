@@ -50,6 +50,25 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         local parseRadar = false
         local lastMouseTime = 0
 
+        -- safezone() variables
+            local safeWorldPos = vec3({13771471,7435803,-128971})
+            local safeRadius = 18000000
+            local szradius = 500000
+            local distsz, distp = math.huge
+            local szsafe 
+        local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
+            distsz = vec3(WorldPos):dist(safeWorldPos)
+            if distsz < safeRadius then  
+                return true, mabs(distsz - safeRadius)
+            end 
+            distp = vec3(WorldPos):dist(vec3(planet.center))
+            if distp < szradius then szsafe = true else szsafe = false end
+            if mabs(distp - szradius) < mabs(distsz - safeRadius) then 
+                return szsafe, mabs(distp - szradius)
+            else
+                return szsafe, mabs(distsz - safeRadius)
+            end
+        end
         local function GetAutopilotBrakeDistanceAndTime(speed)
             -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
             -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
@@ -869,6 +888,8 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
     end
 
     function ap.TenthTick()
+
+        notPvPZone, pvpDist = safeZone(worldPos)
             local function RefreshLastMaxBrake(gravity, force)
                 if gravity == nil then
                     gravity = c.g()
