@@ -19,6 +19,7 @@ script = {}  -- wrappable container for all the code. Different than normal DU L
 
 VERSION_NUMBER = 1.735
 
+
 -- DU Events written for wrap and minimization. Written by Dimencia and Archaegeo. Optimization and Automation of scripting by ChronosWS  Linked sources where appropriate, most have been modified.
     function script.onStart()
         PROGRAM.onStart()
