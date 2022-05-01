@@ -5,7 +5,7 @@
 
 ### NOTE: Version 1.6XX+ is a modular version that uses require files and will not work on GeForce Now. Use version ArchHUDGFN.conf for GEForce Now.
 
-###### For assistance, see my personal [Discord](https://discord.gg/CNRE45xRu7) or the OSIN discord channel [Discord](https://discord.gg/9RD3xQfYXG)
+###### For assistance, see the OSIN discord channel [Discord](https://discord.gg/9RD3xQfYXG) or my personal [Discord](https://discord.gg/CNRE45xRu7)
 ###### Donations are accepted but not expected. You may donate to Archaegeo in game via Wallet or to https://paypal.me/archaegeo for Paypal.
 <!--TOC-->
 # Table of Contents
@@ -51,10 +51,10 @@ https://docs.google.com/document/d/1HcoCwX9QqZt6SBJYQAZOf7sYLWXVJeUnE68RndYnPDY/
 ## How to Install
 1. Scroll down the the **Assets** and click on **`ArchHUD.zip`**, this should trigger a download for this file.
 1. NOTE: When extracting ZIP file, be sure to check option to keep directory structure if available.
-1. Unzip the file to %ProgramData%\Dual Universe\Game\data\lua\autoconf\custom (or equivalent directory if you did not do default install), this will create an `ArchHUD.conf` file and a `archhud` sub directory in `..\custom`
+1. Unzip the file to `%ProgramData%\Dual Universe\Game\data\lua\autoconf\custom` (or equivalent directory if you did not do default install), this will create an `ArchHUD.conf` file and a `archhud` sub directory in `..\custom`
 1. If using a databank, manually link the databank to the control unit(s) that will be running the HUD PRIOR to the next step.
-1. In-game, right click your seat and go to Advanced -> Update custom autoconf list - If you get a YAML error, you did not follow the above directions correctly.
 1. IMPORTANT: Right click the seat and set the user control scheme to Keyboard (Advanced -> Change Control Scheme -> Keyboard). This is necessary for the HUD to work, but you can change the actual control scheme in the next step - fear not virtual joystick aces!
+1. In-game, right click your seat and go to Advanced -> Update custom autoconf list - If you get a YAML error, you did not follow the above directions correctly.
 1. Again, right click your seat and select Advanced -> Run Custom Autoconfigure -> ArchHudvX.XXX
 1. To most easily set up user preferences the first time, edit the `globals.lua` file inside the `archhud` sub folder. You may also change control scheme using a Button while seated and change all other user parameters. Please see https://github.com/Archaegeo/Archaegeo-Orbital-Hud/blob/master/UserSettings.md for how to change settings.
 1. If you have a Databank installed on your vehicle your parameters will save when you stand up. Saved parameters will be restored any time you upgrade the HUD to a new version. 
@@ -62,7 +62,7 @@ https://docs.google.com/document/d/1HcoCwX9QqZt6SBJYQAZOf7sYLWXVJeUnE68RndYnPDY/
 
 FOR SOUND SUPPORT:
 1. Download the archHudSoundPack.zip file found at https://github.com/Archaegeo/Archaegeo-Orbital-Hud/blob/master/archHudSoundPack.zip. 
-1. Extract the `archHudSoundPack.zip` to Documents\NQ\DualUniverse\audio folder (you might need to create the audio sub folder).  This should result in a subfolder named `archHUD`
+1. Extract the `archHudSoundPack.zip` to `Documents\NQ\DualUniverse\audio` folder (you might need to create the audio sub folder).  This should result in a subfolder named `archHUD`
 1. NOTE: Any sound file in the audiopack may be replaced with a different sound file using same filename if you choose to personalize.
 1. NOTE: If you dislike any particular sound and do not want to replace it but still want the other sounds, simply remove its .mp3 file from the soundpack folder.
 1. Voices can be turned off by setting `voices` user variable to false.  Alerts can be turned off by setting `alerts` to false.

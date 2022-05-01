@@ -564,11 +564,11 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             atlasSetup()
             if radar_1 then RADAR = RadarClass(c, s, u, library, radar_1, radar_2, 
             mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) end
-            HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
+            if HudClass then HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
             mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
             navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
-            getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
-            HUD.ButtonSetup()
+            getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp) end
+            if HUD then HUD.ButtonSetup() end
             CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro, screenHud_1,
                 isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
             if shield_1 then SHIELD = ShieldClass(shield_1, stringmatch, mfloor) end
@@ -670,7 +670,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             button.activate()
         end
         if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
-        s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank"))
+        if HUD then s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank")) end
         if userBase then PROGRAM.ExtraOnStop() end
         play("stop","SU")
     end
@@ -710,17 +710,17 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
     function program.onTick(timerId)
         if timerId == "tenthSecond" then -- Timer executed ever tenth of a second
             AP.TenthTick()
-            HUD.TenthTick()
+            if HUD then HUD.TenthTick() end
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
-            HUD.OneSecondTick()
+            if HUD then HUD.OneSecondTick() end
         elseif timerId == "fiveSecond" then -- Timer executed every 5 seconds (SatNav only stuff for now)
             AP.SatNavTick()
         elseif timerId == "msgTick" then -- Timer executed whenever msgText is applied somwehere
-            HUD.MsgTick()
+            if HUD then HUD.MsgTick() end
         elseif timerId == "animateTick" then -- Timer for animation
-            HUD.AnimateTick()
+            if HUD then HUD.AnimateTick() end
         elseif timerId == "hudTick" then -- Timer for all hud updates not called elsewhere
-            HUD.hudtick()
+            if HUD then HUD.hudtick() end
         elseif timerId == "apTick" then -- Timer for all autopilot functions
             AP.APTick()
         elseif timerId == "shieldTick" then
