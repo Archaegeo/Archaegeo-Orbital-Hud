@@ -971,7 +971,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         end
         notPvPZone, pvpDist = safeZone(worldPos)
         MaxSpeed = c.getMaxSpeed()  
-        if AutopilotTargetName ~= "None" then
+        if AutopilotTargetName ~= "None" and (autopilotTargetPlanet or CustomTarget) then
             travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
         end
         RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
