@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.736
+- Fix shield control/info in GFN version.  NOTE: Shield now automatically slots if present in both versions as `shield` vice `shield_1`
 - Fix missing damage report info
 - Fix lua chat error `autoPilotTargetPlanet` in 1.735
 

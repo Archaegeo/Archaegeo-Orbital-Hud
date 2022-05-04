@@ -1,4 +1,4 @@
-function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
+function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield, warpdrive, weapon,
     mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
     navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
     getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
@@ -1060,7 +1060,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 end
             else
                 addTable(help, helpSpace)
-                if shield_1 then
+                if shield then
                     table.insert(help,"Alt-Shift-6: Vent shields")
                     if not AutoShieldToggle then table.insert(help,"Alt-Shift-7: Toggle shield off/on") end
                 end
@@ -2579,9 +2579,9 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     end
 
     function Hud.DrawShield()
-        local shieldState = (shield_1.getState() == 1) and "Shield Active" or "Shield Disabled"
+        local shieldState = (shield.getState() == 1) and "Shield Active" or "Shield Disabled"
         local pvpTime = c.getPvPTimer()
-        local resistances = shield_1.getResistances()
+        local resistances = shield.getResistances()
         local resistString = "A: "..(10+resistances[1]*100).."% / E: "..(10+resistances[2]*100).."% / K:"..(10+resistances[3]*100).."% / T: "..(10+resistances[4]*100).."%"
         local x, y = shieldX -60, shieldY+30
         local colorMod = mfloor(shieldPercent * 2.55)
@@ -2877,7 +2877,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             end 
 
         HUD.DrawTanks()
-        if shield_1 then HUD.DrawShield() end
+        if shield then HUD.DrawShield() end
         if AutopilotTargetName ~= "None" then
             if panelInterplanetary == nil then
                 SetupInterplanetaryPanel()

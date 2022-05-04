@@ -1,4 +1,4 @@
-function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro, screenHud_1,
+function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
     isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
     local Control = {}
     local UnitHidden = true
@@ -248,7 +248,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                     coreCombatStressPanelId = s.createWidgetPanel("Core combat stress")
                     coreCombatStressgWidgetId = s.createWidget(coreCombatStressPanelId,"core_stress")
                     s.addDataToWidget(c.getDataId(),coreCombatStressgWidgetId)
-                    if shield_1 ~= nil then shield_1.show() end
+                    if shield ~= nil then shield.show() end
                 else
                     play("hud","DH")
                     u.hide()
@@ -273,7 +273,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
                         sysDestWid(rocketfuelPanelID)
                         rocketfuelPanelID = nil
                     end
-                    if shield_1 ~= nil then shield_1.hide() end
+                    if shield ~= nil then shield.hide() end
                 end
             end
             toggleView = false
@@ -310,7 +310,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
         elseif action == "option6" then
             toggleView = false 
             if AltIsOn and holdingShift then 
-                if shield_1 then 
+                if shield then 
                     SHIELD.ventShield()
                 else
                     msgText = "No shield found"
@@ -321,8 +321,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
         elseif action == "option7" then
             toggleView = false
             if AltIsOn and holdingShift then 
-                if shield_1 then
-                    shield_1.toggle() 
+                if shield then
+                    shield.toggle() 
                     return 
                 else
                     msgText = "No shield found"
@@ -656,7 +656,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, 
             else
                 msgText = "Select a saved target to rename first"
             end
-        elseif shield_1 and command =="/resist" then
+        elseif shield and command =="/resist" then
             SHIELD.setResist(arguement)
         elseif command == "/addlocation" or string.find(text, "::pos") ~= nil then
             local temp = false

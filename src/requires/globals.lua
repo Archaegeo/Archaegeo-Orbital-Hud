@@ -290,7 +290,7 @@
         mouseDistance = 0 -- 2
         sEFC = false -- 2
         MaxSpeed = c.getMaxSpeed() -- 2
-        if shield_1 then shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints()) end
+        if shield then shieldPercent = mfloor(0.5 + shield.getShieldHitpoints() * 100 / shield.getMaxShieldHitpoints()) end
     end
 
 pcall(require,"autoconf/custom/archhud/custom/userglobals")
