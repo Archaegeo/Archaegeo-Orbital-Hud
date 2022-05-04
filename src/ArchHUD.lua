@@ -300,9 +300,9 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         mouseDistance = 0 -- 2
         sEFC = false -- 2
         MaxSpeed = c.getMaxSpeed() -- 2
-        if shield_1 then shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints()) end
+        if shield then shieldPercent = mfloor(0.5 + shield.getShieldHitpoints() * 100 / shield.getMaxShieldHitpoints()) end
     end     
-    --[[ timestamped print function for debugging
+    ---[[ timestamped print function for debugging
         function p(msg)
             s.print(time..": "..msg)
         end
@@ -1572,38 +1572,38 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
         return Radar
     end
-    local function ShieldClass(shield_1, stringmatch, mfloor) -- Everything related to radar but draw data passed to HUD Class.
+    local function ShieldClass(shield, stringmatch, mfloor) -- Everything related to radar but draw data passed to HUD Class.
         local Shield = {}
-        local RCD = shield_1.getResistancesCooldown()
+        local RCD = shield.getResistancesCooldown()
     
         local function checkShield()
-            local shieldState = shield_1.getState()
+            local shieldState = shield.getState()
             if AutoShieldToggle then
                 if not notPvPZone and shieldState == 0 then
-                    shield_1.toggle()
+                    shield.toggle()
                 elseif notPvPZone and shieldState == 1 then
-                    shield_1.toggle()
+                    shield.toggle()
                 end
             end
         end
     
         local function updateResists()
-            local sRR = shield_1.getStressRatioRaw()
+            local sRR = shield.getStressRatioRaw()
             local tot = 0.5999
             if sRR[1] == 0.0 and sRR[2] == 0.0 and sRR[3] == 0.0 and sRR[4] == 0.0 then return end
-            local setResist = shield_1.setResistances((tot*sRR[1]),(tot*sRR[2]),(tot*sRR[3]),(tot*sRR[4]))
+            local setResist = shield.setResistances((tot*sRR[1]),(tot*sRR[2]),(tot*sRR[3]),(tot*sRR[4]))
             if setResist == 1 then msgText="Shield Resistances updated" else msgText = "Value Exceeded. Failed to update Shield Resistances" end
         end
     
         function Shield.shieldTick()
-            shieldPercent = mfloor(0.5 + shield_1.getShieldHitpoints() * 100 / shield_1.getMaxShieldHitpoints())
+            shieldPercent = mfloor(0.5 + shield.getShieldHitpoints() * 100 / shield.getMaxShieldHitpoints())
             checkShield()
-            RCD = shield_1.getResistancesCooldown()
+            RCD = shield.getResistancesCooldown()
             if RCD == 0 and shieldPercent < AutoShieldPercent then updateResists() end
         end
     
         function Shield.setResist(arguement)
-            if not shield_1 then
+            if not shield then
                 msgText = "No shield found"
                 return
             elseif arguement == nil or RCD>0 then
@@ -1614,13 +1614,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local posPattern = num .. ', ' .. num .. ', ' ..  num .. ', ' .. num    
             local antimatter, electromagnetic, kinetic, thermic = stringmatch(arguement, posPattern)
             if thermic == nil or (antimatter + electromagnetic+ kinetic + thermic) > 0.6 then msgText="Improperly formatted or total exceeds 0.6" return end
-            if shield_1.setResistances(antimatter,electromagnetic,kinetic,thermic)==1 then msgText="Shield Resistances set" else msgText="Resistance setting failed." end
+            if shield.setResistances(antimatter,electromagnetic,kinetic,thermic)==1 then msgText="Shield Resistances set" else msgText="Resistance setting failed." end
         end
     
         function Shield.ventShield()
-            local vcd = shield_1.getVentingCooldown()
+            local vcd = shield.getVentingCooldown()
             if vcd > 0 then msgText="Cannot vent again for "..vcd.." seconds" return end
-            if shield_1.getShieldHitpoints()<shield_1.getMaxShieldHitpoints() then shield_1.startVenting() msgText="Shields Venting Enabled - NO SHIELDS WHILE VENTING" else msgText="Shields already at max hitpoints" end
+            if shield.getShieldHitpoints()<shield.getMaxShieldHitpoints() then shield.startVenting() msgText="Shields Venting Enabled - NO SHIELDS WHILE VENTING" else msgText="Shields already at max hitpoints" end
         end
     
         if userShield then 
@@ -1629,7 +1629,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
         return Shield
     end
-    local function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
+    local function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield, warpdrive, weapon,
         mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
         navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
         getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
@@ -2691,7 +2691,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                 else
                     addTable(help, helpSpace)
-                    if shield_1 then
+                    if shield then
                         table.insert(help,"Alt-Shift-6: Vent shields")
                         if not AutoShieldToggle then table.insert(help,"Alt-Shift-7: Toggle shield off/on") end
                     end
@@ -4210,9 +4210,9 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         end
     
         function Hud.DrawShield()
-            local shieldState = (shield_1.getState() == 1) and "Shield Active" or "Shield Disabled"
+            local shieldState = (shield.getState() == 1) and "Shield Active" or "Shield Disabled"
             local pvpTime = c.getPvPTimer()
-            local resistances = shield_1.getResistances()
+            local resistances = shield.getResistances()
             local resistString = "A: "..(10+resistances[1]*100).."% / E: "..(10+resistances[2]*100).."% / K:"..(10+resistances[3]*100).."% / T: "..(10+resistances[4]*100).."%"
             local x, y = shieldX -60, shieldY+30
             local colorMod = mfloor(shieldPercent * 2.55)
@@ -4508,7 +4508,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end 
     
             HUD.DrawTanks()
-            if shield_1 then HUD.DrawShield() end
+            if shield then HUD.DrawShield() end
             if AutopilotTargetName ~= "None" then
                 if panelInterplanetary == nil then
                     SetupInterplanetaryPanel()
@@ -7759,7 +7759,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
         return ap
     end
-    local function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro, screenHud_1,
+    local function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
         isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
         local Control = {}
         local UnitHidden = true
@@ -8009,7 +8009,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         coreCombatStressPanelId = s.createWidgetPanel("Core combat stress")
                         coreCombatStressgWidgetId = s.createWidget(coreCombatStressPanelId,"core_stress")
                         s.addDataToWidget(c.getDataId(),coreCombatStressgWidgetId)
-                        if shield_1 ~= nil then shield_1.show() end
+                        if shield ~= nil then shield.show() end
                     else
                         play("hud","DH")
                         u.hide()
@@ -8034,7 +8034,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             sysDestWid(rocketfuelPanelID)
                             rocketfuelPanelID = nil
                         end
-                        if shield_1 ~= nil then shield_1.hide() end
+                        if shield ~= nil then shield.hide() end
                     end
                 end
                 toggleView = false
@@ -8071,7 +8071,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             elseif action == "option6" then
                 toggleView = false 
                 if AltIsOn and holdingShift then 
-                    if shield_1 then 
+                    if shield then 
                         SHIELD.ventShield()
                     else
                         msgText = "No shield found"
@@ -8082,8 +8082,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             elseif action == "option7" then
                 toggleView = false
                 if AltIsOn and holdingShift then 
-                    if shield_1 then
-                        shield_1.toggle() 
+                    if shield then
+                        shield.toggle() 
                         return 
                     else
                         msgText = "No shield found"
@@ -8417,7 +8417,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 else
                     msgText = "Select a saved target to rename first"
                 end
-            elseif shield_1 and command =="/resist" then
+            elseif shield and command =="/resist" then
                 SHIELD.setResist(arguement)
             elseif command == "/addlocation" or string.find(text, "::pos") ~= nil then
                 local temp = false
@@ -8557,7 +8557,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
         return Control
     end
-    local function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield_1, gyro, warpdrive, weapon, screenHud_1)
+    local function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
     
         -- Local variables and functions
             local program = {}
@@ -9123,14 +9123,14 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 atlasSetup()
                 if radar_1 then RADAR = RadarClass(c, s, u, library, radar_1, radar_2, 
                 mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) end
-                if HudClass then HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
+                if HudClass then HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield, warpdrive, weapon,
                 mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
                 navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
                 getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp) end
                 if HUD then HUD.ButtonSetup() end
-                CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro, screenHud_1,
+                CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
                     isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
-                if shield_1 then SHIELD = ShieldClass(shield_1, stringmatch, mfloor) end
+                if shield then SHIELD = ShieldClass(shield, stringmatch, mfloor) end
                 coroutine.yield()
                 u.hide()
                 s.showScreen(1)
@@ -9147,7 +9147,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 u.setTimer("oneSecond", 1)
                 u.setTimer("tenthSecond", 1/10)
                 u.setTimer("fiveSecond", 5) 
-                if shield_1 then u.setTimer("shieldTick", 0.0166667) end
+                if shield then u.setTimer("shieldTick", 0.0166667) end
                 if userBase then PROGRAM.ExtraOnStart() end
                 play("start","SU")
             end)
@@ -9343,5 +9343,5 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     end
 -- Execute Script
     globalDeclare(s, c, u, s.getArkTime, math.floor, u.getAtmosphereDensity)
-    PROGRAM = programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield_1, gyro, warpdrive, weapon, screenHud_1)
+    PROGRAM = programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
     script.onStart()
