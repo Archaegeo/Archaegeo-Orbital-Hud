@@ -1,4 +1,4 @@
-function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield_1, gyro, warpdrive, weapon, screenHud_1)
+function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
     
     -- Local variables and functions
         local program = {}
@@ -564,14 +564,14 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             atlasSetup()
             if radar_1 then RADAR = RadarClass(c, s, u, library, radar_1, radar_2, 
             mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) end
-            if HudClass then HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield_1, warpdrive, weapon,
+            if HudClass then HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield, warpdrive, weapon,
             mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
             navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
             getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp) end
             if HUD then HUD.ButtonSetup() end
-            CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield_1, dbHud_2, gyro, screenHud_1,
+            CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
                 isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
-            if shield_1 then SHIELD = ShieldClass(shield_1, stringmatch, mfloor) end
+            if shield then SHIELD = ShieldClass(shield, stringmatch, mfloor) end
             coroutine.yield()
             u.hide()
             s.showScreen(1)
@@ -588,7 +588,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             u.setTimer("oneSecond", 1)
             u.setTimer("tenthSecond", 1/10)
             u.setTimer("fiveSecond", 5) 
-            if shield_1 then u.setTimer("shieldTick", 0.0166667) end
+            if shield then u.setTimer("shieldTick", 0.0166667) end
             if userBase then PROGRAM.ExtraOnStart() end
             play("start","SU")
         end)

@@ -62,7 +62,7 @@ SLOTS=(
     atmofueltank:class=AtmoFuelContainer,select=manual
     spacefueltank:class=SpaceFuelContainer,select=manual
     rocketfueltank:class=RocketFuelContainer,select=manual
-    shield:class=ShieldGeneratorUnit,select=manual
+    shield:class=ShieldGeneratorUnit
     screenHud:class=ScreenUnit,select=manual
 )
 
