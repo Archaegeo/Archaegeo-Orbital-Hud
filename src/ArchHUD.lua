@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.735
+VERSION_NUMBER = 0.736
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -1649,7 +1649,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in. Also used in apclass
         local maxBrakeDistance = 0
         local maxBrakeTime = 0
-        local damageMessage = ""
         local WeaponPanelID = nil
         local PrimaryR = SafeR
         local PrimaryG = SafeG
@@ -3930,10 +3929,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
             newContent[#newContent + 1] = lastOdometerOutput
     
-            -- DAMAGE
-    
-            newContent[#newContent + 1] = damageMessage
-    
             -- RADAR
     
             newContent[#newContent + 1] = radarMessage
@@ -4624,7 +4619,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local function CheckDamage(newContent)
     
                 local percentDam = 0
-                damageMessage = ""
                 local maxShipHP = eleTotalMaxHp
                 local curShipHP = 0
                 local damagedElements = 0
@@ -4641,7 +4635,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     mhp = eleMaxHp(elementsID[k])
                     hp = eleHp(elementsID[k])
                     curShipHP = curShipHP + hp
-                    if (hp < mhp) then
+                    if (hp+1 < mhp) then
                         if (hp == 0) then
                             disabledElements = disabledElements + 1
                         else
@@ -4677,18 +4671,16 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         markers = {}
                     end
                 end
-                percentDam = math.ceil((curShipHP / maxShipHP)*100)
-                if percentDam < 100 then
+                percentDam = round((curShipHP / maxShipHP)*100,2)
+                if disabledElements > 0 or damagedElements > 0 then
                     newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
                     colorMod = mfloor(percentDam * 2.55)
                     color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
-                    if percentDam < 100 then
-                        newContent[#newContent + 1] = svgText("50%", 1035, "Elemental Integrity: "..percentDam.."%", "txtbig txtmid","fill:"..color )
-                        if (disabledElements > 0) then
-                            newContent[#newContent + 1] = svgText("50%",1055, "Disabled Modules: "..disabledElements.." Damaged Modules: "..damagedElements, "txtbig txtmid","fill:"..color)
-                        elseif damagedElements > 0 then
-                            newContent[#newContent + 1] = svgText("50%", 1055, "Damaged Modules: "..damagedElements, "txtbig txtmid", "fill:" .. color)
-                        end
+                    newContent[#newContent + 1] = svgText("50%", 1035, "Elemental Integrity: "..percentDam.."%", "txtbig txtmid","fill:"..color )
+                    if (disabledElements > 0) then
+                        newContent[#newContent + 1] = svgText("50%",1055, "Disabled Modules: "..disabledElements.." Damaged Modules: "..damagedElements, "txtbig txtmid","fill:"..color)
+                    elseif damagedElements > 0 then
+                        newContent[#newContent + 1] = svgText("50%", 1055, "Damaged Modules: "..damagedElements, "txtbig txtmid", "fill:" .. color)
                     end
                 end
             end
@@ -5690,34 +5682,36 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     return accelTime + brakeTime + cruiseTime
                 end
             end
+            local function RefreshLastMaxBrake(gravity, force)
+                if gravity == nil then
+                    gravity = c.g()
+                end
+                gravity = round(gravity, 5) -- round to avoid insignificant updates
+                if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
+                    local speed = coreVelocity:len()
+                    local maxBrake = jdecode(u.getData()).maxBrake 
+                    if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
+                        maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
+                        maxBrake = maxBrake / atmosDensity
+                        if atmosDensity > 0.10 then 
+                            if LastMaxBrakeInAtmo then
+                                LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
+                            else
+                                LastMaxBrakeInAtmo = maxBrake 
+                            end
+                        end -- Now that we're calculating actual brake values, we want this updated
+                    end
+                    if maxBrake ~= nil and maxBrake > 0 then
+                        LastMaxBrake = maxBrake
+                    end
+                    lastMaxBrakeAtG = gravity
+                end
+            end
             notPvPZone, pvpDist = safeZone(worldPos)
             MaxSpeed = c.getMaxSpeed()  
-            travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
-                local function RefreshLastMaxBrake(gravity, force)
-                    if gravity == nil then
-                        gravity = c.g()
-                    end
-                    gravity = round(gravity, 5) -- round to avoid insignificant updates
-                    if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
-                        local speed = coreVelocity:len()
-                        local maxBrake = jdecode(u.getData()).maxBrake 
-                        if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
-                            maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
-                            maxBrake = maxBrake / atmosDensity
-                            if atmosDensity > 0.10 then 
-                                if LastMaxBrakeInAtmo then
-                                    LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
-                                else
-                                    LastMaxBrakeInAtmo = maxBrake 
-                                end
-                            end -- Now that we're calculating actual brake values, we want this updated
-                        end
-                        if maxBrake ~= nil and maxBrake > 0 then
-                            LastMaxBrake = maxBrake
-                        end
-                        lastMaxBrakeAtG = gravity
-                    end
-                end
+            if AutopilotTargetName ~= "None" and (autopilotTargetPlanet or CustomTarget) then
+                travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
+            end
             RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
         end
     
