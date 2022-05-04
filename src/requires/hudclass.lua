@@ -3004,7 +3004,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 mhp = eleMaxHp(elementsID[k])
                 hp = eleHp(elementsID[k])
                 curShipHP = curShipHP + hp
-                if (hp < mhp) then
+                if (hp+1 < mhp) then
                     if (hp == 0) then
                         disabledElements = disabledElements + 1
                     else
@@ -3040,18 +3040,16 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                     markers = {}
                 end
             end
-            percentDam = round(((curShipHP+1) / maxShipHP)*100,1)
-            if percentDam < 100 then
+            percentDam = round((curShipHP / maxShipHP)*100,2)
+            if disabledElements > 0 or damagedElements > 0 then
                 newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
                 colorMod = mfloor(percentDam * 2.55)
                 color = stringf("rgb(%d,%d,%d)", 255 - colorMod, colorMod, 0)
-                if percentDam < 100 then
-                    newContent[#newContent + 1] = svgText("50%", 1035, "Elemental Integrity: "..percentDam.."%", "txtbig txtmid","fill:"..color )
-                    if (disabledElements > 0) then
-                        newContent[#newContent + 1] = svgText("50%",1055, "Disabled Modules: "..disabledElements.." Damaged Modules: "..damagedElements, "txtbig txtmid","fill:"..color)
-                    elseif damagedElements > 0 then
-                        newContent[#newContent + 1] = svgText("50%", 1055, "Damaged Modules: "..damagedElements, "txtbig txtmid", "fill:" .. color)
-                    end
+                newContent[#newContent + 1] = svgText("50%", 1035, "Elemental Integrity: "..percentDam.."%", "txtbig txtmid","fill:"..color )
+                if (disabledElements > 0) then
+                    newContent[#newContent + 1] = svgText("50%",1055, "Disabled Modules: "..disabledElements.." Damaged Modules: "..damagedElements, "txtbig txtmid","fill:"..color)
+                elseif damagedElements > 0 then
+                    newContent[#newContent + 1] = svgText("50%", 1055, "Damaged Modules: "..damagedElements, "txtbig txtmid", "fill:" .. color)
                 end
             end
         end
