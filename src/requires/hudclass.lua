@@ -18,7 +18,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
     local minAutopilotSpeed = 55 -- Minimum speed for autopilot to maneuver in m/s.  Keep above 25m/s to prevent nosedives when boosters kick in. Also used in apclass
     local maxBrakeDistance = 0
     local maxBrakeTime = 0
-    local damageMessage = ""
     local WeaponPanelID = nil
     local PrimaryR = SafeR
     local PrimaryG = SafeG
@@ -2299,10 +2298,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
 
         newContent[#newContent + 1] = lastOdometerOutput
 
-        -- DAMAGE
-
-        newContent[#newContent + 1] = damageMessage
-
         -- RADAR
 
         newContent[#newContent + 1] = radarMessage
@@ -2993,7 +2988,6 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
         local function CheckDamage(newContent)
 
             local percentDam = 0
-            damageMessage = ""
             local maxShipHP = eleTotalMaxHp
             local curShipHP = 0
             local damagedElements = 0
@@ -3046,7 +3040,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                     markers = {}
                 end
             end
-            percentDam = math.ceil((curShipHP / maxShipHP)*100)
+            percentDam = round(((curShipHP+1) / maxShipHP)*100,1)
             if percentDam < 100 then
                 newContent[#newContent + 1] = svgText(0,0,"", "pbright txt")
                 colorMod = mfloor(percentDam * 2.55)

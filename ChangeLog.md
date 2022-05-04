@@ -1,7 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.736
-- Fix error for no planet showing in 1.735
+- Fix missing damage report info
+- Fix lua chat error `autoPilotTargetPlanet` in 1.735
 
 Version 1.735 - Fix for Optional Hud
 - Fixed missing items that caused errors if no HUD
