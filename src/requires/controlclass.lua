@@ -37,8 +37,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                         BrakeIsOn = "Landing"
                     end
                 end
-            end
-            if hasGear and not BrakeLanding and not (vBooster or hover) then
+            elseif hasGear and not BrakeLanding  then
                 play("grOut","LG",1)
                 Nav.control.extendLandingGears() -- Actually extend
             end
@@ -48,7 +47,13 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 Nav.control.retractLandingGears()
             end
             navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-            if stablized then navCom:setTargetGroundAltitude(TargetHoverHeight) end
+            if stablized then 
+                if LandingGearGroundHeight < navCom.targetGroundAltitude then 
+                    navCom:setTargetGroundAltitude(navCom.targetGroundAltitude) 
+                else
+                    navCom:setTargetGroundAltitude(TargetHoverHeight)
+                end
+            end
         end
     end
     function Control.startControl(action)
@@ -99,7 +104,6 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                         end
                     end
                 else
-                    if not down and abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 and GearExtended then CONTROL.landingGear() end
                     navCom:updateTargetGroundAltitudeFromActionStart(mult*1.0)
                 end
             end
@@ -215,6 +219,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             if AltIsOn and holdingShift then 
                 for i=1, #passengers do
                     c.forceDeboard(passengers[i])
+                    c.forceInterruptVRSession(passengers[i])
                 end
                 msgText = "Deboarded All Passengers"
                 return
@@ -304,7 +309,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             end
             ReversalIsOn = nil
             AP.ToggleAutopilot()
-        elseif action == "option5" then
+        elseif action == "option5" then 
             toggleView = false 
             AP.ToggleLockPitch()
         elseif action == "option6" then
