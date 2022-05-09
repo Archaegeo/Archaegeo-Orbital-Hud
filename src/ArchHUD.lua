@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.736
+VERSION_NUMBER = 0.737
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -7798,8 +7798,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             BrakeIsOn = "Landing"
                         end
                     end
-                end
-                if hasGear and not BrakeLanding and not (vBooster or hover) then
+                elseif hasGear and not BrakeLanding  then
                     play("grOut","LG",1)
                     Nav.control.extendLandingGears() -- Actually extend
                 end
@@ -7809,7 +7808,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     Nav.control.retractLandingGears()
                 end
                 navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                if stablized then navCom:setTargetGroundAltitude(TargetHoverHeight) end
+                if stablized then 
+                    if LandingGearGroundHeight < navCom.targetGroundAltitude then 
+                        navCom:setTargetGroundAltitude(navCom.targetGroundAltitude) 
+                    else
+                        navCom:setTargetGroundAltitude(TargetHoverHeight)
+                    end
+                end
             end
         end
         function Control.startControl(action)
@@ -7860,7 +7865,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             end
                         end
                     else
-                        if not down and abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 and GearExtended then CONTROL.landingGear() end
                         navCom:updateTargetGroundAltitudeFromActionStart(mult*1.0)
                     end
                 end
@@ -7976,6 +7980,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 if AltIsOn and holdingShift then 
                     for i=1, #passengers do
                         c.forceDeboard(passengers[i])
+                        c.forceInterruptVRSession(passengers[i])
                     end
                     msgText = "Deboarded All Passengers"
                     return
@@ -8065,7 +8070,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
                 ReversalIsOn = nil
                 AP.ToggleAutopilot()
-            elseif action == "option5" then
+            elseif action == "option5" then 
                 toggleView = false 
                 AP.ToggleLockPitch()
             elseif action == "option6" then
