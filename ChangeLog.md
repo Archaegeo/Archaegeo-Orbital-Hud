@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.737 - Edit Lua Parameter support (MODULAR) and Keybindings Doc
+- Restored `Edit Lua Parameters` capability (MODULAR ONLY - adds too many bytes to the GFN/Standalone version)
+ (userglobals.lua will still override if used as described below in 1.733)
+- Using ALT-SPACEBAR while on ground will not make you take off but will change target hover height when you do (instead of default)
+- Using alt-shift-2 will now also stop session for boarded vr players as well as booting boarded players (except pilot)
+- New Keybindings doc: https://docs.google.com/spreadsheets/d/1r0yxjozlpa7SXZM_wLtOmIoG-8DXc6-buFe2Pz_OpM0/edit?usp=sharing 
+
 Version 1.736
 - Fix shield control/info in GFN version.  NOTE: Shield now automatically slots if present in both versions as `shield` vice `shield_1`
 - Fix missing damage report info if damage checking is on.
