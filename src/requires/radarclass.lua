@@ -8,7 +8,6 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
         local knownContacts = {}
         local radarContacts = 0
         local target
-        local data
         local numKnown
         local static
         local radars = {}
@@ -17,6 +16,8 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
         local perisPanelID
         local peris = 0
         local contacts = {}
+        local radarData
+        local lastPlay = s.getArkTime()
 
     local function UpdateRadarRoutine()
         -- UpdateRadarRoutine Locals
@@ -80,7 +81,6 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
         if radar_1 or radar_2 then RADAR.assignRadar() end
         if (radars[1]) then
             radarContacts = #radars[1].getConstructIds()
-            local radarData = radars[1].getData()
             local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
          
             if radarContacts > 0 then
@@ -110,8 +110,12 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                             if not construct.skipCalc then 
                                 updateVariables(construct, distance, wp)
                                 if AbandonedRadar and not construct.abandoned and radars[1].isConstructAbandoned(id) == 1 and construct.center then
-                                    play("abRdr", "RD")
-                                    s.print("Abandoned Construct: "..name.." ("..cType..") rough ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
+                                    local time = s.getArkTime()
+                                    if lastPlay+5 < time then 
+                                        lastPlay = time
+                                        play("abRdr", "RD")
+                                    end
+                                    s.print("Abandoned Construct: "..name.." ("..size.." "..cType..") at estimated ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
                                     msgText = "Abandoned Radar Contact ("..cType..") detected"
                                     construct.abandoned = true
                                 end
@@ -149,8 +153,6 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                 end
                 knownContacts = {}
                 target = radarData:find('identifiedConstructs":%[%]')
-            else
-                data = radarData:find('worksInEnvironment":false')
             end
         end
     end
@@ -167,17 +169,18 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
     end
 
     function Radar.assignRadar()
-        if radar_1 and radars[1]==radar_1 and radar_1.isOperational() ~= 1 then
-            if radar_2 and radar_2.isOperational() == 1 then 
-                radars[1] = radar_2
-            end
-            if radars[1] == radar_2 then pickType() end
-        elseif radar_2 and radars[1]==radar_2 and radar_2.isOperational() ~= 1 then
-            if radar_1 and radar_1.isOperational() == 1 then 
+        if radarData:find('worksInEnvironment":false') and not radarData:find('errorMessage":"Obstructed') then
+            if radars[1] == radar_2 then 
+                p("HERE1.a")
                 radars[1] = radar_1
+            elseif radar_2 and radars[1] == radar_1 then 
+                p("HERE2.a")
+                radars[1] = radar_2 
             end
-            if radars[1] == radar_1 then pickType() end
+            pickType()
         end
+        radarData = radars[1].getData()
+        
     end
 
     function Radar.UpdateRadar()
@@ -222,8 +225,12 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                 RADAR.ToggleRadarPanel()
             end
         else
-            if data then
+            if radarData:find('errorMessage":"Obstructed') then
+                radarMessage = svgText(radarX, radarY, rType.." Radar: Obstructed", "pbright txtbig txtmid")
+            elseif radarData:find('worksInEnvironment":false') then
                 radarMessage = svgText(radarX, radarY, rType.." Radar: Jammed", "pbright txtbig txtmid")
+            elseif radars[1].isOperational()==0 then
+                radarMessage = svgText(radarX, radarY, rType.." Radar: Malfunction", "pbright txtbig txtmid")
             else
                 radarMessage = svgText(radarX, radarY, "Radar: No "..rType.." Contacts", "pbright txtbig txtmid")
             end
@@ -280,13 +287,13 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
     end
 
     function Radar.onEnter(id)
-        if radar_1 and not inAtmo and not notPvPZone then 
+        if radars[1] and not inAtmo and not notPvPZone then 
             u.setTimer("contact",0.1) 
         end
     end
 
     function Radar.onLeave(id)
-        if radar_1 and CollisionSystem then 
+        if radars[1] and CollisionSystem then 
             if #contacts > 650 then 
                 id = tostring(id)
                 contacts[id] = nil 
@@ -295,10 +302,16 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
     end
 
     radars[1]=nil
-    if radar_1 then
+    if radar_2 and radar_2.isOperational()==1 then
+        p("HERE2")
+        radars[1] = radar_2
+    else
+        p("HERE1")
         radars[1] = radar_1
-        pickType()
     end
+    radarData = radars[1].getData()
+    p(json.encode(radarData))
+    pickType()
     UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
 
     if userRadar then 

@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.738 - Fix Radar
+- Added support for Obstructed radar.  If radar says Obstructed it is either obstructed or destroyed.
+- Fixed "Abandoned Radar Contact" sound announcement to only play once ever 5 seconds max.
+- Cleaned up active radar determination.
+- Added size of abandoned radar contacts to the position printout to help you determine if you should investigate.
+
 Version 1.737 - Edit Lua Parameter support (MODULAR) and Keybindings Doc
 - Restored `Edit Lua Parameters` capability (MODULAR ONLY - adds too many bytes to the GFN/Standalone version)
  (userglobals.lua will still override if used as described below in 1.733)

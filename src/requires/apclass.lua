@@ -1,4 +1,4 @@
-function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, radar_1,
+function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1,
     mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
     navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq,
     getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)  
@@ -1261,10 +1261,10 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
         end        
 
-        if radar_1 then
+        if RADAR then
             parseRadar = not parseRadar
             if parseRadar then 
-                RADAR.UpdateRadar() 
+                RADAR.UpdateRadar()
             end
             if CollisionSystem then checkCollision() end
         end

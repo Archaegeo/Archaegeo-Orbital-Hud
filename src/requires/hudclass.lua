@@ -1,4 +1,4 @@
-function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield, warpdrive, weapon,
+function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapon,
     mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
     navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
     getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
@@ -1884,7 +1884,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
                 -- Add a new location to SavedLocations
                 local position = worldPos
                 local name = planet.name .. ". " .. #SavedLocations
-                if radar_1 then name = RADAR.GetClosestName(name) end
+                if RADAR then name = RADAR.GetClosestName(name) end
                 return ATLAS.AddNewLocation(name, position, false, true)
             end
             
@@ -2760,7 +2760,7 @@ function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield
             HUD.DrawSettings(newContent) 
         end
 
-        if radar_1 then HUD.DrawRadarInfo() end
+        if RADAR then HUD.DrawRadarInfo() end
         HUD.HUDEpilogue(newContent)
         newContent[#newContent + 1] = stringf(
             [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
