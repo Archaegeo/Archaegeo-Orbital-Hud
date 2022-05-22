@@ -171,10 +171,8 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
     function Radar.assignRadar()
         if radarData:find('worksInEnvironment":false') and not radarData:find('errorMessage":"Obstructed') then
             if radars[1] == radar_2 then 
-                p("HERE1.a")
                 radars[1] = radar_1
             elseif radar_2 and radars[1] == radar_1 then 
-                p("HERE2.a")
                 radars[1] = radar_2 
             end
             pickType()
