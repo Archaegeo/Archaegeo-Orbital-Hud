@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.737
+VERSION_NUMBER = 0.738
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -1273,7 +1273,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local knownContacts = {}
             local radarContacts = 0
             local target
-            local data
             local numKnown
             local static
             local radars = {}
@@ -1282,6 +1281,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local perisPanelID
             local peris = 0
             local contacts = {}
+            local radarData
+            local lastPlay = s.getArkTime()
     
         local function UpdateRadarRoutine()
             -- UpdateRadarRoutine Locals
@@ -1345,7 +1346,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             if radar_1 or radar_2 then RADAR.assignRadar() end
             if (radars[1]) then
                 radarContacts = #radars[1].getConstructIds()
-                local radarData = radars[1].getData()
                 local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
              
                 if radarContacts > 0 then
@@ -1375,8 +1375,12 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                                 if not construct.skipCalc then 
                                     updateVariables(construct, distance, wp)
                                     if AbandonedRadar and not construct.abandoned and radars[1].isConstructAbandoned(id) == 1 and construct.center then
-                                        play("abRdr", "RD")
-                                        s.print("Abandoned Construct: "..name.." ("..cType..") rough ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
+                                        local time = s.getArkTime()
+                                        if lastPlay+5 < time then 
+                                            lastPlay = time
+                                            play("abRdr", "RD")
+                                        end
+                                        s.print("Abandoned Construct: "..name.." ("..size.." "..cType..") at estimated ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
                                         msgText = "Abandoned Radar Contact ("..cType..") detected"
                                         construct.abandoned = true
                                     end
@@ -1414,15 +1418,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                     knownContacts = {}
                     target = radarData:find('identifiedConstructs":%[%]')
-                else
-                    data = radarData:find('worksInEnvironment":false')
                 end
             end
         end
         local function pickType()
             if radars[1] then
                 rType = "Atmo"
-                if radars[1].getData():find('worksInAtmosphere":false') then 
+                if radarData:find('worksInAtmosphere":false') then 
                     rType = "Space" 
                 end
             end
@@ -1432,16 +1434,19 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         end
     
         function Radar.assignRadar()
-            if radar_1 and radars[1]==radar_1 and radar_1.isOperational() ~= 1 then
-                if radar_2 and radar_2.isOperational() == 1 then 
-                    radars[1] = radar_2
+            if radar_2 and radars[1].isOperational() ~= 1 then
+                local jammed = radarData:find('errorMessage":"Jammed') or radarData:find('errorMessage":"Out')
+                if jammed then
+                    if radars[1] == radar_2 then 
+                        radars[1] = radar_1
+                    else  
+                        radars[1] = radar_2 
+                    end
                 end
-                if radars[1] == radar_2 then pickType() end
-            elseif radar_2 and radars[1]==radar_2 and radar_2.isOperational() ~= 1 then
-                if radar_1 and radar_1.isOperational() == 1 then 
-                    radars[1] = radar_1
-                end
-                if radars[1] == radar_1 then pickType() end
+                radarData = radars[1].getData()
+                pickType()
+            else
+                radarData = radars[1].getData()
             end
         end
     
@@ -1487,8 +1492,14 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     RADAR.ToggleRadarPanel()
                 end
             else
-                if data then
-                    radarMessage = svgText(radarX, radarY, rType.." Radar: Jammed", "pbright txtbig txtmid")
+                if radars[1].isOperational()~=1 then
+                    if radarData:find('errorMessage":"Obstructed') then
+                        radarMessage = svgText(radarX, radarY, rType.." Radar: Obstructed", "pbright txtbig txtmid")
+                    elseif radarData:find('errorMessage":"Jammed') then
+                        radarMessage = svgText(radarX, radarY, rType.." Radar: Jammed", "pbright txtbig txtmid")
+                    else  
+                        radarMessage = svgText(radarX, radarY, rType.." Radar: Destroyed", "pbright txtbig txtmid")
+                    end
                 else
                     radarMessage = svgText(radarX, radarY, "Radar: No "..rType.." Contacts", "pbright txtbig txtmid")
                 end
@@ -1545,13 +1556,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         end
     
         function Radar.onEnter(id)
-            if radar_1 and not inAtmo and not notPvPZone then 
+            if radars[1] and not inAtmo and not notPvPZone then 
                 u.setTimer("contact",0.1) 
             end
         end
     
         function Radar.onLeave(id)
-            if radar_1 and CollisionSystem then 
+            if radars[1] and CollisionSystem then 
                 if #contacts > 650 then 
                     id = tostring(id)
                     contacts[id] = nil 
@@ -1560,10 +1571,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         end
     
         radars[1]=nil
-        if radar_1 then
+        if radar_2 and radar_2.isOperational()==1 then
+            radars[1] = radar_2
+        else
             radars[1] = radar_1
-            pickType()
         end
+        radarData = radars[1].getData()
+        pickType()
         UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
     
         if userRadar then 
@@ -1571,7 +1585,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         end   
     
         return Radar
-    end
+    end 
     local function ShieldClass(shield, stringmatch, mfloor) -- Everything related to radar but draw data passed to HUD Class.
         local Shield = {}
         local RCD = shield.getResistancesCooldown()
@@ -1629,7 +1643,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
         return Shield
     end
-    local function HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield, warpdrive, weapon,
+    local function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapon,
         mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
         navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
         getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
@@ -3515,7 +3529,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     -- Add a new location to SavedLocations
                     local position = worldPos
                     local name = planet.name .. ". " .. #SavedLocations
-                    if radar_1 then name = RADAR.GetClosestName(name) end
+                    if RADAR then name = RADAR.GetClosestName(name) end
                     return ATLAS.AddNewLocation(name, position, false, true)
                 end
                 
@@ -4391,7 +4405,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 HUD.DrawSettings(newContent) 
             end
     
-            if radar_1 then HUD.DrawRadarInfo() end
+            if RADAR then HUD.DrawRadarInfo() end
             HUD.HUDEpilogue(newContent)
             newContent[#newContent + 1] = stringf(
                 [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
@@ -4736,7 +4750,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
         return Hud
     end
-    local function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, radar_1,
+    local function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1,
         mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
         navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq,
         getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)  
@@ -5999,10 +6013,10 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
             end        
     
-            if radar_1 then
+            if RADAR then
                 parseRadar = not parseRadar
                 if parseRadar then 
-                    RADAR.UpdateRadar() 
+                    RADAR.UpdateRadar()
                 end
                 if CollisionSystem then checkCollision() end
             end
@@ -9116,7 +9130,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 ProcessElements()
                 coroutine.yield() -- Give it some time to breathe before we do the rest
     
-                AP = APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, radar_1, 
+                AP = APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
                     mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
                     navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq, 
                     getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)
@@ -9126,13 +9140,16 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 coroutine.yield() -- Just to make sure
     
                 atlasSetup()
-                if radar_1 then RADAR = RadarClass(c, s, u, library, radar_1, radar_2, 
-                mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) end
-                if HudClass then HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield, warpdrive, weapon,
-                mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
-                navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
-                getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp) end
-                if HUD then HUD.ButtonSetup() end
+                if radar_1 then 
+                    RADAR = RadarClass(c, s, u, library, radar_1, radar_2, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
+                end
+                if HudClass then 
+                    HUD = HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapon, mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, navCom, 
+                        sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables, getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp) 
+                end
+                if HUD then 
+                    HUD.ButtonSetup() 
+                end
                 CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
                     isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
                 if shield then SHIELD = ShieldClass(shield, stringmatch, mfloor) end
@@ -9264,11 +9281,11 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         end
     
         function program.radarEnter(id)
-            RADAR.onEnter(id)
+            if RADAR then RADAR.onEnter(id) end
         end
     
         function program.radarLeave(id)
-            RADAR.onLeave(id)
+            if RADAR then RADAR.onLeave(id) end
         end
     
         function program.onTick(timerId)
