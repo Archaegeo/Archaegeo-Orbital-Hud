@@ -552,7 +552,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             ProcessElements()
             coroutine.yield() -- Give it some time to breathe before we do the rest
 
-            AP = APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, radar_1, 
+            AP = APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
                 mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
                 navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq, 
                 getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)
@@ -562,13 +562,16 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             coroutine.yield() -- Just to make sure
 
             atlasSetup()
-            if radar_1 then RADAR = RadarClass(c, s, u, library, radar_1, radar_2, 
-            mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) end
-            if HudClass then HUD = HudClass(Nav, c, u, s, atlas, radar_1, radar_2, antigrav, hover, shield, warpdrive, weapon,
-            mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
-            navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
-            getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp) end
-            if HUD then HUD.ButtonSetup() end
+            if radar_1 then 
+                RADAR = RadarClass(c, s, u, library, radar_1, radar_2, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
+            end
+            if HudClass then 
+                HUD = HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapon, mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, navCom, 
+                    sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables, getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp) 
+            end
+            if HUD then 
+                HUD.ButtonSetup() 
+            end
             CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
                 isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
             if shield then SHIELD = ShieldClass(shield, stringmatch, mfloor) end
@@ -700,11 +703,11 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
     end
 
     function program.radarEnter(id)
-        RADAR.onEnter(id)
+        if RADAR then RADAR.onEnter(id) end
     end
 
     function program.radarLeave(id)
-        RADAR.onLeave(id)
+        if RADAR then RADAR.onLeave(id) end
     end
 
     function program.onTick(timerId)
