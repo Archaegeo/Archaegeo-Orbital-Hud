@@ -1,7 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.738 - Fix Radar
-- Added support for Obstructed radar.  If radar says Obstructed it is either obstructed or destroyed.
+Version 1.738 - Fix Radar for Obstructed changes
+- Added support for Obstructed radar, will say Obstructed if that is the issue, Jammed if thats the issue an no opposite radar, or Destroyed if thats the issue.
+(If you get Destroyed and its not, it indicates a Radar bug (isOperational() returning 0 when its not Jammed or Obstructed), let NQ know)
 - Fixed "Abandoned Radar Contact" sound announcement to only play once ever 5 seconds max.
 - Cleaned up active radar determination.
 - Added size of abandoned radar contacts to the position printout to help you determine if you should investigate.

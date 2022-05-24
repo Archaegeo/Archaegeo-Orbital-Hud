@@ -159,7 +159,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
     local function pickType()
         if radars[1] then
             rType = "Atmo"
-            if radars[1].getData():find('worksInAtmosphere":false') then 
+            if radarData:find('worksInAtmosphere":false') then 
                 rType = "Space" 
             end
         end
@@ -169,16 +169,20 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
     end
 
     function Radar.assignRadar()
-        if radarData:find('worksInEnvironment":false') and not radarData:find('errorMessage":"Obstructed') then
-            if radars[1] == radar_2 then 
-                radars[1] = radar_1
-            elseif radar_2 and radars[1] == radar_1 then 
-                radars[1] = radar_2 
+        if radar_2 and radars[1].isOperational() ~= 1 then
+            local jammed = radarData:find('errorMessage":"Jammed') or radarData:find('errorMessage":"Out')
+            if jammed then
+                if radars[1] == radar_2 then 
+                    radars[1] = radar_1
+                else  
+                    radars[1] = radar_2 
+                end
             end
+            radarData = radars[1].getData()
             pickType()
+        else
+            radarData = radars[1].getData()
         end
-        radarData = radars[1].getData()
-        
     end
 
     function Radar.UpdateRadar()
@@ -223,12 +227,14 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                 RADAR.ToggleRadarPanel()
             end
         else
-            if radarData:find('errorMessage":"Obstructed') then
-                radarMessage = svgText(radarX, radarY, rType.." Radar: Obstructed", "pbright txtbig txtmid")
-            elseif radarData:find('worksInEnvironment":false') then
-                radarMessage = svgText(radarX, radarY, rType.." Radar: Jammed", "pbright txtbig txtmid")
-            elseif radars[1].isOperational()==0 then
-                radarMessage = svgText(radarX, radarY, rType.." Radar: Malfunction", "pbright txtbig txtmid")
+            if radars[1].isOperational()~=1 then
+                if radarData:find('errorMessage":"Obstructed') then
+                    radarMessage = svgText(radarX, radarY, rType.." Radar: Obstructed", "pbright txtbig txtmid")
+                elseif radarData:find('errorMessage":"Jammed') then
+                    radarMessage = svgText(radarX, radarY, rType.." Radar: Jammed", "pbright txtbig txtmid")
+                else  
+                    radarMessage = svgText(radarX, radarY, rType.." Radar: Destroyed", "pbright txtbig txtmid")
+                end
             else
                 radarMessage = svgText(radarX, radarY, "Radar: No "..rType.." Contacts", "pbright txtbig txtmid")
             end
@@ -301,14 +307,11 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
 
     radars[1]=nil
     if radar_2 and radar_2.isOperational()==1 then
-        p("HERE2")
         radars[1] = radar_2
     else
-        p("HERE1")
         radars[1] = radar_1
     end
     radarData = radars[1].getData()
-    p(json.encode(radarData))
     pickType()
     UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
 
