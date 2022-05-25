@@ -2660,7 +2660,8 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             if AutoTakeoff or spaceLaunch then
                 local intersectBody, nearSide, farSide
                 if AutopilotTargetCoords ~= nil then
-                    intersectBody, nearSide, farSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (AutopilotTargetCoords-worldPos):normalize(), function(body) return (body.radius+body.noAtmosphericDensityAltitude) end)
+                    intersectBody, nearSide, farSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (AutopilotTargetCoords-worldPos):normalize(), 
+                        function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
                 end
                 if antigravOn and not spaceLaunch then
                     if coreAltitude >= (HoldAltitude-50) and velMag > minAutopilotSpeed then
