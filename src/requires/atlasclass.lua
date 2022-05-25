@@ -312,7 +312,7 @@
             for _, body in ipairs(candidates) do
                 local c_oV3 = body.center - origin
                 -- Changed to the new method.  IDK if this is how self works but I think so
-                local radius = self:sizeCalculator(body)
+                local radius = sizeCalculator(body) or self:sizeCalculator(body)
                 local dot = c_oV3:dot(dir)
                 local desc = dot ^ 2 - (c_oV3:len2() - radius ^ 2)
                 if desc >= 0 then

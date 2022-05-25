@@ -5,7 +5,7 @@ function ShieldClass(shield, stringmatch, mfloor) -- Everything related to radar
     local function checkShield()
         local shieldState = shield.getState()
         if AutoShieldToggle then
-            if not notPvPZone and shieldState == 0 then
+            if not notPvPZone and shieldState == 0 and shield.isVenting() ~= 1 then
                 shield.toggle()
             elseif notPvPZone and shieldState == 1 then
                 shield.toggle()

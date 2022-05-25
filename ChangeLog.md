@@ -1,5 +1,15 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.739 - User issue Fixes
+- (MODULAR ONLY) Fixed userglobals.lua not having effect (was due to restoring Edit Lua Parameters support)
+    Load Order when you sit down: Values from ArchHUD.conf (Edit Lua Parameters) and globals.lua, values from userglobals.lua, values from databank. 
+    (So `useTheseSettings` must still be true to override databank).  When you stand up if databank present values save to databank.
+- Changed default `MaxGameVelocity` to -1.  If its -1, the first time you sit down it will be set to actual MaxSpeed minus 0.1m/s
+- Fixed: During autopilot acceleration, if ships `MaxGameVelocity` > ships actual MaxSpeed, `MaxGameVelocity` will be set to MaxSpeed - 0.2m/s
+    This will allow engines to turn off during acceleration phase and enter cruise mode for ships that have too high of a `MaxGameVelocity` set.
+- Fixed: Prevent `AutoShieldToggle` turning on shields in pvp space if shield is currently venting.
+- Fixed: Incorrect reported distance to Atmosphere when vector would collide with atmosphere
+
 Version 1.738 - Fix Radar for Obstructed changes
 - Added support for Obstructed radar, will say Obstructed if that is the issue, Jammed if thats the issue an no opposite radar, or Destroyed if thats the issue.
 (If you get Destroyed and its not, it indicates a Radar bug (isOperational() returning 0 when its not Jammed or Obstructed), let NQ know)

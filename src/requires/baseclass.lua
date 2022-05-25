@@ -164,7 +164,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                         end
                     end
                 end
-
+                pcall(require,"autoconf/custom/archhud/custom/userglobals")
                 if dbHud_1 then
                     if not useTheseSettings then 
                         processVariableList(saveableVariables())
@@ -199,7 +199,6 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                 else
                     msgText = "No databank found. Attach one to control u and rerun \nthe autoconfigure to save preferences and locations"
                 end
-            
                 if (LastStartTime + 180) < time then -- Variables to reset if out of seat (and not on hud) for more than 3 min
                     LastMaxBrakeInAtmo = 0
                 end
@@ -220,6 +219,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                     if #privatelocations>0 then customlocations = addTable(customlocations, privatelocations) end
                 end
                 VectorStatus = "Proceeding to Waypoint"
+                if MaxGameVelocity < 0 then MaxGameVelocity = c.getMaxSpeed()-0.1 end
             end
 
             local function ProcessElements()

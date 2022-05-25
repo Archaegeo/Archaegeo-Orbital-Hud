@@ -73,7 +73,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
             -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
             local finalSpeed = AutopilotEndSpeed
-            if not Autopilot then  finalSpeed = 0 end
+            if not Autopilot then finalSpeed = 0 end
             local whichBrake = LastMaxBrake
             if inAtmo then
                 if LastMaxBrakeInAtmo and LastMaxBrakeInAtmo > 0 then
@@ -971,6 +971,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         end
         notPvPZone, pvpDist = safeZone(worldPos)
         MaxSpeed = c.getMaxSpeed()  
+        if atmosDensity > 0 then p("CA: "..coreAltitude) end
         if AutopilotTargetName ~= "None" and (autopilotTargetPlanet or CustomTarget) then
             travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
         end
@@ -1946,6 +1947,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if velAlongTarget > 0 or accel > 0 then -- (otherwise divide by 0 errors)
                     timeUntilBrake = Kinematic.computeTravelTime(velAlongTarget, accel, AutopilotDistance-brakeDistance)
                 end
+                if MaxGameVelocity > MaxSpeed then MaxGameVelocity = MaxSpeed - 0.2 end
                 if (coreVelocity:len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet) or warmup/4 > timeUntilBrake) then
                     AutopilotAccelerating = false
                     if AutopilotStatus ~= "Cruising" then
