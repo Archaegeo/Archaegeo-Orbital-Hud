@@ -73,7 +73,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
             -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
             local finalSpeed = AutopilotEndSpeed
-            if not Autopilot then  finalSpeed = 0 end
+            if not Autopilot then finalSpeed = 0 end
             local whichBrake = LastMaxBrake
             if inAtmo then
                 if LastMaxBrakeInAtmo and LastMaxBrakeInAtmo > 0 then
@@ -1799,7 +1799,8 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
             
             AutopilotDistance = (vec3(targetCoords) - worldPos):len()
-            local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
+            local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), 
+                function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
             local atmoDistance = farSide
             if nearSide ~= nil and farSide ~= nil then
                 atmoDistance = math.min(nearSide,farSide)
@@ -1946,6 +1947,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 if velAlongTarget > 0 or accel > 0 then -- (otherwise divide by 0 errors)
                     timeUntilBrake = Kinematic.computeTravelTime(velAlongTarget, accel, AutopilotDistance-brakeDistance)
                 end
+                if MaxGameVelocity > MaxSpeed then MaxGameVelocity = MaxSpeed - 0.2 end
                 if (coreVelocity:len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet) or warmup/4 > timeUntilBrake) then
                     AutopilotAccelerating = false
                     if AutopilotStatus ~= "Cruising" then
@@ -2658,7 +2660,8 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             if AutoTakeoff or spaceLaunch then
                 local intersectBody, nearSide, farSide
                 if AutopilotTargetCoords ~= nil then
-                    intersectBody, nearSide, farSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (AutopilotTargetCoords-worldPos):normalize(), function(body) return (body.radius+body.noAtmosphericDensityAltitude) end)
+                    intersectBody, nearSide, farSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (AutopilotTargetCoords-worldPos):normalize(), 
+                        function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
                 end
                 if antigravOn and not spaceLaunch then
                     if coreAltitude >= (HoldAltitude-50) and velMag > minAutopilotSpeed then
