@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.738
+VERSION_NUMBER = 0.739
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -70,7 +70,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     TargetHoverHeight = 50 -- (Default: 50) Hover height above ground when G used to lift off, 50 is above all max hover heights.
     LandingGearGroundHeight = 0 -- (Default: 0) Set to AGL when on ground. Will help prevent ship landing on ground then bouncing back up to landing gear height. 
     ReEntryHeight = 100000 -- (Default: 100000) Height above a planets maximum surface altitude used for re-entry, if height exceeds min space engine height, then 11% atmo is used instead. (100000 means 11% is used)
-    MaxGameVelocity = 13888.00 -- (Default: 13888.00) Max speed for your autopilot in m/s, do not go above 13888.87 (50000 km/hr), can be reduced to save fuel. Some ships will not turn off engines if 13888.87 is used.
+    MaxGameVelocity = -1.00 --export: (Default: -1.00) Max speed for your autopilot in m/s.  If -1 then when you sit down it will set to actual max speed.
     AutopilotInterplanetaryThrottle = 1.0 -- (Default: 1.0) How much throttle, 0.0 to 1.0, you want it to use when in autopilot to another planet while reaching MaxGameVelocity
     warmup = 32 -- How long it takes your space engines to warmup. Basic Space Engines, from XS to XL: 0.25,1,4,16,32. Only affects turn and burn brake calculations.
     fuelTankHandlingAtmo = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
@@ -620,7 +620,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             for _, body in ipairs(candidates) do
                 local c_oV3 = body.center - origin
                 -- Changed to the new method.  IDK if this is how self works but I think so
-                local radius = self:sizeCalculator(body)
+                local radius 
+                if sizeCalculator then radius = sizeCalculator(body) else radius = self:sizeCalculator(body) end
                 local dot = c_oV3:dot(dir)
                 local desc = dot ^ 2 - (c_oV3:len2() - radius ^ 2)
                 if desc >= 0 then
@@ -1593,7 +1594,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         local function checkShield()
             local shieldState = shield.getState()
             if AutoShieldToggle then
-                if not notPvPZone and shieldState == 0 then
+                if not notPvPZone and shieldState == 0 and shield.isVenting() ~= 1 then
                     shield.toggle()
                 elseif notPvPZone and shieldState == 1 then
                     shield.toggle()
@@ -4825,7 +4826,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
                 -- So we don't do unnecessary API calls when atmo brakes don't tell us what we want
                 local finalSpeed = AutopilotEndSpeed
-                if not Autopilot then  finalSpeed = 0 end
+                if not Autopilot then finalSpeed = 0 end
                 local whichBrake = LastMaxBrake
                 if inAtmo then
                     if LastMaxBrakeInAtmo and LastMaxBrakeInAtmo > 0 then
@@ -6551,7 +6552,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
                 
                 AutopilotDistance = (vec3(targetCoords) - worldPos):len()
-                local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
+                local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), 
+                    function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
                 local atmoDistance = farSide
                 if nearSide ~= nil and farSide ~= nil then
                     atmoDistance = math.min(nearSide,farSide)
@@ -6698,6 +6700,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     if velAlongTarget > 0 or accel > 0 then -- (otherwise divide by 0 errors)
                         timeUntilBrake = Kinematic.computeTravelTime(velAlongTarget, accel, AutopilotDistance-brakeDistance)
                     end
+                    if MaxGameVelocity > MaxSpeed then MaxGameVelocity = MaxSpeed - 0.2 end
                     if (coreVelocity:len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet) or warmup/4 > timeUntilBrake) then
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Cruising" then
@@ -7410,7 +7413,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 if AutoTakeoff or spaceLaunch then
                     local intersectBody, nearSide, farSide
                     if AutopilotTargetCoords ~= nil then
-                        intersectBody, nearSide, farSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (AutopilotTargetCoords-worldPos):normalize(), function(body) return (body.radius+body.noAtmosphericDensityAltitude) end)
+                        intersectBody, nearSide, farSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (AutopilotTargetCoords-worldPos):normalize(), 
+                            function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
                     end
                     if antigravOn and not spaceLaunch then
                         if coreAltitude >= (HoldAltitude-50) and velMag > minAutopilotSpeed then
@@ -8742,7 +8746,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             end
                         end
                     end
-    
+                    pcall(require,"autoconf/custom/archhud/custom/userglobals")
                     if dbHud_1 then
                         if not useTheseSettings then 
                             processVariableList(saveableVariables())
@@ -8777,7 +8781,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     else
                         msgText = "No databank found. Attach one to control u and rerun \nthe autoconfigure to save preferences and locations"
                     end
-                
                     if (LastStartTime + 180) < time then -- Variables to reset if out of seat (and not on hud) for more than 3 min
                         LastMaxBrakeInAtmo = 0
                     end
@@ -8798,6 +8801,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         if #privatelocations>0 then customlocations = addTable(customlocations, privatelocations) end
                     end
                     VectorStatus = "Proceeding to Waypoint"
+                    if MaxGameVelocity < 0 then MaxGameVelocity = c.getMaxSpeed()-0.1 end
                 end
     
                 local function ProcessElements()
