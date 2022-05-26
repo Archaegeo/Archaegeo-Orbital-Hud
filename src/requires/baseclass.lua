@@ -179,26 +179,20 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                     coroutine.yield()
                     if valuesAreSet then
                         msgText = "Loaded Saved Variables"
-                        resolutionWidth = ResolutionX
-                        resolutionHeight = ResolutionY
-                        BrakeToggleStatus = BrakeToggleDefault
-                        userControlScheme = string.lower(userControlScheme)
-                        autoRoll = autoRollPreference
-                        adjustedAtmoSpeedLimit = AtmoSpeedLimit
                     elseif not useTheseSettings then
-                        msgText = "No Saved Variables Found - Exit HUD to save settings"
+                        msgText = "No Databank Saved Variables Found\nVariables will save to Databank on standing"
+                        msgTimer = 5
                     end
-                    if LastVersionUpdate < 1.500 then
-                        if LowOrbitHeight < 2000 then
-                            msgText = "Updating LowOrbitHeight to new minimum default of 2000."
-                            LowOrbitHeight = 2000
-                        end
-                    end
-                    LastVersionUpdate = VERSION_NUMBER
                     if #SavedLocations>0 then customlocations = addTable(customlocations, SavedLocations) end
                 else
                     msgText = "No databank found. Attach one to control u and rerun \nthe autoconfigure to save preferences and locations"
                 end
+                resolutionWidth = ResolutionX
+                resolutionHeight = ResolutionY
+                BrakeToggleStatus = BrakeToggleDefault
+                userControlScheme = string.lower(userControlScheme)
+                autoRoll = autoRollPreference
+                adjustedAtmoSpeedLimit = AtmoSpeedLimit
                 if (LastStartTime + 180) < time then -- Variables to reset if out of seat (and not on hud) for more than 3 min
                     LastMaxBrakeInAtmo = 0
                 end

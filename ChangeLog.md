@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.740
+- Fixed: Issue where changing resolutionX and Y in edit lua parameters would not apply if no databank
+
 Version 1.739 - User issue Fixes
 - (MODULAR ONLY) Fixed userglobals.lua not having effect (was due to restoring Edit Lua Parameters support)
     Load Order when you sit down: Values from ArchHUD.conf (Edit Lua Parameters) and globals.lua, values from userglobals.lua, values from databank. 
