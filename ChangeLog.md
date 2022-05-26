@@ -2,6 +2,7 @@
 
 Version 1.740
 - Fixed: Issue where changing resolutionX and Y in edit lua parameters would not apply if no databank
+- Fixed: Moved Vertical Takeoff Button to center to not overlap Route button in some resolutions.
 
 Version 1.739 - User issue Fixes
 - (MODULAR ONLY) Fixed userglobals.lua not having effect (was due to restoring Edit Lua Parameters support)

@@ -2101,7 +2101,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             end, ToggleTurnBurn)
             x = 10
             y = resolutionHeight / 2 - 300
-            MakeButton("Horizontal Takeoff Mode", "Vertical Takeoff Mode", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
+            MakeButton("Horizontal Takeoff Mode", "Vertical Takeoff Mode", buttonWidth, buttonHeight, resolutionWidth/2-buttonWidth/2, y+20,
                 function() return VertTakeOffEngine end, 
                 function () 
                     VertTakeOffEngine = not VertTakeOffEngine 
