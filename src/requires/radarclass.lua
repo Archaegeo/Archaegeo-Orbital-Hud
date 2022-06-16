@@ -117,7 +117,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                                         play("abRdr", "RD")
                                     end
                                     s.print("Abandoned Construct: "..name.." ("..size.." ".. cTypeString[cType]..") at estimated ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
-                                    msgText = "Abandoned Radar Contact ("..cTypeString[cType]..") detected"
+                                    msgText = "Abandoned Radar Contact ("..size.." ".. cTypeString[cType]..") detected"
                                     construct.abandoned = true
                                 end
                                 count2 = count2 + 1
