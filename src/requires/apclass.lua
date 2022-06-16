@@ -851,7 +851,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpd
                 end
                 play("aggOn","AG")
                 antigrav.activate()
-                antigrav.show()
+                antigrav.showWidget()
             end
         end
     end

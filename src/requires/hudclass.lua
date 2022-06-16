@@ -2960,7 +2960,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             local warpDriveData = jdecode(warpdrive.getWidgetData())
             if warpDriveData.destination ~= "Unknown" and warpDriveData.distance > 400000 then
                 if not showWarpWidget then
-                    warpdrive.show()
+                    warpdrive.showWidget()
                     showWarpWidget = true
                 end
             elseif showWarpWidget then

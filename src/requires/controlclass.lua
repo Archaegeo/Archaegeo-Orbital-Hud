@@ -230,8 +230,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 UnitHidden = not UnitHidden
                 if not UnitHidden then
                     play("wid","DH")
-                    u.show()
-                    c.show()
+                    u.showWidget()
+                    c.showWidget()
                     if atmofueltank_size > 0 then
                         _autoconf.displayCategoryPanel(atmofueltank, atmofueltank_size,
                             "Atmo Fuel", "fuel_container")
@@ -253,7 +253,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     coreCombatStressPanelId = s.createWidgetPanel("Core combat stress")
                     coreCombatStressgWidgetId = s.createWidget(coreCombatStressPanelId,"core_stress")
                     s.addDataToWidget(c.getWidgetDataId(),coreCombatStressgWidgetId)
-                    if shield ~= nil then shield.show() end
+                    if shield ~= nil then shield.showWidget() end
                 else
                     play("hud","DH")
                     u.hideWidget()

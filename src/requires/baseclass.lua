@@ -416,7 +416,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 end
                 if antigrav then
                     antigravOn = (antigrav.isActive() == 1)
-                    if antigravOn and not ExternalAGG then antigrav.show() end
+                    if antigravOn and not ExternalAGG then antigrav.showWidget() end
                 end
                 -- unfreeze the player if he is remote controlling the construct
                 if isRemote() == 1 and RemoteFreeze then
