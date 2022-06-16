@@ -1334,7 +1334,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                         end
                     end
                     -- Draw a 'You Are Here' - face edition
-                    local pos = vec3(c.getConstructWorldPos())
+                    local pos = vec3(C.getWorldPosition())
                     local x = orbitMapX + orbitMapSize + pos.x / xRatio
                     local y = orbitMapY + orbitMapSize*1.5/2 + pos.y / yRatio
                     GalaxyMapHTML = GalaxyMapHTML .. '<circle cx="' .. x .. '" cy="' .. y ..

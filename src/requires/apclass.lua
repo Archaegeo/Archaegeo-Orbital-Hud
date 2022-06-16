@@ -205,7 +205,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpd
                 end
                 vector = vec3(vector):normalize()
                 local targetVec = (vec3() - vector)
-                local yawAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationRight()) * autopilotStrength
+                local yawAmount = -getMagnitudeInDirection(targetVec, C.getWorldOrientationRight()) * autopilotStrength
                 local pitchAmount = -getMagnitudeInDirection(targetVec, C.getWorldOrientationUp()) * autopilotStrength
                 if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
                 if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
@@ -243,7 +243,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpd
                 end
                 vector = vec3(vector):normalize()
                 local targetVec = (constructForward - vector)
-                local yawAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationRight()) * autopilotStrength
+                local yawAmount = -getMagnitudeInDirection(targetVec, C.getWorldOrientationRight()) * autopilotStrength
                 local pitchAmount = -getMagnitudeInDirection(targetVec, C.getWorldOrientationUp()) * autopilotStrength
                 if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
                 if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
