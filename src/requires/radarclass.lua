@@ -5,6 +5,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
 
         local friendlies = {}
         local sizeMap = { XS = 13, S = 27, M = 55, L = 110, XL = 221}
+        local cTypeString = {"Universe", "Planet", "Asteroid", "Static", "Dynamic", "Space", "Alien"}
         local knownContacts = {}
         local radarContacts = 0
         local target
@@ -115,8 +116,8 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                                         lastPlay = time
                                         play("abRdr", "RD")
                                     end
-                                    s.print("Abandoned Construct: "..name.." ("..size.." "..cType..") at estimated ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
-                                    msgText = "Abandoned Radar Contact ("..cType..") detected"
+                                    s.print("Abandoned Construct: "..name.." ("..size.." ".. cTypeString[cType]..") at estimated ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
+                                    msgText = "Abandoned Radar Contact ("..cTypeString[cType]..") detected"
                                     construct.abandoned = true
                                 end
                                 count2 = count2 + 1
