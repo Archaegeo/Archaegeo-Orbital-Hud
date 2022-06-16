@@ -202,7 +202,7 @@ VERSION_NUMBER = 1.740
     end
 
 -- Execute Script
-    globalDeclare(system, core, unit, system.getArkTime, math.floor, unit.getAtmosphereDensity) -- Variables that need to be Global, arent user defined, and are declared in globals.lua due to use across multple modules where there values can change.
-    PROGRAM = programClass(Nav, core, unit, system, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
+    globalDeclare(core, unit, system.getArkTime, math.floor, unit.getAtmosphereDensity) -- Variables that need to be Global, arent user defined, and are declared in globals.lua due to use across multple modules where there values can change.
+    PROGRAM = programClass(Nav, core, unit, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
 
     script.onStart() 

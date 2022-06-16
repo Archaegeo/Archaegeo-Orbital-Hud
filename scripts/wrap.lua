@@ -3113,7 +3113,7 @@ return function (options)
   })
 
   local unitSlot = autoconf.getSlotByName("unit")
-  unitSlot.addHandler("start()", {}, fullStartHandlerCode)
+  unitSlot.addHandler("onStart()", {}, fullStartHandlerCode)
 
   for _, slotDefinition in ipairs(slotDefinitions) do
     local slotName = slotDefinition.name
@@ -3176,7 +3176,7 @@ return function (options)
   })
 
   local unitSlot = config.getSlotByName("unit")
-  unitSlot.addHandler("start()", {}, fullStartHandlerCode)
+  unitSlot.addHandler("onStart()", {}, fullStartHandlerCode)
 
   for slotIndex, slotDefinition in ipairs(slotDefinitions) do
     if slotDefinition.class then

@@ -12,11 +12,11 @@ function AxisCommand.composeAxisAccelerationFromThrottle(self, tags)
     local additionalAcceleration = vec3()
 
     if (self.commandAxis == axisCommandId.longitudinal) then
-        axisCRefDirection = vec3(self.core.getConstructOrientationForward())
-        axisWorldDirection = vec3(self.core.getConstructWorldOrientationForward())
+        axisCRefDirection = vec3(DUConstruct.getOrientationForward())
+        axisWorldDirection = vec3(DUConstruct.getWorldOrientationForward())
     elseif (self.commandAxis == axisCommandId.vertical) then
-        axisCRefDirection = vec3(self.core.getConstructOrientationUp())
-        axisWorldDirection = vec3(self.core.getConstructWorldOrientationUp())
+        axisCRefDirection = vec3(DUConstruct.getOrientationUp())
+        axisWorldDirection = vec3(DUConstruct.getWorldOrientationUp())
         -- compensates gravity?
         local worldGravity = vec3(self.core.getWorldGravity())
         local gravityDot = worldGravity:dot(axisWorldDirection)
@@ -27,15 +27,15 @@ function AxisCommand.composeAxisAccelerationFromThrottle(self, tags)
             additionalAcceleration = -vec3(self.core.getWorldGravity())
         end
     elseif (self.commandAxis == axisCommandId.lateral) then
-        axisCRefDirection = vec3(self.core.getConstructOrientationRight())
-        axisWorldDirection = vec3(self.core.getConstructWorldOrientationRight())
+        axisCRefDirection = vec3(DUConstruct.getOrientationRight())
+        axisWorldDirection = vec3(DUConstruct.getWorldOrientationRight())
     else
         return vec3()
     end
 
     local inspace = self.control.getAtmosphereDensity()
 
-    local maxKPAlongAxis = self.core.getMaxKinematicsParametersAlongAxis(tags, {axisCRefDirection:unpack()})
+    local maxKPAlongAxis = DUConstruct.getMaxThrustAlongAxis(tags, {axisCRefDirection:unpack()})
 
     local forceCorrespondingToThrottle = 0
     if (inspace > 0.0989) then    

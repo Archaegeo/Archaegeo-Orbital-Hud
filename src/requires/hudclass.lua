@@ -3,7 +3,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
     navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
     getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
 
-
+    local C = DUConstruct
     local gravConstant = 9.80665
     local Buttons = {}
     local ControlButtons = {}
@@ -113,7 +113,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     local name = tankTable[i][tankName]
                     local slottedIndex = tankTable[i][tankSlotIndex]
                     for j = 1, slottedTanks do
-                        if tankTable[i][tankName] == jdecode(u[slottedTankType .. "_" .. j].getData()).name then
+                        if tankTable[i][tankName] == jdecode(u[slottedTankType .. "_" .. j].getWidgetData()).name then
                             slottedIndex = j
                             break
                         end
@@ -133,7 +133,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                         end
 
                         if slottedIndex ~= 0 then
-                            local slotData = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
+                            local slotData = jdecode(u[slottedTankType .. "_" .. slottedIndex].getWidgetData())
                             fuelPercentTable[i] = slotData.percentage
                             fuelTimeLeftTable[i] = slotData.timeLeft
                             if fuelTimeLeftTable[i] == "n/a" then
@@ -1952,7 +1952,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                         autoRoll = autoRollPreference
                         GearExtended = OldGearExtended
                         if GearExtended then
-                            Nav.control.extendLandingGears()
+                            Nav.control.deployLandingGears()
                             navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                         end
                     end
@@ -2375,7 +2375,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         if brkDist < 0 then brkDist = 0 end
         brakeValue = round((brakeValue / (coreMass * gravConstant)),2).."g"
         local maxThrust = Nav:maxForceForward()
-        gravity = c.g()
+        gravity = c.getGravityIntensity()
         if gravity > 0.1 then
             reqThrust = coreMass * gravity
             reqThrust = round((reqThrust / (coreMass * gravConstant)),2).."g"
@@ -2384,8 +2384,8 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         end
         maxThrust = round((maxThrust / (coreMass * gravConstant)),2).."g"
 
-        local accel = (vec3(c.getWorldAcceleration()):len() / 9.80665)
-        gravity =  c.g()
+        local accel = (vec3(C.getWorldAcceleration()):len() / 9.80665)
+        gravity =  c.getGravityIntensity()
         newContent[#newContent + 1] = [[<g class="dim txt txtend size14">]]
         if isRemote() == 1 and not RemoteHud then
             xg = ConvertResolutionX(1120)
@@ -2460,7 +2460,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         local brkDist, brkTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, brakeValue)
         brakeValue = round((brakeValue / (coreMass * gravConstant)),2).." g"
         local maxThrust = Nav:maxForceForward()
-        gravity = c.g()
+        gravity = c.getGravityIntensity()
         if gravity > 0.1 then
             reqThrust = coreMass * gravity
             reqThrust = round((reqThrust / (coreMass * gravConstant)),2).." g"
@@ -2579,7 +2579,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
     end
 
     function Hud.DrawShield()
-        local shieldState = (shield.getState() == 1) and "Shield Active" or "Shield Disabled"
+        local shieldState = (shield.isActive() == 1) and "Shield Active" or "Shield Disabled"
         local pvpTime = c.getPvPTimer()
         local resistances = shield.getResistances()
         local resistString = "A: "..(10+resistances[1]*100).."% / E: "..(10+resistances[2]*100).."% / K:"..(10+resistances[3]*100).."% / T: "..(10+resistances[4]*100).."%"
@@ -2957,14 +2957,14 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             HideInterplanetaryPanel()
         end
         if warpdrive ~= nil then
-            local warpDriveData = jdecode(warpdrive.getData())
+            local warpDriveData = jdecode(warpdrive.getWidgetData())
             if warpDriveData.destination ~= "Unknown" and warpDriveData.distance > 400000 then
                 if not showWarpWidget then
                     warpdrive.show()
                     showWarpWidget = true
                 end
             elseif showWarpWidget then
-                warpdrive.hide()
+                warpdrive.hideWidget()
                 showWarpWidget = false
             end
         end
@@ -3064,8 +3064,8 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 end
             end
         end
-        passengers = c.getPlayersOnBoard()
-        ships = c.getDockedConstructs()  
+        passengers = C.getPlayersOnBoard()
+        ships = C.getDockedConstructs()  
         local newContent = {}
         updateDistance()
         if ShouldCheckDamage then

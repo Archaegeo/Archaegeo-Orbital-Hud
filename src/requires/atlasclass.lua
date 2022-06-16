@@ -448,6 +448,7 @@
         local C2 = C * C
         local ITERATIONS = 100 -- iterations over engine "warm-up" period
     
+
         function Kinematic.computeAccelerationTime(initial, acceleration, final)
             -- The low speed limit of following is: t=(vf-vi)/a (from: vf=vi+at)
             local k1 = C * math.asin(initial / C)
@@ -842,7 +843,7 @@
                             position = position,
                             name = name,
                             planetname = p.name,
-                            gravity = c.g(),
+                            gravity = c.getGravityIntensity(),
                             safe = safe, -- This indicates we can extreme land here, if this was a real positional waypoint
                         }
                         if not temp then 
@@ -920,7 +921,7 @@
                             msgText = positions[index].name .. " heading cleared ("..positions[index].planetname..")"
                             return
                         end
-                        location.gravity = c.g()
+                        location.gravity = c.getGravityIntensity()
                         location.position = worldPos
                         location.safe = true
                     end

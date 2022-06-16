@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.740
+Version 1.740 - UPDATED FOR Mercury Update (PTS ONLY FOR NOW)
+- Fixed all depreciated functions.
 - Fixed: Issue where changing resolutionX and Y in edit lua parameters would not apply if no databank
 - Fixed: Moved Vertical Takeoff Button to center to not overlap Route button in some resolutions.
 

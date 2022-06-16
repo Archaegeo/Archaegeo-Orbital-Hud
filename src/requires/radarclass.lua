@@ -97,7 +97,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                     end
 
                     if CollisionSystem then
-                        local cType = radars[1].getConstructType(id)
+                        local cType = radars[1].getConstructKind(id)
                         if (AbandonedRadar and radars[1].isConstructAbandoned(id) == 1) or (distance < radarDist and (sz > 27 or cType == "static" or cType == "space")) then
                             static = static + 1
                             local name = radars[1].getConstructName(id)
@@ -178,10 +178,10 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                     radars[1] = radar_2 
                 end
             end
-            radarData = radars[1].getData()
+            radarData = radars[1].getWidgetData()
             pickType()
         else
-            radarData = radars[1].getData()
+            radarData = radars[1].getWidgetData()
         end
     end
 
@@ -248,7 +248,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
 
     function Radar.GetClosestName(name)
         if radars[1] then -- Just match the first one
-            local id,_ = radars[1].getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
+            local id,_ = radars[1].getWidgetData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
             if id ~= nil and id ~= "" then
                 name = name .. " " .. radars[1].getConstructName(id)
             end
@@ -311,7 +311,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
     else
         radars[1] = radar_1
     end
-    radarData = radars[1].getData()
+    radarData = radars[1].getWidgetData()
     pickType()
     UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
 

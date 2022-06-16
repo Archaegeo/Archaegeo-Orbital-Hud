@@ -3,7 +3,7 @@ function ShieldClass(shield, stringmatch, mfloor) -- Everything related to radar
     local RCD = shield.getResistancesCooldown()
 
     local function checkShield()
-        local shieldState = shield.getState()
+        local shieldState = shield.isActive()
         if AutoShieldToggle then
             if not notPvPZone and shieldState == 0 and shield.isVenting() ~= 1 then
                 shield.toggle()
