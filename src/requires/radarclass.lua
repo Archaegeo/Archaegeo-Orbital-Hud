@@ -98,7 +98,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
 
                     if CollisionSystem then
                         local cType = radars[1].getConstructKind(id)
-                        if (AbandonedRadar and radars[1].isConstructAbandoned(id) == 1) or (distance < radarDist and (sz > 27 or cType == "static" or cType == "space")) then
+                        if (AbandonedRadar and radars[1].isConstructAbandoned(id) == 1) or (distance < radarDist and (sz > 27 or cType == 4 or cType == 6)) then
                             static = static + 1
                             local name = radars[1].getConstructName(id)
                             local construct = contacts[id]
