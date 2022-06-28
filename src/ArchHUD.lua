@@ -161,7 +161,7 @@ VERSION_NUMBER = 1.740
         PROGRAM.onStart()
     end
 
-    function script.onStop()
+    function script.onOnStop()
         PROGRAM.onStop()
     end
 
@@ -169,11 +169,11 @@ VERSION_NUMBER = 1.740
         PROGRAM.onTick(timerId)       -- Various tick timers
     end
 
-    function script.onFlush()
+    function script.onOnFlush()
         PROGRAM.onFlush()
     end
 
-    function script.onUpdate()
+    function script.onOnUpdate()
         PROGRAM.onUpdate()
     end
 

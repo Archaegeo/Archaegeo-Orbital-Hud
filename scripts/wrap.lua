@@ -3289,10 +3289,10 @@ local types = {
 
   -- built-in
   control = {
-    filters = { "stop()", "tick(timerId)" }
+    filters = { "onStop()", "tick(timerId)" }
   },
   system = {
-    filters = { "actionStart(action)", "actionStop(action)", "actionLoop(action)", "update()", "flush()", "inputText(text)"},
+    filters = { "actionStart(action)", "actionStop(action)", "actionLoop(action)", "onUpdate()", "onFlush()", "inputText(text)"},
   },
   library = {
   }
