@@ -129,7 +129,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpd
                 if diffAgg < 50 then return diffAgg end
             end
             if telemeter_1 then 
-                groundDistance = telemeter_1.getDistance()
+                groundDistance = telemeter_1.raycast().distance
             end
             if hovGndDet ~= -1 and groundDistance ~= -1 then
                 if hovGndDet < groundDistance then 

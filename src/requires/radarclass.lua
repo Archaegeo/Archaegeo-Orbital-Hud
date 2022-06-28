@@ -23,6 +23,13 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
         local vec3 = vec3
         local insert = table.insert
         local activeRadarState = -4
+        local radarStatus = {
+            [1] = "Operational",
+            [0] = "broken",
+            [-1] = "jammed",
+            [-2] = "obstructed",
+            [-3] = "in use"
+          }
 
     local function UpdateRadarRoutine()
         -- UpdateRadarRoutine Locals
@@ -242,15 +249,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
             end
         else
             if activeRadarState ~= 1 then
-                if activeRadarState == -2 then
-                    radarMessage = svgText(radarX, radarY, rType.." Radar: Obstructed", "pbright txtbig txtmid")
-                elseif activeRadarState == -1 then
-                    radarMessage = svgText(radarX, radarY, rType.." Radar: Jammed", "pbright txtbig txtmid")
-                elseif activeRadarState == 0 then 
-                    radarMessage = svgText(radarX, radarY, rType.." Radar: Broken", "pbright txtbig txtmid")
-                else
-                    radarMessage = svgText(radarX, radarY, rType.." Radar: In Use", "pbright txtbig txtmid")
-                end
+                    radarMessage = svgText(radarX, radarY, rType.." Radar: "..radarStatus[activeRadarState] , "pbright txtbig txtmid")
             else
                 radarMessage = svgText(radarX, radarY, "Radar: No "..rType.." Contacts", "pbright txtbig txtmid")
             end
