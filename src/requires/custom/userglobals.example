@@ -1,0 +1,5 @@
+-- Rename file to userglobals.lua
+-- If this file is present in autoconf\custom\archhud\custom then any variables in this file
+-- override defaults from ArchHUD.lua (Edit Lua Parameters) or variables in globals.lua
+-- Note that Databank overrides this like normal unless useTheseSettings = true
+
