@@ -3,22 +3,24 @@
 -- ################################################################################
 
 -----------------------------------------------------------------------------------
--- Space Engines
---
--- Space engines are engines designed to operate optimally in the space void.
+-- Surface Engines
 -----------------------------------------------------------------------------------
 
 require("fueledengine")
 
---- Space engines are engines designed to operate optimally in the space void.
----@class SpaceEngine
-SpaceEngine = {}
-SpaceEngine.__index = SpaceEngine
-function SpaceEngine()
+---@class SurfaceEngine
+SurfaceEngine = {}
+SurfaceEngine.__index = SurfaceEngine
+function SurfaceEngine()
     local self = FueledEngine()
 
-    ---@deprecated SpaceEngine.getDistance() is deprecated.
-    function self.getDistance() error("SpaceEngine.getDistance() is deprecated.") end
+    --- Returns the distance to the first object detected in the direction of the thrust
+    ---@return number
+    function self.getDistance() end
 
-    return setmetatable(self, SpaceEngine)
+    --- Returns the maximum functional distance from the ground
+    ---@return number
+    function self.getMaxDistance() end
+
+    return setmetatable(self, SurfaceEngine)
 end

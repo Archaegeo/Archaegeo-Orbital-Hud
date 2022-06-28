@@ -22,6 +22,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
         local lastPlay = s.getArkTime()
         local vec3 = vec3
         local insert = table.insert
+        local activeRadarState = -4
 
     local function UpdateRadarRoutine()
         -- UpdateRadarRoutine Locals
@@ -181,9 +182,8 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
     end
 
     function Radar.assignRadar()
-        if radar_2 and activeRadar.isOperational() ~= 1 then
-            local jammed = radarData:find('errorMessage":"Jammed') or radarData:find('errorMessage":"Out')
-            if jammed then
+        if radar_2 and activeRadarState ~= 1 then
+            if activeRadarState == -1 then
                 if activeRadar == radar_2 then 
                     activeRadar = radar_1
                 else  
@@ -196,6 +196,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
         else
             radarData = activeRadar.getWidgetData()
         end
+        activeRadarState = activeRadar.getOperationalState()
     end
 
     function Radar.UpdateRadar()
@@ -240,13 +241,15 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                 RADAR.ToggleRadarPanel()
             end
         else
-            if activeRadar.isOperational()~=1 then
-                if radarData:find('errorMessage":"Obstructed') then
+            if activeRadarState ~= 1 then
+                if activeRadarState == -2 then
                     radarMessage = svgText(radarX, radarY, rType.." Radar: Obstructed", "pbright txtbig txtmid")
-                elseif radarData:find('errorMessage":"Jammed') then
+                elseif activeRadarState == -1 then
                     radarMessage = svgText(radarX, radarY, rType.." Radar: Jammed", "pbright txtbig txtmid")
-                else  
-                    radarMessage = svgText(radarX, radarY, rType.." Radar: Destroyed", "pbright txtbig txtmid")
+                elseif activeRadarState == 0 then 
+                    radarMessage = svgText(radarX, radarY, rType.." Radar: Broken", "pbright txtbig txtmid")
+                else
+                    radarMessage = svgText(radarX, radarY, rType.." Radar: In Use", "pbright txtbig txtmid")
                 end
             else
                 radarMessage = svgText(radarX, radarY, "Radar: No "..rType.." Contacts", "pbright txtbig txtmid")
@@ -319,11 +322,12 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
     end
 
     activeRadar=nil
-    if radar_2 and radar_2.isOperational()==1 then
+    if radar_2 and radar_2.getOperationalState()==1 then
         activeRadar = radar_2
     else
         activeRadar = radar_1
     end
+    activeRadarState=activeRadar.getOperationalState()
     radars = {activeRadar}
     radarData = activeRadar.getWidgetData()
     pickType()
