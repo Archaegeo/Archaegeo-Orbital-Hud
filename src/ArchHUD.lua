@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.739
+VERSION_NUMBER = 0.740
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -208,7 +208,9 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     LockPitch={set=function (i)LockPitch=i end,get=function() return LockPitch end}, LastMaxBrakeInAtmo={set=function (i)LastMaxBrakeInAtmo=i end,get=function() return LastMaxBrakeInAtmo end}, AntigravTargetAltitude={set=function (i)AntigravTargetAltitude=i end,get=function() return AntigravTargetAltitude end}, LastStartTime={set=function (i)LastStartTime=i end,get=function() return LastStartTime end}, iphCondition={set=function (i)iphCondition=i end,get=function() return iphCondition end}, stablized={set=function (i)stablized=i end,get=function() return stablized end}, UseExtra={set=function (i)UseExtra=i end,get=function() return UseExtra end}, SelectedTab={set=function (i)SelectedTab=i end,get=function() return SelectedTab end}, saveRoute={set=function (i)saveRoute=i end,get=function() return saveRoute end},
     apRoute={set=function (i)apRoute=i end,get=function() return apRoute end}}
 
-    local function globalDeclare(s, c, u, systime, mfloor, atmosphere) -- # is how many classes variable is in
+    local function globalDeclare(c, u, systime, mfloor, atmosphere) -- # is how many classes variable is in
+        local s = DUSystem
+        local C = DUConstruct
         time = systime() -- 6
         PlayerThrottle = 0 -- 4
         brakeInput2 = 0 -- 2
@@ -238,7 +240,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         inAtmo = (atmosphere() > 0) -- 5
         atmosDensity = atmosphere() -- 4
         coreAltitude = c.getAltitude() -- 3
-        coreMass = c.getConstructMass() -- 2
+        coreMass = DUConstruct.getMass() -- 2
         gyroIsOn = nil -- 4
         resolutionWidth = ResolutionX -- 3
         resolutionHeight = ResolutionY -- 3
@@ -264,14 +266,14 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         OrbitAchieved = false -- 2
         SpaceEngineVertDn = false -- 2
         SpaceEngines = false -- 2
-        constructForward = vec3(c.getConstructWorldOrientationForward()) -- 2
-        constructRight = vec3(c.getConstructWorldOrientationRight()) -- 3
-        coreVelocity = vec3(c.getVelocity()) -- 3
-        constructVelocity = vec3(c.getWorldVelocity()) -- 4
+        constructForward = vec3(C.getWorldOrientationForward()) -- 2
+        constructRight = vec3(C.getWorldOrientationRight()) -- 3
+        coreVelocity = vec3(C.getVelocity()) -- 3
+        constructVelocity = vec3(C.getWorldVelocity()) -- 4
         velMag = vec3(constructVelocity):len() -- 3
         worldVertical = vec3(c.getWorldVertical()) -- 3
         vSpd = -worldVertical:dot(constructVelocity) -- 2
-        worldPos = vec3(c.getConstructWorldPos()) -- 5
+        worldPos = vec3(C.getWorldPosition()) -- 5
         UpVertAtmoEngine = false -- 3
         antigravOn = false -- 4
         throttleMode = true -- 3
@@ -296,12 +298,12 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         privatelocations = {} -- 3
         customlocations = {} -- 2
         apBrk = false -- 2
-        alignHeading=nil -- 2
+        alignHeading = nil -- 2
         mouseDistance = 0 -- 2
         sEFC = false -- 2
-        MaxSpeed = c.getMaxSpeed() -- 2
+        MaxSpeed = C.getMaxSpeed() -- 2
         if shield then shieldPercent = mfloor(0.5 + shield.getShieldHitpoints() * 100 / shield.getMaxShieldHitpoints()) end
-    end     
+    end    
     ---[[ timestamped print function for debugging
         function p(msg)
             s.print(time..": "..msg)
@@ -1148,7 +1150,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             position = position,
                             name = name,
                             planetname = p.name,
-                            gravity = c.g(),
+                            gravity = c.getGravityIntensity(),
                             safe = safe, -- This indicates we can extreme land here, if this was a real positional waypoint
                         }
                         if not temp then 
@@ -1226,7 +1228,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             msgText = positions[index].name .. " heading cleared ("..positions[index].planetname..")"
                             return
                         end
-                        location.gravity = c.g()
+                        location.gravity = c.getGravityIntensity()
                         location.position = worldPos
                         location.safe = true
                     end
@@ -1271,12 +1273,14 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
             local friendlies = {}
             local sizeMap = { XS = 13, S = 27, M = 55, L = 110, XL = 221}
+            local cTypeString = {"Universe", "Planet", "Asteroid", "Static", "Dynamic", "Space", "Alien"}
             local knownContacts = {}
             local radarContacts = 0
             local target
             local numKnown
             local static
-            local radars = {}
+            local activeRadar
+            local radars = {activeRadar}
             local rType = "Atmo"
             local UpdateRadarCoroutine
             local perisPanelID
@@ -1284,6 +1288,16 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local contacts = {}
             local radarData
             local lastPlay = s.getArkTime()
+            local vec3 = vec3
+            local insert = table.insert
+            local activeRadarState = -4
+            local radarStatus = {
+                [1] = "Operational",
+                [0] = "broken",
+                [-1] = "jammed",
+                [-2] = "obstructed",
+                [-3] = "in use"
+              }
     
         local function UpdateRadarRoutine()
             -- UpdateRadarRoutine Locals
@@ -1345,28 +1359,36 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
     
             if radar_1 or radar_2 then RADAR.assignRadar() end
-            if (radars[1]) then
-                radarContacts = #radars[1].getConstructIds()
-                local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
+            if (activeRadar) then
+                radarContacts = #activeRadar.getConstructIds()
+    
+    
              
                 if radarContacts > 0 then
+                    local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
+                    local hasMatchingTransponder = activeRadar.hasMatchingTransponder
+                    local getConstructKind = activeRadar.getConstructKind
+                    local isConstructAbandoned = activeRadar.isConstructAbandoned
+                    local getConstructName = activeRadar.getConstructName
                     local wp = {worldPos["x"],worldPos["y"],worldPos["z"]}  --getTrueWorldPos()
                     local count, count2 = 0, 0
                     local radarDist = velMag * 10
+                    local nearPlanet = nearPlanet
                     static, numKnown = 0, 0
                     for v in contactData do
                         local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
                         local sz = sizeMap[size]
                         distance = tonum(distance)
-                        if radars[1].hasMatchingTransponder(id) == 1 then
-                            table.insert(friendlies,id)
+                        if hasMatchingTransponder(id) == 1 then
+                            insert(friendlies,id)
                         end
     
                         if CollisionSystem then
-                            local cType = radars[1].getConstructType(id)
-                            if (AbandonedRadar and radars[1].isConstructAbandoned(id) == 1) or (distance < radarDist and (sz > 27 or cType == "static" or cType == "space")) then
+                            local cType = getConstructKind(id)
+                            local abandoned = AbandonedRadar and isConstructAbandoned(id) == 1
+                            if abandoned or (distance < radarDist and (sz > 27 or cType == 4 or cType == 6)) then
                                 static = static + 1
-                                local name = radars[1].getConstructName(id)
+                                local name = getConstructName(id)
                                 local construct = contacts[id]
                                 if construct == nil then
                                     sz = sz+coreHalfDiag
@@ -1375,19 +1397,19 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                                 end
                                 if not construct.skipCalc then 
                                     updateVariables(construct, distance, wp)
-                                    if AbandonedRadar and not construct.abandoned and radars[1].isConstructAbandoned(id) == 1 and construct.center then
+                                    if abandoned and not construct.abandoned and construct.center then
                                         local time = s.getArkTime()
                                         if lastPlay+5 < time then 
                                             lastPlay = time
                                             play("abRdr", "RD")
                                         end
-                                        s.print("Abandoned Construct: "..name.." ("..size.." "..cType..") at estimated ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
-                                        msgText = "Abandoned Radar Contact ("..cType..") detected"
+                                        s.print("Abandoned Construct: "..name.." ("..size.." ".. cTypeString[cType]..") at estimated ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
+                                        msgText = "Abandoned Radar Contact ("..size.." ".. cTypeString[cType]..") detected"
                                         construct.abandoned = true
                                     end
                                     count2 = count2 + 1
                                 else
-                                    table.insert(knownContacts, construct) 
+                                    insert(knownContacts, construct) 
                                 end
                             end
                             count = count + 1
@@ -1423,7 +1445,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             end
         end
         local function pickType()
-            if radars[1] then
+            if activeRadar then
                 rType = "Atmo"
                 if radarData:find('worksInAtmosphere":false') then 
                     rType = "Space" 
@@ -1435,20 +1457,21 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         end
     
         function Radar.assignRadar()
-            if radar_2 and radars[1].isOperational() ~= 1 then
-                local jammed = radarData:find('errorMessage":"Jammed') or radarData:find('errorMessage":"Out')
-                if jammed then
-                    if radars[1] == radar_2 then 
-                        radars[1] = radar_1
+            if radar_2 and activeRadarState ~= 1 then
+                if activeRadarState == -1 then
+                    if activeRadar == radar_2 then 
+                        activeRadar = radar_1
                     else  
-                        radars[1] = radar_2 
+                        activeRadar = radar_2 
                     end
                 end
-                radarData = radars[1].getData()
+                radars = {activeRadar}
+                radarData = activeRadar.getWidgetData()
                 pickType()
             else
-                radarData = radars[1].getData()
+                radarData = activeRadar.getWidgetData()
             end
+            activeRadarState = activeRadar.getOperationalState()
         end
     
         function Radar.UpdateRadar()
@@ -1478,7 +1501,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     radarMessage = radarMessage..svgText( friendx, friendy, "Friendlies In Range", "pbright txtbig txtmid")
                     for k, v in pairs(friendlies) do
                         friendy = friendy + 20
-                        radarMessage = radarMessage..svgText(friendx, friendy, radars[1].getConstructName(v), "pdim txtmid")
+                        radarMessage = radarMessage..svgText(friendx, friendy, activeRadar.getConstructName(v), "pdim txtmid")
                     end
                 end
     
@@ -1493,14 +1516,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     RADAR.ToggleRadarPanel()
                 end
             else
-                if radars[1].isOperational()~=1 then
-                    if radarData:find('errorMessage":"Obstructed') then
-                        radarMessage = svgText(radarX, radarY, rType.." Radar: Obstructed", "pbright txtbig txtmid")
-                    elseif radarData:find('errorMessage":"Jammed') then
-                        radarMessage = svgText(radarX, radarY, rType.." Radar: Jammed", "pbright txtbig txtmid")
-                    else  
-                        radarMessage = svgText(radarX, radarY, rType.." Radar: Destroyed", "pbright txtbig txtmid")
-                    end
+                if activeRadarState ~= 1 then
+                        radarMessage = svgText(radarX, radarY, rType.." Radar: "..radarStatus[activeRadarState] , "pbright txtbig txtmid")
                 else
                     radarMessage = svgText(radarX, radarY, "Radar: No "..rType.." Contacts", "pbright txtbig txtmid")
                 end
@@ -1513,10 +1530,10 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         end
     
         function Radar.GetClosestName(name)
-            if radars[1] then -- Just match the first one
-                local id,_ = radars[1].getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
+            if activeRadar then -- Just match the first one
+                local id,_ = activeRadar.getWidgetData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
                 if id ~= nil and id ~= "" then
-                    name = name .. " " .. radars[1].getConstructName(id)
+                    name = name .. " " .. activeRadar.getConstructName(id)
                 end
             end
             return name
@@ -1557,13 +1574,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         end
     
         function Radar.onEnter(id)
-            if radars[1] and not inAtmo and not notPvPZone then 
+            if activeRadar and not inAtmo and not notPvPZone then 
                 u.setTimer("contact",0.1) 
             end
         end
     
         function Radar.onLeave(id)
-            if radars[1] and CollisionSystem then 
+            if activeRadar and CollisionSystem then 
                 if #contacts > 650 then 
                     id = tostring(id)
                     contacts[id] = nil 
@@ -1571,13 +1588,15 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             end
         end
     
-        radars[1]=nil
-        if radar_2 and radar_2.isOperational()==1 then
-            radars[1] = radar_2
+        activeRadar=nil
+        if radar_2 and radar_2.getOperationalState()==1 then
+            activeRadar = radar_2
         else
-            radars[1] = radar_1
+            activeRadar = radar_1
         end
-        radarData = radars[1].getData()
+        activeRadarState=activeRadar.getOperationalState()
+        radars = {activeRadar}
+        radarData = activeRadar.getWidgetData()
         pickType()
         UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
     
@@ -1592,7 +1611,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         local RCD = shield.getResistancesCooldown()
     
         local function checkShield()
-            local shieldState = shield.getState()
+            local shieldState = shield.isActive()
             if AutoShieldToggle then
                 if not notPvPZone and shieldState == 0 and shield.isVenting() ~= 1 then
                     shield.toggle()
@@ -1649,7 +1668,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
         getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
     
-    
+        local C = DUConstruct
         local gravConstant = 9.80665
         local Buttons = {}
         local ControlButtons = {}
@@ -1759,7 +1778,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         local name = tankTable[i][tankName]
                         local slottedIndex = tankTable[i][tankSlotIndex]
                         for j = 1, slottedTanks do
-                            if tankTable[i][tankName] == jdecode(u[slottedTankType .. "_" .. j].getData()).name then
+                            if tankTable[i][tankName] == jdecode(u[slottedTankType .. "_" .. j].getWidgetData()).name then
                                 slottedIndex = j
                                 break
                             end
@@ -1779,7 +1798,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             end
     
                             if slottedIndex ~= 0 then
-                                local slotData = jdecode(u[slottedTankType .. "_" .. slottedIndex].getData())
+                                local slotData = jdecode(u[slottedTankType .. "_" .. slottedIndex].getWidgetData())
                                 fuelPercentTable[i] = slotData.percentage
                                 fuelTimeLeftTable[i] = slotData.timeLeft
                                 if fuelTimeLeftTable[i] == "n/a" then
@@ -2980,7 +2999,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             end
                         end
                         -- Draw a 'You Are Here' - face edition
-                        local pos = vec3(c.getConstructWorldPos())
+                        local pos = vec3(C.getWorldPosition())
                         local x = orbitMapX + orbitMapSize + pos.x / xRatio
                         local y = orbitMapY + orbitMapSize*1.5/2 + pos.y / yRatio
                         GalaxyMapHTML = GalaxyMapHTML .. '<circle cx="' .. x .. '" cy="' .. y ..
@@ -3598,7 +3617,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             autoRoll = autoRollPreference
                             GearExtended = OldGearExtended
                             if GearExtended then
-                                Nav.control.extendLandingGears()
+                                Nav.control.deployLandingGears()
                                 navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                             end
                         end
@@ -3747,7 +3766,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end, ToggleTurnBurn)
                 x = 10
                 y = resolutionHeight / 2 - 300
-                MakeButton("Horizontal Takeoff Mode", "Vertical Takeoff Mode", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
+                MakeButton("Horizontal Takeoff Mode", "Vertical Takeoff Mode", buttonWidth, buttonHeight, resolutionWidth/2-buttonWidth/2, y+20,
                     function() return VertTakeOffEngine end, 
                     function () 
                         VertTakeOffEngine = not VertTakeOffEngine 
@@ -4021,7 +4040,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             if brkDist < 0 then brkDist = 0 end
             brakeValue = round((brakeValue / (coreMass * gravConstant)),2).."g"
             local maxThrust = Nav:maxForceForward()
-            gravity = c.g()
+            gravity = c.getGravityIntensity()
             if gravity > 0.1 then
                 reqThrust = coreMass * gravity
                 reqThrust = round((reqThrust / (coreMass * gravConstant)),2).."g"
@@ -4030,8 +4049,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             end
             maxThrust = round((maxThrust / (coreMass * gravConstant)),2).."g"
     
-            local accel = (vec3(c.getWorldAcceleration()):len() / 9.80665)
-            gravity =  c.g()
+            local accel = (vec3(C.getWorldAcceleration()):len() / 9.80665)
+            gravity =  c.getGravityIntensity()
             newContent[#newContent + 1] = [[<g class="dim txt txtend size14">]]
             if isRemote() == 1 and not RemoteHud then
                 xg = ConvertResolutionX(1120)
@@ -4106,7 +4125,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local brkDist, brkTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, brakeValue)
             brakeValue = round((brakeValue / (coreMass * gravConstant)),2).." g"
             local maxThrust = Nav:maxForceForward()
-            gravity = c.g()
+            gravity = c.getGravityIntensity()
             if gravity > 0.1 then
                 reqThrust = coreMass * gravity
                 reqThrust = round((reqThrust / (coreMass * gravConstant)),2).." g"
@@ -4225,8 +4244,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         end
     
         function Hud.DrawShield()
-            local shieldState = (shield.getState() == 1) and "Shield Active" or "Shield Disabled"
-            local pvpTime = c.getPvPTimer()
+            local shieldState = (shield.isActive() == 1) and "Shield Active" or "Shield Disabled"
+            local pvpTime = C.getPvPTimer()
             local resistances = shield.getResistances()
             local resistString = "A: "..(10+resistances[1]*100).."% / E: "..(10+resistances[2]*100).."% / K:"..(10+resistances[3]*100).."% / T: "..(10+resistances[4]*100).."%"
             local x, y = shieldX -60, shieldY+30
@@ -4603,14 +4622,14 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 HideInterplanetaryPanel()
             end
             if warpdrive ~= nil then
-                local warpDriveData = jdecode(warpdrive.getData())
+                local warpDriveData = jdecode(warpdrive.getWidgetData())
                 if warpDriveData.destination ~= "Unknown" and warpDriveData.distance > 400000 then
                     if not showWarpWidget then
-                        warpdrive.show()
+                        warpdrive.showWidget()
                         showWarpWidget = true
                     end
                 elseif showWarpWidget then
-                    warpdrive.hide()
+                    warpdrive.hideWidget()
                     showWarpWidget = false
                 end
             end
@@ -4710,8 +4729,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                 end
             end
-            passengers = c.getPlayersOnBoard()
-            ships = c.getDockedConstructs()  
+            passengers = C.getPlayersOnBoard()
+            ships = C.getDockedConstructs()  
             local newContent = {}
             updateDistance()
             if ShouldCheckDamage then
@@ -4751,11 +4770,12 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
         return Hud
     end
-    local function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1,
+    local function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1,
         mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
         navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq,
         getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)  
-     
+        local s = DUSystem
+        local C = DUConstruct
     
         local ap = {}
         -- Local Functions and Variables for whole class
@@ -4784,7 +4804,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local targetRoll = 0
             local VtPitch = 0
             local orbitalParams = { VectorToTarget = false }
-            local constructUp = vec3(c.getConstructWorldOrientationUp())
+            local constructUp = vec3(C.getWorldOrientationUp())
             local setCruiseSpeed = nil
             local hSpd = 0
             local cmdT = -1
@@ -4876,12 +4896,12 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
                 local hovGndDet = hoverDetectGround()  
                 local groundDistance = -1
-                if antigrav and antigrav.getState() == 1 and not ExternalAGG and velMag < minAutopilotSpeed then
+                if antigrav and antigrav.isActive() == 1 and not ExternalAGG and velMag < minAutopilotSpeed then
                     local diffAgg = mabs(coreAltitude - antigrav.getBaseAltitude())
                     if diffAgg < 50 then return diffAgg end
                 end
                 if telemeter_1 then 
-                    groundDistance = telemeter_1.getDistance()
+                    groundDistance = telemeter_1.raycast().distance
                 end
                 if hovGndDet ~= -1 and groundDistance ~= -1 then
                     if hovGndDet < groundDistance then 
@@ -4957,8 +4977,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                     vector = vec3(vector):normalize()
                     local targetVec = (vec3() - vector)
-                    local yawAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationRight()) * autopilotStrength
-                    local pitchAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationUp()) * autopilotStrength
+                    local yawAmount = -getMagnitudeInDirection(targetVec, C.getWorldOrientationRight()) * autopilotStrength
+                    local pitchAmount = -getMagnitudeInDirection(targetVec, C.getWorldOrientationUp()) * autopilotStrength
                     if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
                     if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
                     -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
@@ -4995,8 +5015,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                     vector = vec3(vector):normalize()
                     local targetVec = (constructForward - vector)
-                    local yawAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationRight()) * autopilotStrength
-                    local pitchAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationUp()) * autopilotStrength
+                    local yawAmount = -getMagnitudeInDirection(targetVec, C.getWorldOrientationRight()) * autopilotStrength
+                    local pitchAmount = -getMagnitudeInDirection(targetVec, C.getWorldOrientationUp()) * autopilotStrength
                     if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
                     if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
                     -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
@@ -5081,7 +5101,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 swp = false
             end
             if sba then
-                antigrav.setBaseAltitude(sba) 
+                antigrav.setTargetAltitude(sba) 
                 sba = false
             end
             if sudi then
@@ -5246,7 +5266,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             TargetSet = false -- No matter what
             -- Toggle Autopilot, as long as the target isn't None
             if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
-                if 0.5 * Nav:maxForceForward() / c.g() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
+                if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
                 if #apRoute>0 and not finalLand then 
                     AutopilotTargetIndex = getIndex(apRoute[1])
                     ATLAS.UpdateAutopilotTarget()
@@ -5595,7 +5615,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 if antigravOn then
                     play("aggOff","AG")
                     antigrav.deactivate()
-                    antigrav.hide()
+                    antigrav.hideWidget()
                 else
                     if AntigravTargetAltitude == nil then AntigravTargetAltitude = coreAltitude end
                     if AntigravTargetAltitude < 1000 then
@@ -5603,7 +5623,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                     play("aggOn","AG")
                     antigrav.activate()
-                    antigrav.show()
+                    antigrav.showWidget()
                 end
             end
         end
@@ -5699,12 +5719,12 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             end
             local function RefreshLastMaxBrake(gravity, force)
                 if gravity == nil then
-                    gravity = c.g()
+                    gravity = c.getGravityIntensity()
                 end
                 gravity = round(gravity, 5) -- round to avoid insignificant updates
                 if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
                     local speed = coreVelocity:len()
-                    local maxBrake = jdecode(u.getData()).maxBrake 
+                    local maxBrake = jdecode(u.getWidgetData()).maxBrake 
                     if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
                         maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
                         maxBrake = maxBrake / atmosDensity
@@ -5723,7 +5743,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
             end
             notPvPZone, pvpDist = safeZone(worldPos)
-            MaxSpeed = c.getMaxSpeed()  
+            MaxSpeed = C.getMaxSpeed()  
             if AutopilotTargetName ~= "None" and (autopilotTargetPlanet or CustomTarget) then
                 travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
             end
@@ -5783,13 +5803,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     local axisWorldDirection = vec3()
                 
                     if (commandAxis == axisCommandId.longitudinal) then
-                        axisCRefDirection = vec3(c.getConstructOrientationForward())
+                        axisCRefDirection = vec3(C.getOrientationForward())
                         axisWorldDirection = constructForward
                     elseif (commandAxis == axisCommandId.vertical) then
-                        axisCRefDirection = vec3(c.getConstructOrientationUp())
+                        axisCRefDirection = vec3(C.getOrientationUp())
                         axisWorldDirection = constructUp
                     elseif (commandAxis == axisCommandId.lateral) then
-                        axisCRefDirection = vec3(c.getConstructOrientationRight())
+                        axisCRefDirection = vec3(C.getOrientationRight())
                         axisWorldDirection = constructRight
                     else
                         return vec3()
@@ -5798,7 +5818,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     local gravityAcceleration = vec3(c.getWorldGravity())
                     local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
                 
-                    local airResistanceAcceleration = vec3(c.getWorldAirFrictionAcceleration())
+                    local airResistanceAcceleration = vec3(C.getWorldAirFrictionAcceleration())
                     local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
                 
     
@@ -5829,13 +5849,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     local axisWorldDirection = vec3()
                 
                     if (commandAxis == axisCommandId.longitudinal) then
-                        axisCRefDirection = vec3(c.getConstructOrientationForward())
+                        axisCRefDirection = vec3(C.getOrientationForward())
                         axisWorldDirection = constructForward
                     elseif (commandAxis == axisCommandId.vertical) then
-                        axisCRefDirection = vec3(c.getConstructOrientationUp())
+                        axisCRefDirection = vec3(C.getOrientationUp())
                         axisWorldDirection = constructUp
                     elseif (commandAxis == axisCommandId.lateral) then
-                        axisCRefDirection = vec3(c.getConstructOrientationRight())
+                        axisCRefDirection = vec3(C.getOrientationRight())
                         axisWorldDirection = constructRight
                     else
                         return vec3()
@@ -5844,7 +5864,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     local gravityAcceleration = vec3(c.getWorldGravity())
                     local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
                 
-                    local airResistanceAcceleration = vec3(c.getWorldAirFrictionAcceleration())
+                    local airResistanceAcceleration = vec3(C.getWorldAirFrictionAcceleration())
                     local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
                 
                     local currentAxisSpeedMS = coreVelocity:dot(axisCRefDirection)
@@ -5943,13 +5963,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 worldVertical = (planet.center - worldPos):normalize() -- I think also along gravity hopefully?
             end
     
-            constructUp = vec3(c.getConstructWorldOrientationUp())
-            constructForward = vec3(c.getConstructWorldOrientationForward())
-            constructRight = vec3(c.getConstructWorldOrientationRight())
-            constructVelocity = vec3(c.getWorldVelocity())
-            coreVelocity = vec3(c.getVelocity())
-            worldPos = vec3(c.getConstructWorldPos())
-            coreMass =  c.getConstructMass()
+            constructUp = vec3(C.getWorldOrientationUp())
+            constructForward = vec3(C.getWorldOrientationForward())
+            constructRight = vec3(C.getWorldOrientationRight())
+            constructVelocity = vec3(C.getWorldVelocity())
+            coreVelocity = vec3(C.getVelocity())
+            worldPos = vec3(C.getWorldPosition())
+            coreMass =  C.getMass()
             velMag = vec3(constructVelocity):len()
             vSpd = -worldVertical:dot(constructVelocity)
             adjustedRoll = getRoll(worldVertical, constructForward, constructRight) 
@@ -5963,7 +5983,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local currentRollDegSign = utils.sign(adjustedRoll)
     
             -- Rotation
-            local constructAngularVelocity = vec3(c.getWorldAngularVelocity())
+            local constructAngularVelocity = vec3(C.getWorldAngularVelocity())
             local targetAngularVelocity =
                 finalPitchInput * pitchSpeedFactor * constructRight + finalRollInput * rollSpeedFactor * constructForward +
                     finalYawInput * yawSpeedFactor * constructUp
@@ -6023,7 +6043,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             end
     
             if antigrav then
-                antigravOn = (antigrav.getState() == 1)
+                antigravOn = (antigrav.isActive() == 1)
             end
     
     
@@ -6050,17 +6070,18 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             rollInput2 = 0
             pitchInput2 = 0
             sys = galaxyReference[0]
-            planet = sys:closestBody(c.getConstructWorldPos())
+            local cWorldPos = C.getWorldPosition()
+            planet = sys:closestBody(cWorldPos)
             kepPlanet = Kep(planet)
-            orbit = kepPlanet:orbitalParameters(c.getConstructWorldPos(), constructVelocity)
+            orbit = kepPlanet:orbitalParameters(cWorldPos, constructVelocity)
             if coreAltitude == 0 then
                 coreAltitude = (worldPos - planet.center):len() - planet.radius
             end
             nearPlanet = u.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
     
-            local gravity = planet:getGravity(c.getConstructWorldPos()):len() * coreMass
+            local gravity = planet:getGravity(cWorldPos):len() * coreMass
             targetRoll = 0
-            local maxKinematicUp = c.getMaxKinematicsParametersAlongAxis("ground", c.getConstructOrientationUp())[1]
+            local maxKinematicUp = C.getMaxThrustAlongAxis("ground", C.getOrientationUp())[1]
     
             if sivl == 0 then
                 if isRemote() == 1 and holdingShift then
@@ -6695,7 +6716,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     -- We need the travel time, the one we compute elsewhere includes estimates on acceleration
                     -- Also it doesn't account for velocity not being in the correct direction, this should
                     local timeUntilBrake = 99999 -- Default in case accel and velocity are both 0 
-                    local accel = -(vec3(c.getWorldAcceleration()):dot(constructVelocity:normalize()))
+                    local accel = -(vec3(C.getWorldAcceleration()):dot(constructVelocity:normalize()))
                     local velAlongTarget = uclamp(constructVelocity:dot((targetCoords - worldPos):normalize()),0,velMag)
                     if velAlongTarget > 0 or accel > 0 then -- (otherwise divide by 0 errors)
                         timeUntilBrake = Kinematic.computeTravelTime(velAlongTarget, accel, AutopilotDistance-brakeDistance)
@@ -7720,7 +7741,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
             -- Rotation
             local angularAcceleration = torqueFactor * (targetAngularVelocity - constructAngularVelocity)
-            local airAcceleration = vec3(c.getWorldAirFrictionAngularAcceleration())
+            local airAcceleration = vec3(C.getWorldAirFrictionAngularAcceleration())
             angularAcceleration = angularAcceleration - airAcceleration -- Try to compensate air friction
             
             Nav:setEngineTorqueCommand('torque', angularAcceleration, keepCollinearity, 'airfoil', '', '',
@@ -7808,7 +7829,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     else
                         if hasGear then
                             play("grOut","LG",1)
-                            Nav.control.extendLandingGears()                            
+                            Nav.control.deployLandingGears()                            
                         end
                         apBrk = false
                         navCom:setTargetGroundAltitude(LandingGearGroundHeight)
@@ -7818,7 +7839,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                 elseif hasGear and not BrakeLanding  then
                     play("grOut","LG",1)
-                    Nav.control.extendLandingGears() -- Actually extend
+                    Nav.control.deployLandingGears() -- Actually extend
                 end
             else
                 if hasGear then
@@ -8009,8 +8030,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     UnitHidden = not UnitHidden
                     if not UnitHidden then
                         play("wid","DH")
-                        u.show()
-                        c.show()
+                        u.showWidget()
+                        c.showWidget()
                         if atmofueltank_size > 0 then
                             _autoconf.displayCategoryPanel(atmofueltank, atmofueltank_size,
                                 "Atmo Fuel", "fuel_container")
@@ -8028,15 +8049,15 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         end
                         parentingPanelId = s.createWidgetPanel("Docking")
                         parentingWidgetId = s.createWidget(parentingPanelId,"parenting")
-                        s.addDataToWidget(u.getDataId(),parentingWidgetId)
+                        s.addDataToWidget(u.getWidgetDataId(),parentingWidgetId)
                         coreCombatStressPanelId = s.createWidgetPanel("Core combat stress")
                         coreCombatStressgWidgetId = s.createWidget(coreCombatStressPanelId,"core_stress")
-                        s.addDataToWidget(c.getDataId(),coreCombatStressgWidgetId)
-                        if shield ~= nil then shield.show() end
+                        s.addDataToWidget(c.getWidgetDataId(),coreCombatStressgWidgetId)
+                        if shield ~= nil then shield.showWidget() end
                     else
                         play("hud","DH")
-                        u.hide()
-                        c.hide()
+                        u.hideWidget()
+                        c.hideWidget()
                         if fuelPanelID ~= nil then
                             sysDestWid(fuelPanelID)
                             fuelPanelID = nil
@@ -8057,9 +8078,10 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             sysDestWid(rocketfuelPanelID)
                             rocketfuelPanelID = nil
                         end
-                        if shield ~= nil then shield.hide() end
+                        if shield ~= nil then shield.hideWidget() end
                     end
                 end
+    
                 toggleView = false
                 if AltIsOn and holdingShift then 
                     local onboard = ""
@@ -8580,8 +8602,11 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
         return Control
     end
-    local function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
-    
+    local function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
+        local s = DUSystem
+        local C = DUConstruct
+        local P = DUPlayer
+        local library = DULibrary
         -- Local variables and functions
             local program = {}
     
@@ -8761,26 +8786,20 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         coroutine.yield()
                         if valuesAreSet then
                             msgText = "Loaded Saved Variables"
-                            resolutionWidth = ResolutionX
-                            resolutionHeight = ResolutionY
-                            BrakeToggleStatus = BrakeToggleDefault
-                            userControlScheme = string.lower(userControlScheme)
-                            autoRoll = autoRollPreference
-                            adjustedAtmoSpeedLimit = AtmoSpeedLimit
                         elseif not useTheseSettings then
-                            msgText = "No Saved Variables Found - Exit HUD to save settings"
+                            msgText = "No Databank Saved Variables Found\nVariables will save to Databank on standing"
+                            msgTimer = 5
                         end
-                        if LastVersionUpdate < 1.500 then
-                            if LowOrbitHeight < 2000 then
-                                msgText = "Updating LowOrbitHeight to new minimum default of 2000."
-                                LowOrbitHeight = 2000
-                            end
-                        end
-                        LastVersionUpdate = VERSION_NUMBER
                         if #SavedLocations>0 then customlocations = addTable(customlocations, SavedLocations) end
                     else
                         msgText = "No databank found. Attach one to control u and rerun \nthe autoconfigure to save preferences and locations"
                     end
+                    resolutionWidth = ResolutionX
+                    resolutionHeight = ResolutionY
+                    BrakeToggleStatus = BrakeToggleDefault
+                    userControlScheme = string.lower(userControlScheme)
+                    autoRoll = autoRollPreference
+                    adjustedAtmoSpeedLimit = AtmoSpeedLimit
                     if (LastStartTime + 180) < time then -- Variables to reset if out of seat (and not on hud) for more than 3 min
                         LastMaxBrakeInAtmo = 0
                     end
@@ -8795,13 +8814,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         if AntigravTargetAltitude == nil then 
                             AntigravTargetAltitude = coreAltitude
                         end
-                        antigrav.setBaseAltitude(AntigravTargetAltitude)
+                        antigrav.setTargetAltitude(AntigravTargetAltitude)
                     end
                     if pcall(require, "autoconf/custom/archhud/privatelocations") then
                         if #privatelocations>0 then customlocations = addTable(customlocations, privatelocations) end
                     end
                     VectorStatus = "Proceeding to Waypoint"
-                    if MaxGameVelocity < 0 then MaxGameVelocity = c.getMaxSpeed()-0.1 end
+                    if MaxGameVelocity < 0 then MaxGameVelocity = C.getMaxSpeed()-0.1 end
                 end
     
                 local function ProcessElements()
@@ -8827,7 +8846,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     local slottedTanksSpace = _G["spacefueltank_size"]
                     local slottedTanksRocket = _G["rocketfueltank_size"]
                     for k in pairs(elementsID) do --Look for space engines, landing gear, fuel tanks if not slotted and c size
-                        local type = c.getElementTypeById(elementsID[k])
+                        local type = c.getElementDisplayNameById(elementsID[k])
                         if stringmatch(type, '^.*Atmospheric Engine$') then
                             if stringmatch(tostring(c.getElementTagsById(elementsID[k])), '^.*vertical.*$') and c.getElementForwardById(elementsID[k])[3]>0 then
                                 UpVertAtmoEngine = true
@@ -8887,7 +8906,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                                 
                                 local slottedIndex = 0
                                 for j = 1, slottedTanksAtmo do
-                                    if name == jdecode(u["atmofueltank_" .. j].getData()).name then
+                                    if name == jdecode(u["atmofueltank_" .. j].getWidgetData()).name then
                                         slottedIndex = j
                                         break
                                     end
@@ -8920,7 +8939,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                                 
                                 local slottedIndex = 0
                                 for j = 1, slottedTanksRocket do
-                                    if name == jdecode(u["rocketfueltank_" .. j].getData()).name then
+                                    if name == jdecode(u["rocketfueltank_" .. j].getWidgetData()).name then
                                         slottedIndex = j
                                         break
                                     end
@@ -8953,7 +8972,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                                 
                                 local slottedIndex = 0
                                 for j = 1, slottedTanksSpace do
-                                    if name == jdecode(u["spacefueltank_" .. j].getData()).name then
+                                    if name == jdecode(u["spacefueltank_" .. j].getWidgetData()).name then
                                         slottedIndex = j
                                         break
                                     end
@@ -8973,7 +8992,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 local function SetupChecks()
                     
                     if gyro ~= nil then
-                        gyroIsOn = gyro.getState() == 1
+                        gyroIsOn = gyro.isActive() == 1
                     end
                     if not stablized then 
                         navCom:deactivateGroundEngineAltitudeStabilization()
@@ -9000,23 +9019,23 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         end
                     end
                     if antigrav then
-                        antigravOn = (antigrav.getState() == 1)
-                        if antigravOn and not ExternalAGG then antigrav.show() end
+                        antigravOn = (antigrav.isActive() == 1)
+                        if antigravOn and not ExternalAGG then antigrav.showWidget() end
                     end
                     -- unfreeze the player if he is remote controlling the construct
                     if isRemote() == 1 and RemoteFreeze then
-                        s.freeze(1)
+                        P.freeze(1)
                     else
-                        s.freeze(0)
+                        P.freeze(0)
                     end
                     if hasGear then
                         if abvGndDet ~= -1 and not antigravOn then
-                            Nav.control.extendLandingGears()
+                            Nav.control.deployLandingGears()
                         else
                             Nav.control.retractLandingGears()
                         end
                     end
-                    GearExtended = (Nav.control.isAnyLandingGearExtended() == 1) or (abvGndDet ~=-1 and (abvGndDet - 3) < LandingGearGroundHeight)
+                    GearExtended = (Nav.control.isAnyLandingGearDeployed() == 1) or (abvGndDet ~=-1 and (abvGndDet - 3) < LandingGearGroundHeight)
                     -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
                     if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 50) then
                         BrakeIsOn = "Startup"
@@ -9110,7 +9129,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     Kep = Keplers(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
     
                     ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round)
-                    planet = galaxyReference[0]:closestBody(c.getConstructWorldPos())
+                    planet = galaxyReference[0]:closestBody(C.getWorldPosition())
                 end
     
             SetupComplete = false
@@ -9134,7 +9153,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 ProcessElements()
                 coroutine.yield() -- Give it some time to breathe before we do the rest
     
-                AP = APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
+                AP = APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
                     mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
                     navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq, 
                     getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)
@@ -9158,7 +9177,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
                 if shield then SHIELD = ShieldClass(shield, stringmatch, mfloor) end
                 coroutine.yield()
-                u.hide()
+                u.hideWidget()
                 s.showScreen(1)
                 s.showHelper(0)
                 if screenHud_1 then screenHud_1.clear() end
@@ -9226,12 +9245,12 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         function program.onStop()
             _autoconf.hideCategoryPanels()
             if antigrav ~= nil  and not ExternalAGG then
-                antigrav.hide()
+                antigrav.hideWidget()
             end
             if warpdrive ~= nil then
-                warpdrive.hide()
+                warpdrive.hideWidget()
             end
-            c.hide()
+            c.hideWidget()
             Nav.control.switchOffHeadlights()
             -- Open door and extend ramp if available
             if door and (atmosDensity > 0 or (atmosDensity == 0 and coreAltitude < 10000)) then
@@ -9328,7 +9347,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         PROGRAM.onStart()
     end
 
-    function script.onStop()
+    function script.onOnStop()
         PROGRAM.onStop()
     end
 
@@ -9336,11 +9355,11 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         PROGRAM.onTick(timerId)       -- Various tick timers
     end
 
-    function script.onFlush()
+    function script.onOnFlush()
         PROGRAM.onFlush()
     end
 
-    function script.onUpdate()
+    function script.onOnUpdate()
         PROGRAM.onUpdate()
     end
 
@@ -9368,6 +9387,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         PROGRAM.radarLeave(id)
     end
 -- Execute Script
-    globalDeclare(s, c, u, s.getArkTime, math.floor, u.getAtmosphereDensity)
-    PROGRAM = programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
+    globalDeclare(core, unit, system.getArkTime, math.floor, unit.getAtmosphereDensity) -- Variables that need to be Global, arent user defined, and are declared in globals.lua due to use across multple modules where there values can change.
+    PROGRAM = programClass(Nav, core, unit, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
     script.onStart()

@@ -3113,7 +3113,7 @@ return function (options)
   })
 
   local unitSlot = autoconf.getSlotByName("unit")
-  unitSlot.addHandler("start()", {}, fullStartHandlerCode)
+  unitSlot.addHandler("onStart()", {}, fullStartHandlerCode)
 
   for _, slotDefinition in ipairs(slotDefinitions) do
     local slotName = slotDefinition.name
@@ -3176,7 +3176,7 @@ return function (options)
   })
 
   local unitSlot = config.getSlotByName("unit")
-  unitSlot.addHandler("start()", {}, fullStartHandlerCode)
+  unitSlot.addHandler("onStart()", {}, fullStartHandlerCode)
 
   for slotIndex, slotDefinition in ipairs(slotDefinitions) do
     if slotDefinition.class then
@@ -3289,10 +3289,10 @@ local types = {
 
   -- built-in
   control = {
-    filters = { "stop()", "tick(timerId)" }
+    filters = { "onStop()", "tick(timerId)" }
   },
   system = {
-    filters = { "actionStart(action)", "actionStop(action)", "actionLoop(action)", "update()", "flush()", "inputText(text)"},
+    filters = { "actionStart(action)", "actionStop(action)", "actionLoop(action)", "onUpdate()", "onFlush()", "inputText(text)"},
   },
   library = {
   }
@@ -3399,7 +3399,7 @@ __wrap_lua__stopOnError=false
 __wrap_lua__rethrowErrorAlways=false
 __wrap_lua__rethrowErrorIfStopped=true
 __wrap_lua__printError=true
-function __wrap_lua__error(a) if __wrap_lua__stopped then return end a=tostring(a):gsub('"%-%- |STDERROR%-EVENTHANDLER[^"]*"','chunk'):gsub("&","&amp;"):gsub("<","&lt;"):gsub(">","&gt;") local b=unit or self or {} if __wrap_lua__printError and system and system.print then system.print("Error: "..a:gsub("\n","<br>")) end if __wrap_lua__stopOnError then __wrap_lua__stopped=true end if __wrap_lua__stopped and b and b.exit then b.exit() end if __wrap_lua__rethrowErrorAlways or (__wrap_lua__stopped and __wrap_lua__rethrowErrorIfStopped) then error(a) end end __wrap_lua__traceback=traceback or (debug and debug.traceback) or function(a,b)return b or a end local a,b=xpcall(function() {startHandlerCode} end,__wrap_lua__traceback) if not a then __wrap_lua__error(b) if not {scriptObject} then {scriptObject} = {} end end ]=]
+function __wrap_lua__error(a) if __wrap_lua__stopped then return end a=tostring(a):gsub('"%-%- |STDERROR%-EVENTHANDLER[^"]*"','chunk'):gsub("&","&amp;"):gsub("<","&lt;"):gsub(">","&gt;") local b=unit or self or {} if __wrap_lua__printError and system and system.print then system.print("Error: "..a:gsub("\n","<br>")) end if __wrap_lua__stopOnError then __wrap_lua__stopped=true end if __wrap_lua__stopped and b and b.exit then b.exit() end if __wrap_lua__rethrowErrorAlways or (__wrap_lua__stopped and __wrap_lua__rethrowErrorIfStopped) then error(a) end end __wrap_lua__traceback=traceback or (debug and debug.traceback) or function(a,b)return b or a end local a,b=xpcall(function() {startHandlerCode} end,__wrap_lua__traceback) if not a then __wrap_lua__error(b) if not {scriptObject} then {scriptObject}={} end end ]=]
   }
 }
 
