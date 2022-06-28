@@ -1,9 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.740 - UPDATED FOR Mercury Update (PTS ONLY FOR NOW)
+Version 1.740 - UPDATED FOR Mercury Update (PLEASE LET ME KNOW IF YOU SEE ANY DEPRECIATED MESSAGES)
 - Fixed all depreciated functions.
 - Fixed: Issue where changing resolutionX and Y in edit lua parameters would not apply if no databank
 - Fixed: Moved Vertical Takeoff Button to center to not overlap Route button in some resolutions.
+- Updated Radar performance and messages
 
 Version 1.739 - User issue Fixes
 - (MODULAR ONLY) Fixed userglobals.lua not having effect (was due to restoring Edit Lua Parameters support)
