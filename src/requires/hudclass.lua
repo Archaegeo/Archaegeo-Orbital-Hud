@@ -2580,7 +2580,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
 
     function Hud.DrawShield()
         local shieldState = (shield.isActive() == 1) and "Shield Active" or "Shield Disabled"
-        local pvpTime = c.getPvPTimer()
+        local pvpTime = C.getPvPTimer()
         local resistances = shield.getResistances()
         local resistString = "A: "..(10+resistances[1]*100).."% / E: "..(10+resistances[2]*100).."% / K:"..(10+resistances[3]*100).."% / T: "..(10+resistances[4]*100).."%"
         local x, y = shieldX -60, shieldY+30

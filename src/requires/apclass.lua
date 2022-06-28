@@ -329,7 +329,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpd
             swp = false
         end
         if sba then
-            antigrav.setBaseAltitude(sba) 
+            antigrav.setTargetAltitude(sba) 
             sba = false
         end
         if sudi then

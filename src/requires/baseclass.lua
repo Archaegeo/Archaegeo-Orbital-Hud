@@ -210,7 +210,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                     if AntigravTargetAltitude == nil then 
                         AntigravTargetAltitude = coreAltitude
                     end
-                    antigrav.setBaseAltitude(AntigravTargetAltitude)
+                    antigrav.setTargetAltitude(AntigravTargetAltitude)
                 end
                 if pcall(require, "autoconf/custom/archhud/privatelocations") then
                     if #privatelocations>0 then customlocations = addTable(customlocations, privatelocations) end
