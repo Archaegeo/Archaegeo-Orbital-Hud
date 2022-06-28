@@ -74,7 +74,7 @@ _autoconf.displayCategoryPanel = function(elements, size, title, type, widgetPer
             if widgetPerData then
                 widget = system.createWidget(panel, type)
             end
-            system.addDataToWidget(elements[i].getDataId(), widget)
+            system.addDataToWidget(elements[i].getWidgetDataId(), widget)
         end
         _autoconf.panels_size = _autoconf.panels_size + 1
         _autoconf.panels[_autoconf.panels_size] = panel

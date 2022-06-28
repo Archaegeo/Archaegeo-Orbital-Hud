@@ -5,12 +5,14 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
 
         local friendlies = {}
         local sizeMap = { XS = 13, S = 27, M = 55, L = 110, XL = 221}
+        local cTypeString = {"Universe", "Planet", "Asteroid", "Static", "Dynamic", "Space", "Alien"}
         local knownContacts = {}
         local radarContacts = 0
         local target
         local numKnown
         local static
-        local radars = {}
+        local activeRadar
+        local radars = {activeRadar}
         local rType = "Atmo"
         local UpdateRadarCoroutine
         local perisPanelID
@@ -18,6 +20,16 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
         local contacts = {}
         local radarData
         local lastPlay = s.getArkTime()
+        local vec3 = vec3
+        local insert = table.insert
+        local activeRadarState = -4
+        local radarStatus = {
+            [1] = "Operational",
+            [0] = "broken",
+            [-1] = "jammed",
+            [-2] = "obstructed",
+            [-3] = "in use"
+          }
 
     local function UpdateRadarRoutine()
         -- UpdateRadarRoutine Locals
@@ -79,28 +91,36 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
             end
 
         if radar_1 or radar_2 then RADAR.assignRadar() end
-        if (radars[1]) then
-            radarContacts = #radars[1].getConstructIds()
-            local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
+        if (activeRadar) then
+            radarContacts = #activeRadar.getConstructIds()
+
+
          
             if radarContacts > 0 then
+                local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
+                local hasMatchingTransponder = activeRadar.hasMatchingTransponder
+                local getConstructKind = activeRadar.getConstructKind
+                local isConstructAbandoned = activeRadar.isConstructAbandoned
+                local getConstructName = activeRadar.getConstructName
                 local wp = {worldPos["x"],worldPos["y"],worldPos["z"]}  --getTrueWorldPos()
                 local count, count2 = 0, 0
                 local radarDist = velMag * 10
+                local nearPlanet = nearPlanet
                 static, numKnown = 0, 0
                 for v in contactData do
                     local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
                     local sz = sizeMap[size]
                     distance = tonum(distance)
-                    if radars[1].hasMatchingTransponder(id) == 1 then
-                        table.insert(friendlies,id)
+                    if hasMatchingTransponder(id) == 1 then
+                        insert(friendlies,id)
                     end
 
                     if CollisionSystem then
-                        local cType = radars[1].getConstructType(id)
-                        if (AbandonedRadar and radars[1].isConstructAbandoned(id) == 1) or (distance < radarDist and (sz > 27 or cType == "static" or cType == "space")) then
+                        local cType = getConstructKind(id)
+                        local abandoned = AbandonedRadar and isConstructAbandoned(id) == 1
+                        if abandoned or (distance < radarDist and (sz > 27 or cType == 4 or cType == 6)) then
                             static = static + 1
-                            local name = radars[1].getConstructName(id)
+                            local name = getConstructName(id)
                             local construct = contacts[id]
                             if construct == nil then
                                 sz = sz+coreHalfDiag
@@ -109,19 +129,19 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                             end
                             if not construct.skipCalc then 
                                 updateVariables(construct, distance, wp)
-                                if AbandonedRadar and not construct.abandoned and radars[1].isConstructAbandoned(id) == 1 and construct.center then
+                                if abandoned and not construct.abandoned and construct.center then
                                     local time = s.getArkTime()
                                     if lastPlay+5 < time then 
                                         lastPlay = time
                                         play("abRdr", "RD")
                                     end
-                                    s.print("Abandoned Construct: "..name.." ("..size.." "..cType..") at estimated ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
-                                    msgText = "Abandoned Radar Contact ("..cType..") detected"
+                                    s.print("Abandoned Construct: "..name.." ("..size.." ".. cTypeString[cType]..") at estimated ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
+                                    msgText = "Abandoned Radar Contact ("..size.." ".. cTypeString[cType]..") detected"
                                     construct.abandoned = true
                                 end
                                 count2 = count2 + 1
                             else
-                                table.insert(knownContacts, construct) 
+                                insert(knownContacts, construct) 
                             end
                         end
                         count = count + 1
@@ -157,7 +177,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
         end
     end
     local function pickType()
-        if radars[1] then
+        if activeRadar then
             rType = "Atmo"
             if radarData:find('worksInAtmosphere":false') then 
                 rType = "Space" 
@@ -169,20 +189,21 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
     end
 
     function Radar.assignRadar()
-        if radar_2 and radars[1].isOperational() ~= 1 then
-            local jammed = radarData:find('errorMessage":"Jammed') or radarData:find('errorMessage":"Out')
-            if jammed then
-                if radars[1] == radar_2 then 
-                    radars[1] = radar_1
+        if radar_2 and activeRadarState ~= 1 then
+            if activeRadarState == -1 then
+                if activeRadar == radar_2 then 
+                    activeRadar = radar_1
                 else  
-                    radars[1] = radar_2 
+                    activeRadar = radar_2 
                 end
             end
-            radarData = radars[1].getData()
+            radars = {activeRadar}
+            radarData = activeRadar.getWidgetData()
             pickType()
         else
-            radarData = radars[1].getData()
+            radarData = activeRadar.getWidgetData()
         end
+        activeRadarState = activeRadar.getOperationalState()
     end
 
     function Radar.UpdateRadar()
@@ -212,7 +233,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                 radarMessage = radarMessage..svgText( friendx, friendy, "Friendlies In Range", "pbright txtbig txtmid")
                 for k, v in pairs(friendlies) do
                     friendy = friendy + 20
-                    radarMessage = radarMessage..svgText(friendx, friendy, radars[1].getConstructName(v), "pdim txtmid")
+                    radarMessage = radarMessage..svgText(friendx, friendy, activeRadar.getConstructName(v), "pdim txtmid")
                 end
             end
 
@@ -227,14 +248,8 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                 RADAR.ToggleRadarPanel()
             end
         else
-            if radars[1].isOperational()~=1 then
-                if radarData:find('errorMessage":"Obstructed') then
-                    radarMessage = svgText(radarX, radarY, rType.." Radar: Obstructed", "pbright txtbig txtmid")
-                elseif radarData:find('errorMessage":"Jammed') then
-                    radarMessage = svgText(radarX, radarY, rType.." Radar: Jammed", "pbright txtbig txtmid")
-                else  
-                    radarMessage = svgText(radarX, radarY, rType.." Radar: Destroyed", "pbright txtbig txtmid")
-                end
+            if activeRadarState ~= 1 then
+                    radarMessage = svgText(radarX, radarY, rType.." Radar: "..radarStatus[activeRadarState] , "pbright txtbig txtmid")
             else
                 radarMessage = svgText(radarX, radarY, "Radar: No "..rType.." Contacts", "pbright txtbig txtmid")
             end
@@ -247,10 +262,10 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
     end
 
     function Radar.GetClosestName(name)
-        if radars[1] then -- Just match the first one
-            local id,_ = radars[1].getData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
+        if activeRadar then -- Just match the first one
+            local id,_ = activeRadar.getWidgetData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
             if id ~= nil and id ~= "" then
-                name = name .. " " .. radars[1].getConstructName(id)
+                name = name .. " " .. activeRadar.getConstructName(id)
             end
         end
         return name
@@ -291,13 +306,13 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
     end
 
     function Radar.onEnter(id)
-        if radars[1] and not inAtmo and not notPvPZone then 
+        if activeRadar and not inAtmo and not notPvPZone then 
             u.setTimer("contact",0.1) 
         end
     end
 
     function Radar.onLeave(id)
-        if radars[1] and CollisionSystem then 
+        if activeRadar and CollisionSystem then 
             if #contacts > 650 then 
                 id = tostring(id)
                 contacts[id] = nil 
@@ -305,13 +320,15 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
         end
     end
 
-    radars[1]=nil
-    if radar_2 and radar_2.isOperational()==1 then
-        radars[1] = radar_2
+    activeRadar=nil
+    if radar_2 and radar_2.getOperationalState()==1 then
+        activeRadar = radar_2
     else
-        radars[1] = radar_1
+        activeRadar = radar_1
     end
-    radarData = radars[1].getData()
+    activeRadarState=activeRadar.getOperationalState()
+    radars = {activeRadar}
+    radarData = activeRadar.getWidgetData()
     pickType()
     UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
 

@@ -3113,7 +3113,7 @@ return function (options)
   })
 
   local unitSlot = autoconf.getSlotByName("unit")
-  unitSlot.addHandler("start()", {}, fullStartHandlerCode)
+  unitSlot.addHandler("onStart()", {}, fullStartHandlerCode)
 
   for _, slotDefinition in ipairs(slotDefinitions) do
     local slotName = slotDefinition.name
@@ -3176,7 +3176,7 @@ return function (options)
   })
 
   local unitSlot = config.getSlotByName("unit")
-  unitSlot.addHandler("start()", {}, fullStartHandlerCode)
+  unitSlot.addHandler("onStart()", {}, fullStartHandlerCode)
 
   for slotIndex, slotDefinition in ipairs(slotDefinitions) do
     if slotDefinition.class then
@@ -3289,10 +3289,10 @@ local types = {
 
   -- built-in
   control = {
-    filters = { "stop()", "tick(timerId)" }
+    filters = { "onStop()", "tick(timerId)" }
   },
   system = {
-    filters = { "actionStart(action)", "actionStop(action)", "actionLoop(action)", "update()", "flush()", "inputText(text)"},
+    filters = { "actionStart(action)", "actionStop(action)", "actionLoop(action)", "onUpdate()", "onFlush()", "inputText(text)"},
   },
   library = {
   }

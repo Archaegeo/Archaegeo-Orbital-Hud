@@ -57,7 +57,9 @@
     apRoute={set=function (i)apRoute=i end,get=function() return apRoute end}}
 
 -- Unsaved Globals
-    function globalDeclare(s, c, u, systime, mfloor, atmosphere) -- # is how many classes variable is in
+    function globalDeclare(c, u, systime, mfloor, atmosphere) -- # is how many classes variable is in
+        local s = DUSystem
+        local C = DUConstruct
         time = systime() -- 6
         PlayerThrottle = 0 -- 4
         brakeInput2 = 0 -- 2
@@ -87,7 +89,7 @@
         inAtmo = (atmosphere() > 0) -- 5
         atmosDensity = atmosphere() -- 4
         coreAltitude = c.getAltitude() -- 3
-        coreMass = c.getConstructMass() -- 2
+        coreMass = DUConstruct.getMass() -- 2
         gyroIsOn = nil -- 4
         resolutionWidth = ResolutionX -- 3
         resolutionHeight = ResolutionY -- 3
@@ -113,14 +115,14 @@
         OrbitAchieved = false -- 2
         SpaceEngineVertDn = false -- 2
         SpaceEngines = false -- 2
-        constructForward = vec3(c.getConstructWorldOrientationForward()) -- 2
-        constructRight = vec3(c.getConstructWorldOrientationRight()) -- 3
-        coreVelocity = vec3(c.getVelocity()) -- 3
-        constructVelocity = vec3(c.getWorldVelocity()) -- 4
+        constructForward = vec3(C.getWorldOrientationForward()) -- 2
+        constructRight = vec3(C.getWorldOrientationRight()) -- 3
+        coreVelocity = vec3(C.getVelocity()) -- 3
+        constructVelocity = vec3(C.getWorldVelocity()) -- 4
         velMag = vec3(constructVelocity):len() -- 3
         worldVertical = vec3(c.getWorldVertical()) -- 3
         vSpd = -worldVertical:dot(constructVelocity) -- 2
-        worldPos = vec3(c.getConstructWorldPos()) -- 5
+        worldPos = vec3(C.getWorldPosition()) -- 5
         UpVertAtmoEngine = false -- 3
         antigravOn = false -- 4
         throttleMode = true -- 3
@@ -148,6 +150,6 @@
         alignHeading = nil -- 2
         mouseDistance = 0 -- 2
         sEFC = false -- 2
-        MaxSpeed = c.getMaxSpeed() -- 2
+        MaxSpeed = C.getMaxSpeed() -- 2
         if shield then shieldPercent = mfloor(0.5 + shield.getShieldHitpoints() * 100 / shield.getMaxShieldHitpoints()) end
     end

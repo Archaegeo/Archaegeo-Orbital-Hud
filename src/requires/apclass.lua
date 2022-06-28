@@ -1,8 +1,9 @@
-function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1,
+function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1,
     mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
     navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq,
     getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)  
- 
+    local s = DUSystem
+    local C = DUConstruct
 
     local ap = {}
     -- Local Functions and Variables for whole class
@@ -31,7 +32,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         local targetRoll = 0
         local VtPitch = 0
         local orbitalParams = { VectorToTarget = false }
-        local constructUp = vec3(c.getConstructWorldOrientationUp())
+        local constructUp = vec3(C.getWorldOrientationUp())
         local setCruiseSpeed = nil
         local hSpd = 0
         local cmdT = -1
@@ -123,12 +124,12 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
             local hovGndDet = hoverDetectGround()  
             local groundDistance = -1
-            if antigrav and antigrav.getState() == 1 and not ExternalAGG and velMag < minAutopilotSpeed then
+            if antigrav and antigrav.isActive() == 1 and not ExternalAGG and velMag < minAutopilotSpeed then
                 local diffAgg = mabs(coreAltitude - antigrav.getBaseAltitude())
                 if diffAgg < 50 then return diffAgg end
             end
             if telemeter_1 then 
-                groundDistance = telemeter_1.getDistance()
+                groundDistance = telemeter_1.raycast().distance
             end
             if hovGndDet ~= -1 and groundDistance ~= -1 then
                 if hovGndDet < groundDistance then 
@@ -204,8 +205,8 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 end
                 vector = vec3(vector):normalize()
                 local targetVec = (vec3() - vector)
-                local yawAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationRight()) * autopilotStrength
-                local pitchAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationUp()) * autopilotStrength
+                local yawAmount = -getMagnitudeInDirection(targetVec, C.getWorldOrientationRight()) * autopilotStrength
+                local pitchAmount = -getMagnitudeInDirection(targetVec, C.getWorldOrientationUp()) * autopilotStrength
                 if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
                 if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
                 -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
@@ -242,8 +243,8 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 end
                 vector = vec3(vector):normalize()
                 local targetVec = (constructForward - vector)
-                local yawAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationRight()) * autopilotStrength
-                local pitchAmount = -getMagnitudeInDirection(targetVec, c.getConstructWorldOrientationUp()) * autopilotStrength
+                local yawAmount = -getMagnitudeInDirection(targetVec, C.getWorldOrientationRight()) * autopilotStrength
+                local pitchAmount = -getMagnitudeInDirection(targetVec, C.getWorldOrientationUp()) * autopilotStrength
                 if previousYawAmount == 0 then previousYawAmount = yawAmount / 2 end
                 if previousPitchAmount == 0 then previousPitchAmount = pitchAmount / 2 end
                 -- Skip dampening at very low values, and force it to effectively overshoot so it can more accurately align back
@@ -328,7 +329,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             swp = false
         end
         if sba then
-            antigrav.setBaseAltitude(sba) 
+            antigrav.setTargetAltitude(sba) 
             sba = false
         end
         if sudi then
@@ -493,7 +494,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         TargetSet = false -- No matter what
         -- Toggle Autopilot, as long as the target isn't None
         if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
-            if 0.5 * Nav:maxForceForward() / c.g() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
+            if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
             if #apRoute>0 and not finalLand then 
                 AutopilotTargetIndex = getIndex(apRoute[1])
                 ATLAS.UpdateAutopilotTarget()
@@ -842,7 +843,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             if antigravOn then
                 play("aggOff","AG")
                 antigrav.deactivate()
-                antigrav.hide()
+                antigrav.hideWidget()
             else
                 if AntigravTargetAltitude == nil then AntigravTargetAltitude = coreAltitude end
                 if AntigravTargetAltitude < 1000 then
@@ -850,7 +851,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 end
                 play("aggOn","AG")
                 antigrav.activate()
-                antigrav.show()
+                antigrav.showWidget()
             end
         end
     end
@@ -946,12 +947,12 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         end
         local function RefreshLastMaxBrake(gravity, force)
             if gravity == nil then
-                gravity = c.g()
+                gravity = c.getGravityIntensity()
             end
             gravity = round(gravity, 5) -- round to avoid insignificant updates
             if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
                 local speed = coreVelocity:len()
-                local maxBrake = jdecode(u.getData()).maxBrake 
+                local maxBrake = jdecode(u.getWidgetData()).maxBrake 
                 if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
                     maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
                     maxBrake = maxBrake / atmosDensity
@@ -970,7 +971,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             end
         end
         notPvPZone, pvpDist = safeZone(worldPos)
-        MaxSpeed = c.getMaxSpeed()  
+        MaxSpeed = C.getMaxSpeed()  
         if AutopilotTargetName ~= "None" and (autopilotTargetPlanet or CustomTarget) then
             travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
         end
@@ -1030,13 +1031,13 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 local axisWorldDirection = vec3()
             
                 if (commandAxis == axisCommandId.longitudinal) then
-                    axisCRefDirection = vec3(c.getConstructOrientationForward())
+                    axisCRefDirection = vec3(C.getOrientationForward())
                     axisWorldDirection = constructForward
                 elseif (commandAxis == axisCommandId.vertical) then
-                    axisCRefDirection = vec3(c.getConstructOrientationUp())
+                    axisCRefDirection = vec3(C.getOrientationUp())
                     axisWorldDirection = constructUp
                 elseif (commandAxis == axisCommandId.lateral) then
-                    axisCRefDirection = vec3(c.getConstructOrientationRight())
+                    axisCRefDirection = vec3(C.getOrientationRight())
                     axisWorldDirection = constructRight
                 else
                     return vec3()
@@ -1045,7 +1046,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 local gravityAcceleration = vec3(c.getWorldGravity())
                 local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
             
-                local airResistanceAcceleration = vec3(c.getWorldAirFrictionAcceleration())
+                local airResistanceAcceleration = vec3(C.getWorldAirFrictionAcceleration())
                 local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
             
 
@@ -1076,13 +1077,13 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 local axisWorldDirection = vec3()
             
                 if (commandAxis == axisCommandId.longitudinal) then
-                    axisCRefDirection = vec3(c.getConstructOrientationForward())
+                    axisCRefDirection = vec3(C.getOrientationForward())
                     axisWorldDirection = constructForward
                 elseif (commandAxis == axisCommandId.vertical) then
-                    axisCRefDirection = vec3(c.getConstructOrientationUp())
+                    axisCRefDirection = vec3(C.getOrientationUp())
                     axisWorldDirection = constructUp
                 elseif (commandAxis == axisCommandId.lateral) then
-                    axisCRefDirection = vec3(c.getConstructOrientationRight())
+                    axisCRefDirection = vec3(C.getOrientationRight())
                     axisWorldDirection = constructRight
                 else
                     return vec3()
@@ -1091,7 +1092,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 local gravityAcceleration = vec3(c.getWorldGravity())
                 local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
             
-                local airResistanceAcceleration = vec3(c.getWorldAirFrictionAcceleration())
+                local airResistanceAcceleration = vec3(C.getWorldAirFrictionAcceleration())
                 local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
             
                 local currentAxisSpeedMS = coreVelocity:dot(axisCRefDirection)
@@ -1190,13 +1191,13 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
             worldVertical = (planet.center - worldPos):normalize() -- I think also along gravity hopefully?
         end
 
-        constructUp = vec3(c.getConstructWorldOrientationUp())
-        constructForward = vec3(c.getConstructWorldOrientationForward())
-        constructRight = vec3(c.getConstructWorldOrientationRight())
-        constructVelocity = vec3(c.getWorldVelocity())
-        coreVelocity = vec3(c.getVelocity())
-        worldPos = vec3(c.getConstructWorldPos())
-        coreMass =  c.getConstructMass()
+        constructUp = vec3(C.getWorldOrientationUp())
+        constructForward = vec3(C.getWorldOrientationForward())
+        constructRight = vec3(C.getWorldOrientationRight())
+        constructVelocity = vec3(C.getWorldVelocity())
+        coreVelocity = vec3(C.getVelocity())
+        worldPos = vec3(C.getWorldPosition())
+        coreMass =  C.getMass()
         velMag = vec3(constructVelocity):len()
         vSpd = -worldVertical:dot(constructVelocity)
         adjustedRoll = getRoll(worldVertical, constructForward, constructRight) 
@@ -1210,7 +1211,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         local currentRollDegSign = utils.sign(adjustedRoll)
 
         -- Rotation
-        local constructAngularVelocity = vec3(c.getWorldAngularVelocity())
+        local constructAngularVelocity = vec3(C.getWorldAngularVelocity())
         local targetAngularVelocity =
             finalPitchInput * pitchSpeedFactor * constructRight + finalRollInput * rollSpeedFactor * constructForward +
                 finalYawInput * yawSpeedFactor * constructUp
@@ -1270,7 +1271,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         end
 
         if antigrav then
-            antigravOn = (antigrav.getState() == 1)
+            antigravOn = (antigrav.isActive() == 1)
         end
 
 
@@ -1297,17 +1298,18 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
         rollInput2 = 0
         pitchInput2 = 0
         sys = galaxyReference[0]
-        planet = sys:closestBody(c.getConstructWorldPos())
+        local cWorldPos = C.getWorldPosition()
+        planet = sys:closestBody(cWorldPos)
         kepPlanet = Kep(planet)
-        orbit = kepPlanet:orbitalParameters(c.getConstructWorldPos(), constructVelocity)
+        orbit = kepPlanet:orbitalParameters(cWorldPos, constructVelocity)
         if coreAltitude == 0 then
             coreAltitude = (worldPos - planet.center):len() - planet.radius
         end
         nearPlanet = u.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
 
-        local gravity = planet:getGravity(c.getConstructWorldPos()):len() * coreMass
+        local gravity = planet:getGravity(cWorldPos):len() * coreMass
         targetRoll = 0
-        local maxKinematicUp = c.getMaxKinematicsParametersAlongAxis("ground", c.getConstructOrientationUp())[1]
+        local maxKinematicUp = C.getMaxThrustAlongAxis("ground", C.getOrientationUp())[1]
 
         if sivl == 0 then
             if isRemote() == 1 and holdingShift then
@@ -1942,7 +1944,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
                 -- We need the travel time, the one we compute elsewhere includes estimates on acceleration
                 -- Also it doesn't account for velocity not being in the correct direction, this should
                 local timeUntilBrake = 99999 -- Default in case accel and velocity are both 0 
-                local accel = -(vec3(c.getWorldAcceleration()):dot(constructVelocity:normalize()))
+                local accel = -(vec3(C.getWorldAcceleration()):dot(constructVelocity:normalize()))
                 local velAlongTarget = uclamp(constructVelocity:dot((targetCoords - worldPos):normalize()),0,velMag)
                 if velAlongTarget > 0 or accel > 0 then -- (otherwise divide by 0 errors)
                     timeUntilBrake = Kinematic.computeTravelTime(velAlongTarget, accel, AutopilotDistance-brakeDistance)
@@ -2967,7 +2969,7 @@ function APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, wa
 
         -- Rotation
         local angularAcceleration = torqueFactor * (targetAngularVelocity - constructAngularVelocity)
-        local airAcceleration = vec3(c.getWorldAirFrictionAngularAcceleration())
+        local airAcceleration = vec3(C.getWorldAirFrictionAngularAcceleration())
         angularAcceleration = angularAcceleration - airAcceleration -- Try to compensate air friction
         
         Nav:setEngineTorqueCommand('torque', angularAcceleration, keepCollinearity, 'airfoil', '', '',

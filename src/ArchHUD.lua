@@ -153,7 +153,7 @@ end
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 1.739
+VERSION_NUMBER = 1.740
 
 
 -- DU Events written for wrap and minimization. Written by Dimencia and Archaegeo. Optimization and Automation of scripting by ChronosWS  Linked sources where appropriate, most have been modified.
@@ -161,7 +161,7 @@ VERSION_NUMBER = 1.739
         PROGRAM.onStart()
     end
 
-    function script.onStop()
+    function script.onOnStop()
         PROGRAM.onStop()
     end
 
@@ -169,11 +169,11 @@ VERSION_NUMBER = 1.739
         PROGRAM.onTick(timerId)       -- Various tick timers
     end
 
-    function script.onFlush()
+    function script.onOnFlush()
         PROGRAM.onFlush()
     end
 
-    function script.onUpdate()
+    function script.onOnUpdate()
         PROGRAM.onUpdate()
     end
 
@@ -202,7 +202,7 @@ VERSION_NUMBER = 1.739
     end
 
 -- Execute Script
-    globalDeclare(system, core, unit, system.getArkTime, math.floor, unit.getAtmosphereDensity) -- Variables that need to be Global, arent user defined, and are declared in globals.lua due to use across multple modules where there values can change.
-    PROGRAM = programClass(Nav, core, unit, system, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
+    globalDeclare(core, unit, system.getArkTime, math.floor, unit.getAtmosphereDensity) -- Variables that need to be Global, arent user defined, and are declared in globals.lua due to use across multple modules where there values can change.
+    PROGRAM = programClass(Nav, core, unit, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
 
     script.onStart() 

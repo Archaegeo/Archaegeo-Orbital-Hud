@@ -29,7 +29,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 else
                     if hasGear then
                         play("grOut","LG",1)
-                        Nav.control.extendLandingGears()                            
+                        Nav.control.deployLandingGears()                            
                     end
                     apBrk = false
                     navCom:setTargetGroundAltitude(LandingGearGroundHeight)
@@ -39,7 +39,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 end
             elseif hasGear and not BrakeLanding  then
                 play("grOut","LG",1)
-                Nav.control.extendLandingGears() -- Actually extend
+                Nav.control.deployLandingGears() -- Actually extend
             end
         else
             if hasGear then
@@ -230,8 +230,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 UnitHidden = not UnitHidden
                 if not UnitHidden then
                     play("wid","DH")
-                    u.show()
-                    c.show()
+                    u.showWidget()
+                    c.showWidget()
                     if atmofueltank_size > 0 then
                         _autoconf.displayCategoryPanel(atmofueltank, atmofueltank_size,
                             "Atmo Fuel", "fuel_container")
@@ -249,15 +249,15 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     end
                     parentingPanelId = s.createWidgetPanel("Docking")
                     parentingWidgetId = s.createWidget(parentingPanelId,"parenting")
-                    s.addDataToWidget(u.getDataId(),parentingWidgetId)
+                    s.addDataToWidget(u.getWidgetDataId(),parentingWidgetId)
                     coreCombatStressPanelId = s.createWidgetPanel("Core combat stress")
                     coreCombatStressgWidgetId = s.createWidget(coreCombatStressPanelId,"core_stress")
-                    s.addDataToWidget(c.getDataId(),coreCombatStressgWidgetId)
-                    if shield ~= nil then shield.show() end
+                    s.addDataToWidget(c.getWidgetDataId(),coreCombatStressgWidgetId)
+                    if shield ~= nil then shield.showWidget() end
                 else
                     play("hud","DH")
-                    u.hide()
-                    c.hide()
+                    u.hideWidget()
+                    c.hideWidget()
                     if fuelPanelID ~= nil then
                         sysDestWid(fuelPanelID)
                         fuelPanelID = nil
@@ -278,9 +278,10 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                         sysDestWid(rocketfuelPanelID)
                         rocketfuelPanelID = nil
                     end
-                    if shield ~= nil then shield.hide() end
+                    if shield ~= nil then shield.hideWidget() end
                 end
             end
+
             toggleView = false
             if AltIsOn and holdingShift then 
                 local onboard = ""

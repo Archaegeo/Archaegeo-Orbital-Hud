@@ -1,5 +1,8 @@
-function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
-    
+function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
+    local s = DUSystem
+    local C = DUConstruct
+    local P = DUPlayer
+    local library = DULibrary
     -- Local variables and functions
         local program = {}
 
@@ -179,26 +182,20 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                     coroutine.yield()
                     if valuesAreSet then
                         msgText = "Loaded Saved Variables"
-                        resolutionWidth = ResolutionX
-                        resolutionHeight = ResolutionY
-                        BrakeToggleStatus = BrakeToggleDefault
-                        userControlScheme = string.lower(userControlScheme)
-                        autoRoll = autoRollPreference
-                        adjustedAtmoSpeedLimit = AtmoSpeedLimit
                     elseif not useTheseSettings then
-                        msgText = "No Saved Variables Found - Exit HUD to save settings"
+                        msgText = "No Databank Saved Variables Found\nVariables will save to Databank on standing"
+                        msgTimer = 5
                     end
-                    if LastVersionUpdate < 1.500 then
-                        if LowOrbitHeight < 2000 then
-                            msgText = "Updating LowOrbitHeight to new minimum default of 2000."
-                            LowOrbitHeight = 2000
-                        end
-                    end
-                    LastVersionUpdate = VERSION_NUMBER
                     if #SavedLocations>0 then customlocations = addTable(customlocations, SavedLocations) end
                 else
                     msgText = "No databank found. Attach one to control u and rerun \nthe autoconfigure to save preferences and locations"
                 end
+                resolutionWidth = ResolutionX
+                resolutionHeight = ResolutionY
+                BrakeToggleStatus = BrakeToggleDefault
+                userControlScheme = string.lower(userControlScheme)
+                autoRoll = autoRollPreference
+                adjustedAtmoSpeedLimit = AtmoSpeedLimit
                 if (LastStartTime + 180) < time then -- Variables to reset if out of seat (and not on hud) for more than 3 min
                     LastMaxBrakeInAtmo = 0
                 end
@@ -213,13 +210,13 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                     if AntigravTargetAltitude == nil then 
                         AntigravTargetAltitude = coreAltitude
                     end
-                    antigrav.setBaseAltitude(AntigravTargetAltitude)
+                    antigrav.setTargetAltitude(AntigravTargetAltitude)
                 end
                 if pcall(require, "autoconf/custom/archhud/privatelocations") then
                     if #privatelocations>0 then customlocations = addTable(customlocations, privatelocations) end
                 end
                 VectorStatus = "Proceeding to Waypoint"
-                if MaxGameVelocity < 0 then MaxGameVelocity = c.getMaxSpeed()-0.1 end
+                if MaxGameVelocity < 0 then MaxGameVelocity = C.getMaxSpeed()-0.1 end
             end
 
             local function ProcessElements()
@@ -245,7 +242,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                 local slottedTanksSpace = _G["spacefueltank_size"]
                 local slottedTanksRocket = _G["rocketfueltank_size"]
                 for k in pairs(elementsID) do --Look for space engines, landing gear, fuel tanks if not slotted and c size
-                    local type = c.getElementTypeById(elementsID[k])
+                    local type = c.getElementDisplayNameById(elementsID[k])
                     if stringmatch(type, '^.*Atmospheric Engine$') then
                         if stringmatch(tostring(c.getElementTagsById(elementsID[k])), '^.*vertical.*$') and c.getElementForwardById(elementsID[k])[3]>0 then
                             UpVertAtmoEngine = true
@@ -305,7 +302,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
 							
 							local slottedIndex = 0
 							for j = 1, slottedTanksAtmo do
-								if name == jdecode(u["atmofueltank_" .. j].getData()).name then
+								if name == jdecode(u["atmofueltank_" .. j].getWidgetData()).name then
 									slottedIndex = j
 									break
 								end
@@ -338,7 +335,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
 							
 							local slottedIndex = 0
 							for j = 1, slottedTanksRocket do
-								if name == jdecode(u["rocketfueltank_" .. j].getData()).name then
+								if name == jdecode(u["rocketfueltank_" .. j].getWidgetData()).name then
 									slottedIndex = j
 									break
 								end
@@ -371,7 +368,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                             
 							local slottedIndex = 0
 							for j = 1, slottedTanksSpace do
-								if name == jdecode(u["spacefueltank_" .. j].getData()).name then
+								if name == jdecode(u["spacefueltank_" .. j].getWidgetData()).name then
 									slottedIndex = j
 									break
 								end
@@ -391,7 +388,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             local function SetupChecks()
                 
                 if gyro ~= nil then
-                    gyroIsOn = gyro.getState() == 1
+                    gyroIsOn = gyro.isActive() == 1
                 end
                 if not stablized then 
                     navCom:deactivateGroundEngineAltitudeStabilization()
@@ -418,23 +415,23 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                     end
                 end
                 if antigrav then
-                    antigravOn = (antigrav.getState() == 1)
-                    if antigravOn and not ExternalAGG then antigrav.show() end
+                    antigravOn = (antigrav.isActive() == 1)
+                    if antigravOn and not ExternalAGG then antigrav.showWidget() end
                 end
                 -- unfreeze the player if he is remote controlling the construct
                 if isRemote() == 1 and RemoteFreeze then
-                    s.freeze(1)
+                    P.freeze(1)
                 else
-                    s.freeze(0)
+                    P.freeze(0)
                 end
                 if hasGear then
                     if abvGndDet ~= -1 and not antigravOn then
-                        Nav.control.extendLandingGears()
+                        Nav.control.deployLandingGears()
                     else
                         Nav.control.retractLandingGears()
                     end
                 end
-                GearExtended = (Nav.control.isAnyLandingGearExtended() == 1) or (abvGndDet ~=-1 and (abvGndDet - 3) < LandingGearGroundHeight)
+                GearExtended = (Nav.control.isAnyLandingGearDeployed() == 1) or (abvGndDet ~=-1 and (abvGndDet - 3) < LandingGearGroundHeight)
                 -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
                 if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 50) then
                     BrakeIsOn = "Startup"
@@ -528,7 +525,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                 Kep = Keplers(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
 
                 ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round)
-                planet = galaxyReference[0]:closestBody(c.getConstructWorldPos())
+                planet = galaxyReference[0]:closestBody(C.getWorldPosition())
             end
 
         SetupComplete = false
@@ -552,7 +549,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
             ProcessElements()
             coroutine.yield() -- Give it some time to breathe before we do the rest
 
-            AP = APClass(Nav, c, u, s, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
+            AP = APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
                 mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
                 navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq, 
                 getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)
@@ -576,7 +573,7 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
                 isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
             if shield then SHIELD = ShieldClass(shield, stringmatch, mfloor) end
             coroutine.yield()
-            u.hide()
+            u.hideWidget()
             s.showScreen(1)
             s.showHelper(0)
             if screenHud_1 then screenHud_1.clear() end
@@ -644,12 +641,12 @@ function programClass(Nav, c, u, s, library, atlas, vBooster, hover, telemeter_1
     function program.onStop()
         _autoconf.hideCategoryPanels()
         if antigrav ~= nil  and not ExternalAGG then
-            antigrav.hide()
+            antigrav.hideWidget()
         end
         if warpdrive ~= nil then
-            warpdrive.hide()
+            warpdrive.hideWidget()
         end
-        c.hide()
+        c.hideWidget()
         Nav.control.switchOffHeadlights()
         -- Open door and extend ramp if available
         if door and (atmosDensity > 0 or (atmosDensity == 0 and coreAltitude < 10000)) then
