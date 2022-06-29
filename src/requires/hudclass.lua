@@ -2558,9 +2558,8 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
 
         -- DrawRadarInfo() variables
 
-        local friendy = ConvertResolutionY(15)
-        local friendx = ConvertResolutionX(1370)
-        local msg, where
+        local friendy = ConvertResolutionY(125)
+        local friendx = ConvertResolutionX(1225)
 
     function Hud.DrawRadarInfo()
         radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY) 

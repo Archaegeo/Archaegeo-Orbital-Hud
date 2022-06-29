@@ -19,7 +19,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
         local peris = 0
         local contacts = {}
         local radarData
-        local lastPlay = s.getArkTime()
+        local lastPlay = 0
         local vec3 = vec3
         local insert = table.insert
         local activeRadarState = -4
@@ -93,9 +93,6 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
         if radar_1 or radar_2 then RADAR.assignRadar() end
         if (activeRadar) then
             radarContacts = #activeRadar.getConstructIds()
-
-
-         
             if radarContacts > 0 then
                 local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
                 local hasMatchingTransponder = activeRadar.hasMatchingTransponder
@@ -107,6 +104,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
                 local radarDist = velMag * 10
                 local nearPlanet = nearPlanet
                 static, numKnown = 0, 0
+                friendlies = {}
                 for v in contactData do
                     local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
                     local sz = sizeMap[size]
@@ -218,9 +216,7 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
     end
 
     function Radar.GetRadarHud(friendx, friendy, radarX, radarY)
-        local friends = friendlies
         local radarMessage, msg
-        friendlies = {}
         local num = numKnown or 0 
         if radarContacts > 0 then 
             if CollisionSystem then 

@@ -1,5 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.741
+- Changed radar message while `CollisionSystem` is true to "#/# K/PC : # Ignored" where K is known location, PC is within 10 sec range at current speed (but not necessarily on collision course)
+- Fixed Radar not showing list of friendlies in range (matching tags on active transponders)
+- Changed default AtmoSpeedLimit to 1175 (1200 is the floor speed for friction burn damage)
+
 Version 1.740 - UPDATED FOR Mercury Update (PLEASE LET ME KNOW IF YOU SEE ANY DEPRECIATED MESSAGES)
 - Fixed all depreciated functions.
 - Fixed: Issue where changing resolutionX and Y in edit lua parameters would not apply if no databank
