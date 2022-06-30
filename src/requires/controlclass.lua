@@ -136,6 +136,17 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     ReversalIsOn = nil
                 end                
             end
+            local function holdingShiftOff()
+                if sysIsVwLock() == 1 then
+                    simulatedX = 0
+                    simulatedY = 0 -- Reset for steering purposes
+                    sysLockVw(PrevViewLock)
+                elseif isRemote() == 1 and ShiftShowsRemoteButtons then
+                    Animated = false
+                    Animating = false
+                end
+                holdingShift = false
+            end
         if action == "gear" then
             CONTROL.landingGear()
         elseif action == "light" then
@@ -380,14 +391,18 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
         elseif action == "lshift" then
             apButtonsHovered = false
             if AltIsOn then holdingShift = true end
-            if sysIsVwLock() == 1 then
-                holdingShift = true
-                PrevViewLock = sysIsVwLock()
-                sysLockVw(1)
-            elseif isRemote() == 1 and ShiftShowsRemoteButtons then
-                holdingShift = true
-                Animated = false
-                Animating = false
+            if holdingShift then
+                holdingShiftOff()
+            else
+                if sysIsVwLock() == 1 then
+                    holdingShift = true
+                    PrevViewLock = sysIsVwLock()
+                    sysLockVw(1)
+                elseif isRemote() == 1 and ShiftShowsRemoteButtons then
+                    holdingShift = true
+                    Animated = false
+                    Animating = false
+                end
             end
         elseif action == "brake" then
             if BrakeToggleStatus or AltIsOn then
@@ -457,6 +472,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             else
                 msgText = "No antigrav found"
             end
+        elseif action == "leftmouse" then
+            if holdingShift then holdingShiftOff() end
         end
     end
 
@@ -514,16 +531,6 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
         elseif action == "groundaltitudedown" then
             groundAltStop()
             toggleView = false
-        elseif action == "lshift" then
-            if sysIsVwLock() == 1 then
-                simulatedX = 0
-                simulatedY = 0 -- Reset for steering purposes
-                sysLockVw(PrevViewLock)
-            elseif isRemote() == 1 and ShiftShowsRemoteButtons then
-                Animated = false
-                Animating = false
-            end
-            holdingShift = false
         elseif action == "brake" then
             if not BrakeToggleStatus and not AltIsOn then
                 if BrakeIsOn then

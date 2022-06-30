@@ -560,7 +560,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
 
             atlasSetup()
             if radar_1 then 
-                RADAR = RadarClass(c, s, u, library, radar_1, radar_2, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
+                RADAR = RadarClass(c, s, u, library, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
             end
             if HudClass then 
                 HUD = HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapon, mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, navCom, 

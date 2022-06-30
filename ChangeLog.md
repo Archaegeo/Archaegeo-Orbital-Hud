@@ -1,7 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.741
-- Fixed Radar not showing list of friendlies in range (matching tags on active transponders)
+Version 1.741 - Now with Leftmouse Button support
+- While not in free look (normal), tap left shift to toggle on buttons and mouse pointer.  Move pointer over button and use LMB to press it. 
+    Buttons will turn off. You can tap left shift without pressing lmb to turn buttons back off.
+- Emergency Warp Initiation - If in pvp space, and you have a warp target, and enough cells in container, and a radar contact appears 
+that is closer than `EmergencyWarp` distance, ship will initiate warp.  (Will still take at least 20 seconds)
+- New Global `EmergencyWarp` = 0 (Default: 0) If > 0 and a radar contact is detected in pvp space and the contact is closer than EmergencyWarp value, and all other warp conditions met, will initiate warp.
+- Fixed long term Radar issure of not showing list of friendlies in range (matching tags on active transponders)
 - Changed default AtmoSpeedLimit to 1175 (1200 is the floor speed for friction burn damage)
 - Modified safezone determination to use new construct function calls.
 

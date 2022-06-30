@@ -1,4 +1,4 @@
-function RadarClass(c, s, u, library, radar_1, radar_2, 
+function RadarClass(c, s, u, library, radar_1, radar_2, warpdrive,
     mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) -- Everything related to radar but draw data passed to HUD Class.
     local Radar = {}
     -- Radar Class locals
@@ -304,6 +304,11 @@ function RadarClass(c, s, u, library, radar_1, radar_2,
     function Radar.onEnter(id)
         if activeRadar and not inAtmo and not notPvPZone then 
             u.setTimer("contact",0.1) 
+            if EmergencyWarp > 0 and warpdrive and activeRadar.getConstructDistance(id) < EmergencyWarp and warpdrive.getStatus() == 15 then
+                msgText = "PVP CONTACT - INITIATING WARP"
+                msgTimer = 7
+                warpdrive.initiate()
+            end
         end
     end
 
