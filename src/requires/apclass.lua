@@ -51,24 +51,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpd
         local parseRadar = false
         local lastMouseTime = 0
 
-        -- safezone() variables
-            local safeWorldPos = vec3({13771471,7435803,-128971})
-            local safeRadius = 18000000
-            local szradius = 500000
-            local distsz, distp = math.huge
-            local szsafe 
-        local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
-            distsz = vec3(WorldPos):dist(safeWorldPos)
-            if distsz < safeRadius then  
-                return true, mabs(distsz - safeRadius)
-            end 
-            distp = vec3(WorldPos):dist(vec3(planet.center))
-            if distp < szradius then szsafe = true else szsafe = false end
-            if mabs(distp - szradius) < mabs(distsz - safeRadius) then 
-                return szsafe, mabs(distp - szradius)
-            else
-                return szsafe, mabs(distsz - safeRadius)
-            end
+        local function safeZone() -- Thanks to @SeM for the base code, modified to work with existing Atlas
+            return (C.isInPvPZone()~=1), mabs(C.getDistanceToSafeZone())
         end
         local function GetAutopilotBrakeDistanceAndTime(speed)
             -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
@@ -970,7 +954,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpd
                 lastMaxBrakeAtG = gravity
             end
         end
-        notPvPZone, pvpDist = safeZone(worldPos)
+        notPvPZone, pvpDist = safeZone()
         MaxSpeed = C.getMaxSpeed()  
         if AutopilotTargetName ~= "None" and (autopilotTargetPlanet or CustomTarget) then
             travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
