@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.740
+VERSION_NUMBER = 0.741
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -64,7 +64,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     AutopilotSpaceDistance = 5000 -- (Default: 5000) Target distance AP will try to stop from a custom waypoint in space.  Good ships can lower this value a lot.
     TargetOrbitRadius = 1.2 -- (Default: 1.2) How tight you want to orbit the planet at end of autopilot.  The smaller the value the tighter the orbit.  Value is multiple of Atmospheric Height
     LowOrbitHeight = 2000 -- (Default: 2000) Height of Orbit above top of atmospehre when using Alt-4-4 same planet autopilot or alt-6-6 in space.
-    AtmoSpeedLimit = 1050 -- (Default: 1050) Speed limit in Atmosphere in km/h. AtmoSpeedAssist will cause ship to throttle back when this speed is reached.
+    AtmoSpeedLimit = 1175 -- (Default: 1175) Speed limit in Atmosphere in km/h. AtmoSpeedAssist will cause ship to throttle back when this speed is reached.
     SpaceSpeedLimit = 66000 -- (Default: 66000) Space speed limit in KM/H. If you hit this speed and are NOT in active autopilot, engines will turn off to prevent using all fuel (66000 means they wont turn off)
     AutoTakeoffAltitude = 1000 -- (Default: 1000) How high above your ground height AutoTakeoff tries to put you
     TargetHoverHeight = 50 -- (Default: 50) Hover height above ground when G used to lift off, 50 is above all max hover heights.
@@ -79,10 +79,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     ContainerOptimization = 0 -- (Default: 0) For accurate estimates on unslotted tanks, set this to the Container Optimization level of the person who placed the tanks. Ignored for slotted tanks.
     FuelTankOptimization = 0 -- (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank optimization skill level of the person who placed the tank. Ignored for slotted tanks.
     AutoShieldPercent = 0 -- (Default: 0) Automatically adjusts shield resists once per minute if shield percent is less than this value.
+    EmergencyWarp = 0 -- (Default: 0) If > 0 and a radar contact is detected in pvp space and the contact is closer than EmergencyWarp value, and all other warp conditions met, will initiate warp.
+
     savableVariablesHandling = {YawStallAngle={set=function (i)YawStallAngle=i end,get=function() return YawStallAngle end},PitchStallAngle={set=function (i)PitchStallAngle=i end,get=function() return PitchStallAngle end},brakeLandingRate={set=function (i)brakeLandingRate=i end,get=function() return brakeLandingRate end},MaxPitch={set=function (i)MaxPitch=i end,get=function() return MaxPitch end}, ReEntryPitch={set=function (i)ReEntryPitch=i end,get=function() return ReEntryPitch end},LockPitchTarget={set=function (i)LockPitchTarget=i end,get=function() return LockPitchTarget end}, AutopilotSpaceDistance={set=function (i)AutopilotSpaceDistance=i end,get=function() return AutopilotSpaceDistance end}, TargetOrbitRadius={set=function (i)TargetOrbitRadius=i end,get=function() return TargetOrbitRadius end}, LowOrbitHeight={set=function (i)LowOrbitHeight=i end,get=function() return LowOrbitHeight end},
     AtmoSpeedLimit={set=function (i)AtmoSpeedLimit=i end,get=function() return AtmoSpeedLimit end},SpaceSpeedLimit={set=function (i)SpaceSpeedLimit=i end,get=function() return SpaceSpeedLimit end},AutoTakeoffAltitude={set=function (i)AutoTakeoffAltitude=i end,get=function() return AutoTakeoffAltitude end},TargetHoverHeight={set=function (i)TargetHoverHeight=i end,get=function() return TargetHoverHeight end}, LandingGearGroundHeight={set=function (i)LandingGearGroundHeight=i end,get=function() return LandingGearGroundHeight end}, ReEntryHeight={set=function (i)ReEntryHeight=i end,get=function() return ReEntryHeight end},
     MaxGameVelocity={set=function (i)MaxGameVelocity=i end,get=function() return MaxGameVelocity end}, AutopilotInterplanetaryThrottle={set=function (i)AutopilotInterplanetaryThrottle=i end,get=function() return AutopilotInterplanetaryThrottle end},warmup={set=function (i)warmup=i end,get=function() return warmup end},fuelTankHandlingAtmo={set=function (i)fuelTankHandlingAtmo=i end,get=function() return fuelTankHandlingAtmo end},fuelTankHandlingSpace={set=function (i)fuelTankHandlingSpace=i end,get=function() return fuelTankHandlingSpace end},
-    fuelTankHandlingRocket={set=function (i)fuelTankHandlingRocket=i end,get=function() return fuelTankHandlingRocket end},ContainerOptimization={set=function (i)ContainerOptimization=i end,get=function() return ContainerOptimization end},FuelTankOptimization={set=function (i)FuelTankOptimization=i end,get=function() return FuelTankOptimization end},AutoShieldPercent={set=function (i)AutoShieldPercent=i end,get=function() return AutoShieldPercent end}}
+    fuelTankHandlingRocket={set=function (i)fuelTankHandlingRocket=i end,get=function() return fuelTankHandlingRocket end},ContainerOptimization={set=function (i)ContainerOptimization=i end,get=function() return ContainerOptimization end},FuelTankOptimization={set=function (i)FuelTankOptimization=i end,get=function() return FuelTankOptimization end},AutoShieldPercent={set=function (i)AutoShieldPercent=i end,get=function() return AutoShieldPercent end},
+    EmergencyWarp={set=function (i)EmergencyWarp=i end,get=function() return EmergencyWarp end}}
 
 
 -- HUD Postioning variables
@@ -1266,7 +1269,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         return Atlas
     end
     -- ArchHUD classes  
-    local function RadarClass(c, s, u, library, radar_1, radar_2, 
+    local function RadarClass(c, s, u, library, radar_1, radar_2, warpdrive,
         mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) -- Everything related to radar but draw data passed to HUD Class.
         local Radar = {}
         -- Radar Class locals
@@ -1287,7 +1290,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local peris = 0
             local contacts = {}
             local radarData
-            local lastPlay = s.getArkTime()
+            local lastPlay = 0
             local vec3 = vec3
             local insert = table.insert
             local activeRadarState = -4
@@ -1361,9 +1364,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             if radar_1 or radar_2 then RADAR.assignRadar() end
             if (activeRadar) then
                 radarContacts = #activeRadar.getConstructIds()
-    
-    
-             
                 if radarContacts > 0 then
                     local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
                     local hasMatchingTransponder = activeRadar.hasMatchingTransponder
@@ -1375,6 +1375,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     local radarDist = velMag * 10
                     local nearPlanet = nearPlanet
                     static, numKnown = 0, 0
+                    friendlies = {}
                     for v in contactData do
                         local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
                         local sz = sizeMap[size]
@@ -1486,9 +1487,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         end
     
         function Radar.GetRadarHud(friendx, friendy, radarX, radarY)
-            local friends = friendlies
             local radarMessage, msg
-            friendlies = {}
             local num = numKnown or 0 
             if radarContacts > 0 then 
                 if CollisionSystem then 
@@ -1576,6 +1575,11 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         function Radar.onEnter(id)
             if activeRadar and not inAtmo and not notPvPZone then 
                 u.setTimer("contact",0.1) 
+                if warpdrive and EmergencyWarp > 0 and activeRadar.getConstructDistance(id) < EmergencyWarp and warpdrive.getStatus() == 15 then
+                    msgText = "INITIATING WARP"
+                    msgTimer = 7
+                    warpdrive.initiate()
+                end
             end
         end
     
@@ -1605,7 +1609,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         end   
     
         return Radar
-    end 
+    end  
     local function ShieldClass(shield, stringmatch, mfloor) -- Everything related to radar but draw data passed to HUD Class.
         local Shield = {}
         local RCD = shield.getResistancesCooldown()
@@ -2803,7 +2807,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
                 local targetHeight = orbitMapSize*1.5
                 if SelectedTab == "INFO" then
-                    targetHeight = 25*9
+                    targetHeight = 25*10
                 end
     
                 if SelectedTab ~= "HIDE" then
@@ -4161,6 +4165,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 newContent[#newContent + 1] = svgText(midX, startY+height*6, HUD.FuelUsed("rocketfueltank"))
                 newContent[#newContent +1] = svgText(startX, startY+height*7, stringf("Set Max Speed: %s", mfloor(MaxGameVelocity*3.6+0.5)))
                 newContent[#newContent +1] = svgText(midX, startY+height*7, stringf("Actual Max Speed: %s", mfloor(MaxSpeed*3.6+0.5)))
+                newContent[#newContent +1] = svgText(startX, startY+height*8, stringf("Friction Burn Speed: %s", mfloor(C.getFrictionBurnSpeed()*3.6)))
             end
             newContent[#newContent + 1] = "</g></g>"
             return newContent
@@ -4223,9 +4228,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
             -- DrawRadarInfo() variables
     
-            local friendy = ConvertResolutionY(15)
-            local friendx = ConvertResolutionX(1370)
-            local msg, where
+            local friendy = ConvertResolutionY(125)
+            local friendx = ConvertResolutionX(1225)
     
         function Hud.DrawRadarInfo()
             radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY) 
@@ -4823,24 +4827,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local parseRadar = false
             local lastMouseTime = 0
     
-            -- safezone() variables
-                local safeWorldPos = vec3({13771471,7435803,-128971})
-                local safeRadius = 18000000
-                local szradius = 500000
-                local distsz, distp = math.huge
-                local szsafe 
-            local function safeZone(WorldPos) -- Thanks to @SeM for the base code, modified to work with existing Atlas
-                distsz = vec3(WorldPos):dist(safeWorldPos)
-                if distsz < safeRadius then  
-                    return true, mabs(distsz - safeRadius)
-                end 
-                distp = vec3(WorldPos):dist(vec3(planet.center))
-                if distp < szradius then szsafe = true else szsafe = false end
-                if mabs(distp - szradius) < mabs(distsz - safeRadius) then 
-                    return szsafe, mabs(distp - szradius)
-                else
-                    return szsafe, mabs(distsz - safeRadius)
-                end
+            local function safeZone() -- Thanks to @SeM for the base code, modified to work with existing Atlas
+                return (C.isInPvPZone()~=1), mabs(C.getDistanceToSafeZone())
             end
             local function GetAutopilotBrakeDistanceAndTime(speed)
                 -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
@@ -5742,7 +5730,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     lastMaxBrakeAtG = gravity
                 end
             end
-            notPvPZone, pvpDist = safeZone(worldPos)
+            notPvPZone, pvpDist = safeZone()
             MaxSpeed = C.getMaxSpeed()  
             if AutopilotTargetName ~= "None" and (autopilotTargetPlanet or CustomTarget) then
                 travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
@@ -7936,6 +7924,17 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         ReversalIsOn = nil
                     end                
                 end
+                local function holdingShiftOff()
+                    if sysIsVwLock() == 1 then
+                        simulatedX = 0
+                        simulatedY = 0 -- Reset for steering purposes
+                        sysLockVw(PrevViewLock)
+                    elseif isRemote() == 1 and ShiftShowsRemoteButtons then
+                        Animated = false
+                        Animating = false
+                    end
+                    holdingShift = false
+                end
             if action == "gear" then
                 CONTROL.landingGear()
             elseif action == "light" then
@@ -8179,15 +8178,19 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
             elseif action == "lshift" then
                 apButtonsHovered = false
-                if AltIsOn then holdingShift = true end
-                if sysIsVwLock() == 1 then
-                    holdingShift = true
-                    PrevViewLock = sysIsVwLock()
-                    sysLockVw(1)
-                elseif isRemote() == 1 and ShiftShowsRemoteButtons then
-                    holdingShift = true
-                    Animated = false
-                    Animating = false
+                if AltIsOn then holdingShift = true
+                elseif holdingShift then
+                    holdingShiftOff()
+                else
+                    if sysIsVwLock() == 1 then
+                        holdingShift = true
+                        PrevViewLock = sysIsVwLock()
+                        sysLockVw(1)
+                    elseif isRemote() == 1 and ShiftShowsRemoteButtons then
+                        holdingShift = true
+                        Animated = false
+                        Animating = false
+                    end
                 end
             elseif action == "brake" then
                 if BrakeToggleStatus or AltIsOn then
@@ -8257,6 +8260,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 else
                     msgText = "No antigrav found"
                 end
+            elseif action == "leftmouse" then
+                if holdingShift then holdingShiftOff() end
             end
         end
     
@@ -8314,16 +8319,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             elseif action == "groundaltitudedown" then
                 groundAltStop()
                 toggleView = false
-            elseif action == "lshift" then
-                if sysIsVwLock() == 1 then
-                    simulatedX = 0
-                    simulatedY = 0 -- Reset for steering purposes
-                    sysLockVw(PrevViewLock)
-                elseif isRemote() == 1 and ShiftShowsRemoteButtons then
-                    Animated = false
-                    Animating = false
-                end
-                holdingShift = false
             elseif action == "brake" then
                 if not BrakeToggleStatus and not AltIsOn then
                     if BrakeIsOn then
@@ -8333,6 +8328,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                 end
             elseif action == "lalt" then
+                if holdingShift then holdingShift = false end
                 if isRemote() == 0 and freeLookToggle then
                     if toggleView then
                         if sysIsVwLock() == 1 then
@@ -9164,7 +9160,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
                 atlasSetup()
                 if radar_1 then 
-                    RADAR = RadarClass(c, s, u, library, radar_1, radar_2, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
+                    RADAR = RadarClass(c, s, u, library, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
                 end
                 if HudClass then 
                     HUD = HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapon, mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, navCom, 
