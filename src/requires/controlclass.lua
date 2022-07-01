@@ -390,8 +390,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             end
         elseif action == "lshift" then
             apButtonsHovered = false
-            if AltIsOn then holdingShift = true end
-            if holdingShift then
+            if AltIsOn then holdingShift = true
+            elseif holdingShift then
                 holdingShiftOff()
             else
                 if sysIsVwLock() == 1 then
@@ -540,6 +540,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 end
             end
         elseif action == "lalt" then
+            if holdingShift then holdingShift = false end
             if isRemote() == 0 and freeLookToggle then
                 if toggleView then
                     if sysIsVwLock() == 1 then
