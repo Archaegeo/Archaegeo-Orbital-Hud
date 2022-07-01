@@ -304,8 +304,8 @@ function RadarClass(c, s, u, library, radar_1, radar_2, warpdrive,
     function Radar.onEnter(id)
         if activeRadar and not inAtmo and not notPvPZone then 
             u.setTimer("contact",0.1) 
-            if EmergencyWarp > 0 and warpdrive and activeRadar.getConstructDistance(id) < EmergencyWarp and warpdrive.getStatus() == 15 then
-                msgText = "PVP CONTACT - INITIATING WARP"
+            if warpdrive and EmergencyWarp > 0 and activeRadar.getConstructDistance(id) < EmergencyWarp and warpdrive.getStatus() == 15 then
+                msgText = "INITIATING WARP"
                 msgTimer = 7
                 warpdrive.initiate()
             end
