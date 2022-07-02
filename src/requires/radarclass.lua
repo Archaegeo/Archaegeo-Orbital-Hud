@@ -112,7 +112,11 @@ function RadarClass(c, s, u, library, radar_1, radar_2, warpdrive,
                     if hasMatchingTransponder(id) == 1 then
                         insert(friendlies,id)
                     end
-
+                    if warpdrive and distance < EmergencyWarp and not notPvPZone and warpdrive.getStatus() == 15 then 
+                        msgText = "INITIATING WARP"
+                        msgTimer = 7
+                        warpdrive.initiate()
+                    end
                     if CollisionSystem then
                         local cType = getConstructKind(id)
                         local abandoned = AbandonedRadar and isConstructAbandoned(id) == 1
