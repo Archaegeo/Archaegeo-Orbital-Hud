@@ -1820,11 +1820,11 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             showSettings = not showSettings 
             if showSettings then 
                 Buttons = SettingButtons
-                msgText = "Hold SHIFT to see Settings" 
+                msgText = "Tap SHIFT to see Settings" 
                 oldShowHud = showHud
             else
                 Buttons = ControlButtons
-                msgText = "Hold SHIFT to see Control Buttons"
+                msgText = "Tap SHIFT to see Control Buttons"
                 ToggleShownSettings()
                 showHud = oldShowHud
             end
@@ -2615,19 +2615,22 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                                                 mfloor(PrimaryG + 0.5) - strokeColor, mfloor(PrimaryB + 0.5) - strokeColor)
             end
             local function CheckButtons()
-                for _, v in pairs(Buttons) do
-                    if v.hovered then
-                        if not v.drawCondition or v.drawCondition(v) then
-                            v.toggleFunction(v)
+                if leftmouseclick then
+                    for _, v in pairs(Buttons) do
+                        if v.hovered then
+                            if not v.drawCondition or v.drawCondition(v) then
+                                v.toggleFunction(v)
+                            end
+                            v.hovered = false
                         end
-                        v.hovered = false
                     end
-                end
-                for _, v in pairs(TabButtons) do
-                    if v.hovered then
-                        SelectedTab = v.label
-                        v.hovered = false
+                    for _, v in pairs(TabButtons) do
+                        if v.hovered then
+                            SelectedTab = v.label
+                            v.hovered = false
+                        end
                     end
+                    leftmouseclick = false
                 end
             end    
             local function SetButtonContains()

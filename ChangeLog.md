@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 1.742 
+- Fixed - Shift will no longer press buttons, only leftmouse click.
 - Changed EmergencyWarp to work for anytime all conditions met (not just when contact first appears on radar)
 
 Version 1.741 - Now with Leftmouse Button support

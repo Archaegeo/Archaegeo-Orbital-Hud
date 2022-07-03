@@ -73,6 +73,7 @@
         upAmount = 0 -- 2
         followMode = false -- 2
         holdingShift = false -- 3
+        leftmouseclick = false
         msgText = "empty" -- 6
         msgTimer = 3 -- 4
         isBoosting = false -- 3 Dodgin's Don't Die Rocket Govenor
