@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.741
+VERSION_NUMBER = 0.742
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -144,7 +144,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     brakeSpeedFactor = 3 -- (Default: 3) When braking, this factor will increase the brake force by brakeSpeedFactor * velocity
     brakeFlatFactor = 1 -- (Default: 1) When braking, this factor will increase the brake force by a flat brakeFlatFactor * velocity direction> (higher value may be unstable)
     DampingMultiplier = 40 -- (Default: 40) How strongly autopilot dampens when nearing the correct orientation
-    hudTickRate = 0.0666667 -- (Default: 0.0666667) Set the tick rate for your HUD. Default is 4 times slower than apTickRate
+    hudTickRate = 0.0666667 -- (Default: 0.0666667) Set the tick rate for your HUD.
     ExtraEscapeThrust = 0.0 -- (Default: 0.0) Set this to some value (start low till you know your ship) to apply extra thrust between 10% and 0.05% atmosphere while using AtmoSpeedLimit.
     ExtraLongitudeTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "forward faster major" These will be added to the engines that are control by longitude.
     ExtraLateralTags = "none" -- (Default: "none") Enter any extra lateral tags you use inside '' seperated by space, i.e. "left right" These will be added to the engines that are control by lateral.
@@ -227,6 +227,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         upAmount = 0 -- 2
         followMode = false -- 2
         holdingShift = false -- 3
+        leftmouseclick = false -- 2
         msgText = "empty" -- 6
         msgTimer = 3 -- 4
         isBoosting = false -- 3 Dodgin's Don't Die Rocket Govenor
@@ -1383,7 +1384,11 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         if hasMatchingTransponder(id) == 1 then
                             insert(friendlies,id)
                         end
-    
+                        if not notPvPZone and warpdrive and distance < EmergencyWarp and  warpdrive.getStatus() == 15 then 
+                            msgText = "INITIATING WARP"
+                            msgTimer = 7
+                            warpdrive.initiate()
+                        end
                         if CollisionSystem then
                             local cType = getConstructKind(id)
                             local abandoned = AbandonedRadar and isConstructAbandoned(id) == 1
@@ -1575,11 +1580,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         function Radar.onEnter(id)
             if activeRadar and not inAtmo and not notPvPZone then 
                 u.setTimer("contact",0.1) 
-                if warpdrive and EmergencyWarp > 0 and activeRadar.getConstructDistance(id) < EmergencyWarp and warpdrive.getStatus() == 15 then
-                    msgText = "INITIATING WARP"
-                    msgTimer = 7
-                    warpdrive.initiate()
-                end
             end
         end
     
@@ -1609,7 +1609,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         end   
     
         return Radar
-    end  
+    end 
     local function ShieldClass(shield, stringmatch, mfloor) -- Everything related to radar but draw data passed to HUD Class.
         local Shield = {}
         local RCD = shield.getResistancesCooldown()
@@ -3489,11 +3489,11 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 showSettings = not showSettings 
                 if showSettings then 
                     Buttons = SettingButtons
-                    msgText = "Hold SHIFT to see Settings" 
+                    msgText = "Tap SHIFT to see Settings" 
                     oldShowHud = showHud
                 else
                     Buttons = ControlButtons
-                    msgText = "Hold SHIFT to see Control Buttons"
+                    msgText = "Tap SHIFT to see Control Buttons"
                     ToggleShownSettings()
                     showHud = oldShowHud
                 end
@@ -4117,7 +4117,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             end
             return used
         end
-    
+        local fps, fpsAvg, fpsCount, fpsAvgTotal, fpsTotal = 0,0,0,{},0
         function Hud.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
             if SelectedTab ~= "INFO" then return newContent end
             local gravity 
@@ -4142,6 +4142,23 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 local startY = ConvertResolutionY(OrbitMapY+20)
                 local midX = ConvertResolutionX(OrbitMapX+10+OrbitMapSize/1.25)
                 local height = 25
+                local hudrate = mfloor(1/hudTickRate)
+                if fpsCount < hudrate then
+                    fpsTotal = fpsTotal + s.getActionUpdateDeltaTime()
+                    fpsCount = fpsCount + 1
+                else
+                    fps = 1/(fpsTotal / hudrate)
+                    table.insert(fpsAvgTotal, fps)
+                    fpsCount, fpsTotal = 0, 0
+                end
+                fpsAvg = 0
+                for k,v in pairs(fpsAvgTotal) do
+                    fpsAvg = fpsAvg + v
+                end
+                if #fpsAvgTotal> 0 then fpsAvg = mfloor(fpsAvg/#fpsAvgTotal) end
+                if #fpsAvgTotal > 29 then
+                    table.remove(fpsAvgTotal,1)
+                end
                 newContent[#newContent + 1] = "<g class='txtstart size14 bright'>"
                 newContent[#newContent + 1] = svgText(startX, startY, stringf("BrkTime: %s", FormatTimeString(brkTime)))
                 newContent[#newContent + 1] = svgText(midX, startY, stringf("Trip: %.2f km", totalDistanceTrip)) 
@@ -4166,6 +4183,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 newContent[#newContent +1] = svgText(startX, startY+height*7, stringf("Set Max Speed: %s", mfloor(MaxGameVelocity*3.6+0.5)))
                 newContent[#newContent +1] = svgText(midX, startY+height*7, stringf("Actual Max Speed: %s", mfloor(MaxSpeed*3.6+0.5)))
                 newContent[#newContent +1] = svgText(startX, startY+height*8, stringf("Friction Burn Speed: %s", mfloor(C.getFrictionBurnSpeed()*3.6)))
+                newContent[#newContent +1] = svgText(midX, startY+height*8, stringf("FPS (Avg): %s (%s)", mfloor(fps),fpsAvg))
             end
             newContent[#newContent + 1] = "</g></g>"
             return newContent
@@ -4284,19 +4302,22 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                                                     mfloor(PrimaryG + 0.5) - strokeColor, mfloor(PrimaryB + 0.5) - strokeColor)
                 end
                 local function CheckButtons()
-                    for _, v in pairs(Buttons) do
-                        if v.hovered then
-                            if not v.drawCondition or v.drawCondition(v) then
-                                v.toggleFunction(v)
+                    if leftmouseclick then
+                        for _, v in pairs(Buttons) do
+                            if v.hovered then
+                                if not v.drawCondition or v.drawCondition(v) then
+                                    v.toggleFunction(v)
+                                end
+                                v.hovered = false
                             end
-                            v.hovered = false
                         end
-                    end
-                    for _, v in pairs(TabButtons) do
-                        if v.hovered then
-                            SelectedTab = v.label
-                            v.hovered = false
+                        for _, v in pairs(TabButtons) do
+                            if v.hovered then
+                                SelectedTab = v.label
+                                v.hovered = false
+                            end
                         end
+                        leftmouseclick = false
                     end
                 end    
                 local function SetButtonContains()
@@ -8261,7 +8282,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     msgText = "No antigrav found"
                 end
             elseif action == "leftmouse" then
-                if holdingShift then holdingShiftOff() end
+                if holdingShift then leftmouseclick=true holdingShiftOff() end
             end
         end
     
@@ -9183,7 +9204,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 coroutine.yield()
     
                 u.setTimer("apTick", 0.0166667)
-                if radar_1 then u.setTimer("radarTick", 0.0166667) end
                 u.setTimer("hudTick", hudTickRate)
                 u.setTimer("oneSecond", 1)
                 u.setTimer("tenthSecond", 1/10)
