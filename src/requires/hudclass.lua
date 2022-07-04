@@ -2448,7 +2448,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         end
         return used
     end
-
+    local fps, fpsAvg, fpsCount, fpsAvgTotal, fpsTotal = 0,0,0,{},0
     function Hud.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
         if SelectedTab ~= "INFO" then return newContent end
         local gravity 
@@ -2473,6 +2473,23 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             local startY = ConvertResolutionY(OrbitMapY+20)
             local midX = ConvertResolutionX(OrbitMapX+10+OrbitMapSize/1.25)
             local height = 25
+            local hudrate = mfloor(1/hudTickRate)
+            if fpsCount < hudrate then
+                fpsTotal = fpsTotal + s.getActionUpdateDeltaTime()
+                fpsCount = fpsCount + 1
+            else
+                fps = 1/(fpsTotal / hudrate)
+                table.insert(fpsAvgTotal, fps)
+                fpsCount, fpsTotal = 0, 0
+            end
+            fpsAvg = 0
+            for k,v in pairs(fpsAvgTotal) do
+                fpsAvg = fpsAvg + v
+            end
+            if #fpsAvgTotal> 0 then fpsAvg = mfloor(fpsAvg/#fpsAvgTotal) end
+            if #fpsAvgTotal > 29 then
+                table.remove(fpsAvgTotal,1)
+            end
             newContent[#newContent + 1] = "<g class='txtstart size14 bright'>"
             newContent[#newContent + 1] = svgText(startX, startY, stringf("BrkTime: %s", FormatTimeString(brkTime)))
             newContent[#newContent + 1] = svgText(midX, startY, stringf("Trip: %.2f km", totalDistanceTrip)) 
@@ -2497,6 +2514,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             newContent[#newContent +1] = svgText(startX, startY+height*7, stringf("Set Max Speed: %s", mfloor(MaxGameVelocity*3.6+0.5)))
             newContent[#newContent +1] = svgText(midX, startY+height*7, stringf("Actual Max Speed: %s", mfloor(MaxSpeed*3.6+0.5)))
             newContent[#newContent +1] = svgText(startX, startY+height*8, stringf("Friction Burn Speed: %s", mfloor(C.getFrictionBurnSpeed()*3.6)))
+            newContent[#newContent +1] = svgText(midX, startY+height*8, stringf("FPS (Avg): %s (%s)", mfloor(fps),fpsAvg))
         end
         newContent[#newContent + 1] = "</g></g>"
         return newContent

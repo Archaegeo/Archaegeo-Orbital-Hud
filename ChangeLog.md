@@ -3,6 +3,9 @@
 Version 1.742 
 - Fixed - Shift will no longer press buttons, only leftmouse click.
 - Changed EmergencyWarp to work for anytime all conditions met (not just when contact first appears on radar)
+- Added FPS to INFO panel. Shown as # (#). # is an average based on hudTickRate. 
+    So at default hudTickRate (0.066667) # will be the average over last 15 frames.  If you change hudTickRate to 0.033333 
+    it would give you average over last 30 frames. (#) is a running value of the last 30 # values (so roughly 30 seconds).
 
 Version 1.741 - Now with Leftmouse Button support
 - While not in free look (normal), tap left shift to toggle on buttons and mouse pointer.  Move pointer over button and use LMB to press it. 
