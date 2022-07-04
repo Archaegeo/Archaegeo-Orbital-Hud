@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.742 
+- Fixed - Shift will no longer press buttons, only leftmouse click.
+- Changed EmergencyWarp to work for anytime all conditions met (not just when contact first appears on radar)
+- Added FPS to INFO panel. Shown as # (#). # is an 1 second average based on hudTickRate. (#) is a 30 second rolling average
+
+
 Version 1.741 - Now with Leftmouse Button support
 - While not in free look (normal), tap left shift to toggle on buttons and mouse pointer.  Move pointer over button and use LMB to press it. 
     Buttons will turn off. You can tap left shift without pressing lmb to turn buttons back off.

@@ -583,7 +583,6 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             coroutine.yield()
 
             u.setTimer("apTick", 0.0166667)
-            if radar_1 then u.setTimer("radarTick", 0.0166667) end
             u.setTimer("hudTick", hudTickRate)
             u.setTimer("oneSecond", 1)
             u.setTimer("tenthSecond", 1/10)

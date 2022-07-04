@@ -473,7 +473,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 msgText = "No antigrav found"
             end
         elseif action == "leftmouse" then
-            if holdingShift then holdingShiftOff() end
+            if holdingShift then leftmouseclick=true holdingShiftOff() end
         end
     end
 
