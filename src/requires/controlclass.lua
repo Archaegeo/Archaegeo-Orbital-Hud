@@ -1,5 +1,6 @@
 function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
     isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
+    local C = DUConstruct
     local Control = {}
     local UnitHidden = true
     local holdAltitudeButtonModifier = 5
@@ -219,7 +220,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             if AltIsOn and holdingShift then 
                 local onboard = ""
                 for i=1, #passengers do
-                    onboard = onboard.."| Name: "..s.getPlayerName(passengers[i]).." Mass: "..round(c.getBoardedPlayerMass(passengers[i])/1000,1).."t "
+                    onboard = onboard.."| Name: "..s.getPlayerName(passengers[i]).." Mass: "..round(C.getBoardedPlayerMass(passengers[i])/1000,1).."t "
                 end
                 s.print("Onboard: "..onboard)
                 return
@@ -229,8 +230,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             toggleView = false
             if AltIsOn and holdingShift then 
                 for i=1, #passengers do
-                    c.forceDeboard(passengers[i])
-                    c.forceInterruptVRSession(passengers[i])
+                    C.forceDeboard(passengers[i])
+                    C.forceInterruptVRSession(passengers[i])
                 end
                 msgText = "Deboarded All Passengers"
                 return
@@ -463,6 +464,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 end
             end
         elseif action == "speedup" then
+            if holdingShift and not AltIsOn then p("RADAR OFF") return end
             AP.changeSpd()
         elseif action == "speeddown" then
             AP.changeSpd(true)
@@ -473,7 +475,21 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 msgText = "No antigrav found"
             end
         elseif action == "leftmouse" then
-            if holdingShift then leftmouseclick=true holdingShiftOff() end
+            if AltIsOn and holdingShift then 
+                if RADAR then 
+                    RADAR.ToggleRadarPanel()
+                    RADAR = nil
+                    FullRadar = false
+                    collectgarbage()
+                else
+                    FullRadar = true
+                    PROGRAM.radarSetup()
+                end
+                toggleView = false
+            elseif holdingShift then 
+                leftmouseclick=true 
+                holdingShiftOff() 
+            end
         end
     end
 

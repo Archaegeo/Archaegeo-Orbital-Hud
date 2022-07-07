@@ -2781,7 +2781,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             HUD.DrawSettings(newContent) 
         end
 
-        if RADAR then HUD.DrawRadarInfo() end
+        if RADAR then HUD.DrawRadarInfo() else radarMessage = "" end
         HUD.HUDEpilogue(newContent)
         newContent[#newContent + 1] = stringf(
             [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],

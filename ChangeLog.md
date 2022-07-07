@@ -1,5 +1,16 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.743 - RADAR FPS "bandaid"
+- New Global `FullRadar` = true --export: (Default: true) If set to false, radar will not be activate on sitting down.  
+    This will result in a much higher fps in crowded areas with radar hooked up while still allowing V to show contacts on screen.
+- Added LALT-LSHIFT-LMB action that will toggle radar off and set `FullRadar` to false while in flight or toggle it back on if previously off
+    This will result in a large fps increase, but not as large as sitting down with FullRadar already false.
+Results: 1318 contacts at Alioth - Mkt 6 sitting on pad
+With full normal radar - 8 FPS.
+With LALT-LSHIFT-LMB to kill it (FullRadar to false and close widget) while seated - 15 FPS
+Getting in seat with FullRadar false (but radars still linked) - 40 FPS
+Getting in seat with radars completely disconnected  - 52 fps
+
 Version 1.742 
 - Fixed - Shift will no longer press buttons, only leftmouse click.
 - Changed EmergencyWarp to work for anytime all conditions met (not just when contact first appears on radar)
