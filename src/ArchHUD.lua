@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.742
+VERSION_NUMBER = 0.743
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -45,12 +45,14 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     AutoShieldToggle = true -- (Default: true) If true, system will toggle Shield off in safe space and on in PvP space automagically.
     PreventPvP = true -- (Default: true) If true, system will stop you before crossing from safe to pvp space while in autopilot.
     DisplayOdometer = true -- (Default: true) If false the top odometer bar of information will be hidden.
-
+    FullRadar = true -- (Default: true) If set to false, radar will not be activate on sitting down.  This will result in a much higher fps in crowded areas with radar hooked up while still allowing V to show contacts on screen.
+ 
     saveableVariablesBoolean = {userControlScheme={set=function (i)userControlScheme=i end,get=function() return userControlScheme end}, soundFolder={set=function (i)soundFolder=i end,get=function() return soundFolder end}, freeLookToggle={set=function (i)freeLookToggle=i end,get=function() return freeLookToggle end}, BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}, RemoteFreeze={set=function (i)RemoteFreeze=i end,get=function() return RemoteFreeze end}, brightHud={set=function (i)brightHud=i end,get=function() return brightHud end}, RemoteHud={set=function (i)RemoteHud=i end,get=function() return RemoteHud end}, VanillaRockets={set=function (i)VanillaRockets=i end,get=function() return VanillaRockets end},
     InvertMouse={set=function (i)InvertMouse=i end,get=function() return InvertMouse end}, autoRollPreference={set=function (i)autoRollPreference=i end,get=function() return autoRollPreference end}, ExternalAGG={set=function (i)ExternalAGG=i end,get=function() return ExternalAGG end}, UseSatNav={set=function (i)UseSatNav=i end,get=function() return UseSatNav end}, ShouldCheckDamage={set=function (i)ShouldCheckDamage=i end,get=function() return ShouldCheckDamage end}, 
     AtmoSpeedAssist={set=function (i)AtmoSpeedAssist=i end,get=function() return AtmoSpeedAssist end}, ForceAlignment={set=function (i)ForceAlignment=i end,get=function() return ForceAlignment end}, DisplayDeadZone={set=function (i)DisplayDeadZone=i end,get=function() return DisplayDeadZone end}, showHud={set=function (i)showHud=i end,get=function() return showHud end}, hideHudOnToggleWidgets={set=function (i)hideHudOnToggleWidgets=i end,get=function() return hideHudOnToggleWidgets end}, 
     ShiftShowsRemoteButtons={set=function (i)ShiftShowsRemoteButtons=i end,get=function() return ShiftShowsRemoteButtons end}, SetWaypointOnExit={set=function (i)SetWaypointOnExit=i end,get=function() return SetWaypointOnExit end}, AlwaysVSpd={set=function (i)AlwaysVSpd=i end,get=function() return AlwaysVSpd end}, BarFuelDisplay={set=function (i)BarFuelDisplay=i end,get=function() return BarFuelDisplay end}, 
-    voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AbandonedRadar={set=function (i)AbandonedRadar=i end,get=function() return AbandonedRadar end},AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end}, DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end}}
+    voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AbandonedRadar={set=function (i)AbandonedRadar=i end,get=function() return AbandonedRadar end},AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end},
+    DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end},FullRadar={set=function (i)FullRadar=i end,get=function() return FullRadar end}}
 
 -- Ship Handling variables
     -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank system
@@ -1270,7 +1272,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         return Atlas
     end
     -- ArchHUD classes  
-    local function RadarClass(c, s, u, library, radar_1, radar_2, warpdrive,
+    local function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
         mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) -- Everything related to radar but draw data passed to HUD Class.
         local Radar = {}
         -- Radar Class locals
@@ -1592,24 +1594,27 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             end
         end
     
-        activeRadar=nil
-        if radar_2 and radar_2.getOperationalState()==1 then
-            activeRadar = radar_2
-        else
-            activeRadar = radar_1
-        end
-        activeRadarState=activeRadar.getOperationalState()
-        radars = {activeRadar}
-        radarData = activeRadar.getWidgetData()
-        pickType()
-        UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
+        local function setup()
+            activeRadar=nil
+            if radar_2 and radar_2.getOperationalState()==1 then
+                activeRadar = radar_2
+            else
+                activeRadar = radar_1
+            end
+            activeRadarState=activeRadar.getOperationalState()
+            radars = {activeRadar}
+            radarData = activeRadar.getWidgetData()
+            pickType()
+            UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
     
-        if userRadar then 
-            for k,v in pairs(userRadar) do Radar[k] = v end 
-        end   
+            if userRadar then 
+                for k,v in pairs(userRadar) do Radar[k] = v end 
+            end   
+        end
+        setup()
     
         return Radar
-    end 
+    end
     local function ShieldClass(shield, stringmatch, mfloor) -- Everything related to radar but draw data passed to HUD Class.
         local Shield = {}
         local RCD = shield.getResistancesCooldown()
@@ -4450,7 +4455,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 HUD.DrawSettings(newContent) 
             end
     
-            if RADAR then HUD.DrawRadarInfo() end
+            if RADAR then HUD.DrawRadarInfo() else radarMessage = "" end
             HUD.HUDEpilogue(newContent)
             newContent[#newContent + 1] = stringf(
                 [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
@@ -7809,6 +7814,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     end
     local function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
         isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
+        local C = DUConstruct
         local Control = {}
         local UnitHidden = true
         local holdAltitudeButtonModifier = 5
@@ -8028,7 +8034,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 if AltIsOn and holdingShift then 
                     local onboard = ""
                     for i=1, #passengers do
-                        onboard = onboard.."| Name: "..s.getPlayerName(passengers[i]).." Mass: "..round(c.getBoardedPlayerMass(passengers[i])/1000,1).."t "
+                        onboard = onboard.."| Name: "..s.getPlayerName(passengers[i]).." Mass: "..round(C.getBoardedPlayerMass(passengers[i])/1000,1).."t "
                     end
                     s.print("Onboard: "..onboard)
                     return
@@ -8038,8 +8044,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 toggleView = false
                 if AltIsOn and holdingShift then 
                     for i=1, #passengers do
-                        c.forceDeboard(passengers[i])
-                        c.forceInterruptVRSession(passengers[i])
+                        C.forceDeboard(passengers[i])
+                        C.forceInterruptVRSession(passengers[i])
                     end
                     msgText = "Deboarded All Passengers"
                     return
@@ -8272,6 +8278,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                 end
             elseif action == "speedup" then
+                if holdingShift and not AltIsOn then p("RADAR OFF") return end
                 AP.changeSpd()
             elseif action == "speeddown" then
                 AP.changeSpd(true)
@@ -8282,7 +8289,21 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     msgText = "No antigrav found"
                 end
             elseif action == "leftmouse" then
-                if holdingShift then leftmouseclick=true holdingShiftOff() end
+                if AltIsOn and holdingShift then 
+                    if RADAR then 
+                        RADAR.ToggleRadarPanel()
+                        RADAR = nil
+                        FullRadar = false
+                        collectgarbage()
+                    else
+                        FullRadar = true
+                        PROGRAM.radarSetup()
+                    end
+                    toggleView = false
+                elseif holdingShift then 
+                    leftmouseclick=true 
+                    holdingShiftOff() 
+                end
             end
         end
     
@@ -8768,7 +8789,15 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     return "0s"
                 end
             end
-        
+        local function radarSetup()
+            if radar_1 and FullRadar then 
+                RADAR = RadarClass(c, s, u, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
+            end
+        end
+    
+        function program.radarSetup()
+            radarSetup()
+        end
     
         function program.onStart()
             -- Local functions for onStart
@@ -9180,9 +9209,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 coroutine.yield() -- Just to make sure
     
                 atlasSetup()
-                if radar_1 then 
-                    RADAR = RadarClass(c, s, u, library, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
-                end
+                radarSetup()
+    
                 if HudClass then 
                     HUD = HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapon, mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, navCom, 
                         sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables, getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp) 
