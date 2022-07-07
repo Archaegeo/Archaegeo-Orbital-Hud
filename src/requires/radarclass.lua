@@ -1,4 +1,4 @@
-function RadarClass(c, s, u, library, radar_1, radar_2, warpdrive,
+function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
     mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) -- Everything related to radar but draw data passed to HUD Class.
     local Radar = {}
     -- Radar Class locals
@@ -320,21 +320,24 @@ function RadarClass(c, s, u, library, radar_1, radar_2, warpdrive,
         end
     end
 
-    activeRadar=nil
-    if radar_2 and radar_2.getOperationalState()==1 then
-        activeRadar = radar_2
-    else
-        activeRadar = radar_1
-    end
-    activeRadarState=activeRadar.getOperationalState()
-    radars = {activeRadar}
-    radarData = activeRadar.getWidgetData()
-    pickType()
-    UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
+    local function setup()
+        activeRadar=nil
+        if radar_2 and radar_2.getOperationalState()==1 then
+            activeRadar = radar_2
+        else
+            activeRadar = radar_1
+        end
+        activeRadarState=activeRadar.getOperationalState()
+        radars = {activeRadar}
+        radarData = activeRadar.getWidgetData()
+        pickType()
+        UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
 
-    if userRadar then 
-        for k,v in pairs(userRadar) do Radar[k] = v end 
-    end   
+        if userRadar then 
+            for k,v in pairs(userRadar) do Radar[k] = v end 
+        end   
+    end
+    setup()
 
     return Radar
 end 

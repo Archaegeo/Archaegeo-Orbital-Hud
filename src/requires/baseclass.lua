@@ -147,7 +147,15 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 return "0s"
             end
         end
-    
+    local function radarSetup()
+        if radar_1 and FullRadar then 
+            RADAR = RadarClass(c, s, u, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
+        end
+    end
+
+    function program.radarSetup()
+        radarSetup()
+    end
 
     function program.onStart()
         -- Local functions for onStart
@@ -559,9 +567,8 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             coroutine.yield() -- Just to make sure
 
             atlasSetup()
-            if radar_1 then 
-                RADAR = RadarClass(c, s, u, library, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
-            end
+            radarSetup()
+
             if HudClass then 
                 HUD = HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapon, mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, navCom, 
                     sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables, getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp) 
