@@ -176,7 +176,24 @@ function baseClass(N, C, U, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 end
                 
                 local function SetupChecks() -- Things to check on startup
+                    pitchInput = 0
+                    rollInput = 0
+                    yawInput = 0
                     BrakeIsOn = "Startup"
+                    N.axisCommandManager:setupCustomTargetSpeedRanges(axisCommandId.longitudinal, {1000, 5000, 10000, 20000, 30000})
+                    N.axisCommandManager:setTargetGroundAltitude(4)
+
+                    -- freeze the player in he is remote controlling the construct
+                    if U.isRemoteControlled() == 1 then
+                        P.freeze(1)
+                    end
+
+                    gearExtended = (U.isAnyLandingGearDeployed() == 1) -- make sure it's a lua boolean
+                    if gearExtended then
+                        U.deployLandingGears()
+                    else
+                        U.retractLandingGears()
+                    end
                 end
 
                 local function atlasSetup()
@@ -274,9 +291,10 @@ function baseClass(N, C, U, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 ProcessElements() -- Processing of elements
                 coroutine.yield() -- Give it some time to breathe before we do the rest
 
-                AP = APClass(N, C, U, S) -- AUTOPILOT CLASS
 
                 SetupChecks() -- All the if-thens to set up for particular ship.  Specifically override these with the saved variables if available
+
+                FLIGHT = FlightClass(N, C, U, S) -- AUTOPILOT CLASS (contains onFlush code)
 
                 coroutine.yield() -- Just to make sure
 
@@ -284,9 +302,9 @@ function baseClass(N, C, U, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 if radar_1 and RadarClass then RADAR = RadarClass(C, S, U, radar_1, radar_2) end
 
                 if HudClass then 
-                    HUD = HudClass(N, C, U, S) 
+                    HUD = HudClass(N, C, U, S, antigrav, warpdrive, gyro, shield) 
                 end
-                CONTROL = ControlClass(N, C, U, S) -- User Controls
+                CONTROL = ControlClass(N, C, U, S, antigrav, saveableVariables, SaveDataBank) -- User Controls
                 if shield and ShieldClass then SHIELD = ShieldClass(shield) end
                 coroutine.yield()
                 U.hideWidget()
@@ -296,12 +314,7 @@ function baseClass(N, C, U, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 -- Start timers
                 coroutine.yield()
 
-                U.setTimer("apTick", 0.0166667) -- 0.0166667 is 60 FPS
-                if HUD then U.setTimer("hudTick", hudTickRate) end
-                U.setTimer("oneSecond", 1)
-                U.setTimer("tenthSecond", 1/10)
-                U.setTimer("fiveSecond", 5) 
-                if shield then U.setTimer("shieldTick", 0.0166667) end
+
                 if userBase then BASE.ExtraOnStart() end
             end)
             coroutine.resume(beginSetup)
@@ -325,44 +338,19 @@ function baseClass(N, C, U, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
 
         function base.onFlush()
             if SetupComplete then
-                AP.onFlush()
+                FLIGHT.onFlush()
                 if userBase then BASE.ExtraOnFlush() end
             end
         end
 
         function base.onStop()
             _autoconf.hideCategoryPanels()
-            if antigrav ~= nil  and not ExternalAGG then
-                antigrav.hideWidget()
-            end
-            if warpdrive ~= nil then
-                warpdrive.hideWidget()
-            end
+            if antigrav ~= nil then antigrav.hideWidget() end
+            if warpdrive ~= nil then warpdrive.hideWidget() end
+            if gyro ~= nil then gyro.hideWidget() end
             C.hideWidget()
-            N.control.switchOffHeadlights()
-            -- Open door and extend ramp if available
-            if door and (atmosDensity > 0 or (atmosDensity == 0 and coreAltitude < 10000)) then
-                for _, v in pairs(door) do
-                    v.toggle()
-                end
-            end
-            if switch then
-                for _, v in pairs(switch) do
-                    v.toggle()
-                end
-            end
-            if forcefield and (atmosDensity > 0 or (atmosDensity == 0 and coreAltitude < 10000)) then
-                for _, v in pairs(forcefield) do
-                    v.toggle()
-                end
-            end
-            showHud = oldShowHud
+            U.switchOffHeadlights()
             SaveDataBank()
-            if button then
-                button.activate()
-            end
-            if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
-            if HUD then p(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank")) end
             if userBase then BASE.ExtraOnStop() end
         end
 
@@ -399,26 +387,7 @@ function baseClass(N, C, U, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         end
 
         function base.onTick(timerId)
-            if timerId == "tenthSecond" then -- Timer executed ever tenth of a second
-                AP.TenthTick()
-                -- Tenth of a second call
-            elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
-                -- One second call
-            elseif timerId == "fiveSecond" then -- Timer executed every 5 seconds
-                -- five second call
-            elseif timerId == "animateTick" then -- Timer for animation
-                if HUD then HUD.AnimateTick() end
-            elseif timerId == "hudTick" then -- Timer for all hud updates not called elsewhere
-                if HUD then HUD.hudtick() end
-            elseif timerId == "apTick" then -- Timer for all autopilot functions
-                AP.APTick()
-            elseif timerId == "shieldTick" then
-                SHIELD.shieldTick()
-            elseif timerId == "tagTick" then
-                CONTROL.tagTick()
-            elseif timerId == "contact" then
-                RADAR.ContactTick()
-            end
+            -- Tick calls to various Class files
         end
 
     if userBase then 

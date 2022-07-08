@@ -15,7 +15,7 @@
 
     userBase = {} -- baseclass.lua override
     userRadar = {} -- radarclass.lua override
-    userAP = {} -- apclass.lua override
+    userFlight = {} -- flightclass.lua override
     userAtlas = {} -- atlasclass.lua override
     userControl = {} -- controlclass.lua override
     userHud = {} -- hudclass.lua override

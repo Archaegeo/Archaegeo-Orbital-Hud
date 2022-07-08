@@ -17,7 +17,10 @@ end
     -- True/False variables
         -- NOTE: saveableVariablesBoolean below must contain any True/False variables that needs to be saved/loaded from databank.
         BrakeToggleDefault = true --export: (Default: true) Whether your brake toggle is on/off by default. 
-        saveableVariablesBoolean = {BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}}
+        autoRoll = false --export: [Only in atmosphere]<br>When the pilot stops rolling,  flight model will try to get back to horizontal (no roll)
+        turnAssist = true --export: [Only in atmosphere]<br>When the pilot is rolling, the flight model will try to add yaw and pitch to make the construct turn better<br>The flight model will start by adding more yaw the more horizontal the construct is and more pitch the more vertical it is
+        saveableVariablesBoolean = {BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end},autoRoll={set=function (i)autoRoll=i end,get=function() return autoRoll end},
+            turnAssist={set=function (i)turnAssist=i end,get=function() return turnAssist end}}
 
     -- Ship Handling variables
         -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank system
@@ -32,10 +35,20 @@ end
 
     -- Ship flight physics variables - Change with care, can have large effects on ships performance.
         -- NOTE: savableVariablesPhysics below must contain any Ship flight physics variables that needs to be saved/loaded from databank system
-        speedChangeLarge = 5.0 --export: (Default: 5) Example Variable, no effect
-        savableVariablesPhysics = {speedChangeLarge={set=function (i)speedChangeLarge=i end,get=function() return speedChangeLarge end}}
+        pitchSpeedFactor = 0.8 --export: This factor will increase/decrease the player input along the pitch axis<br>(higher value may be unstable)<br>Valid values: Superior or equal to 0.01
+        yawSpeedFactor =  1 --export: This factor will increase/decrease the player input along the yaw axis<br>(higher value may be unstable)<br>Valid values: Superior or equal to 0.01
+        rollSpeedFactor = 1.5 --export: This factor will increase/decrease the player input along the roll axis<br>(higher value may be unstable)<br>Valid values: Superior or equal to 0.01
+        brakeSpeedFactor = 3 --export: When braking, this factor will increase the brake force by brakeSpeedFactor * velocity<br>Valid values: Superior or equal to 0.01
+        brakeFlatFactor = 1 --export: When braking, this factor will increase the brake force by a flat brakeFlatFactor * velocity direction><br>(higher value may be unstable)<br>Valid values: Superior or equal to 0.01
+        autoRollFactor = 2 --export: [Only in atmosphere]<br>When autoRoll is engaged, this factor will increase to strength of the roll back to 0<br>Valid values: Superior or equal to 0.01
+        turnAssistFactor = 2 --export: [Only in atmosphere]<br>This factor will increase/decrease the turnAssist effect<br>(higher value may be unstable)<br>Valid values: Superior or equal to 0.01
+        torqueFactor = 2 --export: Force factor applied to reach rotationSpeed<br>(higher value may be unstable)<br>Valid values: Superior or equal to 0.01
+        savableVariablesPhysics = {pitchSpeedFactor={set=function (i)pitchSpeedFactor=i end,get=function() return pitchSpeedFactor end},yawSpeedFactor={set=function (i)yawSpeedFactor=i end,get=function() return yawSpeedFactor end},
+            rollSpeedFactor={set=function (i)rollSpeedFactor=i end,get=function() return rollSpeedFactor end},brakeSpeedFactor={set=function (i)brakeSpeedFactor=i end,get=function() return brakeSpeedFactor end},
+            brakeFlatFactor={set=function (i)brakeFlatFactor=i end,get=function() return brakeFlatFactor end},autoRollFactor={set=function (i)autoRollFactor=i end,get=function() return autoRollFactor end},
+            turnAssistFactor={set=function (i)turnAssistFactor=i end,get=function() return turnAssistFactor end},torqueFactor={set=function (i)torqueFactor=i end,get=function() return torqueFactor end},}
 
-local requireTable = {"autoconf/custom/archhud/globals","autoconf/custom/archhud/hudclass", "autoconf/custom/archhud/apclass", "autoconf/custom/archhud/controlclass",
+local requireTable = {"autoconf/custom/archhud/globals","autoconf/custom/archhud/hudclass", "autoconf/custom/archhud/flightclass", "autoconf/custom/archhud/controlclass",
                       "autoconf/custom/archhud/atlasclass", "autoconf/custom/archhud/baseclass", "autoconf/custom/archhud/shieldclass",
                       "autoconf/custom/archhud/radarclass", "autoconf/custom/archhud/axiscommandoverride", "autoconf/custom/archhud/userclass"}
 
