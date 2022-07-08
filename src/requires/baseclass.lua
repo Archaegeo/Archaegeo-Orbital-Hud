@@ -1,39 +1,21 @@
-function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
-    local s = DUSystem
-    local C = DUConstruct
+function baseClass(N, C, U, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
+    local S = DUSystem
+    local c = DUConstruct
     local P = DUPlayer
-    local library = DULibrary
-    -- Local variables and functions
-        local program = {}
 
+    -- Local variables
+        local base = {}
+    -- Local Redefines
         local stringf = string.format
         local jdecode = json.decode
         local jencode = json.encode
-        local eleMaxHp = c.getElementMaxHitPointsById
-        local eleMass = c.getElementMassById
-        local isRemote = Nav.control.isRemoteControlled
         local stringmatch = string.match
-        local sysDestWid = s.destroyWidgetPanel
-        local sysUpData = s.updateData
-        local sysAddData = s.addDataToWidget
-        local sysLockVw = s.lockView
-        local sysIsVwLock = s.isViewLocked
         local msqrt = math.sqrt
         local tonum = tonumber
         local mabs = math.abs
         local mfloor = math.floor
-        local atmosphere = u.getAtmosphereDensity
-        local atan = math.atan
-        local systime = s.getArkTime
         local uclamp = utils.clamp
-        local navCom = Nav.axisCommandManager
-
-        local targetGroundAltitude = LandingGearGroundHeight -- So it can tell if one loaded or not
-        local coreHalfDiag = 13
-        local elementsID = c.getElementIdList()
-
-        local eleTotalMaxHp = 0
-
+    -- Local Functions
         local function float_eq(a, b) -- float equation
             if a == 0 then
                 return mabs(b) < 1e-09
@@ -42,10 +24,6 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 return mabs(a) < 1e-09
             end
             return mabs(a - b) < math.max(mabs(a), mabs(b)) * epsilon
-        end
-        local function round(num, numDecimalPlaces) -- rounds variable num to numDecimalPlaces
-            local mult = 10 ^ (numDecimalPlaces or 0)
-            return mfloor(num * mult + 0.5) / mult
         end
         local function addTable(table1, table2) -- Function to add two tables together
             for k,v in pairs(table2) do
@@ -89,23 +67,17 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             if dbHud_1 then
                 writeData(autoVariables) 
                 writeData(saveableVariables())
-                s.print("Saved Variables to Datacore")
+                p("Saved Variables to Datacore")
                 if copy and dbHud_2 then
-                    msgText = "Databank copied.  Remove copy when ready."
+                    p("Databank copied.  Remove copy when ready.")
                 end
             end
         end
-        local function play(sound, ID, type)
-            if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
-            s.playSound(soundFolder.."/"..sound..".mp3")
-        end
-        local function svgText(x, y, text, class, style) -- processes a svg text string, saves code lines by doing it this way
-            if class == nil then class = "" end
-            if style == nil then style = "" end
-            return stringf([[<text class="%s" x=%s y=%s style="%s">%s</text>]], class,x, y, style, text)
-        end
-    
         local function getDistanceDisplayString(distance, places) -- Turn a distance into a string to a number of places
+            local function round(num, numDecimalPlaces) -- rounds variable num to numDecimalPlaces
+                local mult = 10 ^ (numDecimalPlaces or 0)
+                return mfloor(num * mult + 0.5) / mult
+            end
             local su = distance > 100000
             if places == nil then places = 1 end
             if su then
@@ -118,7 +90,6 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 return round(distance / 1000, places).."KM"
             end
         end
-    
         local function FormatTimeString(seconds) -- Format a time string for display
             local minutes = 0
             local hours = 0
@@ -140,607 +111,319 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             elseif hours > 0 then
                 return hours .. "h " .. minutes .. "m "
             elseif minutes > 0 then
-                return minutes .. "m " .. seconds .. "s"
+                return minutes .. "m " .. seconds .. "S"
             elseif seconds > 0 then 
-                return seconds .. "s"
+                return seconds .. "S"
             else
                 return "0s"
             end
         end
-    local function radarSetup()
-        if radar_1 and FullRadar then 
-            RADAR = RadarClass(c, s, u, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
-        end
-    end
 
-    function program.radarSetup()
-        radarSetup()
-    end
+    -- Class Functions
+        function base.onStart()
+            -- Local functions for onStart
+                local valuesAreSet = false
+                local function LoadVariables() -- Databank variable loading
 
-    function program.onStart()
-        -- Local functions for onStart
-
-            local valuesAreSet = false
-            local function LoadVariables()
-
-                local function processVariableList(varList)
-                    local hasKey = dbHud_1.hasKey
-                    for k, v in pairs(varList) do
-                        if hasKey(k) then
-                            local result = jdecode(dbHud_1.getStringValue(k))
-                            if result ~= nil then
-                                v.set(result)
-                                valuesAreSet = true
+                    local function processVariableList(varList)
+                        local hasKey = dbHud_1.hasKey
+                        for k, v in pairs(varList) do
+                            if hasKey(k) then
+                                local result = jdecode(dbHud_1.getStringValue(k))
+                                if result ~= nil then
+                                    v.set(result)
+                                    valuesAreSet = true
+                                end
                             end
                         end
                     end
-                end
-                pcall(require,"autoconf/custom/archhud/custom/userglobals")
-                if dbHud_1 then
-                    if not useTheseSettings then 
-                        processVariableList(saveableVariables())
+                    pcall(require,"autoconf/custom/archhud/custom/userglobals")
+                    if dbHud_1 then
+                        if not useTheseSettings then 
+                            processVariableList(saveableVariables())
+                            coroutine.yield()
+                            processVariableList(autoVariables)
+                        else
+                            processVariableList(autoVariables)
+                            p("Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use saved values")
+                            valuesAreSet = false
+                        end
                         coroutine.yield()
-                        processVariableList(autoVariables)
+                        if valuesAreSet then
+                            p("Loaded Saved Variables")
+                        elseif not useTheseSettings then
+                            p("No Databank Saved Variables Found\nVariables will save to Databank on standing")
+                        end
                     else
-                        processVariableList(autoVariables)
-                        msgText = "Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use saved values"
-                        msgTimer = 5
-                        valuesAreSet = false
+                        p("No databank found. Attach one to control U and rerun \nthe autoconfigure to save preferences and locations")
                     end
-                    coroutine.yield()
-                    if valuesAreSet then
-                        msgText = "Loaded Saved Variables"
-                    elseif not useTheseSettings then
-                        msgText = "No Databank Saved Variables Found\nVariables will save to Databank on standing"
-                        msgTimer = 5
-                    end
-                    if #SavedLocations>0 then customlocations = addTable(customlocations, SavedLocations) end
-                else
-                    msgText = "No databank found. Attach one to control u and rerun \nthe autoconfigure to save preferences and locations"
+                    resolutionWidth = S.getScreenWidth()
+                    resolutionHeight = S.getScreenHeight()
+                    MaxGameVelocity = c.getMaxSpeed()-0.1
                 end
-                resolutionWidth = ResolutionX
-                resolutionHeight = ResolutionY
-                BrakeToggleStatus = BrakeToggleDefault
-                userControlScheme = string.lower(userControlScheme)
-                autoRoll = autoRollPreference
-                adjustedAtmoSpeedLimit = AtmoSpeedLimit
-                if (LastStartTime + 180) < time then -- Variables to reset if out of seat (and not on hud) for more than 3 min
-                    LastMaxBrakeInAtmo = 0
-                end
-                LastStartTime = time
-                userControlScheme = string.lower(userControlScheme)
-                if string.find("keyboard virtual joystick mouse",  userControlScheme) == nil then 
-                    msgText = "Invalid User Control Scheme selected.\nChange userControlScheme in Lua Parameters to keyboard, mouse, or virtual joystick\nOr use shift and button in screen"
-                    msgTimer = 7
-                end
-            
-                if antigrav and not ExternalAGG then
-                    if AntigravTargetAltitude == nil then 
-                        AntigravTargetAltitude = coreAltitude
-                    end
-                    antigrav.setTargetAltitude(AntigravTargetAltitude)
-                end
-                if pcall(require, "autoconf/custom/archhud/privatelocations") then
-                    if #privatelocations>0 then customlocations = addTable(customlocations, privatelocations) end
-                end
-                VectorStatus = "Proceeding to Waypoint"
-                if MaxGameVelocity < 0 then MaxGameVelocity = C.getMaxSpeed()-0.1 end
-            end
 
-            local function ProcessElements()
+                local function ProcessElements() -- Processing of elements
+                    local elementsID = C.getElementIdList()
+                    for k in pairs(elementsID) do --Look for space engines, landing gear, fuel tanks if not slotted and C size
+                        local type = C.getElementDisplayNameById(elementsID[k])
+                        --[[ EXAMPLES
+                            if stringmatch(type, '^.*Space Engine$') then
+                            end
+                            if (type == "Landing Gear") then
+                            end
+                        --]]
+                    end
+                end
                 
-                local function CalculateFuelVolume(curMass, vanillaMaxVolume)
-                    if curMass > vanillaMaxVolume then
-                        vanillaMaxVolume = curMass
-                    end
-                    local f1, f2 = 0, 0
-                    if ContainerOptimization > 0 then 
-                        f1 = ContainerOptimization * 0.05
-                    end
-                    if FuelTankOptimization > 0 then 
-                        f2 = FuelTankOptimization * 0.05
-                    end
-                    vanillaMaxVolume = vanillaMaxVolume * (1 - (f1 + f2))
-                    return vanillaMaxVolume            
-                end
-
-                local eleName = c.getElementNameById
-                local checkTanks = (fuelX ~= 0 and fuelY ~= 0)
-                local slottedTanksAtmo = _G["atmofueltank_size"]
-                local slottedTanksSpace = _G["spacefueltank_size"]
-                local slottedTanksRocket = _G["rocketfueltank_size"]
-                for k in pairs(elementsID) do --Look for space engines, landing gear, fuel tanks if not slotted and c size
-                    local type = c.getElementDisplayNameById(elementsID[k])
-                    if stringmatch(type, '^.*Atmospheric Engine$') then
-                        if stringmatch(tostring(c.getElementTagsById(elementsID[k])), '^.*vertical.*$') and c.getElementForwardById(elementsID[k])[3]>0 then
-                            UpVertAtmoEngine = true
-                        end
-                    end
-
-                    if stringmatch(type, '^.*Space Engine$') then
-                        SpaceEngines = true
-                        if stringmatch(tostring(c.getElementTagsById(elementsID[k])), '^.*vertical.*$') then
-                            local enrot = c.getElementForwardById(elementsID[k])
-                            if enrot[3] < 0 then
-                                SpaceEngineVertUp = true
-                            else
-                                SpaceEngineVertDn = true
-                            end
-                        end
-                    end
-                    if (type == "Landing Gear") then
-                        hasGear = true
-                    end
-                    if (type == "Dynamic Core Unit") then
-                        local hp = eleMaxHp(elementsID[k])
-                        if hp > 10000 then
-                            coreHalfDiag = 110
-                        elseif hp > 1000 then
-                            coreHalfDiag = 55
-                        elseif hp > 150 then
-                            coreHalfDiag = 27
-                        end
-                    end
-                    eleTotalMaxHp = eleTotalMaxHp + eleMaxHp(elementsID[k])
-                    if checkTanks and (type == "Atmospheric Fuel Tank" or type == "Space Fuel Tank" or type == "Rocket Fuel Tank") then
-                        local hp = eleMaxHp(elementsID[k])
-                        local mass = eleMass(elementsID[k])
-                        local curMass = 0
-                        local curTime = systime()
-                        if (type == "Atmospheric Fuel Tank") then
-                            local vanillaMaxVolume = 400
-                            local massEmpty = 35.03
-                            if hp > 10000 then
-                                vanillaMaxVolume = 51200 -- volume in kg of L tank
-                                massEmpty = 5480
-                            elseif hp > 1300 then
-                                vanillaMaxVolume = 6400 -- volume in kg of M
-                                massEmpty = 988.67
-                            elseif hp > 150 then
-                                vanillaMaxVolume = 1600 --- volume in kg small
-                                massEmpty = 182.67
-                            end
-                            curMass = mass - massEmpty
-                            if fuelTankHandlingAtmo > 0 then
-                                vanillaMaxVolume = vanillaMaxVolume + (vanillaMaxVolume * (fuelTankHandlingAtmo * 0.2))
-                            end
-                            vanillaMaxVolume =  CalculateFuelVolume(curMass, vanillaMaxVolume)
-							
-							local name = eleName(elementsID[k])
-							
-							local slottedIndex = 0
-							for j = 1, slottedTanksAtmo do
-								if name == jdecode(u["atmofueltank_" .. j].getWidgetData()).name then
-									slottedIndex = j
-									break
-								end
-							end
-							
-							local tank = {elementsID[k], string.sub(name, 1, 12),
-                                                        vanillaMaxVolume, massEmpty, curMass, curTime, slottedIndex}
-                            atmoTanks[#atmoTanks + 1] = tank
-                        end
-                        if (type == "Rocket Fuel Tank") then
-                            local vanillaMaxVolume = 320
-                            local massEmpty = 173.42
-                            if hp > 65000 then
-                                vanillaMaxVolume = 40000 -- volume in kg of L tank
-                                massEmpty = 25740
-                            elseif hp > 6000 then
-                                vanillaMaxVolume = 5120 -- volume in kg of M
-                                massEmpty = 4720
-                            elseif hp > 700 then
-                                vanillaMaxVolume = 640 --- volume in kg small
-                                massEmpty = 886.72
-                            end
-                            curMass = mass - massEmpty
-                            if fuelTankHandlingRocket > 0 then
-                                vanillaMaxVolume = vanillaMaxVolume + (vanillaMaxVolume * (fuelTankHandlingRocket * 0.1))
-                            end
-                            vanillaMaxVolume =  CalculateFuelVolume(curMass, vanillaMaxVolume)
-                            
-							local name = eleName(elementsID[k])
-							
-							local slottedIndex = 0
-							for j = 1, slottedTanksRocket do
-								if name == jdecode(u["rocketfueltank_" .. j].getWidgetData()).name then
-									slottedIndex = j
-									break
-								end
-							end
-							
-							local tank = {elementsID[k], string.sub(name, 1, 12),
-                                                        vanillaMaxVolume, massEmpty, curMass, curTime, slottedIndex}
-                            rocketTanks[#rocketTanks + 1] = tank
-                        end
-                        if (type == "Space Fuel Tank") then
-                            local vanillaMaxVolume = 600
-                            local massEmpty = 35.03
-                            if hp > 10000 then
-                                vanillaMaxVolume = 76800 -- volume in kg of L tank
-                                massEmpty = 5480
-                            elseif hp > 1300 then
-                                vanillaMaxVolume = 9600 -- volume in kg of M
-                                massEmpty = 988.67
-                            elseif hp > 150 then
-                                vanillaMaxVolume = 2400 -- volume in kg of S
-                                massEmpty = 182.67                                
-                            end
-                            curMass = mass - massEmpty
-                            if fuelTankHandlingSpace > 0 then
-                                vanillaMaxVolume = vanillaMaxVolume + (vanillaMaxVolume * (fuelTankHandlingSpace * 0.2))
-                            end
-                            vanillaMaxVolume =  CalculateFuelVolume(curMass, vanillaMaxVolume)
-                            
-                            local name = eleName(elementsID[k])
-                            
-							local slottedIndex = 0
-							for j = 1, slottedTanksSpace do
-								if name == jdecode(u["spacefueltank_" .. j].getWidgetData()).name then
-									slottedIndex = j
-									break
-								end
-							end
-							
-							local tank = {elementsID[k], string.sub(name, 1, 12),
-                                                        vanillaMaxVolume, massEmpty, curMass, curTime, slottedIndex}
-                            spaceTanks[#spaceTanks + 1] = tank
-                        end
-                    end
-                end
-                if not UpVertAtmoEngine then
-                    VertTakeOff, VertTakeOffEngine = false, false
-                end
-            end
-            
-            local function SetupChecks()
-                
-                if gyro ~= nil then
-                    gyroIsOn = gyro.isActive() == 1
-                end
-                if not stablized then 
-                    navCom:deactivateGroundEngineAltitudeStabilization()
-                end
-                if userControlScheme ~= "keyboard" then
-                    sysLockVw(1)
-                else
-                    sysLockVw(0)
-                end
-                -- Close door and retract ramp if available
-                if door and (inAtmo or (not inAtmo and coreAltitude < 10000)) then
-                    for _, v in pairs(door) do
-                        v.toggle()
-                    end
-                end
-                if switch then 
-                    for _, v in pairs(switch) do
-                        v.toggle()
-                    end
-                end    
-                if forcefield and (inAtmo or (not inAtmo == 0 and coreAltitude < 10000)) then
-                    for _, v in pairs(forcefield) do
-                        v.toggle()
-                    end
-                end
-                if antigrav then
-                    antigravOn = (antigrav.isActive() == 1)
-                    if antigravOn and not ExternalAGG then antigrav.showWidget() end
-                end
-                -- unfreeze the player if he is remote controlling the construct
-                if isRemote() == 1 and RemoteFreeze then
-                    P.freeze(1)
-                else
-                    P.freeze(0)
-                end
-                if hasGear then
-                    if abvGndDet ~= -1 and not antigravOn then
-                        Nav.control.deployLandingGears()
-                    else
-                        Nav.control.retractLandingGears()
-                    end
-                end
-                GearExtended = (Nav.control.isAnyLandingGearDeployed() == 1) or (abvGndDet ~=-1 and (abvGndDet - 3) < LandingGearGroundHeight)
-                -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
-                if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 50) then
+                local function SetupChecks() -- Things to check on startup
                     BrakeIsOn = "Startup"
-                else
-                    BrakeIsOn = false
                 end
 
-                navCom:setTargetGroundAltitude(targetGroundAltitude)
+                local function atlasSetup()
+                    local atlasCopy = {}
+                    
+                    local function getSpaceEntry()
+                        return {
+                                    id = 0,
+                                    name = { "Space", "Space", "Space"},
+                                    type = {},
+                                    biosphere = {},
+                                    classification = {},
+                                    habitability = {},
+                                    description = {},
+                                    iconPath = "",
+                                    hasAtmosphere = false,
+                                    isSanctuary = false,
+                                    isInSafeZone = true,
+                                    systemId = 0,
+                                    positionInSystem = 0,
+                                    satellites = {},
+                                    center = { 0, 0, 0 },
+                                    gravity = 0,
+                                    radius = 0,
+                                    atmosphereThickness = 0,
+                                    atmosphereRadius = 0,
+                                    surfaceArea = 0,
+                                    surfaceAverageAltitude = 0,
+                                    surfaceMaxAltitude = 0,
+                                    surfaceMinAltitude = 0,
+                                    GM = 0,
+                                    ores = {},
+                                    territories = 0,
+                                    noAtmosphericDensityAltitude = 0,
+                                    spaceEngineMinAltitude = 0,
+                                }
+                    end
 
-                WasInAtmo = inAtmo
+                    local altTable = { [1]=4480, [6]=4480, [7]=6270, [27]=8437 } -- Alternate min space engine altitudes for madis, sinnen, sicari, haven
+                    -- No Atmo Heights for Madis, Alioth, Thades, Talemai, Feli, Sicari, Sinnen, Teoma, Jago, Sanctuary, Haven, Lacobus, Symeon, Ion.
+                    local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[27]=15554,[100]=12511,[110]=7792,[120]=11766} 
+                    for galaxyId,galaxy in pairs(atlas) do
+                        -- Create a copy of Space with the appropriate SystemId for each galaxy
+                        atlas[galaxyId][0] = getSpaceEntry()
+                        atlas[galaxyId][0].systemId = galaxyId
+                        atlasCopy[galaxyId] = {} -- Prepare a copy galaxy
 
-            end
-
-            local function atlasSetup()
-                local atlasCopy = {}
-                
-                local function getSpaceEntry()
-                    return {
-                                id = 0,
-                                name = { "Space", "Space", "Space"},
-                                type = {},
-                                biosphere = {},
-                                classification = {},
-                                habitability = {},
-                                description = {},
-                                iconPath = "",
-                                hasAtmosphere = false,
-                                isSanctuary = false,
-                                isInSafeZone = true,
-                                systemId = 0,
-                                positionInSystem = 0,
-                                satellites = {},
-                                center = { 0, 0, 0 },
-                                gravity = 0,
-                                radius = 0,
-                                atmosphereThickness = 0,
-                                atmosphereRadius = 0,
-                                surfaceArea = 0,
-                                surfaceAverageAltitude = 0,
-                                surfaceMaxAltitude = 0,
-                                surfaceMinAltitude = 0,
-                                GM = 0,
-                                ores = {},
-                                territories = 0,
-                                noAtmosphericDensityAltitude = 0,
-                                spaceEngineMinAltitude = 0,
-                            }
-                end
-
-                local altTable = { [1]=4480, [6]=4480, [7]=6270, [27]=8437 } -- Alternate min space engine altitudes for madis, sinnen, sicari, haven
-                -- No Atmo Heights for Madis, Alioth, Thades, Talemai, Feli, Sicari, Sinnen, Teoma, Jago, Sanctuary, Haven, Lacobus, Symeon, Ion.
-                local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[27]=15554,[100]=12511,[110]=7792,[120]=11766} 
-                for galaxyId,galaxy in pairs(atlas) do
-                    -- Create a copy of Space with the appropriate SystemId for each galaxy
-                    atlas[galaxyId][0] = getSpaceEntry()
-                    atlas[galaxyId][0].systemId = galaxyId
-                    atlasCopy[galaxyId] = {} -- Prepare a copy galaxy
-
-                    for planetId,planet in pairs(atlas[galaxyId]) do
-                        planet.gravity = planet.gravity/9.8
-                        planet.center = vec3(planet.center)
-                        planet.name = planet.name[1]
-                
-                        planet.noAtmosphericDensityAltitude = noAtmoAlt[planet.id] or planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
-                        planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness)
-                                
-                        planet.planetarySystemId = galaxyId
-                        planet.bodyId = planet.id
-                        atlasCopy[galaxyId][planetId] = planet
-                        if minAtlasX == nil or planet.center.x < minAtlasX then
-                            minAtlasX = planet.center.x
-                        end
-                        if maxAtlasX == nil or planet.center.x > maxAtlasX then
-                            maxAtlasX = planet.center.x
-                        end
-                        if minAtlasY == nil or planet.center.y < minAtlasY then
-                            minAtlasY = planet.center.y
-                        end
-                        if maxAtlasY == nil or planet.center.y > maxAtlasY then
-                            maxAtlasY = planet.center.y
-                        end
-                        if planet.center and planet.name ~= "Space" then
-                            planetAtlas[#planetAtlas + 1] = planet
+                        for planetId,planet in pairs(atlas[galaxyId]) do
+                            planet.gravity = planet.gravity/9.8
+                            planet.center = vec3(planet.center)
+                            planet.name = planet.name[1]
+                    
+                            planet.noAtmosphericDensityAltitude = noAtmoAlt[planet.id] or planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
+                            planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness)
+                                    
+                            planet.planetarySystemId = galaxyId
+                            planet.bodyId = planet.id
+                            atlasCopy[galaxyId][planetId] = planet
+                            if minAtlasX == nil or planet.center.x < minAtlasX then
+                                minAtlasX = planet.center.x
+                            end
+                            if maxAtlasX == nil or planet.center.x > maxAtlasX then
+                                maxAtlasX = planet.center.x
+                            end
+                            if minAtlasY == nil or planet.center.y < minAtlasY then
+                                minAtlasY = planet.center.y
+                            end
+                            if maxAtlasY == nil or planet.center.y > maxAtlasY then
+                                maxAtlasY = planet.center.y
+                            end
+                            if planet.center and planet.name ~= "Space" then
+                                planetAtlas[#planetAtlas + 1] = planet
+                            end
                         end
                     end
+                    PlanetaryReference = PlanetRef(N, C, U, S, stringf, uclamp, tonum, msqrt, float_eq)
+                    galaxyReference = PlanetaryReference(atlasCopy)
+                    -- Setup Modular Classes
+                    Kinematic = Kinematics(N, C, U, S, msqrt, mabs)
+                    Kep = Keplers(N, C, U, S, stringf, uclamp, tonum, msqrt, float_eq)
+
+                    ATLAS = AtlasClass(N, C, U, S, atlas)
+                    planet = galaxyReference[0]:closestBody(c.getWorldPosition())
                 end
-                PlanetaryReference = PlanetRef(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
-                galaxyReference = PlanetaryReference(atlasCopy)
-                -- Setup Modular Classes
-                Kinematic = Kinematics(Nav, c, u, s, msqrt, mabs)
-                Kep = Keplers(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
 
-                ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round)
-                planet = galaxyReference[0]:closestBody(C.getWorldPosition())
-            end
+            SetupComplete = false
 
-        SetupComplete = false
+            beginSetup = coroutine.create(function()
+                
+                -- Load Saved Variables
+                LoadVariables() -- Databank variable loading
+                coroutine.yield() -- Give it some time to breathe before we do the rest
 
-        beginSetup = coroutine.create(function()
-            
-            --[[ --EliasVilld Log Code setup material.
-            Logs = Logger()
-            _logCompute = Logs.CreateLog("Computation", "time")
-            --]]
+                -- Find elements we care about
+                ProcessElements() -- Processing of elements
+                coroutine.yield() -- Give it some time to breathe before we do the rest
 
-            navCom:setupCustomTargetSpeedRanges(axisCommandId.longitudinal,
-                {1000, 5000, 10000, 20000, 30000})
+                AP = APClass(N, C, U, S) -- AUTOPILOT CLASS
 
-            -- Load Saved Variables
+                SetupChecks() -- All the if-thens to set up for particular ship.  Specifically override these with the saved variables if available
 
-            LoadVariables()
-            coroutine.yield() -- Give it some time to breathe before we do the rest
+                coroutine.yield() -- Just to make sure
 
-            -- Find elements we care about
-            ProcessElements()
-            coroutine.yield() -- Give it some time to breathe before we do the rest
+                atlasSetup() -- SETUP ATLAS
+                if radar_1 and RadarClass then RADAR = RadarClass(C, S, U, radar_1, radar_2) end
 
-            AP = APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
-                mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
-                navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq, 
-                getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)
+                if HudClass then 
+                    HUD = HudClass(N, C, U, S) 
+                end
+                CONTROL = ControlClass(N, C, U, S) -- User Controls
+                if shield and ShieldClass then SHIELD = ShieldClass(shield) end
+                coroutine.yield()
+                U.hideWidget()
+                S.showScreen(1)
+                S.showHelper(0)
+                if screenHud_1 then screenHud_1.clear() end
+                -- Start timers
+                coroutine.yield()
 
-            SetupChecks() -- All the if-thens to set up for particular ship.  Specifically override these with the saved variables if available
-
-            coroutine.yield() -- Just to make sure
-
-            atlasSetup()
-            radarSetup()
-
-            if HudClass then 
-                HUD = HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapon, mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, navCom, 
-                    sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables, getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp) 
-            end
-            if HUD then 
-                HUD.ButtonSetup() 
-            end
-            CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
-                isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
-            if shield then SHIELD = ShieldClass(shield, stringmatch, mfloor) end
-            coroutine.yield()
-            u.hideWidget()
-            s.showScreen(1)
-            s.showHelper(0)
-            if screenHud_1 then screenHud_1.clear() end
-            -- That was a lot of work with dirty strings and json.  Clean up
-            collectgarbage("collect")
-            -- Start timers
-            coroutine.yield()
-
-            u.setTimer("apTick", 0.0166667)
-            u.setTimer("hudTick", hudTickRate)
-            u.setTimer("oneSecond", 1)
-            u.setTimer("tenthSecond", 1/10)
-            u.setTimer("fiveSecond", 5) 
-            if shield then u.setTimer("shieldTick", 0.0166667) end
-            if userBase then PROGRAM.ExtraOnStart() end
-            play("start","SU")
-        end)
-        coroutine.resume(beginSetup)
-    end
-    
-    function program.onUpdate()
-        if not SetupComplete then
-            local cont = coroutine.status (beginSetup)
-            if cont == "suspended" then 
-                local value, done = coroutine.resume(beginSetup)
-                if done then s.print("ERROR STARTUP: "..done) end
-            elseif cont == "dead" then
-                SetupComplete = true
-            end
+                U.setTimer("apTick", 0.0166667) -- 0.0166667 is 60 FPS
+                if HUD then U.setTimer("hudTick", hudTickRate) end
+                U.setTimer("oneSecond", 1)
+                U.setTimer("tenthSecond", 1/10)
+                U.setTimer("fiveSecond", 5) 
+                if shield then U.setTimer("shieldTick", 0.0166667) end
+                if userBase then BASE.ExtraOnStart() end
+            end)
+            coroutine.resume(beginSetup)
         end
-        if SetupComplete then
-            Nav:update()
-            if inAtmo and AtmoSpeedAssist and throttleMode then
-                if throttleMode and WasInCruise then
-                    -- Not in cruise, but was last tick
-                    AP.cmdThrottle(0)
-                    WasInCruise = false
-                elseif not throttleMode and not WasInCruise then
-                    -- Is in cruise, but wasn't last tick
-                    PlayerThrottle = 0 -- Reset this here too, because, why not
-                    WasInCruise = true
+        
+        function base.onUpdate()
+            if not SetupComplete then
+                local cont = coroutine.status (beginSetup)
+                if cont == "suspended" then 
+                    local value, done = coroutine.resume(beginSetup)
+                    if done then p("ERROR STARTUP: "..done) end
+                elseif cont == "dead" then
+                    SetupComplete = true
                 end
             end
-            if ThrottleValue then
-                navCom:setThrottleCommand(axisCommandId.longitudinal, ThrottleValue)
-                ThrottleValue = nil
-            end
-            
-            if not Animating and content ~= LastContent then
-                s.setScreen(content) 
-            end
-            LastContent = content
-            if userBase then PROGRAM.ExtraOnUpdate() end
-        end
-    end
-
-    function program.onFlush()
-        if SetupComplete then
-            AP.onFlush()
-            if userBase then PROGRAM.ExtraOnFlush() end
-        end
-    end
-
-    function program.onStop()
-        _autoconf.hideCategoryPanels()
-        if antigrav ~= nil  and not ExternalAGG then
-            antigrav.hideWidget()
-        end
-        if warpdrive ~= nil then
-            warpdrive.hideWidget()
-        end
-        c.hideWidget()
-        Nav.control.switchOffHeadlights()
-        -- Open door and extend ramp if available
-        if door and (atmosDensity > 0 or (atmosDensity == 0 and coreAltitude < 10000)) then
-            for _, v in pairs(door) do
-                v.toggle()
+            if SetupComplete then
+                N:update()
+                if userBase then BASE.ExtraOnUpdate() end
             end
         end
-        if switch then
-            for _, v in pairs(switch) do
-                v.toggle()
+
+        function base.onFlush()
+            if SetupComplete then
+                AP.onFlush()
+                if userBase then BASE.ExtraOnFlush() end
             end
         end
-        if forcefield and (atmosDensity > 0 or (atmosDensity == 0 and coreAltitude < 10000)) then
-            for _, v in pairs(forcefield) do
-                v.toggle()
+
+        function base.onStop()
+            _autoconf.hideCategoryPanels()
+            if antigrav ~= nil  and not ExternalAGG then
+                antigrav.hideWidget()
+            end
+            if warpdrive ~= nil then
+                warpdrive.hideWidget()
+            end
+            C.hideWidget()
+            N.control.switchOffHeadlights()
+            -- Open door and extend ramp if available
+            if door and (atmosDensity > 0 or (atmosDensity == 0 and coreAltitude < 10000)) then
+                for _, v in pairs(door) do
+                    v.toggle()
+                end
+            end
+            if switch then
+                for _, v in pairs(switch) do
+                    v.toggle()
+                end
+            end
+            if forcefield and (atmosDensity > 0 or (atmosDensity == 0 and coreAltitude < 10000)) then
+                for _, v in pairs(forcefield) do
+                    v.toggle()
+                end
+            end
+            showHud = oldShowHud
+            SaveDataBank()
+            if button then
+                button.activate()
+            end
+            if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
+            if HUD then p(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank")) end
+            if userBase then BASE.ExtraOnStop() end
+        end
+
+        function base.controlStart(action)
+            if SetupComplete then
+                CONTROL.startControl(action)
             end
         end
-        showHud = oldShowHud
-        SaveDataBank()
-        if button then
-            button.activate()
+
+        function base.controlStop(action)
+            if SetupComplete then
+                CONTROL.stopControl(action)
+            end
         end
-        if SetWaypointOnExit then AP.showWayPoint(planet, worldPos) end
-        if HUD then s.print(HUD.FuelUsed("atmofueltank")..", "..HUD.FuelUsed("spacefueltank")..", "..HUD.FuelUsed("rocketfueltank")) end
-        if userBase then PROGRAM.ExtraOnStop() end
-        play("stop","SU")
-    end
 
-    function program.controlStart(action)
-        if SetupComplete then
-            CONTROL.startControl(action)
+        function base.controlLoop(action)
+            if SetupComplete then
+                CONTROL.loopControl(action)
+            end
         end
-    end
 
-    function program.controlStop(action)
-        if SetupComplete then
-            CONTROL.stopControl(action)
+        function base.controlInput(text)
+            if SetupComplete then
+                CONTROL.inputTextControl(text)
+            end
         end
-    end
 
-    function program.controlLoop(action)
-        if SetupComplete then
-            CONTROL.loopControl(action)
+        function base.radarEnter(id)
+            if RADAR then RADAR.onEnter(id) end
         end
-    end
 
-    function program.controlInput(text)
-        if SetupComplete then
-            CONTROL.inputTextControl(text)
+        function base.radarLeave(id)
+            if RADAR then RADAR.onLeave(id) end
         end
-    end
 
-    function program.radarEnter(id)
-        if RADAR then RADAR.onEnter(id) end
-    end
-
-    function program.radarLeave(id)
-        if RADAR then RADAR.onLeave(id) end
-    end
-
-    function program.onTick(timerId)
-        if timerId == "tenthSecond" then -- Timer executed ever tenth of a second
-            AP.TenthTick()
-            if HUD then HUD.TenthTick() end
-        elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
-            if HUD then HUD.OneSecondTick() end
-        elseif timerId == "fiveSecond" then -- Timer executed every 5 seconds (SatNav only stuff for now)
-            AP.SatNavTick()
-        elseif timerId == "msgTick" then -- Timer executed whenever msgText is applied somwehere
-            if HUD then HUD.MsgTick() end
-        elseif timerId == "animateTick" then -- Timer for animation
-            if HUD then HUD.AnimateTick() end
-        elseif timerId == "hudTick" then -- Timer for all hud updates not called elsewhere
-            if HUD then HUD.hudtick() end
-        elseif timerId == "apTick" then -- Timer for all autopilot functions
-            AP.APTick()
-        elseif timerId == "shieldTick" then
-            SHIELD.shieldTick()
-        elseif timerId == "tagTick" then
-            CONTROL.tagTick()
-        elseif timerId == "contact" then
-            RADAR.ContactTick()
+        function base.onTick(timerId)
+            if timerId == "tenthSecond" then -- Timer executed ever tenth of a second
+                AP.TenthTick()
+                -- Tenth of a second call
+            elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
+                -- One second call
+            elseif timerId == "fiveSecond" then -- Timer executed every 5 seconds
+                -- five second call
+            elseif timerId == "animateTick" then -- Timer for animation
+                if HUD then HUD.AnimateTick() end
+            elseif timerId == "hudTick" then -- Timer for all hud updates not called elsewhere
+                if HUD then HUD.hudtick() end
+            elseif timerId == "apTick" then -- Timer for all autopilot functions
+                AP.APTick()
+            elseif timerId == "shieldTick" then
+                SHIELD.shieldTick()
+            elseif timerId == "tagTick" then
+                CONTROL.tagTick()
+            elseif timerId == "contact" then
+                RADAR.ContactTick()
+            end
         end
-    end
 
     if userBase then 
-        for k,v in pairs(userBase) do program[k] = v end 
+        for k,v in pairs(userBase) do base[k] = v end 
     end  
 
-    return program
+    return base
 end
