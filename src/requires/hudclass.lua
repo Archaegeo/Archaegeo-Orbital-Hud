@@ -3076,10 +3076,10 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         end
         local function updateWeapons()
             if weapon then
-                if  WeaponPanelID==nil and (radarPanelID ~= nil or GearExtended)  then
+                if  WeaponPanelID==nil and (radarPanelId ~= nil or GearExtended)  then
                     _autoconf.displayCategoryPanel(weapon, weapon_size, "Weapons", "weapon", true)
                     WeaponPanelID = _autoconf.panels[_autoconf.panels_size]
-                elseif WeaponPanelID ~= nil and radarPanelID == nil and not GearExtended then
+                elseif WeaponPanelID ~= nil and radarPanelId == nil and not GearExtended then
                     sysDestWid(WeaponPanelID)
                     WeaponPanelID = nil
                 end

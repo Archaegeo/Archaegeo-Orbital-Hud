@@ -30,7 +30,36 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
             [-2] = "obstructed",
             [-3] = "in use"
           }
-
+        local radarWidgetId
+        local radarDataId
+    local function toggleRadarPanel()
+        if radarPanelId ~= nil and peris == 0 then
+            sysDestWid(radarPanelId)
+            s.destroyWidget(radarWidgetId)
+            s.destroyData(radarDataId)
+            radarWidgetId, radarDataId, radarPanelId = nil, nil, nil
+            if perisPanelID ~= nil then
+                sysDestWid(perisPanelID)
+                perisPanelID = nil
+            end
+        else
+            -- If radar is installed but no weapon, don't show periscope
+            if peris == 1 then
+                sysDestWid(radarPanelId)
+                radarPanelId = nil
+                _autoconf.displayCategoryPanel(radars, 1, "Periscope",
+                    "periscope")
+                perisPanelID = _autoconf.panels[_autoconf.panels_size]
+            end
+            if radarPanelId == nil and radarContacts > 0 then
+                radarPanelId = s.createWidgetPanel(rType)
+                radarWidgetId = s.createWidget(radarPanelId, 'radar')
+                radarDataId = activeRadar.getWidgetDataId()
+                s.addDataToWidget(radarDataId , radarWidgetId)
+            end
+            peris = 0
+        end
+    end
     local function UpdateRadarRoutine()
         -- UpdateRadarRoutine Locals
             local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
@@ -244,7 +273,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
             if target ~= nil and perisPanelID ~= nil then
                 RADAR.ToggleRadarPanel()
             end
-            if radarPanelID == nil then
+            if radarPanelId == nil then
                 RADAR.ToggleRadarPanel()
             end
         else
@@ -253,7 +282,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
             else
                 radarMessage = svgText(radarX, radarY, "Radar: No "..rType.." Contacts", "pbright txtbig txtmid")
             end
-            if radarPanelID ~= nil then
+            if radarPanelId ~= nil then
                 peris = 0
                 RADAR.ToggleRadarPanel()
             end
@@ -271,28 +300,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
         return name
     end
     function Radar.ToggleRadarPanel()
-        if radarPanelID ~= nil and peris == 0 then
-            sysDestWid(radarPanelID)
-            radarPanelID = nil
-            if perisPanelID ~= nil then
-                sysDestWid(perisPanelID)
-                perisPanelID = nil
-            end
-        else
-            -- If radar is installed but no weapon, don't show periscope
-            if peris == 1 then
-                sysDestWid(radarPanelID)
-                radarPanelID = nil
-                _autoconf.displayCategoryPanel(radars, 1, "Periscope",
-                    "periscope")
-                perisPanelID = _autoconf.panels[_autoconf.panels_size]
-            end
-            if radarPanelID == nil then
-                _autoconf.displayCategoryPanel(radars, 1, "Radar", "radar")
-                radarPanelID = _autoconf.panels[_autoconf.panels_size]
-            end
-            peris = 0
-        end
+        toggleRadarPanel()
     end
 
     function Radar.ContactTick()

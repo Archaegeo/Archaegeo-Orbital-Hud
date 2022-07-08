@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.744
+- Changed radar widget to use preferred creation/destroy method recommended by Ligo vice the autoconf creation.
+
 Version 1.743 - RADAR FPS "bandaid"
 - New Global `FullRadar` = true --export: (Default: true) If set to false, radar will not be activate on sitting down.  
     This will result in a much higher fps in crowded areas with radar hooked up while still allowing V to show contacts on screen.
