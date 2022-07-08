@@ -1,4 +1,4 @@
-function AxisCommand.composeAxisAccelerationFromThrottle(self, tags)
+function AxisCommand.composeAxisAccelerationFromThrottle(self, tags) -- Fixes issue with default axiscommand.lua file regarding engines in space.
 
     if self.commandType ~= axisCommandType.byThrottle then
         self.system.logError('Trying to get a axis command by Throttle while not in by-Throttle mode')

@@ -1,9 +1,11 @@
 require 'src.slots'
 
+-- Redefine globals to locals
 local S = system
 local C = core
 local U = unit
 local N = Navigator.new(S, C, U)
+
 local atlas = require("atlas")
 
 --prints a timestamped message to lua chat
@@ -48,20 +50,20 @@ end
             brakeFlatFactor={set=function (i)brakeFlatFactor=i end,get=function() return brakeFlatFactor end},autoRollFactor={set=function (i)autoRollFactor=i end,get=function() return autoRollFactor end},
             turnAssistFactor={set=function (i)turnAssistFactor=i end,get=function() return turnAssistFactor end},torqueFactor={set=function (i)torqueFactor=i end,get=function() return torqueFactor end},}
 
-local requireTable = {"autoconf/custom/archhud/globals","autoconf/custom/archhud/hudclass", "autoconf/custom/archhud/flightclass", "autoconf/custom/archhud/controlclass",
-                      "autoconf/custom/archhud/atlasclass", "autoconf/custom/archhud/baseclass", "autoconf/custom/archhud/shieldclass",
-                      "autoconf/custom/archhud/radarclass", "autoconf/custom/archhud/axiscommandoverride", "autoconf/custom/archhud/userclass"}
-
-for k,v in ipairs(requireTable) do
-    pcall(require,requireTable[k])
-end
+-- Require files to segregate code into seperate files
+    local requireTable = {"autoconf/custom/archhud/globals","autoconf/custom/archhud/hudclass", "autoconf/custom/archhud/flightclass", "autoconf/custom/archhud/controlclass",
+        "autoconf/custom/archhud/atlasclass", "autoconf/custom/archhud/baseclass", "autoconf/custom/archhud/shieldclass",
+        "autoconf/custom/archhud/radarclass", "autoconf/custom/archhud/axiscommandoverride", "autoconf/custom/archhud/userclass"}
+    for k,v in ipairs(requireTable) do
+        pcall(require,requireTable[k])  -- pcall lets it continue executing if the require file isnt present.
+    end
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
 VERSION_NUMBER = 1.000
 
 
--- DU Events written for wrap and minimization. Written by Dimencia and Archaegeo. Optimization and Automation of scripting by ChronosWS  Linked sources where appropriate, most have been modified.
+-- DU Events 
     function script.onStart()
         BASE.onStart()
     end
@@ -107,7 +109,9 @@ VERSION_NUMBER = 1.000
     end
 
 -- Execute Script
-    globalDeclare(C, U) -- Variables that need to be Global, arent user defined, and are declared in globals.lua due to use across multple modules where there values can change.
+    globalDeclare() -- Variables that need to be Global, but arent user defined and not saved to databank.  These are declared in globals.lua due to use across multple modules where there values can change.
+
+-- Start the system by setting base and then calling onStart    
     BASE = baseClass(N, C, U, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
 
     script.onStart() 

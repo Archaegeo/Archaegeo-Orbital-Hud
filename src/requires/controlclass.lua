@@ -4,8 +4,7 @@ function ControlClass(N, C, U, S, antigrav, saveableVariables, SaveDataBank)
     local NAC = N.axisCommandManager
     local UnitHidden = true
 
-    function Control.startControl(action)
-        -- Local function for onActionStart items in more than one
+    function Control.startControl(action) -- Local function for onActionStart items when a key is pressed
 
         if action == "gear" then
             gearExtended = not gearExtended
@@ -58,7 +57,7 @@ function ControlClass(N, C, U, S, antigrav, saveableVariables, SaveDataBank)
         elseif action == "lshift" then
         elseif action == "brake" then
             if BrakeToggleDefault then 
-                AP.BrakeToggle("Manual")
+                FLIGHT.BrakeToggle("Manual")
             else
                 BrakeIsOn = true
             end
@@ -78,7 +77,7 @@ function ControlClass(N, C, U, S, antigrav, saveableVariables, SaveDataBank)
         end
     end
 
-    function Control.stopControl(action)
+    function Control.stopControl(action) -- Local functions of onActionStop items when a key is released
         -- Local function in more than one onActionStop
             local function groundAltStop()
                 if not ExternalAGG and antigravOn then
@@ -123,7 +122,7 @@ function ControlClass(N, C, U, S, antigrav, saveableVariables, SaveDataBank)
 
     end
 
-    function Control.loopControl(action)
+    function Control.loopControl(action) -- Local functions of onActionLoop items when a key is held down
         -- Local functions onActionLoop
 
         if action == "groundaltitudeup" then
@@ -137,12 +136,11 @@ function ControlClass(N, C, U, S, antigrav, saveableVariables, SaveDataBank)
         end
     end
 
-    function Control.inputTextControl(text)
-        -- Local functions for onInputText
+    function Control.inputTextControl(text) -- Local functions for onInputText typed in lua chat
         local i
         local command, arguement = nil, nil
         local commandhelp = "Command List:\n/commands \n/setname <newname> - Updates current selected saved position name\n/G VariableName newValue - Updates global variable to new value\n"..
-                "/G dump - shows all variables updatable by /G\n/agg <targetheight> - Manually set agg target height\n"..
+                "/G dump - shows all variables updatable by /G\n"..
                 "/copydatabank - copies dbHud databank to a blank databank\n"
         i = string.find(text, " ")
         command = text
@@ -217,7 +215,7 @@ function ControlClass(N, C, U, S, antigrav, saveableVariables, SaveDataBank)
         end
     end
 
-    if userControl then 
+    if userControl then -- user extra functions not defined here
         for k,v in pairs(userControl) do Control[k] = v end 
     end  
 

@@ -1,14 +1,26 @@
-function FlightClass(N, C, U, S)  
+function FlightClass(N, C, U, S)  -- Old AP class.  Flight class, onFlush functions and other flight mechanics
     local c = DUConstruct
 
     local flight = {}
 
-    local function initialize()
+    local function initialize() -- Set up when class is established
         N.axisCommandManager:setupCustomTargetSpeedRanges(axisCommandId.longitudinal, {1000, 5000, 10000, 20000, 30000})
         N.axisCommandManager:setTargetGroundAltitude(4)
     end
 
-    function flight.onFlush()
+    function flight.BrakeToggle(reason) -- Toggle brakes on and off if BrakeToggleDefault is true
+        if not BrakeIsOn then
+            if reason then
+                BrakeIsOn = reason
+            else
+                BrakeIsOn = true
+            end
+        else
+            BrakeIsOn = false
+        end
+    end
+
+    function flight.onFlush() -- onFlush flight mechanics.  Some functions will not work in onFlush
          -- validate params
         pitchSpeedFactor = math.max(pitchSpeedFactor, 0.01)
         yawSpeedFactor = math.max(yawSpeedFactor, 0.01)
@@ -157,7 +169,7 @@ function FlightClass(N, C, U, S)
         N:setBoosterCommand('rocket_engine')
     end
 
-    if userFlight then 
+    if userFlight then -- Extra user functions for flight mechanics not defined here.
         for k,v in pairs(userFlight) do flight[k] = v end 
     end   
 

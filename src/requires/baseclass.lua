@@ -120,7 +120,7 @@ function baseClass(N, C, U, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         end
 
     -- Class Functions
-        function base.onStart()
+        function base.onStart() -- the function called when you first sit down
             -- Local functions for onStart
                 local valuesAreSet = false
                 local function LoadVariables() -- Databank variable loading
@@ -288,7 +288,7 @@ function baseClass(N, C, U, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 coroutine.yield() -- Give it some time to breathe before we do the rest
 
                 -- Find elements we care about
-                ProcessElements() -- Processing of elements
+                --ProcessElements() -- Processing of elements
                 coroutine.yield() -- Give it some time to breathe before we do the rest
 
 
@@ -302,12 +302,11 @@ function baseClass(N, C, U, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 if radar_1 and RadarClass then RADAR = RadarClass(C, S, U, radar_1, radar_2) end
 
                 if HudClass then 
-                    HUD = HudClass(N, C, U, S, antigrav, warpdrive, gyro, shield) 
+                    HUD = HudClass(N, C, U, S, antigrav, warpdrive, gyro, shield, weapon)
                 end
                 CONTROL = ControlClass(N, C, U, S, antigrav, saveableVariables, SaveDataBank) -- User Controls
                 if shield and ShieldClass then SHIELD = ShieldClass(shield) end
                 coroutine.yield()
-                U.hideWidget()
                 S.showScreen(1)
                 S.showHelper(0)
                 if screenHud_1 then screenHud_1.clear() end
@@ -320,7 +319,7 @@ function baseClass(N, C, U, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             coroutine.resume(beginSetup)
         end
         
-        function base.onUpdate()
+        function base.onUpdate() -- the function called by Update, executes 60 times a second or framerate fps, whichever is lower
             if not SetupComplete then
                 local cont = coroutine.status (beginSetup)
                 if cont == "suspended" then 
@@ -336,14 +335,14 @@ function baseClass(N, C, U, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
         end
 
-        function base.onFlush()
+        function base.onFlush() -- on Flush, meant for flight physics, executes 60 times a second regardless of framerate
             if SetupComplete then
                 FLIGHT.onFlush()
                 if userBase then BASE.ExtraOnFlush() end
             end
         end
 
-        function base.onStop()
+        function base.onStop() -- the function call when the script stops
             _autoconf.hideCategoryPanels()
             if antigrav ~= nil then antigrav.hideWidget() end
             if warpdrive ~= nil then warpdrive.hideWidget() end
@@ -354,43 +353,43 @@ function baseClass(N, C, U, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             if userBase then BASE.ExtraOnStop() end
         end
 
-        function base.controlStart(action)
+        function base.controlStart(action) -- Called whenever a control key is used
             if SetupComplete then
                 CONTROL.startControl(action)
             end
         end
 
-        function base.controlStop(action)
+        function base.controlStop(action) -- called whenever a control key is released
             if SetupComplete then
                 CONTROL.stopControl(action)
             end
         end
 
-        function base.controlLoop(action)
+        function base.controlLoop(action) -- called when a control key is held down
             if SetupComplete then
                 CONTROL.loopControl(action)
             end
         end
 
-        function base.controlInput(text)
+        function base.controlInput(text) -- called when input is typed into lua chat
             if SetupComplete then
                 CONTROL.inputTextControl(text)
             end
         end
 
-        function base.radarEnter(id)
+        function base.radarEnter(id) -- called whenever a radar contact enters radar range
             if RADAR then RADAR.onEnter(id) end
         end
 
-        function base.radarLeave(id)
+        function base.radarLeave(id) -- called whenever a radar contact leaves radar range
             if RADAR then RADAR.onLeave(id) end
         end
 
-        function base.onTick(timerId)
+        function base.onTick(timerId)  -- called to execute tick timers in various classes if set up in onStart or elsewhere
             -- Tick calls to various Class files
         end
 
-    if userBase then 
+    if userBase then -- support for extra functions not defined here
         for k,v in pairs(userBase) do base[k] = v end 
     end  
 

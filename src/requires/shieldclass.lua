@@ -2,7 +2,7 @@ function ShieldClass(shield) -- Everything related to radar but draw data passed
     local Shield = {}
 
 
-    if userShield then 
+    if userShield then -- If user functions exist not defined here
         for k,v in pairs(userShield) do Shield[k] = v end 
     end  
 

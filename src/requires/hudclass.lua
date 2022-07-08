@@ -1,10 +1,11 @@
-function HudClass(N, C, U, S, antigrav, warpdrive, gyro, shield)
+function HudClass(N, C, U, S, antigrav, warpdrive, gyro, shield, weapon)  -- Class that controls what shows up on screen
 
     local c = DUConstruct
 
     local Hud = {}
 
-    local function initialize()
+    local function initialize() -- Initial setup when class is defined (when you sit down)
+
         -- Parenting widget
         parentingPanelId = S.createWidgetPanel("Docking")
         parentingWidgetId = S.createWidget(parentingPanelId,"parenting")
@@ -17,27 +18,32 @@ function HudClass(N, C, U, S, antigrav, warpdrive, gyro, shield)
 
         -- element widgets
         -- For now we have to alternate between PVP and non-PVP widgets to have them on the same side.
-        _autoconf.displayCategoryPanel(weapon, weapon_size, L_TEXT("ui_lua_widget_weapon", "Weapons"), "weapon", true)
+
+        if weapon then 
+            _autoconf.displayCategoryPanel(weapon, weapon_size, "Weapons", "weapon", true) 
+            WeaponPanelID = _autoconf.panels[_autoconf.panels_size] 
+        end
+
         C.showWidget()
-        _autoconf.displayCategoryPanel(radars, radar_size, L_TEXT("ui_lua_widget_periscope", "Periscope"), "periscope")
+        _autoconf.displayCategoryPanel(radar, 1, "Periscope", "periscope")
         placeRadar = true
         if atmofueltank_size > 0 then
-            _autoconf.displayCategoryPanel(atmofueltank, atmofueltank_size, L_TEXT("ui_lua_widget_atmofuel", "Atmo Fuel"), "fuel_container")
+            _autoconf.displayCategoryPanel(atmofueltank, atmofueltank_size, "Atmo Fuel", "fuel_container")
             if placeRadar then
-                _autoconf.displayCategoryPanel(radar, radar_size, L_TEXT("ui_lua_widget_radar", "Radar"), "radar")
+                _autoconf.displayCategoryPanel(radar, 1, "Radar", "radar")
                 placeRadar = false
             end
         end
         if spacefueltank_size > 0 then
-            _autoconf.displayCategoryPanel(spacefueltank, spacefueltank_size, L_TEXT("ui_lua_widget_spacefuel", "Space Fuel"), "fuel_container")
+            _autoconf.displayCategoryPanel(spacefueltank, spacefueltank_size, "Space Fuel", "fuel_container")
             if placeRadar then
-                _autoconf.displayCategoryPanel(radar, radar_size, L_TEXT("ui_lua_widget_radar", "Radar"), "radar")
+                _autoconf.displayCategoryPanel(radar, 1, "Radar", "radar")
                 placeRadar = false
             end
         end
-        _autoconf.displayCategoryPanel(rocketfueltank, rocketfueltank_size, L_TEXT("ui_lua_widget_rocketfuel", "Rocket Fuel"), "fuel_container")
+        _autoconf.displayCategoryPanel(rocketfueltank, rocketfueltank_size, "Rocket Fuel", "fuel_container")
         if placeRadar then -- We either have only rockets or no fuel tanks at all, uncommon for usual vessels
-            _autoconf.displayCategoryPanel(radar, radar_size, L_TEXT("ui_lua_widget_radar", "Radar"), "radar")
+            _autoconf.displayCategoryPanel(radar, 1, "Radar", "radar")
             placeRadar = false
         end
 
@@ -48,7 +54,7 @@ function HudClass(N, C, U, S, antigrav, warpdrive, gyro, shield)
 
     end
 
-    if userHud then 
+    if userHud then -- Extra user functions for hud not defined here
         for k,v in pairs(userHud) do Hud[k] = v end 
     end  
 

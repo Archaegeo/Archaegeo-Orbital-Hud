@@ -2,7 +2,7 @@
 
 
 -- Planet Info - https://gitlab.com/JayleBreak/dualuniverse/-/tree/master/DUflightfiles/autoconf/custom with modifications to support HUD, vanilla JayleBreak will not work anymore
-    function PlanetRef(N, C, U, S, stringf, uclamp, tonum, msqrt, float_eq)
+    function PlanetRef(N, C, U, S, stringf, uclamp, tonum, msqrt, float_eq) 
 
         --[[                    START OF LOCAL IMPLEMENTATION DETAILS             ]]--
         -- Type checks
@@ -658,7 +658,7 @@
         })
     end 
 
--- ArchHUD Basic Atlas for use
+-- ArchHUD Basic Atlas for use -- Sets up a basic atlas for use in other systems
     function AtlasClass(N, C, U, S, atlas) -- Atlas and Interplanetary functions including Update Autopilot Target
 
         -- Atlas functions
