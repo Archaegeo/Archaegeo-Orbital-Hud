@@ -50,6 +50,7 @@ end
             brakeFlatFactor={set=function (i)brakeFlatFactor=i end,get=function() return brakeFlatFactor end},autoRollFactor={set=function (i)autoRollFactor=i end,get=function() return autoRollFactor end},
             turnAssistFactor={set=function (i)turnAssistFactor=i end,get=function() return turnAssistFactor end},torqueFactor={set=function (i)torqueFactor=i end,get=function() return torqueFactor end},}
 
+
 -- Require files to segregate code into seperate files
     local requireTable = {"autoconf/custom/archhud/globals","autoconf/custom/archhud/hudclass", "autoconf/custom/archhud/flightclass", "autoconf/custom/archhud/controlclass",
         "autoconf/custom/archhud/atlasclass", "autoconf/custom/archhud/baseclass", "autoconf/custom/archhud/shieldclass",
