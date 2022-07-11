@@ -2,6 +2,7 @@
 
 Version 1.744
 - Changed radar widget to use preferred creation/destroy method recommended by Ligo vice the autoconf creation.
+- Fixed an issue causing a load error if no existing databank in the GFN version.
 
 Version 1.743 - RADAR FPS "bandaid"
 - New Global `FullRadar` = true --export: (Default: true) If set to false, radar will not be activate on sitting down.  
