@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.743
+VERSION_NUMBER = 0.744
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -8855,7 +8855,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         msgText = "Invalid User Control Scheme selected.\nChange userControlScheme in Lua Parameters to keyboard, mouse, or virtual joystick\nOr use shift and button in screen"
                         msgTimer = 7
                     end
-                
                     if antigrav and not ExternalAGG then
                         if AntigravTargetAltitude == nil then 
                             AntigravTargetAltitude = coreAltitude
@@ -8866,7 +8865,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         if #privatelocations>0 then customlocations = addTable(customlocations, privatelocations) end
                     end
                     VectorStatus = "Proceeding to Waypoint"
-                    if MaxGameVelocity < 0 then MaxGameVelocity = C.getMaxSpeed()-0.1 end
+                    if not MaxGameVelocity or MaxGameVelocity < 0 then MaxGameVelocity = C.getMaxSpeed()-0.1 end
                 end
     
                 local function ProcessElements()
@@ -9191,19 +9190,17 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     {1000, 5000, 10000, 20000, 30000})
     
                 -- Load Saved Variables
-    
                 LoadVariables()
                 coroutine.yield() -- Give it some time to breathe before we do the rest
-    
+                
                 -- Find elements we care about
                 ProcessElements()
                 coroutine.yield() -- Give it some time to breathe before we do the rest
-    
                 AP = APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
                     mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
                     navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq, 
                     getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)
-    
+
                 SetupChecks() -- All the if-thens to set up for particular ship.  Specifically override these with the saved variables if available
     
                 coroutine.yield() -- Just to make sure
