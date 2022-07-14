@@ -480,7 +480,6 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     RADAR.ToggleRadarPanel()
                     RADAR = nil
                     FullRadar = false
-                    collectgarbage()
                 else
                     FullRadar = true
                     PROGRAM.radarSetup()
