@@ -30,8 +30,8 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
             [-2] = "obstructed",
             [-3] = "in use"
           }
-        local radarWidgetId
-        local radarDataId
+        local radarWidgetId, perisWidgetId
+        local radarDataId, perisDataId
     local function toggleRadarPanel()
         if radarPanelId ~= nil and peris == 0 then
             sysDestWid(radarPanelId)
@@ -40,16 +40,19 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
             radarWidgetId, radarDataId, radarPanelId = nil, nil, nil
             if perisPanelID ~= nil then
                 sysDestWid(perisPanelID)
-                perisPanelID = nil
+                s.destroyWidget(perisWidgetId)
+                s.destroyData(perisDataId)
+                perisPanelID, perisWidgetId, perisDataId = nil, nil, nil
             end
         else
             -- If radar is installed but no weapon, don't show periscope
             if peris == 1 then
                 sysDestWid(radarPanelId)
                 radarPanelId = nil
-                _autoconf.displayCategoryPanel(radars, 1, "Periscope",
-                    "periscope")
-                perisPanelID = _autoconf.panels[_autoconf.panels_size]
+                perisPanelID = s.createWidgetPanel("PeriWinkle")
+                perisWidgetId = s.createWidget(perisPanelID, 'periscope')
+                perisDataId = activeRadar.getWidgetDataId()
+                s.addDataToWidget(perisDataId , perisWidgetId)
             end
             if radarPanelId == nil and radarContacts > 0 then
                 radarPanelId = s.createWidgetPanel(rType)

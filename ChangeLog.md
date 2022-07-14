@@ -1,7 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 1.744
-- Changed radar widget to use preferred creation/destroy method recommended by Ligo vice the autoconf creation.
+Version 1.744 - Return of Arch ECU
+- A new file in the .zip called Arch-ECU.conf.  To use: Install on a ECU and Arm the ECU.
+    REMINDER: ECU only works if someone is near it when it activates.  Activates when a control unit (Chair or remote) deactivates.
+    If AGG installed, will turn on AGG
+    If in atmosphere, will perform a normal ArchHUD brake landing (if no AGG or not at AGG height)
+    If in space, will attempt to bring ship to a stop.
+- Changed radar and periscope widgets to use preferred creation/destroy method recommended by Ligo vice the autoconf creation.
 - Fixed an issue causing a load error if no existing databank in the GFN version.
 
 Version 1.743 - RADAR FPS "bandaid"
