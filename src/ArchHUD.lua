@@ -1304,7 +1304,39 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 [-2] = "obstructed",
                 [-3] = "in use"
               }
-    
+            local radarWidgetId, perisWidgetId
+            local radarDataId, perisDataId
+        local function toggleRadarPanel()
+            if radarPanelId ~= nil and peris == 0 then
+                sysDestWid(radarPanelId)
+                s.destroyWidget(radarWidgetId)
+                s.destroyData(radarDataId)
+                radarWidgetId, radarDataId, radarPanelId = nil, nil, nil
+                if perisPanelID ~= nil then
+                    sysDestWid(perisPanelID)
+                    s.destroyWidget(perisWidgetId)
+                    s.destroyData(perisDataId)
+                    perisPanelID, perisWidgetId, perisDataId = nil, nil, nil
+                end
+            else
+                -- If radar is installed but no weapon, don't show periscope
+                if peris == 1 then
+                    sysDestWid(radarPanelId)
+                    radarPanelId = nil
+                    perisPanelID = s.createWidgetPanel("PeriWinkle")
+                    perisWidgetId = s.createWidget(perisPanelID, 'periscope')
+                    perisDataId = activeRadar.getWidgetDataId()
+                    s.addDataToWidget(perisDataId , perisWidgetId)
+                end
+                if radarPanelId == nil and radarContacts > 0 then
+                    radarPanelId = s.createWidgetPanel(rType)
+                    radarWidgetId = s.createWidget(radarPanelId, 'radar')
+                    radarDataId = activeRadar.getWidgetDataId()
+                    s.addDataToWidget(radarDataId , radarWidgetId)
+                end
+                peris = 0
+            end
+        end
         local function UpdateRadarRoutine()
             -- UpdateRadarRoutine Locals
                 local function trilaterate (r1, p1, r2, p2, r3, p3, r4, p4 )-- Thanks to Wolfe's DU math library and Eastern Gamer advice
@@ -1518,7 +1550,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 if target ~= nil and perisPanelID ~= nil then
                     RADAR.ToggleRadarPanel()
                 end
-                if radarPanelID == nil then
+                if radarPanelId == nil then
                     RADAR.ToggleRadarPanel()
                 end
             else
@@ -1527,7 +1559,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 else
                     radarMessage = svgText(radarX, radarY, "Radar: No "..rType.." Contacts", "pbright txtbig txtmid")
                 end
-                if radarPanelID ~= nil then
+                if radarPanelId ~= nil then
                     peris = 0
                     RADAR.ToggleRadarPanel()
                 end
@@ -1545,28 +1577,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             return name
         end
         function Radar.ToggleRadarPanel()
-            if radarPanelID ~= nil and peris == 0 then
-                sysDestWid(radarPanelID)
-                radarPanelID = nil
-                if perisPanelID ~= nil then
-                    sysDestWid(perisPanelID)
-                    perisPanelID = nil
-                end
-            else
-                -- If radar is installed but no weapon, don't show periscope
-                if peris == 1 then
-                    sysDestWid(radarPanelID)
-                    radarPanelID = nil
-                    _autoconf.displayCategoryPanel(radars, 1, "Periscope",
-                        "periscope")
-                    perisPanelID = _autoconf.panels[_autoconf.panels_size]
-                end
-                if radarPanelID == nil then
-                    _autoconf.displayCategoryPanel(radars, 1, "Radar", "radar")
-                    radarPanelID = _autoconf.panels[_autoconf.panels_size]
-                end
-                peris = 0
-            end
+            toggleRadarPanel()
         end
     
         function Radar.ContactTick()
@@ -1614,7 +1625,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         setup()
     
         return Radar
-    end
+    end 
     local function ShieldClass(shield, stringmatch, mfloor) -- Everything related to radar but draw data passed to HUD Class.
         local Shield = {}
         local RCD = shield.getResistancesCooldown()
@@ -4750,10 +4761,10 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             end
             local function updateWeapons()
                 if weapon then
-                    if  WeaponPanelID==nil and (radarPanelID ~= nil or GearExtended)  then
+                    if  WeaponPanelID==nil and (radarPanelId ~= nil or GearExtended)  then
                         _autoconf.displayCategoryPanel(weapon, weapon_size, "Weapons", "weapon", true)
                         WeaponPanelID = _autoconf.panels[_autoconf.panels_size]
-                    elseif WeaponPanelID ~= nil and radarPanelID == nil and not GearExtended then
+                    elseif WeaponPanelID ~= nil and radarPanelId == nil and not GearExtended then
                         sysDestWid(WeaponPanelID)
                         WeaponPanelID = nil
                     end
@@ -8294,7 +8305,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         RADAR.ToggleRadarPanel()
                         RADAR = nil
                         FullRadar = false
-                        collectgarbage()
                     else
                         FullRadar = true
                         PROGRAM.radarSetup()
