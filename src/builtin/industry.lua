@@ -44,12 +44,12 @@ function Industry()
     function self.softStop() error("Industry.softStop() is deprecated, use Industry.stop(false,false) instead.") end
 
     --- Get the current running state of the industry
-    ---@return integer value (Stopped = 1, Running = 2, Jammed missing ingredient = 3, Jammed output full = 4, Jammed no output container = 5, Pending = 6)
+    ---@return integer value (Stopped = 1, Running = 2, Jammed missing ingredient = 3, Jammed output full = 4, Jammed no output container = 5, Pending = 6, Jammed missing schematics = 7)
     function self.getState() end
     function self.getStatus() error("Industry.getStatus() is deprecated, use Industry.getState() instead.") end
 
     --- Returns the complete information of the industry
-    ---@return integer value The complete state of the industry, a table with fields {[int] state, [bool] stopRequested, [int] schematicId, [int] unitsProduced, [int] remainingTime, [int] batchesRequested, [int] batchesRemaining, [float] maintainProductAmount, [int] currentProductAmount}
+    ---@return integer value The complete state of the industry, a table with fields {[int] state, [bool] stopRequested, [int] schematicId (deprecated = 0), [int] schematicsRemaining, [int] unitsProduced, [int] remainingTime, [int] batchesRequested, [int] batchesRemaining, [float] maintainProductAmount, [int] currentProductAmount, [table] currentProducts:{{[int] id, [double] quantity},...}}
     function self.getInfo() end
 
     --- Get the count of completed cycles since the player started the unit
@@ -66,13 +66,32 @@ function Industry()
     ---@return number
     function self.getUptime() end
 
-    --- Get the id of the currently loaded Schematic
-    ---@return integer
-    function self.getCurrentSchematic() end
 
-    --- Set the loaded Schematic, based on its id. Use getCurrentSchematic to learn about your Schematic id
-    ---@param id integer The Schematic id to be loaded
-    function self.setCurrentSchematic(id) end
+    --- Returns the list of items required to run the selected output product.
+    ---@return table outputs Returns the list of products
+    function self.getInputs() end
+
+    --- Returns the list of id of the items currently produced.
+    ---@return table outputs The first entry in the table is always the main product produced
+    function self.getOutputs() end
+    ---@deprecated Industry.getCurrentSchematic() is deprecated.
+    function self.getCurrentSchematic() error("Industry.getCurrentSchematic() is deprecated.") end
+
+    --- Set the item to produce from its id
+    ---@param itemId integer The item id of the item to produce
+    ---@return integer success The result of the operation 0 for a sucess, -1 if the industry is running
+    function self.setOutput(itemId) end
+    ---@deprecated Industry.setCurrentSchematic(id) is deprecated, use Industry.setOutput(itemId) instead.
+    function self.setCurrentSchematic(id) error("Industry.setCurrentSchematic(id) is deprecated, use Industry.setOutput(itemId) instead.") end
+
+
+    --- Send a request to get an update of the content of the schematic bank, limited to one call allowed per 30 seconds
+    ---@return number time If the request is not yet possible, returns the remaining time to wait for
+    function self.updateBank() end
+
+    --- Returns a table describing the contents of the schematic bank, as a pair itemId and quantity per slot
+    ---@return table content The content of the schematic bank as a table with fields {[int] id, [float] quantity} per slot
+    function self.getBank() end
 
 
     --- Emitted when the Industry Unit has started a new production process
@@ -86,13 +105,15 @@ function Industry()
     self.onCompleted = Event:new()
     self.completed = Event:new()
     self.completed:addAction(function(self,id,quantity) error("Industry.completed() event is deprecated, use Industry.onCompleted(id,quantity) instead.") end, true, 1)
-    
+
     --- Emitted when the industry status has changed
     ---@param status integer The status of the industry can be (Stopped = 1, Running = 2, Jammed missing ingredient = 3, Jammed output full = 4, Jammed no output container = 5, Pending = 6)
     self.onStatusChanged = Event:new()
     self.statusChanged = Event:new()
     self.statusChanged:addAction(function(self) error("Industry.statusChanged(status) event is deprecated, use Industry.onStatusChanged(status) instead.") end, true, 1)
 
+    --- Emitted when the schematic bank content is updated(bank update or after a manual request made with updateBank())
+    self.onBankUpdate = Event:new()
 
     return setmetatable(self, Industry)
 end
