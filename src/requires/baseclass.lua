@@ -489,7 +489,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                             }
                 end
 
-                local altTable = { [1]=4480, [6]=4480, [7]=6270 } -- Alternate min space engine altitudes for madis, sinnen, sicari, haven
+                local altTable = { [1]=4480, [6]=4480, [7]=6270, [27]=4150 } -- Alternate min space engine altitudes for madis, sinnen, sicari, haven
                 -- No Atmo Heights for Madis, Alioth, Thades, Talemai, Feli, Sicari, Sinnen, Teoma, Jago, Sanctuary, Haven, Lacobus, Symeon, Ion.
                 local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[27]=7700,[100]=12511,[110]=7792,[120]=11766} 
                 for galaxyId,galaxy in pairs(atlas) do
