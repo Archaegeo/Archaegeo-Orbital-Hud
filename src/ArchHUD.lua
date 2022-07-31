@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.744
+VERSION_NUMBER = 0.745
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -8865,6 +8865,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         msgText = "Invalid User Control Scheme selected.\nChange userControlScheme in Lua Parameters to keyboard, mouse, or virtual joystick\nOr use shift and button in screen"
                         msgTimer = 7
                     end
+                
                     if antigrav and not ExternalAGG then
                         if AntigravTargetAltitude == nil then 
                             AntigravTargetAltitude = coreAltitude
@@ -9140,9 +9141,9 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                                 }
                     end
     
-                    local altTable = { [1]=4480, [6]=4480, [7]=6270, [27]=8437 } -- Alternate min space engine altitudes for madis, sinnen, sicari, haven
+                    local altTable = { [1]=4480, [6]=4480, [7]=6270, [27]=4150 } -- Alternate min space engine altitudes for madis, sinnen, sicari, haven
                     -- No Atmo Heights for Madis, Alioth, Thades, Talemai, Feli, Sicari, Sinnen, Teoma, Jago, Sanctuary, Haven, Lacobus, Symeon, Ion.
-                    local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[27]=15554,[100]=12511,[110]=7792,[120]=11766} 
+                    local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[27]=7700,[100]=12511,[110]=7792,[120]=11766} 
                     for galaxyId,galaxy in pairs(atlas) do
                         -- Create a copy of Space with the appropriate SystemId for each galaxy
                         atlas[galaxyId][0] = getSpaceEntry()
@@ -9200,17 +9201,19 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     {1000, 5000, 10000, 20000, 30000})
     
                 -- Load Saved Variables
+    
                 LoadVariables()
                 coroutine.yield() -- Give it some time to breathe before we do the rest
-                
+    
                 -- Find elements we care about
                 ProcessElements()
                 coroutine.yield() -- Give it some time to breathe before we do the rest
+    
                 AP = APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
                     mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
                     navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq, 
                     getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)
-
+    
                 SetupChecks() -- All the if-thens to set up for particular ship.  Specifically override these with the saved variables if available
     
                 coroutine.yield() -- Just to make sure
