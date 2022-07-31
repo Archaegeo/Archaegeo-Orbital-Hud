@@ -281,15 +281,15 @@ function System()
     function self.isViewLocked() end
 
     ---@deprecated System.freeze() is deprecated, use Player.freeze().
-    function self.freeze(state) error("System.freeze(state) is deprecated, use Player.freeze(state).") end
+    function self.freeze(state) error("System.freeze(state) is deprecated, use Player.freeze(state) instead.") end
     ---@deprecated System.isFrozen() is deprecated, use Player.isFrozen().
-    function self.isFrozen() error("System.isFrozen() is deprecated, use Player.isFrozen().") end
+    function self.isFrozen() error("System.isFrozen() is deprecated, use Player.isFrozen() instead.") end
 
     --- Return the current time since the arrival of the Arkship on September 30th, 2017
     ---@return number value Time in seconds
     function self.getArkTime() end
     ---@deprecated System.getTime() is deprecated, use System.getArkTime().
-    function self.getTime() error("System.getTime() is deprecated, use System.getArkTime().") end
+    function self.getTime() error("System.getTime() is deprecated, use System.getArkTime() instead.") end
 
     --- Return the current time since January 1st, 1970.
     ---@return number value Time in seconds
@@ -319,20 +319,25 @@ function System()
     
     --- Return the item table corresponding to the given item ID.
     ---@param id integer The ID of the item
-    ---@return table value An item table with fields: {[integer] id, [string] name, [string] displayName, [string] locDisplayName, [string] displayNameWithSize, [string] locDisplayNameWithSize, [string] description, [string] locDescription, [string] type, [number] unitMass, [number] unitVolume, [integer] tier, [string] scale, [string] iconPath}
+    ---@return table value An item table with fields: {[int] id, [string] name, [string] displayName, [string] locDisplayName, [string] displayNameWithSize, [string] locDisplayNameWithSize, [string] description, [string] locDescription, [string] type, [number] unitMass, [number] unitVolume, [integer] tier, [string] scale, [string] iconPath, [table] schematics, [table] products}
     function self.getItem(id) end
-    --- Returns the schematic table corresponding to the given schematic ID
-    ---@param id integer The Schematic Id, as returned for example by the getCurrentSchematic industry Lua API
-    ---@return string value A schematic table with field: {[integer] id, [integer] tier,[integer] time, products:{{[integer] id, [double] quantity},...}, components:{{[integer] id, [double] quantity},...}}
-    function self.getSchematic(id) end
+
+    --- Returns a list of recipes producing the given item from its id.
+    ---@param itemId integer The ID of the item
+    ---@return table value A list of recipe table with field: {[int] id, [int] tier,[double] time, [bool] nanocraftable, [table] products:{{[int] id, [double] quantity},...}, [table] ingredients:{{[int] id, [double] quantity},...}}
+    function self.getRecipes(itemId) end
+    ---@deprecated System.getSchematic(id) is deprecated, use System.getRecipes(itemId).tag.
+    function self.getSchematic(id) error("System.getSchematic(id) is deprecated, use System.getRecipes(itemId) instead.") end
+
+
     --- Returns the corresping organization to the given organization id, if known, e.g. broadcasted by a transponder
     ---@param id integer The ID of the organization
     ---@return table value A table containing information about the given organization {[string] name, [string] tag}
     function self.getOrganization(id) end
     ---@deprecated System.getOrganizationName() is deprecated, use System.getOrganization(id).name .
-    function self.getOrganizationName() error("System.getOrganizationName() is deprecated, use System.getOrganization(id).name .") end
+    function self.getOrganizationName() error("System.getOrganizationName() is deprecated, use System.getOrganization(id).name instead.") end
     ---@deprecated System.getOrganizationTag() is deprecated, use System.getOrganization(id).tag .
-    function self.getOrganizationTag() error("System.getOrganizationTag() is deprecated, use System.getOrganization(id).tag .") end
+    function self.getOrganizationTag() error("System.getOrganizationTag() is deprecated, use System.getOrganization(id).tag instead.") end
 
     --- Return the player's world position as a waypoint string, starting with '::pos' (only in explicit runs)
     ---@return string value The waypoint as a string
@@ -361,6 +366,10 @@ function System()
     --- Stop the current playing sound
     function self.stopSound() end
 
+
+    --- Print the given string in the Lua chat channel
+    ---@param msg string
+    function self.print(msg) end
 
     return setmetatable(self, System)
 end

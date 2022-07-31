@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.745 
+- Fix for Haven Atmo change, now at 7700m where it goes to 0 (was 15000)
+
 Version 1.744 - Return of Arch ECU
 - A new file in the .zip called Arch-ECU.conf.  To use: Install on a ECU and Arm the ECU.
     REMINDER: ECU only works if someone is near it when it activates.  Activates when a control unit (Chair or remote) deactivates.

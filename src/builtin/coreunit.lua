@@ -224,7 +224,7 @@ function CoreUnit()
 
     --- Returns the status of the Industry Unit Element, identified by its local ID
     ---@param localId integer The local ID of the Element
-    ---@return table info If the Element is an Industry Unit, a table with fields {[string] state, [bool] stopRequested, [int] schematicId, [int] unitsProduced, [int] remainingTime, [int] batchesRequested, [int] batchesRemaining, [number] maintainProductAmount, [int] currentProductAmount}
+    ---@return table info If the Element is an Industry Unit, a table with fields {[int] state, [bool] stopRequested, [int] schematicId (deprecated = 0), [int] schematicsRemaining, [int] unitsProduced, [int] remainingTime, [int] batchesRequested, [int] batchesRemaining, [float] maintainProductAmount, [int] currentProductAmount, [table] currentProducts:{{[int] id, [double] quantity},...}}
     function self.getElementIndustryInfoById(localId) end
     ---@deprecated CoreUnit.getElementIndustryStatusById(localId) is deprecated, use CoreUnit.getElementIndustryInfoById(localId) instead.
     function self.getElementIndustryStatusById(localId) error("CoreUnit.getElementIndustryStatusById(localId) is deprecated, use CoreUnit.getElementIndustryInfoById(localId) instead.") end
