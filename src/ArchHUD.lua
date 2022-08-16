@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.745
+VERSION_NUMBER = 0.746
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -46,13 +46,14 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     PreventPvP = true -- (Default: true) If true, system will stop you before crossing from safe to pvp space while in autopilot.
     DisplayOdometer = true -- (Default: true) If false the top odometer bar of information will be hidden.
     FullRadar = true -- (Default: true) If set to false, radar will not be activate on sitting down.  This will result in a much higher fps in crowded areas with radar hooked up while still allowing V to show contacts on screen.
+    ECUHud = false -- (Default: false) If set to true, ECU will act like HUD when activated vice like ECU.
  
     saveableVariablesBoolean = {userControlScheme={set=function (i)userControlScheme=i end,get=function() return userControlScheme end}, soundFolder={set=function (i)soundFolder=i end,get=function() return soundFolder end}, freeLookToggle={set=function (i)freeLookToggle=i end,get=function() return freeLookToggle end}, BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}, RemoteFreeze={set=function (i)RemoteFreeze=i end,get=function() return RemoteFreeze end}, brightHud={set=function (i)brightHud=i end,get=function() return brightHud end}, RemoteHud={set=function (i)RemoteHud=i end,get=function() return RemoteHud end}, VanillaRockets={set=function (i)VanillaRockets=i end,get=function() return VanillaRockets end},
     InvertMouse={set=function (i)InvertMouse=i end,get=function() return InvertMouse end}, autoRollPreference={set=function (i)autoRollPreference=i end,get=function() return autoRollPreference end}, ExternalAGG={set=function (i)ExternalAGG=i end,get=function() return ExternalAGG end}, UseSatNav={set=function (i)UseSatNav=i end,get=function() return UseSatNav end}, ShouldCheckDamage={set=function (i)ShouldCheckDamage=i end,get=function() return ShouldCheckDamage end}, 
     AtmoSpeedAssist={set=function (i)AtmoSpeedAssist=i end,get=function() return AtmoSpeedAssist end}, ForceAlignment={set=function (i)ForceAlignment=i end,get=function() return ForceAlignment end}, DisplayDeadZone={set=function (i)DisplayDeadZone=i end,get=function() return DisplayDeadZone end}, showHud={set=function (i)showHud=i end,get=function() return showHud end}, hideHudOnToggleWidgets={set=function (i)hideHudOnToggleWidgets=i end,get=function() return hideHudOnToggleWidgets end}, 
     ShiftShowsRemoteButtons={set=function (i)ShiftShowsRemoteButtons=i end,get=function() return ShiftShowsRemoteButtons end}, SetWaypointOnExit={set=function (i)SetWaypointOnExit=i end,get=function() return SetWaypointOnExit end}, AlwaysVSpd={set=function (i)AlwaysVSpd=i end,get=function() return AlwaysVSpd end}, BarFuelDisplay={set=function (i)BarFuelDisplay=i end,get=function() return BarFuelDisplay end}, 
     voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AbandonedRadar={set=function (i)AbandonedRadar=i end,get=function() return AbandonedRadar end},AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end},
-    DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end},FullRadar={set=function (i)FullRadar=i end,get=function() return FullRadar end}}
+    DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end},FullRadar={set=function (i)FullRadar=i end,get=function() return FullRadar end},ECUHud={set=function (i)ECUHud=i end,get=function() return ECUHud end}}
 
 -- Ship Handling variables
     -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank system
@@ -203,6 +204,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     LastVersionUpdate = 0.000
     saveRoute = {}
     apRoute = {}
+    ecuThrottle = {}
     autoVariables = {VertTakeOff={set=function (i)VertTakeOff=i end,get=function() return VertTakeOff end}, VertTakeOffEngine={set=function (i)VertTakeOffEngine=i end,get=function() return VertTakeOffEngine end},SpaceTarget={set=function (i)SpaceTarget=i end,get=function() return SpaceTarget end},BrakeToggleStatus={set=function (i)BrakeToggleStatus=i end,get=function() return BrakeToggleStatus end}, BrakeIsOn={set=function (i)BrakeIsOn=i end,get=function() return BrakeIsOn end}, RetrogradeIsOn={set=function (i)RetrogradeIsOn=i end,get=function() return RetrogradeIsOn end}, ProgradeIsOn={set=function (i)ProgradeIsOn=i end,get=function() return ProgradeIsOn end},
     Autopilot={set=function (i)Autopilot=i end,get=function() return Autopilot end}, TurnBurn={set=function (i)TurnBurn=i end,get=function() return TurnBurn end}, AltitudeHold={set=function (i)AltitudeHold=i end,get=function() return AltitudeHold end}, BrakeLanding={set=function (i)BrakeLanding=i end,get=function() return BrakeLanding end},
     Reentry={set=function (i)Reentry=i end,get=function() return Reentry end}, AutoTakeoff={set=function (i)AutoTakeoff=i end,get=function() return AutoTakeoff end}, HoldAltitude={set=function (i)HoldAltitude=i end,get=function() return HoldAltitude end}, AutopilotAccelerating={set=function (i)AutopilotAccelerating=i end,get=function() return AutopilotAccelerating end}, AutopilotBraking={set=function (i)AutopilotBraking=i end,get=function() return AutopilotBraking end},
@@ -211,7 +213,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     AutopilotTargetIndex={set=function (i)AutopilotTargetIndex=i end,get=function() return AutopilotTargetIndex end}, TotalDistanceTravelled={set=function (i)TotalDistanceTravelled=i end,get=function() return TotalDistanceTravelled end},
     TotalFlightTime={set=function (i)TotalFlightTime=i end,get=function() return TotalFlightTime end}, SavedLocations={set=function (i)SavedLocations=i end,get=function() return SavedLocations end}, VectorToTarget={set=function (i)VectorToTarget=i end,get=function() return VectorToTarget end}, LocationIndex={set=function (i)LocationIndex=i end,get=function() return LocationIndex end}, LastMaxBrake={set=function (i)LastMaxBrake=i end,get=function() return LastMaxBrake end}, 
     LockPitch={set=function (i)LockPitch=i end,get=function() return LockPitch end}, LastMaxBrakeInAtmo={set=function (i)LastMaxBrakeInAtmo=i end,get=function() return LastMaxBrakeInAtmo end}, AntigravTargetAltitude={set=function (i)AntigravTargetAltitude=i end,get=function() return AntigravTargetAltitude end}, LastStartTime={set=function (i)LastStartTime=i end,get=function() return LastStartTime end}, iphCondition={set=function (i)iphCondition=i end,get=function() return iphCondition end}, stablized={set=function (i)stablized=i end,get=function() return stablized end}, UseExtra={set=function (i)UseExtra=i end,get=function() return UseExtra end}, SelectedTab={set=function (i)SelectedTab=i end,get=function() return SelectedTab end}, saveRoute={set=function (i)saveRoute=i end,get=function() return saveRoute end},
-    apRoute={set=function (i)apRoute=i end,get=function() return apRoute end}}
+    apRoute={set=function (i)apRoute=i end,get=function() return apRoute end}, ecuThrottle={set=function (i)ecuThrottle=i end,get=function() return ecuThrottle end}}
 
     local function globalDeclare(c, u, systime, mfloor, atmosphere) -- # is how many classes variable is in
         local s = DUSystem
@@ -2005,11 +2007,11 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 newContent[#newContent + 1] = tickerPath .. [["/>]]
                 newContent[#newContent + 1] = stringf([[<<polygon class="bright" points="%d,%d %d,%d %d,%d"/>]],
                     yawx-5, yawy-20, yawx+5, yawy-20, yawx, yawy-10)
-                if DisplayOdometer then 
+                --if DisplayOdometer then 
                     if nearPlanet then bottomText = "HDG" end
                     newContent[#newContent + 1] = svgText(ConvertResolutionX(960) , ConvertResolutionY(100), yawC.."°" , "dim txt txtmid size14", "")
                     newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(85), bottomText, "dim txt txtmid size20","")
-                end
+                --end
                 newContent[#newContent + 1] = [[</g>]]
             end
     
@@ -2387,7 +2389,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
                 newContent[#newContent + 1] = svgText( x1, ys, mfloor(spd).." km/h" , "pbright txtbig txtstart")
             end
-    
+            local ecuBlink = 40
             local function DrawWarnings(newContent)
     
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(150), ConvertResolutionY(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
@@ -2412,33 +2414,18 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     apY = ConvertResolutionY(115)
                     turnBurnY = ConvertResolutionY(95)
                 end
-                local defaultStroke = "#222222"
-                local onFill = "white"
-                local defaultClass = "dimmer"
-                local fillClass = "pbright"
     
-                local brakeFill = "#110000"
-                local brakeStroke = defaultStroke
-                local brakeClass = defaultClass
                 if BrakeIsOn then
                     local bkStr = ""
                     if type(BrakeIsOn) == "string" then bkStr="-"..BrakeIsOn end
                     newContent[#newContent + 1] = svgText(warningX, brakeY, "Brake Engaged"..bkStr, "warnings")
-                    brakeFill = "#440000"
-                    brakeStroke = onFill
-                    brakeClass = fillClass
                 elseif brakeInput2 > 0 then
                     newContent[#newContent + 1] = svgText(warningX, brakeY, "Auto-Brake Engaged", "warnings", "opacity:"..brakeInput2)
                 end
-                local stallFill = "#110000"
-                local stallStroke = defaultStroke
-                local stallClass = defaultClass
+    
                 if inAtmo and stalling and abvGndDet == -1 then
                     if not Autopilot and not VectorToTarget and not BrakeLanding and not antigravOn and not VertTakeOff and not AutoTakeoff then
                         newContent[#newContent + 1] = svgText(warningX, apY+50, "** STALL WARNING **", "warnings")
-                        stallFill = "#ff0000"
-                        stallStroke = onFill
-                        stallClass = fillClass
                         play("stall","SW",2)
                     end
                 end
@@ -2449,13 +2436,18 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 if gyroIsOn then
                     newContent[#newContent + 1] = svgText(warningX, gyroY, "Gyro Enabled", "warnings")
                 end
-                local gearFill = "#111100"
-                local gearStroke = defaultStroke
-                local gearClass = defaultClass
+    
+                if ECU then
+                    ecuBlink = ecuBlink -1
+                    if ecuBlink > 20 then 
+                        newContent[#newContent + 1] = svgText(warningX, gyroY-20, "ECU Enabled", "warnings")
+                    elseif ecuBlink < 0 then 
+                        ecuBlink = 40
+                    end
+                end
+    
                 if GearExtended then
-                    gearFill = "#775500"
-                    gearStroke = onFill
-                    gearClass = fillClass
+    
                     if hasGear then
                         newContent[#newContent + 1] = svgText(warningX, gearY, "Gear Extended", "warn")
                     else
@@ -2466,22 +2458,14 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     local displayText = getDistanceDisplayString(Nav:getTargetGroundAltitude())
                     newContent[#newContent + 1] = svgText(warningX, hoverY,"Hover Height: ".. displayText,"warn") 
                 end
-                local rocketFill = "#000011"
-                local rocketStroke = defaultStroke
-                local rocketClass = defaultClass
+    
                 if isBoosting then
-                    rocketFill = "#0000DD"
-                    rocketStroke = onFill
-                    rocketClass = fillClass
+    
                     newContent[#newContent + 1] = svgText(warningX, ewarpY+20, "ROCKET BOOST ENABLED", "warn")
                 end           
-                local aggFill = "#001100"
-                local aggStroke = defaultStroke      
-                local aggClass = defaultClass
+    
                 if antigrav and not ExternalAGG and antigravOn and AntigravTargetAltitude ~= nil then
-                    aggFill = "#00DD00"
-                    aggStroke = onFill
-                    aggClass = fillClass
+    
                     local aggWarn = "warnings"
                     if mabs(coreAltitude - antigrav.getBaseAltitude()) < 501 then aggWarn = "warn" end
                         newContent[#newContent + 1] = svgText(warningX, apY+40, stringf("Target Altitude: %d Singularity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), aggWarn)
@@ -2545,22 +2529,16 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 if RetrogradeIsOn then
                     newContent[#newContent + 1] = svgText(warningX, apY, "Retrograde Alignment", "crit")
                 end
-                local collisionFill = "#110000"
-                local collisionStroke = defaultStroke
-                local collisionClass = defaultClass
+    
                 if collisionAlertStatus then
-                    collisionFill = "#FF0000"
-                    collisionStroke = onFill
-                    collisionClass = fillClass
+    
                     local type
                     if string.find(collisionAlertStatus, "COLLISION") then type = "warnings" else type = "crit" end
                     newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, collisionAlertStatus, type)
                 elseif atmosDensity == 0 then
                     local intersectBody, atmoDistance = AP.checkLOS((constructVelocity):normalize())
                     if atmoDistance ~= nil then
-                        collisionClass = fillClass
-                        collisionFill = "#FF0000"
-                        collisionStroke = onFill
+    
                         local displayText = getDistanceDisplayString(atmoDistance)
                         local travelTime = Kinematic.computeTravelTime(velMag, 0, atmoDistance)
                         local displayCollisionType = "Collision"
@@ -2571,13 +2549,9 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 if VectorToTarget and not IntoOrbit then
                     newContent[#newContent + 1] = svgText(warningX, apY+60, VectorStatus, "warn")
                 end
-                local boardersFill = "#111100"
-                local boardersStroke = defaultStroke
-                local boardersClass = defaultClass
+    
                 if passengers and #passengers > 1 then
-                    boardersFill = "#DDDD00"
-                    boardersStroke = onFill
-                    boardersClass = fillClass
+    
                 end
     
                 local crx = ConvertResolutionX
@@ -2825,19 +2799,19 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 if SelectedTab == "INFO" then
                     targetHeight = 25*10
                 end
-    
+                if SelectedTab == "ORBIT" and coreAltitude < planet.spaceEngineMinAltitude then return newContent end
                 if SelectedTab ~= "HIDE" then
-                newContent[#newContent + 1] = [[<g class="pbright txtorb txtmid">]]
-                -- Draw a darkened box around it to keep it visible
-                newContent[#newContent + 1] = stringf(
-                                                '<rect width="%f" height="%d" rx="10" ry="10" x="%d" y="%d" class="dimfill brightstroke" style="stroke-width:3;fill-opacity:0.3;" />',
-                                                orbitMapSize*2, targetHeight, orbitMapX, orbitMapY)
-                -- And another inner box for clipping
-                newContent[#newContent + 1] = stringf(
-                                                [[<clippath id="orbitRect">
-                                                <rect width="%f" height="%d" rx="10" ry="10" x="%d" y="%d" class="dimfill brightstroke" style="stroke-width:3;fill-opacity:0.3;" />
-                                                </clippath>]],
-                                                orbitMapSize*2, targetHeight, orbitMapX, orbitMapY)
+                    newContent[#newContent + 1] = [[<g class="pbright txtorb txtmid">]]
+                    -- Draw a darkened box around it to keep it visible
+                    newContent[#newContent + 1] = stringf(
+                                                    '<rect width="%f" height="%d" rx="10" ry="10" x="%d" y="%d" class="dimfill brightstroke" style="stroke-width:3;fill-opacity:0.3;" />',
+                                                    orbitMapSize*2, targetHeight, orbitMapX, orbitMapY)
+                    -- And another inner box for clipping
+                    newContent[#newContent + 1] = stringf(
+                                                    [[<clippath id="orbitRect">
+                                                    <rect width="%f" height="%d" rx="10" ry="10" x="%d" y="%d" class="dimfill brightstroke" style="stroke-width:3;fill-opacity:0.3;" />
+                                                    </clippath>]],
+                                                    orbitMapSize*2, targetHeight, orbitMapX, orbitMapY)
                 end
     
                 local orbitMapHeight = orbitMapSize*1.5
@@ -9249,6 +9223,34 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 if shield then u.setTimer("shieldTick", 0.0166667) end
                 if userBase then PROGRAM.ExtraOnStart() end
                 play("start","SU")
+                local function ecuResume()
+                    if ecuThrottle[1] == 0 then
+                        AP.cmdThrottle(ecuThrottle[2])
+                    else
+                        if atmosDensity > 0 then 
+                            adjustedAtmoSpeedLimit = ecuThrottle[2] 
+                            AP.cmdThrottle(1)
+                        end
+                    end
+                end
+                ECU = string.find(u.getName(),"Emergency") or false
+                if ECU then 
+                    if abvGndDet > -1 and velMag < 1 and (abvGndDet - 3) < LandingGearGroundHeight then 
+                        u.exit()
+                    else
+                        if ECUHud then 
+                            ecuResume()
+                        else
+                            if atmosDensity == 0 then
+                                BrakeIsOn = "ECU Braking"
+                            elseif abvGndDet == -1 then 
+                                CONTROL.landingGear() 
+                            end
+                        end
+                    end
+                elseif ECUHud and (ecuThrottle[3]+3) > systime() then
+                    ecuResume()
+                end
             end)
             coroutine.resume(beginSetup)
         end
@@ -9285,6 +9287,12 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     s.setScreen(content) 
                 end
                 LastContent = content
+                if ECU and not ECUHud and atmosDensity > 0 and abvGndDet == -1 then
+                    CONTROL.landingGear()
+                end
+                if ECU and abvGndDet > -1 and velMag < 1 and (abvGndDet - 3) < LandingGearGroundHeight then 
+                    u.exit()
+                end
                 if userBase then PROGRAM.ExtraOnUpdate() end
             end
         end
@@ -9323,6 +9331,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
             end
             showHud = oldShowHud
+            local ECUTime = 0
+            if ECU then ECUTime = systime() end
+            if navCom:getAxisCommandType(0) == 0 then
+                ecuThrottle = {0, PlayerThrottle, ECUTime}
+            else
+                ecuThrottle = {1, navCom:getTargetSpeed(axisCommandId.longitudinal), ECUTime}
+            end
             SaveDataBank()
             if button then
                 button.activate()
@@ -9367,7 +9382,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
         function program.onTick(timerId)
             if timerId == "tenthSecond" then -- Timer executed ever tenth of a second
-                AP.TenthTick()
+                if AP then AP.TenthTick() end
                 if HUD then HUD.TenthTick() end
             elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
                 if HUD then HUD.OneSecondTick() end
@@ -9380,7 +9395,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             elseif timerId == "hudTick" then -- Timer for all hud updates not called elsewhere
                 if HUD then HUD.hudtick() end
             elseif timerId == "apTick" then -- Timer for all autopilot functions
-                AP.APTick()
+                if AP then AP.APTick() end
             elseif timerId == "shieldTick" then
                 SHIELD.shieldTick()
             elseif timerId == "tagTick" then
