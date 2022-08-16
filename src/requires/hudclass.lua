@@ -320,11 +320,11 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             newContent[#newContent + 1] = tickerPath .. [["/>]]
             newContent[#newContent + 1] = stringf([[<<polygon class="bright" points="%d,%d %d,%d %d,%d"/>]],
                 yawx-5, yawy-20, yawx+5, yawy-20, yawx, yawy-10)
-            if DisplayOdometer then 
+            --if DisplayOdometer then 
                 if nearPlanet then bottomText = "HDG" end
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(960) , ConvertResolutionY(100), yawC.."°" , "dim txt txtmid size14", "")
                 newContent[#newContent + 1] = svgText(ConvertResolutionX(960), ConvertResolutionY(85), bottomText, "dim txt txtmid size20","")
-            end
+            --end
             newContent[#newContent + 1] = [[</g>]]
         end
 
@@ -702,7 +702,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             end
             newContent[#newContent + 1] = svgText( x1, ys, mfloor(spd).." km/h" , "pbright txtbig txtstart")
         end
-
+        local ecuBlink = 40
         local function DrawWarnings(newContent)
 
             newContent[#newContent + 1] = svgText(ConvertResolutionX(150), ConvertResolutionY(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
@@ -727,33 +727,18 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 apY = ConvertResolutionY(115)
                 turnBurnY = ConvertResolutionY(95)
             end
-            local defaultStroke = "#222222"
-            local onFill = "white"
-            local defaultClass = "dimmer"
-            local fillClass = "pbright"
 
-            local brakeFill = "#110000"
-            local brakeStroke = defaultStroke
-            local brakeClass = defaultClass
             if BrakeIsOn then
                 local bkStr = ""
                 if type(BrakeIsOn) == "string" then bkStr="-"..BrakeIsOn end
                 newContent[#newContent + 1] = svgText(warningX, brakeY, "Brake Engaged"..bkStr, "warnings")
-                brakeFill = "#440000"
-                brakeStroke = onFill
-                brakeClass = fillClass
             elseif brakeInput2 > 0 then
                 newContent[#newContent + 1] = svgText(warningX, brakeY, "Auto-Brake Engaged", "warnings", "opacity:"..brakeInput2)
             end
-            local stallFill = "#110000"
-            local stallStroke = defaultStroke
-            local stallClass = defaultClass
+
             if inAtmo and stalling and abvGndDet == -1 then
                 if not Autopilot and not VectorToTarget and not BrakeLanding and not antigravOn and not VertTakeOff and not AutoTakeoff then
                     newContent[#newContent + 1] = svgText(warningX, apY+50, "** STALL WARNING **", "warnings")
-                    stallFill = "#ff0000"
-                    stallStroke = onFill
-                    stallClass = fillClass
                     play("stall","SW",2)
                 end
             end
@@ -764,13 +749,18 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             if gyroIsOn then
                 newContent[#newContent + 1] = svgText(warningX, gyroY, "Gyro Enabled", "warnings")
             end
-            local gearFill = "#111100"
-            local gearStroke = defaultStroke
-            local gearClass = defaultClass
+
+            if ECU then
+                ecuBlink = ecuBlink -1
+                if ecuBlink > 20 then 
+                    newContent[#newContent + 1] = svgText(warningX, gyroY-20, "ECU Enabled", "warnings")
+                elseif ecuBlink < 0 then 
+                    ecuBlink = 40
+                end
+            end
+
             if GearExtended then
-                gearFill = "#775500"
-                gearStroke = onFill
-                gearClass = fillClass
+
                 if hasGear then
                     newContent[#newContent + 1] = svgText(warningX, gearY, "Gear Extended", "warn")
                 else
@@ -781,22 +771,14 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 local displayText = getDistanceDisplayString(Nav:getTargetGroundAltitude())
                 newContent[#newContent + 1] = svgText(warningX, hoverY,"Hover Height: ".. displayText,"warn") 
             end
-            local rocketFill = "#000011"
-            local rocketStroke = defaultStroke
-            local rocketClass = defaultClass
+
             if isBoosting then
-                rocketFill = "#0000DD"
-                rocketStroke = onFill
-                rocketClass = fillClass
+
                 newContent[#newContent + 1] = svgText(warningX, ewarpY+20, "ROCKET BOOST ENABLED", "warn")
             end           
-            local aggFill = "#001100"
-            local aggStroke = defaultStroke      
-            local aggClass = defaultClass
+
             if antigrav and not ExternalAGG and antigravOn and AntigravTargetAltitude ~= nil then
-                aggFill = "#00DD00"
-                aggStroke = onFill
-                aggClass = fillClass
+
                 local aggWarn = "warnings"
                 if mabs(coreAltitude - antigrav.getBaseAltitude()) < 501 then aggWarn = "warn" end
                     newContent[#newContent + 1] = svgText(warningX, apY+40, stringf("Target Altitude: %d Singularity Altitude: %d", mfloor(AntigravTargetAltitude), mfloor(antigrav.getBaseAltitude())), aggWarn)
@@ -860,22 +842,16 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             if RetrogradeIsOn then
                 newContent[#newContent + 1] = svgText(warningX, apY, "Retrograde Alignment", "crit")
             end
-            local collisionFill = "#110000"
-            local collisionStroke = defaultStroke
-            local collisionClass = defaultClass
+
             if collisionAlertStatus then
-                collisionFill = "#FF0000"
-                collisionStroke = onFill
-                collisionClass = fillClass
+
                 local type
                 if string.find(collisionAlertStatus, "COLLISION") then type = "warnings" else type = "crit" end
                 newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, collisionAlertStatus, type)
             elseif atmosDensity == 0 then
                 local intersectBody, atmoDistance = AP.checkLOS((constructVelocity):normalize())
                 if atmoDistance ~= nil then
-                    collisionClass = fillClass
-                    collisionFill = "#FF0000"
-                    collisionStroke = onFill
+
                     local displayText = getDistanceDisplayString(atmoDistance)
                     local travelTime = Kinematic.computeTravelTime(velMag, 0, atmoDistance)
                     local displayCollisionType = "Collision"
@@ -886,13 +862,9 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             if VectorToTarget and not IntoOrbit then
                 newContent[#newContent + 1] = svgText(warningX, apY+60, VectorStatus, "warn")
             end
-            local boardersFill = "#111100"
-            local boardersStroke = defaultStroke
-            local boardersClass = defaultClass
+
             if passengers and #passengers > 1 then
-                boardersFill = "#DDDD00"
-                boardersStroke = onFill
-                boardersClass = fillClass
+
             end
 
             local crx = ConvertResolutionX
@@ -1140,19 +1112,19 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             if SelectedTab == "INFO" then
                 targetHeight = 25*10
             end
-
+            if SelectedTab == "ORBIT" and coreAltitude < planet.spaceEngineMinAltitude then return newContent end
             if SelectedTab ~= "HIDE" then
-            newContent[#newContent + 1] = [[<g class="pbright txtorb txtmid">]]
-            -- Draw a darkened box around it to keep it visible
-            newContent[#newContent + 1] = stringf(
-                                            '<rect width="%f" height="%d" rx="10" ry="10" x="%d" y="%d" class="dimfill brightstroke" style="stroke-width:3;fill-opacity:0.3;" />',
-                                            orbitMapSize*2, targetHeight, orbitMapX, orbitMapY)
-            -- And another inner box for clipping
-            newContent[#newContent + 1] = stringf(
-                                            [[<clippath id="orbitRect">
-                                            <rect width="%f" height="%d" rx="10" ry="10" x="%d" y="%d" class="dimfill brightstroke" style="stroke-width:3;fill-opacity:0.3;" />
-                                            </clippath>]],
-                                            orbitMapSize*2, targetHeight, orbitMapX, orbitMapY)
+                newContent[#newContent + 1] = [[<g class="pbright txtorb txtmid">]]
+                -- Draw a darkened box around it to keep it visible
+                newContent[#newContent + 1] = stringf(
+                                                '<rect width="%f" height="%d" rx="10" ry="10" x="%d" y="%d" class="dimfill brightstroke" style="stroke-width:3;fill-opacity:0.3;" />',
+                                                orbitMapSize*2, targetHeight, orbitMapX, orbitMapY)
+                -- And another inner box for clipping
+                newContent[#newContent + 1] = stringf(
+                                                [[<clippath id="orbitRect">
+                                                <rect width="%f" height="%d" rx="10" ry="10" x="%d" y="%d" class="dimfill brightstroke" style="stroke-width:3;fill-opacity:0.3;" />
+                                                </clippath>]],
+                                                orbitMapSize*2, targetHeight, orbitMapX, orbitMapY)
             end
 
             local orbitMapHeight = orbitMapSize*1.5

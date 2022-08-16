@@ -1,5 +1,20 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.746 - Full HUD ECU
+- Full HUD ECU support: Connect archhud databank to ECU (same one connected to seat/remote). Install ArchHUD Autoconf on ECU.  Activate ECU
+    NOTE: ECU's cannot do cruise mode, so some hud features will not function in ECU control (orbital hop, etc)
+    When ECU is activated: When you exit seat, if on ground, ECU will activate then turn off, otherwise:
+    1) If `ECUHud` set to false, then ECU will behave like normal ArchHUD ECU and Brakeland if in Atmo above ground, or stop if in space.
+    2) if `ECUHud` set to true, then ECU will continue normal flight in full hud mode. (This means continuing alt-hold or autopilot if in progress, etc)
+    In `ECUHud` mode, throttle will maintain based on what it was when you activated ECU or when you resit if ECU was active in last 3 seconds.
+- New User Variable `ECUHud` Default is false
+- Added blinking ECU warning when control is via ECU.
+- If ORBIT selected top left, ORBIT screen will only show if coreAltitude > minSpaceEngineAltitude for current planet.
+- Created base `blankhudclass.example`.  Rename to `hudclass.lua` to make your own gui for the system. (or delete hudclass.lua to fly with no GUI)
+- Fix Yaw bar not showing in space
+- Fix ArchHUD-ECU (the old script) turning off if in space near a planet.
+
+
 Version 1.745 
 - Fix for Haven Atmo change, now at 7700m where it goes to 0 (was 15000)
 

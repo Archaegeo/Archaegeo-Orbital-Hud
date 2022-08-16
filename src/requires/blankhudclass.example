@@ -1,0 +1,36 @@
+-- This is a blank hudclass.lua for use in developing your own hud for ArchHUD.  
+-- The below functions must exist, but do not have to do anything, they are just called by baseclass.lua
+
+function HudClass()
+
+    local Hud = {}
+    
+    function Hud.FuelUsed(fuelType)
+        return 0
+    end
+
+    function Hud.hudtick()
+    end
+
+    function Hud.TenthTick()
+    end
+
+    function Hud.OneSecondTick()
+    end
+
+    function Hud.AnimateTick()
+    end
+
+    function Hud.MsgTick()
+    end
+
+    function Hud.ButtonSetup()
+    end
+
+    if userHud then 
+        for k,v in pairs(userHud) do Hud[k] = v end 
+    end  
+
+    return Hud
+end
+  
