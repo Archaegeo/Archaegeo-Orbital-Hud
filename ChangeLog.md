@@ -7,6 +7,7 @@ Version 1.746 - Full HUD ECU
     1) If `ECUHud` set to false, then ECU will behave like normal ArchHUD ECU and Brakeland if in Atmo above ground, or stop if in space.
     2) if `ECUHud` set to true, then ECU will continue normal flight in full hud mode. (This means continuing alt-hold or autopilot if in progress, etc)
     In `ECUHud` mode, throttle will maintain based on what it was when you activated ECU or when you resit if ECU was active in last 3 seconds.
+    Also in `ECUHud` mode it appears you can only control bank/pitch/yaw with Autopilot functions (Alt-4, Alt-6, etc)
 - New User Variable `ECUHud` Default is false
 - Added blinking ECU warning when control is via ECU.
 - If ORBIT selected top left, ORBIT screen will only show if coreAltitude > minSpaceEngineAltitude for current planet.
