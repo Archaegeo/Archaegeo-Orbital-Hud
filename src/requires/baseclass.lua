@@ -597,6 +597,34 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             if shield then u.setTimer("shieldTick", 0.0166667) end
             if userBase then PROGRAM.ExtraOnStart() end
             play("start","SU")
+            local function ecuResume()
+                if ecuThrottle[1] == 0 then
+                    AP.cmdThrottle(ecuThrottle[2])
+                else
+                    if atmosDensity > 0 then 
+                        adjustedAtmoSpeedLimit = ecuThrottle[2] 
+                        AP.cmdThrottle(1)
+                    end
+                end
+            end
+            ECU = string.find(u.getName(),"Emergency") or false
+            if ECU then 
+                if abvGndDet > -1 and velMag < 1 and (abvGndDet - 3) < LandingGearGroundHeight then 
+                    u.exit()
+                else
+                    if ECUHud then 
+                        ecuResume()
+                    else
+                        if atmosDensity == 0 then
+                            BrakeIsOn = "ECU Braking"
+                        elseif abvGndDet == -1 then 
+                            CONTROL.landingGear() 
+                        end
+                    end
+                end
+            elseif ECUHud and (ecuThrottle[3]+3) > systime() then
+                ecuResume()
+            end
         end)
         coroutine.resume(beginSetup)
     end
@@ -633,6 +661,12 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 s.setScreen(content) 
             end
             LastContent = content
+            if ECU and not ECUHud and atmosDensity > 0 and abvGndDet == -1 then
+                CONTROL.landingGear()
+            end
+            if ECU and abvGndDet > -1 and velMag < 1 and (abvGndDet - 3) < LandingGearGroundHeight then 
+                u.exit()
+            end
             if userBase then PROGRAM.ExtraOnUpdate() end
         end
     end
@@ -671,6 +705,13 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             end
         end
         showHud = oldShowHud
+        local ECUTime = 0
+        if ECU then ECUTime = systime() end
+        if navCom:getAxisCommandType(0) == 0 then
+            ecuThrottle = {0, PlayerThrottle, ECUTime}
+        else
+            ecuThrottle = {1, navCom:getTargetSpeed(axisCommandId.longitudinal), ECUTime}
+        end
         SaveDataBank()
         if button then
             button.activate()
@@ -715,7 +756,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
 
     function program.onTick(timerId)
         if timerId == "tenthSecond" then -- Timer executed ever tenth of a second
-            AP.TenthTick()
+            if AP then AP.TenthTick() end
             if HUD then HUD.TenthTick() end
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
             if HUD then HUD.OneSecondTick() end
@@ -728,7 +769,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
         elseif timerId == "hudTick" then -- Timer for all hud updates not called elsewhere
             if HUD then HUD.hudtick() end
         elseif timerId == "apTick" then -- Timer for all autopilot functions
-            AP.APTick()
+            if AP then AP.APTick() end
         elseif timerId == "shieldTick" then
             SHIELD.shieldTick()
         elseif timerId == "tagTick" then
