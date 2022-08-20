@@ -8,7 +8,7 @@
 ###### For assistance, see the OSIN discord channel [Discord](https://discord.gg/9RD3xQfYXG) or my personal [Discord](https://discord.gg/CNRE45xRu7)
 ###### Donations are accepted but not expected. You may donate to Archaegeo in game via Wallet or to https://paypal.me/archaegeo for Paypal.
 
-Please see the user manual at https://docs.google.com/document/d/13-Kz1pqbbIHq8HTFLVG1r58D9zxsJe8_eTXezuryfPg/edit?usp=sharing 
+Please see the [User manual](https://docs.google.com/document/d/13-Kz1pqbbIHq8HTFLVG1r58D9zxsJe8_eTXezuryfPg/edit?usp=sharing) for installation and details on use
 
 ### Credits
 
