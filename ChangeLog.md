@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.748
+- Update the installation instructions shown at the release page.
+- Update the user settings page.
+- Remove `soundVolume` user variable as is no longer used with NQ sound system.
+- Creation of User's Manual https://docs.google.com/document/d/13-Kz1pqbbIHq8HTFLVG1r58D9zxsJe8_eTXezuryfPg/edit?usp=sharing 
+
 Version 1.747
 - Fixed buttons not being clickable if freeLookToggle is off (and other keyboard mode issues)
 - Fix ECU support to auto-activate AGG if ECU being used as normal ECU and not full HUD ECU and AGG is linked.

@@ -1,5 +1,3 @@
--- These values are a default set for 1920x1080 ResolutionX and Y settings. 
-
 -- Auto Variable declarations that store status of ship on databank. Do not edit directly here unless you know what you are doing, these change as ship flies.
 -- NOTE: autoVariables below must contain any variable that needs to be saved/loaded from databank system
     BrakeToggleStatus = BrakeToggleDefault
@@ -57,7 +55,7 @@
     LockPitch={set=function (i)LockPitch=i end,get=function() return LockPitch end}, LastMaxBrakeInAtmo={set=function (i)LastMaxBrakeInAtmo=i end,get=function() return LastMaxBrakeInAtmo end}, AntigravTargetAltitude={set=function (i)AntigravTargetAltitude=i end,get=function() return AntigravTargetAltitude end}, LastStartTime={set=function (i)LastStartTime=i end,get=function() return LastStartTime end}, iphCondition={set=function (i)iphCondition=i end,get=function() return iphCondition end}, stablized={set=function (i)stablized=i end,get=function() return stablized end}, UseExtra={set=function (i)UseExtra=i end,get=function() return UseExtra end}, SelectedTab={set=function (i)SelectedTab=i end,get=function() return SelectedTab end}, saveRoute={set=function (i)saveRoute=i end,get=function() return saveRoute end},
     apRoute={set=function (i)apRoute=i end,get=function() return apRoute end}, ecuThrottle={set=function (i)ecuThrottle=i end,get=function() return ecuThrottle end}}
 
--- Unsaved Globals
+-- Unsaved Globals - Do not edit unless you know what you are doing
     function globalDeclare(c, u, systime, mfloor, atmosphere) -- # is how many classes variable is in
         local s = DUSystem
         local C = DUConstruct
