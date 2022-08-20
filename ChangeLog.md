@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.748
+- Update the installation instructions shown at the release page.
+- Update the user settings page.
+
 Version 1.747
 - Fixed buttons not being clickable if freeLookToggle is off (and other keyboard mode issues)
 - Fix ECU support to auto-activate AGG if ECU being used as normal ECU and not full HUD ECU and AGG is linked.

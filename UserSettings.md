@@ -1,13 +1,16 @@
 # User Settings
 * DATABANK USAGE: The hud databank must be manually slotted to the control unit one time and then the HUD Autoconf file re-ran.
 When you stand up, all current user settings are saved to a manually linked databank.  When you sit down, the settings on a databank will override those
-in globals.lua require file unless useTheseSettings is true.
-## To modify user settings:
-* While out of seat, edit the globals.lua file.  You will need to set useTheseSettings to true if you need to override values saved on databank.
-* While in seat, hold SHIFT while not in freelook mode, mouse over View Settings, and release SHIFT (Thats how you click a button)
-* While in View Settings mode, you can hold SHIFT and mouse over a true/false value to change it, or mouse over one of the sub
+in code unless useTheseSettings is true.
+## To modify user settings, use one of the following methods:
+* While out of seat, if using modular version (1.7XX):
+    * You can edit the ArchHUD.conf file and globals.lua file.
+    * Or you can choose Edit Lua Parameters on the seat.
+    * You will need to set useTheseSettings to true if you need to override values saved on databank.
+* While in seat, tap SHIFT (hold alt if in freelook mode), mouse over View Settings and click
+    * While in View Settings mode, you can tap SHIFT and mouse over a true/false value to change it, or mouse over one of the sub
 catagories
-* Sub catagory values can be changed by hitting Enter, selecting LUA chat, and typing /G VariableName value
+    * Sub catagory values can be changed by hitting Enter, selecting LUA chat, and typing /G VariableName value
 
 useTheseSettings = false --export:  Change this to true to override databank saved settings
 # The construct itself must be set to keyboard control.  Then you use this setting to set how the hud controls.
