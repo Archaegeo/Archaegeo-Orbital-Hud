@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.746
+VERSION_NUMBER = 0.747
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -22,7 +22,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     BrakeToggleDefault = true -- (Default: true) Whether your brake toggle is on/off by default. Can be adjusted in the button menu. False is vanilla DU brakes.
     RemoteFreeze = false -- (Default: false) Whether or not to freeze your character in place when using a remote controller.
     RemoteHud = false --  (Default: false) Whether you want to see the full normal HUD while in remote mode.
-    brightHud = false -- (Default: false) Enable to prevent hud hiding when in freelook.
+    brightHud = false -- (Default: false) Enfable to prevent hud hiding when in freelook.
     VanillaRockets = false -- (Default: false) If on, rockets behave like vanilla
     InvertMouse = false -- (Default: false) If true, then when controlling flight mouse Y axis is inverted (pushing up noses plane down) Does not affect selecting buttons or camera.
     autoRollPreference = false -- (Default: false) [Only in atmosphere] - When the pilot stops rolling, flight model will try to get back to horizontal (no roll)
@@ -3502,6 +3502,15 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         oldShowHud = v.get()
                     elseif k == "BrakeToggleDefault" then 
                         BrakeToggleStatus = BrakeToggleDefault
+                    elseif k == "FullRadar" then
+                        if RADAR then 
+                            RADAR.ToggleRadarPanel()
+                            RADAR = nil
+                            FullRadar = false
+                        else
+                            FullRadar = true
+                            PROGRAM.radarSetup()
+                        end
                     end
                 end
                 local buttonHeight = 50
@@ -8274,20 +8283,9 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     msgText = "No antigrav found"
                 end
             elseif action == "leftmouse" then
-                if AltIsOn and holdingShift then 
-                    if RADAR then 
-                        RADAR.ToggleRadarPanel()
-                        RADAR = nil
-                        FullRadar = false
-                    else
-                        FullRadar = true
-                        PROGRAM.radarSetup()
-                    end
-                    toggleView = false
-                elseif holdingShift then 
-                    leftmouseclick=true 
-                    holdingShiftOff() 
-                end
+                leftmouseclick=true 
+                holdingShiftOff() 
+                toggleView = false
             end
         end
     
@@ -9245,6 +9243,10 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                                 BrakeIsOn = "ECU Braking"
                             elseif abvGndDet == -1 then 
                                 CONTROL.landingGear() 
+                            end
+                            if antigrav ~= nil then
+                                antigrav.activate()
+                                antigrav.show()
                             end
                         end
                     end
