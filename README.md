@@ -79,24 +79,7 @@ At this point you should be ready to fly!
 [Return to Table of Contents](#table-of-contents)
 
 # Usage
-#### The HUD makes use of on-screen buttons and keyboard controls. An overview followed by more detailed descriptions are below:
-See in game HELP for basic controls.
-This section to be updated later.
-
-[Return to Table of Contents](#table-of-contents)
-## Variable Persistence
-As mentioned briefly above, your custom variables are saved between reloading configurations if you attach a databank to the ship. However, all variables in the program are saved in the databank when you exit the seat. This means it will be exactly as you left it - if you were landed when you got out, it won't jump off the ground when you get it.
-
-This also means that when using autopilot, you can relatively easily move between a seat and Remote Controller; it will be down for a short time while you swap, but everything is saved and it will pick up where it left off.|
-
-[Return to Table of Contents](#table-of-contents)
-<!--Does this really need to be in the readme, or some other file? Not sure how often a user would need this information.-->
-# Examples and Tutorials
-
-[Return to Table of Contents](#table-of-contents)
-
-# No Autopilot Version
-#### There is not currently a working No Autopilot version
+Please see the user manual at https://docs.google.com/document/d/13-Kz1pqbbIHq8HTFLVG1r58D9zxsJe8_eTXezuryfPg/edit?usp=sharing 
 
 [Return to Table of Contents](#table-of-contents)
 
