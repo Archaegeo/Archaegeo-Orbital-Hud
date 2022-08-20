@@ -620,6 +620,10 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                         elseif abvGndDet == -1 then 
                             CONTROL.landingGear() 
                         end
+                        if antigrav ~= nil then
+                            antigrav.activate()
+                            antigrav.show()
+                        end
                     end
                 end
             elseif ECUHud and (ecuThrottle[3]+3) > systime() then

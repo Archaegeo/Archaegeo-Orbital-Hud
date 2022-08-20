@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.747
+- Fixed buttons not being clickable if freeLookToggle is off (and other keyboard mode issues)
+- Fix ECU support to auto-activate AGG if ECU being used as normal ECU and not full HUD ECU and AGG is linked.
+
 Version 1.746 - Full HUD ECU
 - Full HUD ECU support: Connect archhud databank to ECU (same one connected to seat/remote). Install ArchHUD Autoconf on ECU.  Activate ECU
     NOTE: ECU's cannot do cruise mode, so some hud features will not function in ECU control (orbital hop, etc)

@@ -475,20 +475,9 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 msgText = "No antigrav found"
             end
         elseif action == "leftmouse" then
-            if AltIsOn and holdingShift then 
-                if RADAR then 
-                    RADAR.ToggleRadarPanel()
-                    RADAR = nil
-                    FullRadar = false
-                else
-                    FullRadar = true
-                    PROGRAM.radarSetup()
-                end
-                toggleView = false
-            elseif holdingShift then 
-                leftmouseclick=true 
-                holdingShiftOff() 
-            end
+            leftmouseclick=true 
+            holdingShiftOff() 
+            toggleView = false
         end
     end
 
