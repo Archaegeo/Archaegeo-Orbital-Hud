@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.747
+VERSION_NUMBER = 0.748
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -121,13 +121,11 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     OrbitMapSize = 250 -- (Default: 250) Size of the orbit map, make sure it is divisible by 4
     OrbitMapX = 0 -- (Default: 0) X postion of Orbit Display 
     OrbitMapY = 30 -- (Default: 30) Y position of Orbit Display
-    soundVolume = 100 -- (Default: 100) Set to value (0-100 recommended) to control volume of voice and alerts. Alerts will automatically lower other hud sounds 50% if needed.
-
     savableVariablesHud = {ResolutionX={set=function (i)ResolutionX=i end,get=function() return ResolutionX end},ResolutionY={set=function (i)ResolutionY=i end,get=function() return ResolutionY end},circleRad={set=function (i)circleRad=i end,get=function() return circleRad end},SafeR={set=function (i)SafeR=i end,get=function() return SafeR end}, SafeG={set=function (i)SafeG=i end,get=function() return SafeG end}, SafeB={set=function (i)SafeB=i end,get=function() return SafeB end}, 
     PvPR={set=function (i)PvPR=i end,get=function() return PvPR end}, PvPG={set=function (i)PvPG=i end,get=function() return PvPG end}, PvPB={set=function (i)PvPB=i end,get=function() return PvPB end},centerX={set=function (i)centerX=i end,get=function() return centerX end}, centerY={set=function (i)centerY=i end,get=function() return centerY end}, throtPosX={set=function (i)throtPosX=i end,get=function() return throtPosX end}, throtPosY={set=function (i)throtPosY=i end,get=function() return throtPosY end},
     vSpdMeterX={set=function (i)vSpdMeterX=i end,get=function() return vSpdMeterX end}, vSpdMeterY={set=function (i)vSpdMeterY=i end,get=function() return vSpdMeterY end},altMeterX={set=function (i)altMeterX=i end,get=function() return altMeterX end}, altMeterY={set=function (i)altMeterY=i end,get=function() return altMeterY end},fuelX={set=function (i)fuelX=i end,get=function() return fuelX end}, fuelY={set=function (i)fuelY=i end,get=function() return fuelY end},
     shieldX={set=function (i)shieldX=i end,get=function() return shieldX end}, shieldY={set=function (i)shieldY=i end,get=function() return shieldY end}, radarX={set=function (i)radarX=i end,get=function() return radarX end}, radarY={set=function (i)radarY=i end,get=function() return radarY end},DeadZone={set=function (i)DeadZone=i end,get=function() return DeadZone end},
-    OrbitMapSize={set=function (i)OrbitMapSize=i end,get=function() return OrbitMapSize end}, OrbitMapX={set=function (i)OrbitMapX=i end,get=function() return OrbitMapX end}, OrbitMapY={set=function (i)OrbitMapY=i end,get=function() return OrbitMapY end}, soundVolume={set=function (i)soundVolume=i end,get=function() return soundVolume end}}
+    OrbitMapSize={set=function (i)OrbitMapSize=i end,get=function() return OrbitMapSize end}, OrbitMapX={set=function (i)OrbitMapX=i end,get=function() return OrbitMapX end}, OrbitMapY={set=function (i)OrbitMapY=i end,get=function() return OrbitMapY end}}
 
 -- Ship flight physics variables - Change with care, can have large effects on ships performance.
     -- NOTE: savableVariablesPhysics below must contain any Ship flight physics variables that needs to be saved/loaded from databank system
