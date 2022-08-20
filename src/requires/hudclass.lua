@@ -1815,6 +1815,15 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     oldShowHud = v.get()
                 elseif k == "BrakeToggleDefault" then 
                     BrakeToggleStatus = BrakeToggleDefault
+                elseif k == "FullRadar" then
+                    if RADAR then 
+                        RADAR.ToggleRadarPanel()
+                        RADAR = nil
+                        FullRadar = false
+                    else
+                        FullRadar = true
+                        PROGRAM.radarSetup()
+                    end
                 end
             end
             local buttonHeight = 50
