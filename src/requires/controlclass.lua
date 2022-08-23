@@ -22,7 +22,6 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     Reentry = false
                     AutoTakeoff = false
                     VertTakeOff = false
-                    AltitudeHold = false
                     if BrakeLanding then apBrk = not apBrk end
                     BrakeLanding = true
                     autoRoll = true
@@ -38,6 +37,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                         BrakeIsOn = "Landing"
                     end
                 end
+                AltitudeHold = false
+                HoverMode = false
             elseif hasGear and not BrakeLanding  then
                 play("grOut","LG",1)
                 Nav.control.deployLandingGears() -- Actually extend
@@ -75,7 +76,6 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     end
                     return curTarget
                 end
-
                 if down then mult = -1 end
                 if not ExternalAGG and antigravOn then
                     if holdingShift and down then
@@ -100,8 +100,17 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     else
                         if holdingShift and inAtmo then
                             HoldAltitude = nextTargetHeight(HoldAltitude, down)
+                            HoverMode = false 
                         else
                             HoldAltitude = HoldAltitude + mult*holdAltitudeButtonModifier
+                            if HoverMode then 
+                                if HoldAltitude > 100 then 
+                                    HoverMode = false 
+                                else
+                                    navCom:updateTargetGroundAltitudeFromActionStart(mult*1.0)
+                                    HoverMode = Nav:getTargetGroundAltitude()
+                                end
+                            end
                         end
                     end
                 else
@@ -384,7 +393,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 u.setTimer("tagTick",0.1)
             elseif gyro ~= nil then
                 gyro.toggle()
-                gyroIsOn = gyro.getState() == 1
+                gyroIsOn = gyro.isActive() == 1
                 if gyroIsOn then play("gyOn", "GA") else play("gyOff", "GA") end
             else
                 msgText = "No gyro found"
@@ -464,7 +473,6 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 end
             end
         elseif action == "speedup" then
-            if holdingShift and not AltIsOn then p("RADAR OFF") return end
             AP.changeSpd()
         elseif action == "speeddown" then
             AP.changeSpd(true)
