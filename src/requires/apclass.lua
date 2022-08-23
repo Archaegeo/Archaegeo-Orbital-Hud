@@ -636,6 +636,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpd
     
     function ap.ToggleAltitudeHold()  -- Toggle Altitude Hold mode on and off
         if (time - ahDoubleClick) < 1.5 then
+            HoverMode = false
             if planet.hasAtmosphere  then
                 if inAtmo then
 
@@ -681,15 +682,21 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpd
             autoRoll = true
             LockPitch = nil
             OrbitAchieved = false
-            if abvGndDet ~= -1 and velMag < 20 then
-                if GearExtended then CONTROL.landingGear() end
-                play("lfs", "LS")
-                AutoTakeoff = true
-                if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
-                BrakeIsOn = "ATO Hold"
-                navCom:setTargetGroundAltitude(TargetHoverHeight)
-                if VertTakeOffEngine and UpVertAtmoEngine then 
-                    AP.ToggleVerticalTakeoff()
+            if abvGndDet ~= -1 then 
+                if not GearExtended then
+                    HoldAltitude = coreAltitude 
+                    HoverMode = abvGndDet
+                    navCom:setTargetGroundAltitude(HoverMode)
+                elseif velMag < 20 then
+                    if GearExtended then CONTROL.landingGear() end
+                    play("lfs", "LS")
+                    AutoTakeoff = true
+                    if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
+                    BrakeIsOn = "ATO Hold"
+                    navCom:setTargetGroundAltitude(TargetHoverHeight)
+                    if VertTakeOffEngine and UpVertAtmoEngine then 
+                        AP.ToggleVerticalTakeoff()
+                    end
                 end
             else
                 play("altOn","AH")
@@ -725,6 +732,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpd
             AutoTakeoff = false
             VectorToTarget = false
             ahDoubleClick = 0
+            HoverMode = false
         end
     end
 
@@ -2180,8 +2188,14 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpd
                 pitchInput2 = autoPitchInput
             end
         end
-
         if AltitudeHold or BrakeLanding or Reentry or VectorToTarget or LockPitch ~= nil then 
+            if HoverMode then 
+                if abvGndDet == -1 then 
+                    HoldAltitude = HoldAltitude - 0.2 
+                else
+                    HoldAltitude = coreAltitude + (HoverMode - abvGndDet) 
+                end
+            end
             -- We want current brake value, not max
             local curBrake = LastMaxBrakeInAtmo
             if curBrake then

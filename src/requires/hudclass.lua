@@ -2341,6 +2341,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         if CollisionSystem and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
         if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
         if TurnBurn then flightStyle = "TB-"..flightStyle end
+        if HoverMode then flightStyle = "HOVERMODE-"..flightStyle end
         if not stablized then flightStyle = flightStyle.."-DeCoupled" end
 
         local labelY1 = cry(99)

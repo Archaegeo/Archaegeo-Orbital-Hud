@@ -1,5 +1,13 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.749 - Enhanced Hover Mode
+- If Altitude hold is engaged (alt-6) while in the air but within ground detection height (AGL shows under altitude) 
+    the hud will enter Hover mode.  The ship will attempt to maintain the same height above ground rather 
+    than a fixed altitude.  This can be cancelled by any of the normal alt-hold cancellation methods, or by raising or
+    lowering desired height with alt-spacebar/C or alt-shift-spacebar/C.
+    WARNING: It is recommended to only use this mode on agile ships. Speeds > 300k/hr can be dangerous at low heights.
+- Fix depreciated function
+
 Version 1.748
 - Update the installation instructions shown at the release page.
 - Update the user settings page.
