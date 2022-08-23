@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.748
+VERSION_NUMBER = 0.749
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -203,6 +203,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     saveRoute = {}
     apRoute = {}
     ecuThrottle = {}
+    HoverMode = false
     autoVariables = {VertTakeOff={set=function (i)VertTakeOff=i end,get=function() return VertTakeOff end}, VertTakeOffEngine={set=function (i)VertTakeOffEngine=i end,get=function() return VertTakeOffEngine end},SpaceTarget={set=function (i)SpaceTarget=i end,get=function() return SpaceTarget end},BrakeToggleStatus={set=function (i)BrakeToggleStatus=i end,get=function() return BrakeToggleStatus end}, BrakeIsOn={set=function (i)BrakeIsOn=i end,get=function() return BrakeIsOn end}, RetrogradeIsOn={set=function (i)RetrogradeIsOn=i end,get=function() return RetrogradeIsOn end}, ProgradeIsOn={set=function (i)ProgradeIsOn=i end,get=function() return ProgradeIsOn end},
     Autopilot={set=function (i)Autopilot=i end,get=function() return Autopilot end}, TurnBurn={set=function (i)TurnBurn=i end,get=function() return TurnBurn end}, AltitudeHold={set=function (i)AltitudeHold=i end,get=function() return AltitudeHold end}, BrakeLanding={set=function (i)BrakeLanding=i end,get=function() return BrakeLanding end},
     Reentry={set=function (i)Reentry=i end,get=function() return Reentry end}, AutoTakeoff={set=function (i)AutoTakeoff=i end,get=function() return AutoTakeoff end}, HoldAltitude={set=function (i)HoldAltitude=i end,get=function() return HoldAltitude end}, AutopilotAccelerating={set=function (i)AutopilotAccelerating=i end,get=function() return AutopilotAccelerating end}, AutopilotBraking={set=function (i)AutopilotBraking=i end,get=function() return AutopilotBraking end},
@@ -211,7 +212,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     AutopilotTargetIndex={set=function (i)AutopilotTargetIndex=i end,get=function() return AutopilotTargetIndex end}, TotalDistanceTravelled={set=function (i)TotalDistanceTravelled=i end,get=function() return TotalDistanceTravelled end},
     TotalFlightTime={set=function (i)TotalFlightTime=i end,get=function() return TotalFlightTime end}, SavedLocations={set=function (i)SavedLocations=i end,get=function() return SavedLocations end}, VectorToTarget={set=function (i)VectorToTarget=i end,get=function() return VectorToTarget end}, LocationIndex={set=function (i)LocationIndex=i end,get=function() return LocationIndex end}, LastMaxBrake={set=function (i)LastMaxBrake=i end,get=function() return LastMaxBrake end}, 
     LockPitch={set=function (i)LockPitch=i end,get=function() return LockPitch end}, LastMaxBrakeInAtmo={set=function (i)LastMaxBrakeInAtmo=i end,get=function() return LastMaxBrakeInAtmo end}, AntigravTargetAltitude={set=function (i)AntigravTargetAltitude=i end,get=function() return AntigravTargetAltitude end}, LastStartTime={set=function (i)LastStartTime=i end,get=function() return LastStartTime end}, iphCondition={set=function (i)iphCondition=i end,get=function() return iphCondition end}, stablized={set=function (i)stablized=i end,get=function() return stablized end}, UseExtra={set=function (i)UseExtra=i end,get=function() return UseExtra end}, SelectedTab={set=function (i)SelectedTab=i end,get=function() return SelectedTab end}, saveRoute={set=function (i)saveRoute=i end,get=function() return saveRoute end},
-    apRoute={set=function (i)apRoute=i end,get=function() return apRoute end}, ecuThrottle={set=function (i)ecuThrottle=i end,get=function() return ecuThrottle end}}
+    apRoute={set=function (i)apRoute=i end,get=function() return apRoute end}, ecuThrottle={set=function (i)ecuThrottle=i end,get=function() return ecuThrottle end}, HoverMode={set=function (i)HoverMode=i end,get=function() return HoverMode end}}
 
     local function globalDeclare(c, u, systime, mfloor, atmosphere) -- # is how many classes variable is in
         local s = DUSystem
@@ -4026,6 +4027,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             if CollisionSystem and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
             if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
             if TurnBurn then flightStyle = "TB-"..flightStyle end
+            if HoverMode then flightStyle = "HOVERMODE-"..flightStyle end
             if not stablized then flightStyle = flightStyle.."-DeCoupled" end
     
             local labelY1 = cry(99)
@@ -5430,6 +5432,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         
         function ap.ToggleAltitudeHold()  -- Toggle Altitude Hold mode on and off
             if (time - ahDoubleClick) < 1.5 then
+                HoverMode = false
                 if planet.hasAtmosphere  then
                     if inAtmo then
     
@@ -5475,15 +5478,21 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 autoRoll = true
                 LockPitch = nil
                 OrbitAchieved = false
-                if abvGndDet ~= -1 and velMag < 20 then
-                    if GearExtended then CONTROL.landingGear() end
-                    play("lfs", "LS")
-                    AutoTakeoff = true
-                    if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
-                    BrakeIsOn = "ATO Hold"
-                    navCom:setTargetGroundAltitude(TargetHoverHeight)
-                    if VertTakeOffEngine and UpVertAtmoEngine then 
-                        AP.ToggleVerticalTakeoff()
+                if abvGndDet ~= -1 then 
+                    if not GearExtended then
+                        HoldAltitude = coreAltitude 
+                        HoverMode = abvGndDet
+                        navCom:setTargetGroundAltitude(HoverMode)
+                    elseif velMag < 20 then
+                        if GearExtended then CONTROL.landingGear() end
+                        play("lfs", "LS")
+                        AutoTakeoff = true
+                        if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
+                        BrakeIsOn = "ATO Hold"
+                        navCom:setTargetGroundAltitude(TargetHoverHeight)
+                        if VertTakeOffEngine and UpVertAtmoEngine then 
+                            AP.ToggleVerticalTakeoff()
+                        end
                     end
                 else
                     play("altOn","AH")
@@ -5519,6 +5528,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 AutoTakeoff = false
                 VectorToTarget = false
                 ahDoubleClick = 0
+                HoverMode = false
             end
         end
     
@@ -6974,8 +6984,14 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     pitchInput2 = autoPitchInput
                 end
             end
-    
             if AltitudeHold or BrakeLanding or Reentry or VectorToTarget or LockPitch ~= nil then 
+                if HoverMode then 
+                    if abvGndDet == -1 then 
+                        HoldAltitude = HoldAltitude - 0.2 
+                    else
+                        HoldAltitude = coreAltitude + (HoverMode - abvGndDet) 
+                    end
+                end
                 -- We want current brake value, not max
                 local curBrake = LastMaxBrakeInAtmo
                 if curBrake then
@@ -7828,7 +7844,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         Reentry = false
                         AutoTakeoff = false
                         VertTakeOff = false
-                        AltitudeHold = false
                         if BrakeLanding then apBrk = not apBrk end
                         BrakeLanding = true
                         autoRoll = true
@@ -7844,6 +7859,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             BrakeIsOn = "Landing"
                         end
                     end
+                    AltitudeHold = false
+                    HoverMode = false
                 elseif hasGear and not BrakeLanding  then
                     play("grOut","LG",1)
                     Nav.control.deployLandingGears() -- Actually extend
@@ -7881,7 +7898,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         end
                         return curTarget
                     end
-    
                     if down then mult = -1 end
                     if not ExternalAGG and antigravOn then
                         if holdingShift and down then
@@ -7906,8 +7922,17 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         else
                             if holdingShift and inAtmo then
                                 HoldAltitude = nextTargetHeight(HoldAltitude, down)
+                                HoverMode = false 
                             else
                                 HoldAltitude = HoldAltitude + mult*holdAltitudeButtonModifier
+                                if HoverMode then 
+                                    if HoldAltitude > 100 then 
+                                        HoverMode = false 
+                                    else
+                                        navCom:updateTargetGroundAltitudeFromActionStart(mult*1.0)
+                                        HoverMode = Nav:getTargetGroundAltitude()
+                                    end
+                                end
                             end
                         end
                     else
@@ -8190,7 +8215,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     u.setTimer("tagTick",0.1)
                 elseif gyro ~= nil then
                     gyro.toggle()
-                    gyroIsOn = gyro.getState() == 1
+                    gyroIsOn = gyro.isActive() == 1
                     if gyroIsOn then play("gyOn", "GA") else play("gyOff", "GA") end
                 else
                     msgText = "No gyro found"
@@ -8270,7 +8295,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                 end
             elseif action == "speedup" then
-                if holdingShift and not AltIsOn then p("RADAR OFF") return end
                 AP.changeSpd()
             elseif action == "speeddown" then
                 AP.changeSpd(true)
