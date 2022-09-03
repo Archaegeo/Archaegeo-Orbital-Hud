@@ -528,6 +528,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 end
                 PlanetaryReference = PlanetRef(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
                 galaxyReference = PlanetaryReference(atlasCopy)
+                sys = galaxyReference[0]
                 -- Setup Modular Classes
                 Kinematic = Kinematics(Nav, c, u, s, msqrt, mabs)
                 Kep = Keplers(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
@@ -557,10 +558,10 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             ProcessElements()
             coroutine.yield() -- Give it some time to breathe before we do the rest
 
-            AP = APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
+            AP = APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, 
                 mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
                 navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq, 
-                getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)
+                getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode)
 
             SetupChecks() -- All the if-thens to set up for particular ship.  Specifically override these with the saved variables if available
 

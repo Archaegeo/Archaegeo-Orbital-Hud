@@ -455,7 +455,9 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             clearAll()
             clearAllCheck = time
             if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed then
-                if PlayerThrottle ~= 0 then
+                if AltIsOn then
+                    if adjustedAtmoSpeedLimit > 0 then adjustedAtmoSpeedLimit = 0 else adjustedAtmoSpeedLimit = AtmoSpeedLimit end
+                elseif PlayerThrottle ~= 0 then
                     navCom:resetCommand(axisCommandId.longitudinal)
                     AP.cmdThrottle(0)
                 else
