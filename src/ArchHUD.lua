@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.749
+VERSION_NUMBER = 0.750
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -4794,10 +4794,10 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
         return Hud
     end
-    local function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1,
+    local function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1,
         mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
         navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq,
-        getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)  
+        getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode)  
         local s = DUSystem
         local C = DUConstruct
     
@@ -5245,6 +5245,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
             end
             local routeOrbit = false
+            HoverMode = false
             if (time - apDoubleClick) < 1.5 and inAtmo then
                 if not SpaceEngines then
                     if inAtmo then
@@ -5479,7 +5480,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 LockPitch = nil
                 OrbitAchieved = false
                 if abvGndDet ~= -1 then 
-                    if not GearExtended then
+                    if not GearExtended and not VectorToTarget then
                         HoldAltitude = coreAltitude 
                         HoverMode = abvGndDet
                         navCom:setTargetGroundAltitude(HoverMode)
@@ -5810,147 +5811,150 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
             end
         end
-        
+    
+        -- Local functions and static variables for onFlush
+            local function composeAxisAccelerationFromTargetSpeedV(commandAxis, targetSpeed)
+    
+                local axisCRefDirection = vec3()
+                local axisWorldDirection = vec3()
+            
+                if (commandAxis == axisCommandId.longitudinal) then
+                    axisCRefDirection = vec3(C.getOrientationForward())
+                    axisWorldDirection = constructForward
+                elseif (commandAxis == axisCommandId.vertical) then
+                    axisCRefDirection = vec3(C.getOrientationUp())
+                    axisWorldDirection = constructUp
+                elseif (commandAxis == axisCommandId.lateral) then
+                    axisCRefDirection = vec3(C.getOrientationRight())
+                    axisWorldDirection = constructRight
+                else
+                    return vec3()
+                end
+            
+                local gravityAcceleration = vec3(c.getWorldGravity())
+                local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
+            
+                local airResistanceAcceleration = vec3(C.getWorldAirFrictionAcceleration())
+                local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
+            
+    
+                local currentAxisSpeedMS = coreVelocity:dot(axisCRefDirection)
+            
+                local targetAxisSpeedMS = targetSpeed * constants.kph2m
+            
+                if targetSpeedPID2 == nil then -- CHanged first param from 1 to 10...
+                    targetSpeedPID2 = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
+                end
+            
+                targetSpeedPID2:inject(targetAxisSpeedMS - currentAxisSpeedMS) -- update PID
+            
+                local accelerationCommand = targetSpeedPID2:get()
+            
+                local finalAcceleration = (accelerationCommand - airResistanceAccelerationCommand - gravityAccelerationCommand) * axisWorldDirection  -- Try to compensate air friction
+            
+                -- The hell are these? Uncommented recently just in case they were important
+                --s.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
+                --s.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
+            
+                return finalAcceleration
+            end
+    
+            local function composeAxisAccelerationFromTargetSpeed(commandAxis, targetSpeed)
+    
+                local axisCRefDirection = vec3()
+                local axisWorldDirection = vec3()
+            
+                if (commandAxis == axisCommandId.longitudinal) then
+                    axisCRefDirection = vec3(C.getOrientationForward())
+                    axisWorldDirection = constructForward
+                elseif (commandAxis == axisCommandId.vertical) then
+                    axisCRefDirection = vec3(C.getOrientationUp())
+                    axisWorldDirection = constructUp
+                elseif (commandAxis == axisCommandId.lateral) then
+                    axisCRefDirection = vec3(C.getOrientationRight())
+                    axisWorldDirection = constructRight
+                else
+                    return vec3()
+                end
+            
+                local gravityAcceleration = vec3(c.getWorldGravity())
+                local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
+            
+                local airResistanceAcceleration = vec3(C.getWorldAirFrictionAcceleration())
+                local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
+            
+                local currentAxisSpeedMS = coreVelocity:dot(axisCRefDirection)
+            
+                local targetAxisSpeedMS = targetSpeed * constants.kph2m
+            
+                if targetSpeedPID == nil then -- CHanged first param from 1 to 10...
+                    targetSpeedPID = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
+                end
+            
+                targetSpeedPID:inject(targetAxisSpeedMS - currentAxisSpeedMS) -- update PID
+            
+                local accelerationCommand = targetSpeedPID:get()
+            
+                local finalAcceleration = (accelerationCommand - airResistanceAccelerationCommand - gravityAccelerationCommand) * axisWorldDirection  -- Try to compensate air friction
+            
+                -- The hell are these? Uncommented recently just in case they were important
+                --s.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
+                --s.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
+            
+                return finalAcceleration
+            end
+    
+            local function getPitch(gravityDirection, forward, right)
+            
+                local horizontalForward = gravityDirection:cross(right):normalize_inplace() -- Cross forward?
+                local pitch = math.acos(uclamp(horizontalForward:dot(-forward), -1, 1)) * constants.rad2deg -- acos?
+                
+                if horizontalForward:cross(-forward):dot(right) < 0 then
+                    pitch = -pitch
+                end -- Cross right dot forward?
+                return pitch
+            end
+    
+            local function checkCollision()
+                if collisionTarget and not BrakeLanding then
+                    local body = collisionTarget[1]
+                    local far, near = collisionTarget[2],collisionTarget[3] 
+                    local collisionDistance = math.min(far, near or far)
+                    local collisionTime = collisionDistance/velMag
+                    local ignoreCollision = AutoTakeoff and (velMag < 42 or abvGndDet ~= -1)
+                    local apAction = (AltitudeHold or VectorToTarget or LockPitch or Autopilot)
+                    if apAction and not ignoreCollision and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
+                        BrakeIsOn = "Collision"
+                        apRoute = {}
+                        cmdT = 0
+                        if AltitudeHold then AP.ToggleAltitudeHold() end
+                        if LockPitch then AP.ToggleLockPitch() end
+                        msgText = "Autopilot Cancelled due to possible collision"
+                        s.print(body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2))
+                        AP.ResetAutopilots(1)
+                        StrongBrakes = true
+                        if inAtmo then BrakeLanding = true end
+                        autoRoll = true
+                    end
+                    if collisionTime < 11 then 
+                        collisionAlertStatus = body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2)
+                    else
+                        collisionAlertStatus = body.name.." collision "..FormatTimeString(collisionTime)
+                    end
+                    if collisionTime < 6 then play("alarm","AL",2) end
+                else
+                    collisionAlertStatus = false
+                end
+            end
+            -- Engine commands
+            local keepCollinearity = 1 -- for easier reading
+            local dontKeepCollinearity = 0 -- for easier reading
+            local tolerancePercentToSkipOtherPriorities = 1 -- if we are within this tolerance (in%), we don't go to the next priorities
+            local MousePitchFactor = 1 -- Mouse control only
+            local MouseYawFactor = 1 -- Mouse control only
         function ap.onFlush()
-            -- Local functions for onFlush
-                local function composeAxisAccelerationFromTargetSpeedV(commandAxis, targetSpeed)
-    
-                    local axisCRefDirection = vec3()
-                    local axisWorldDirection = vec3()
-                
-                    if (commandAxis == axisCommandId.longitudinal) then
-                        axisCRefDirection = vec3(C.getOrientationForward())
-                        axisWorldDirection = constructForward
-                    elseif (commandAxis == axisCommandId.vertical) then
-                        axisCRefDirection = vec3(C.getOrientationUp())
-                        axisWorldDirection = constructUp
-                    elseif (commandAxis == axisCommandId.lateral) then
-                        axisCRefDirection = vec3(C.getOrientationRight())
-                        axisWorldDirection = constructRight
-                    else
-                        return vec3()
-                    end
-                
-                    local gravityAcceleration = vec3(c.getWorldGravity())
-                    local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
-                
-                    local airResistanceAcceleration = vec3(C.getWorldAirFrictionAcceleration())
-                    local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
-                
-    
-                    local currentAxisSpeedMS = coreVelocity:dot(axisCRefDirection)
-                
-                    local targetAxisSpeedMS = targetSpeed * constants.kph2m
-                
-                    if targetSpeedPID2 == nil then -- CHanged first param from 1 to 10...
-                        targetSpeedPID2 = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
-                    end
-                
-                    targetSpeedPID2:inject(targetAxisSpeedMS - currentAxisSpeedMS) -- update PID
-                
-                    local accelerationCommand = targetSpeedPID2:get()
-                
-                    local finalAcceleration = (accelerationCommand - airResistanceAccelerationCommand - gravityAccelerationCommand) * axisWorldDirection  -- Try to compensate air friction
-                
-                    -- The hell are these? Uncommented recently just in case they were important
-                    --s.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
-                    --s.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
-                
-                    return finalAcceleration
-                end
-    
-                local function composeAxisAccelerationFromTargetSpeed(commandAxis, targetSpeed)
-    
-                    local axisCRefDirection = vec3()
-                    local axisWorldDirection = vec3()
-                
-                    if (commandAxis == axisCommandId.longitudinal) then
-                        axisCRefDirection = vec3(C.getOrientationForward())
-                        axisWorldDirection = constructForward
-                    elseif (commandAxis == axisCommandId.vertical) then
-                        axisCRefDirection = vec3(C.getOrientationUp())
-                        axisWorldDirection = constructUp
-                    elseif (commandAxis == axisCommandId.lateral) then
-                        axisCRefDirection = vec3(C.getOrientationRight())
-                        axisWorldDirection = constructRight
-                    else
-                        return vec3()
-                    end
-                
-                    local gravityAcceleration = vec3(c.getWorldGravity())
-                    local gravityAccelerationCommand = gravityAcceleration:dot(axisWorldDirection)
-                
-                    local airResistanceAcceleration = vec3(C.getWorldAirFrictionAcceleration())
-                    local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
-                
-                    local currentAxisSpeedMS = coreVelocity:dot(axisCRefDirection)
-                
-                    local targetAxisSpeedMS = targetSpeed * constants.kph2m
-                
-                    if targetSpeedPID == nil then -- CHanged first param from 1 to 10...
-                        targetSpeedPID = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
-                    end
-                
-                    targetSpeedPID:inject(targetAxisSpeedMS - currentAxisSpeedMS) -- update PID
-                
-                    local accelerationCommand = targetSpeedPID:get()
-                
-                    local finalAcceleration = (accelerationCommand - airResistanceAccelerationCommand - gravityAccelerationCommand) * axisWorldDirection  -- Try to compensate air friction
-                
-                    -- The hell are these? Uncommented recently just in case they were important
-                    --s.addMeasure("dynamic", "acceleration", "command", accelerationCommand)
-                    --s.addMeasure("dynamic", "acceleration", "intensity", finalAcceleration:len())
-                
-                    return finalAcceleration
-                end
-    
-                local function getPitch(gravityDirection, forward, right)
-                
-                    local horizontalForward = gravityDirection:cross(right):normalize_inplace() -- Cross forward?
-                    local pitch = math.acos(uclamp(horizontalForward:dot(-forward), -1, 1)) * constants.rad2deg -- acos?
-                    
-                    if horizontalForward:cross(-forward):dot(right) < 0 then
-                        pitch = -pitch
-                    end -- Cross right dot forward?
-                    return pitch
-                end
-    
-                local function checkCollision()
-                    if collisionTarget and not BrakeLanding then
-                        local body = collisionTarget[1]
-                        local far, near = collisionTarget[2],collisionTarget[3] 
-                        local collisionDistance = math.min(far, near or far)
-                        local collisionTime = collisionDistance/velMag
-                        local ignoreCollision = AutoTakeoff and (velMag < 42 or abvGndDet ~= -1)
-                        local apAction = (AltitudeHold or VectorToTarget or LockPitch or Autopilot)
-                        if apAction and not ignoreCollision and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
-                            BrakeIsOn = "Collision"
-                            apRoute = {}
-                            cmdT = 0
-                            if AltitudeHold then AP.ToggleAltitudeHold() end
-                            if LockPitch then AP.ToggleLockPitch() end
-                            msgText = "Autopilot Cancelled due to possible collision"
-                            s.print(body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2))
-                            AP.ResetAutopilots(1)
-                            StrongBrakes = true
-                            if inAtmo then BrakeLanding = true end
-                            autoRoll = true
-                        end
-                        if collisionTime < 11 then 
-                            collisionAlertStatus = body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2)
-                        else
-                            collisionAlertStatus = body.name.." collision "..FormatTimeString(collisionTime)
-                        end
-                        if collisionTime < 6 then play("alarm","AL",2) end
-                    else
-                        collisionAlertStatus = false
-                    end
-                end
-    
-            if antigrav and not ExternalAGG then
-                if not antigravOn and antigrav.getBaseAltitude() ~= AntigravTargetAltitude then 
+            if antigrav and not ExternalAGG and not antigravOn and antigrav.getBaseAltitude() ~= AntigravTargetAltitude then
                     sba = AntigravTargetAltitude
-                end
             end
             if sEFC then
                 Nav:setEngineForceCommand('hover', vec3(), 1)
@@ -6000,8 +6004,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
             -- Rotation
             local constructAngularVelocity = vec3(C.getWorldAngularVelocity())
-            local targetAngularVelocity =
-                finalPitchInput * pitchSpeedFactor * constructRight + finalRollInput * rollSpeedFactor * constructForward +
+            local targetAngularVelocity = finalPitchInput * pitchSpeedFactor * constructRight + finalRollInput * rollSpeedFactor * constructForward +
                     finalYawInput * yawSpeedFactor * constructUp
     
     
@@ -6028,10 +6031,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             end
     
     
-            -- Engine commands
-            local keepCollinearity = 1 -- for easier reading
-            local dontKeepCollinearity = 0 -- for easier reading
-            local tolerancePercentToSkipOtherPriorities = 1 -- if we are within this tolerance (in%), we don't go to the next priorities
+    
     
             brakeInput2 = 0
     
@@ -6063,8 +6063,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             end
     
     
-            local MousePitchFactor = 1 -- Mouse control only
-            local MouseYawFactor = 1 -- Mouse control only
+    
             local deltaTick = time - lastApTickTime
             local currentYaw = -math.deg(signedRotationAngle(constructUp, constructVelocity, constructForward))
             local currentPitch = math.deg(signedRotationAngle(constructRight, constructVelocity, constructForward)) -- Let's use a consistent func that uses global velocity
@@ -6085,7 +6084,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             yawInput2 = 0
             rollInput2 = 0
             pitchInput2 = 0
-            sys = galaxyReference[0]
+    
             local cWorldPos = C.getWorldPosition()
             planet = sys:closestBody(cWorldPos)
             kepPlanet = Kep(planet)
@@ -6942,7 +6941,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 -- Keep brake engaged at all times unless: 
                 -- Ship is aligned with the target on yaw (roll and pitch are locked to 0)
                 -- and ship's speed is below like 5-10m/s
-                local pos = worldPos + vec3(u.getMasterPlayerRelativePosition()) -- Is this related to c forward or nah?
+                local pos = vec3(DUPlayer.getWorldPosition()) -- Is this related to c forward or nah?
                 local distancePos = (pos - worldPos)
                 -- local distance = distancePos:len()
                 -- distance needs to be calculated using only construct forward and right
@@ -8277,7 +8276,9 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 clearAll()
                 clearAllCheck = time
                 if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed then
-                    if PlayerThrottle ~= 0 then
+                    if AltIsOn then
+                        if adjustedAtmoSpeedLimit > 0 then adjustedAtmoSpeedLimit = 0 else adjustedAtmoSpeedLimit = AtmoSpeedLimit end
+                    elseif PlayerThrottle ~= 0 then
                         navCom:resetCommand(axisCommandId.longitudinal)
                         AP.cmdThrottle(0)
                     else
@@ -9174,6 +9175,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                     PlanetaryReference = PlanetRef(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
                     galaxyReference = PlanetaryReference(atlasCopy)
+                    sys = galaxyReference[0]
                     -- Setup Modular Classes
                     Kinematic = Kinematics(Nav, c, u, s, msqrt, mabs)
                     Kep = Keplers(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
@@ -9203,10 +9205,10 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 ProcessElements()
                 coroutine.yield() -- Give it some time to breathe before we do the rest
     
-                AP = APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, warpdrive, dbHud_1, 
+                AP = APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, 
                     mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
                     navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq, 
-                    getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, stringf, sysAddData)
+                    getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode)
     
                 SetupChecks() -- All the if-thens to set up for particular ship.  Specifically override these with the saved variables if available
     
