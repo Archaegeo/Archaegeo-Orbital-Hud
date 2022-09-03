@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.750
+- Fix: Alt-4 while in ground detect range will not enter hovermode.
+- Fix follow mode to work again (Remote control only)
+- If MMB pressed while in throttle mode and holding alt, speed limit will adjust to 0 if > 0 or to AtmoSpeedLimit if 0.
+- Cleanup code in numerous places.
+
 Version 1.749 - Enhanced Hover Mode
 - If Altitude hold is engaged (alt-6) while in the air but within ground detection height (AGL shows under altitude) 
     the hud will enter Hover mode.  The ship will attempt to maintain the same height above ground rather 
