@@ -488,8 +488,8 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                                 spaceEngineMinAltitude = 0,
                             }
                 end
-                -- Alternate min space engine altitudes for madis, sinnen, sicari, haven
-                --local altTable = { [1]=4480, [6]=4480, [7]=6270, [27]=4150 }
+
+                local altTable = { [1]=6637, [2]=3426, [26]=4242, [27]=4150, [3]=21452 } -- Measured min space engine altitudes for madis, alioth, sanctuary, haven
                 -- No Atmo Heights for Madis, Alioth, Thades, Talemai, Feli, Sicari, Sinnen, Teoma, Jago, Sanctuary, Haven, Lacobus, Symeon, Ion.
                 --local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[27]=7700,[100]=12511,[110]=7792,[120]=11766} 
                 for galaxyId,galaxy in pairs(atlas) do
@@ -503,8 +503,8 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                         planet.center = vec3(planet.center)
                         planet.name = planet.name[1]
                 
-                        planet.noAtmosphericDensityAltitude = planet.atmosphereThickness 
-                        planet.spaceEngineMinAltitude = 0.68377*(planet.atmosphereThickness)
+                        planet.noAtmosphericDensityAltitude = planet.atmosphereThickness
+                        planet.spaceEngineMinAltitude = altTable[planet.id] 
                                 
                         planet.planetarySystemId = galaxyId
                         planet.bodyId = planet.id

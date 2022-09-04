@@ -1,8 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 2.000 RELEASE CANDIDATE VERSION
-- Removed atmosphere heights to use atlas.lua values.
+- Removed atmosphere heights to use atlas.lua values.  Measured min space engine heights by hand.
 - Added filtering out of Thades Asteroids from IPH if desired.
+- Fixed ExtraEngineTags having no effect if set to default "none"
 
 Version 1.750
 - Fix: Alt-4 while in ground detect range will not enter hovermode.

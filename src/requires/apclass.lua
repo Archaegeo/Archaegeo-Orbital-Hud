@@ -2892,7 +2892,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
 
             -- Longitudinal Translation
             local longitudinalEngineTags = 'thrust analog longitudinal '
-            if (UseExtra=="All" or UseExtra=="Longitude") then longitudinalEngineTags = longitudinalEngineTags..ExtraLongitudeTags end
+            if ExtraLongitudeTags ~= "none" and (UseExtra=="All" or UseExtra=="Longitude") then longitudinalEngineTags = longitudinalEngineTags..ExtraLongitudeTags end
             local longitudinalCommandType = navCom:getAxisCommandType(axisCommandId.longitudinal)
             if (longitudinalCommandType == axisCommandType.byThrottle) then
                 local longitudinalAcceleration = navCom:composeAxisAccelerationFromThrottle(
@@ -2914,7 +2914,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
 
             -- Lateral Translation
             local lateralStrafeEngineTags = 'thrust analog lateral '
-            if (UseExtra=="All" or UseExtra=="Lateral") then lateralStrafeEngineTags = lateralStrafeEngineTags..ExtraLateralTags end
+            if ExtraLateralTags ~= "none" and (UseExtra=="All" or UseExtra=="Lateral") then lateralStrafeEngineTags = lateralStrafeEngineTags..ExtraLateralTags end
             local lateralCommandType = navCom:getAxisCommandType(axisCommandId.lateral)
             if (lateralCommandType == axisCommandType.byThrottle) then
                 local lateralStrafeAcceleration = navCom:composeAxisAccelerationFromThrottle(
@@ -2928,7 +2928,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
 
             -- Vertical Translation
             local verticalStrafeEngineTags = 'thrust analog vertical '
-            if (UseExtra=="All" or UseExtra=="Vertical") then verticalStrafeEngineTags = verticalStrafeEngineTags..ExtraVerticalTags end
+            if ExtraVerticalTags ~= "none" and (UseExtra=="All" or UseExtra=="Vertical") then verticalStrafeEngineTags = verticalStrafeEngineTags..ExtraVerticalTags end
             local verticalCommandType = navCom:getAxisCommandType(axisCommandId.vertical)
             if (verticalCommandType == axisCommandType.byThrottle)  then
                 local verticalStrafeAcceleration = navCom:composeAxisAccelerationFromThrottle(
