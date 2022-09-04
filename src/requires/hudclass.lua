@@ -2139,7 +2139,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 if iphCondition == "All" then
                     iphCondition = "Custom Only"
                 elseif iphCondition == "Custom Only" then
-                    iphCondition = "No Moons"
+                    iphCondition = "No Moons-Asteroids"
                 else
                     iphCondition = "All"
                 end

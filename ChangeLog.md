@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.000 RELEASE CANDIDATE VERSION
+- Removed atmosphere heights to use atlas.lua values.
+- Added filtering out of Thades Asteroids from IPH if desired.
+
 Version 1.750
 - Fix: Alt-4 while in ground detect range will not enter hovermode.
 - Fix follow mode to work again (Remote control only)
