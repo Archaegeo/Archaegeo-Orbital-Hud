@@ -2,6 +2,7 @@
 
 Version 2.000 RELEASE CANDIDATE VERSION
 - Removed atmosphere heights to use atlas.lua values.  Measured min space engine heights by hand.
+- Changed ExtraEscapeThrust so that if True you will use friction burn speed - 1 when exiting atmosphere.
 - Added filtering out of Thades Asteroids from IPH if desired.
 - Fixed ExtraEngineTags having no effect if set to default "none"
 

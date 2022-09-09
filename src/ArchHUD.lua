@@ -137,7 +137,7 @@ end
             brakeFlatFactor = 1 --export: (Default: 1) When braking, this factor will increase the brake force by a flat brakeFlatFactor * velocity direction> (higher value may be unstable)
             DampingMultiplier = 40 --export: (Default: 40) How strongly autopilot dampens when nearing the correct orientation
             hudTickRate = 0.0666667 --export: (Default: 0.0666667) Set the tick rate for your HUD. 
-            ExtraEscapeThrust = 0.0 --export: (Default: 0.0) Set this to some value (start low till you know your ship) to apply extra thrust between 10% and 0.05% atmosphere while using AtmoSpeedLimit.
+            ExtraEscapeThrust = 0.0 --export: (Default: 0.0) Set this to 1 to use friction burn speed as your max speed when escaping atmosphere. Setting other than 1 will be a the value multiplied by your friction burn speed.
             ExtraLongitudeTags = "none" --export: (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "forward faster major" These will be added to the engines that are control by longitude.
             ExtraLateralTags = "none" --export: (Default: "none") Enter any extra lateral tags you use inside '' seperated by space, i.e. "left right" These will be added to the engines that are control by lateral.
             ExtraVerticalTags = "none" --export: (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "up down" These will be added to the engines that are control by vertical.

@@ -2770,8 +2770,10 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
             -- Add in vertical speed as well as the front speed, to help with ships that have very bad brakes
             local addThrust = 0
-            if ExtraEscapeThrust > 0 and not Reentry and  atmosDensity > 0.005 and atmosDensity < 0.1 and vSpd > - 50 then
-                addThrust = (0.1 - atmosDensity)*adjustedAtmoSpeedLimit*ExtraEscapeThrust
+            if ExtraEscapeThrust > 0 and not Reentry and atmosDensity > 0.005 and atmosDensity < 0.1 and vSpd > -10 then
+                local fbs = C.getFrictionBurnSpeed() * ExtraEscapeThrust
+                local aasl = adjustedAtmoSpeedLimit/3.6
+                if fbs > aasl then addThrust = fbs - aasl - 1 end
             end
             throttlePID:inject(adjustedAtmoSpeedLimit/3.6 + addThrust - constructVelocity:dot(constructForward))
             local pidGet = throttlePID:get()
