@@ -3,7 +3,8 @@
 Version 2.000 RELEASE CANDIDATE VERSION
 - Removed atmosphere heights to use atlas.lua values.  Measured min space engine heights by hand.
 - Changed ExtraEscapeThrust to use friction burn speed as your max speed when escaping atmosphere if set to 1.0 
-    Setting other than 1.0 will be the value multiplied by your friction burn speed..
+    Setting other than 1.0 will be the value multiplied by your friction burn speed.
+- Changed Alt-3 from Toggle Widget/HUD mode to Toggle HUD on/off.  With HUD off, only IPH and messages will be shown.
 - Added filtering out of Thades Asteroids from IPH if desired.
 - Fixed ExtraEngineTags having no effect if set to default "none"
 

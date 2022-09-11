@@ -277,7 +277,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
                 RADAR.ToggleRadarPanel()
             end
             if radarPanelId == nil then
-                RADAR.ToggleRadarPanel()
+                if showHud then RADAR.ToggleRadarPanel() end
             end
         else
             if activeRadarState ~= 1 then
