@@ -263,11 +263,11 @@ function Construct()
     function self.getDockedConstructMass(id) end
 
     --- Sets the docking mode
-    ---@param mode integer The docking mode (Manual = 0, Automatic = 1, Semi-automatic = 2)
+    ---@param mode integer The docking mode (Manual = 1, Automatic = 2, Semi-automatic = 3)
     ---@return integer
     function self.setDockingMode(mode) end
     --- Returns the current docking mode
-    ---@return integer mode The docking mode (Manual = 0, Automatic = 1, Semi-automatic = 2)
+    ---@return integer mode The docking mode (Manual = 1, Automatic = 2, Semi-automatic = 3)
     function self.getDockingMode() end
     --- Sends a request to dock to the given construct. Limited to piloting controllers
     ---@param id integer The parent construct id

@@ -94,7 +94,7 @@ function System()
     ---@param mode integer The camera mode, represented by an integer (First Person View = 1, Look Around Construct View = 2, Follow Construct View = 3)
     self.onCameraChanged = Event:new()
     self.cameraChanged = Event:new()
-    self.cameraChanged:addAction(function(self,mode) error("System.cameraChanged(mode) event is deprecated, use System.onInputText(mode) instead.") end, true, 1)
+    self.cameraChanged:addAction(function(self,mode) error("System.cameraChanged(mode) event is deprecated, use System.onCameraChanged(mode) instead.") end, true, 1)
 
     --- Return the currently key bound to the given action. Useful to display tips.
     ---@param actionName string The action name, represented as a string taken among the set of predefined Lua-available actions (you can check the drop down list to see what is available)
