@@ -28,7 +28,6 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
         local uclamp = utils.clamp
         local navCom = Nav.axisCommandManager
 
-        local targetGroundAltitude = LandingGearGroundHeight -- So it can tell if one loaded or not
         local coreHalfDiag = 13
         local elementsID = c.getElementIdList()
 
@@ -37,11 +36,11 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
         local function float_eq(a, b) -- float equation
             if a == 0 then
                 return mabs(b) < 1e-09
-            end
-            if b == 0 then
+            elseif b == 0 then
                 return mabs(a) < 1e-09
+            else
+                return mabs(a - b) < math.max(mabs(a), mabs(b)) * epsilon
             end
-            return mabs(a - b) < math.max(mabs(a), mabs(b)) * epsilon
         end
         local function round(num, numDecimalPlaces) -- rounds variable num to numDecimalPlaces
             local mult = 10 ^ (numDecimalPlaces or 0)
@@ -100,15 +99,14 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             s.playSound(soundFolder.."/"..sound..".mp3")
         end
         local function svgText(x, y, text, class, style) -- processes a svg text string, saves code lines by doing it this way
-            if class == nil then class = "" end
-            if style == nil then style = "" end
+            class = class or ""
+            style = style or ""
             return stringf([[<text class="%s" x=%s y=%s style="%s">%s</text>]], class,x, y, style, text)
         end
     
         local function getDistanceDisplayString(distance, places) -- Turn a distance into a string to a number of places
-            local su = distance > 100000
             if places == nil then places = 1 end
-            if su then
+            if distance > 100000 then
                 -- Convert to SU
                 return round(distance / 1000 / 200, places).."SU"
             elseif distance < 1000 then
@@ -447,7 +445,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                     BrakeIsOn = false
                 end
 
-                navCom:setTargetGroundAltitude(targetGroundAltitude)
+                navCom:setTargetGroundAltitude(LandingGearGroundHeight)
 
                 WasInAtmo = inAtmo
 
