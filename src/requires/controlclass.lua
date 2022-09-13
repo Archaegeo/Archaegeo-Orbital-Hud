@@ -9,19 +9,20 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
     local currentAggModifier = antiGravButtonModifier
     local clearAllCheck = time
 
-    function Control.landingGear()
+    function Control.landingGear(eLL)
         GearExtended = not GearExtended
         if GearExtended then
             VectorToTarget = false
             LockPitch = nil
             AP.cmdThrottle(0)
             if vBooster or hover then 
-                if inAtmo and abvGndDet == -1 then
+                if (inAtmo or coreAltitude < 20000) and not eLL then
                     play("bklOn", "BL")
                     StrongBrakes = true -- We don't care about this anymore
                     Reentry = false
                     AutoTakeoff = false
                     VertTakeOff = false
+                    if IntoOrbit then AP.ToggleIntoOrbit() end
                     if BrakeLanding then apBrk = not apBrk end
                     BrakeLanding = true
                     autoRoll = true
@@ -212,14 +213,10 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 navCom:updateCommandFromActionStart(axisCommandId.lateral, -1.0)
                 LeftAmount = -1
         elseif action == "up" then
-            upAmount = upAmount + 1
+            AP.vertical(1)
             if abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 and GearExtended then CONTROL.landingGear() end
-            navCom:deactivateGroundEngineAltitudeStabilization()
-            navCom:updateCommandFromActionStart(axisCommandId.vertical, 1.0)
         elseif action == "down" then
-            upAmount = upAmount - 1
-            navCom:deactivateGroundEngineAltitudeStabilization()
-            navCom:updateCommandFromActionStart(axisCommandId.vertical, -1.0)
+            AP.vertical(-1)
         elseif action == "groundaltitudeup" then
             groundAltStart()
         elseif action == "groundaltitudedown" then
@@ -470,19 +467,9 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             navCom:updateCommandFromActionStop(axisCommandId.lateral, 1.0)
             LeftAmount = 0
         elseif action == "up" then
-            upAmount = 0
-            navCom:updateCommandFromActionStop(axisCommandId.vertical, -1.0)
-            if stablized then 
-                navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                sEFC = true
-            end
+            AP.vertical(0,-1)
         elseif action == "down" then
-            upAmount = 0
-            navCom:updateCommandFromActionStop(axisCommandId.vertical, 1.0)
-            if stablized then 
-                navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                sEFC = true 
-            end
+            AP.vertical(0,1)
         elseif action == "groundaltitudeup" then
             groundAltStop()
             toggleView = false

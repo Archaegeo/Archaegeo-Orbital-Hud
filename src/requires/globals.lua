@@ -92,8 +92,6 @@
         coreAltitude = c.getAltitude() -- 3
         coreMass = DUConstruct.getMass() -- 2
         gyroIsOn = nil -- 4
-        resolutionWidth = ResolutionX -- 3
-        resolutionHeight = ResolutionY -- 3
         atmoTanks = {} -- 2
         spaceTanks = {} -- 2
         rocketTanks = {} -- 2

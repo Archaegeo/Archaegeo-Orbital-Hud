@@ -1,4 +1,4 @@
-function ShieldClass(shield, stringmatch, mfloor) -- Everything related to radar but draw data passed to HUD Class.
+function ShieldClass(shield, stringmatch, mfloor) -- Everything related to shield but draw data passed to HUD Class.
     local Shield = {}
     local RCD = shield.getResistancesCooldown()
 

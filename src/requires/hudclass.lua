@@ -34,18 +34,18 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
     --Local Huds Functions
 
         local function ConvertResolutionX (v)
-            if resolutionWidth == 1920 then 
+            if ResolutionX == 1920 then 
                 return v
             else
-                return round(resolutionWidth * v / 1920, 0)
+                return round(ResolutionX * v / 1920, 0)
             end
         end
     
         local function ConvertResolutionY (v)
-            if resolutionHeight == 1080 then 
+            if ResolutionY == 1080 then 
                 return v
             else
-                return round(resolutionHeight * v / 1080, 0)
+                return round(ResolutionY * v / 1080, 0)
             end
         end
 
@@ -1829,7 +1829,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             local buttonHeight = 50
             local buttonWidth = 340 -- Defaults
             local x = 500
-            local y = resolutionHeight / 2 - 400
+            local y = ResolutionY / 2 - 400
             local cnt = 0
             for k, v in pairs(saveableVariables("boolean")) do
                 if type(v.get()) == "boolean" then
@@ -1840,22 +1840,22 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     y = y + buttonHeight + 20
                     if cnt == 9 then 
                         x = x + buttonWidth + 20 
-                        y = resolutionHeight / 2 - 400
+                        y = ResolutionY / 2 - 400
                         cnt = 0
                     else
                         cnt = cnt + 1
                     end
                 end
             end
-            MakeButton("Control View", "Control View", buttonWidth, buttonHeight, 10, resolutionHeight / 2 - 500, function() return true end, 
+            MakeButton("Control View", "Control View", buttonWidth, buttonHeight, 10, ResolutionY / 2 - 500, function() return true end, 
                 ToggleButtons, function() return true end, true)
-            MakeButton("View Handling Settings", 'Hide Handling Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight), 
+            MakeButton("View Handling Settings", 'Hide Handling Settings', buttonWidth, buttonHeight, 10, ResolutionY / 2 - (500 - buttonHeight), 
                 function() return showHandlingVariables end, function() ToggleShownSettings("handling") end, 
                 function() return true end, true)
-            MakeButton("View Hud Settings", 'Hide Hud Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight*2), 
+            MakeButton("View Hud Settings", 'Hide Hud Settings', buttonWidth, buttonHeight, 10, ResolutionY / 2 - (500 - buttonHeight*2), 
                 function() return showHudVariables end, function() ToggleShownSettings("hud") end, 
                 function() return true end, true)
-            MakeButton("View Physics Settings", 'Hide Physics Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight*3), 
+            MakeButton("View Physics Settings", 'Hide Physics Settings', buttonWidth, buttonHeight, 10, ResolutionY / 2 - (500 - buttonHeight*3), 
                 function() return showPhysicsVariables end, function() ToggleShownSettings("physics") end, 
                 function() return true end, true)
         end
@@ -1961,7 +1961,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             MakeButton("0", "0", orbitButtonSize, orbitButtonSize, orbitButtonX, orbitButtonY+orbitButtonSize*2+2,
                                 function() return false end, function() scopeFOV = 90 end, function() return SelectedTab == "SCOPE" and scopeFOV ~= 90 end, nil, "ZoomButton")
             local brake = MakeButton("Enable Brake Toggle", "Disable Brake Toggle", buttonWidth, buttonHeight,
-                                resolutionWidth / 2 - buttonWidth / 2, resolutionHeight / 2 + 350, function()
+                                ResolutionX / 2 - buttonWidth / 2, ResolutionY / 2 + 350, function()
                     return BrakeToggleStatus
                 end, function()
                     BrakeToggleStatus = not BrakeToggleStatus
@@ -1972,19 +1972,19 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     end
                 end)
             MakeButton("Align Prograde", "Disable Prograde", buttonWidth, buttonHeight,
-                resolutionWidth / 2 - buttonWidth / 2 - 50 - brake.width, resolutionHeight / 2 - buttonHeight + 380,
+                ResolutionX / 2 - buttonWidth / 2 - 50 - brake.width, ResolutionY / 2 - buttonHeight + 380,
                 function()
                     return ProgradeIsOn
                 end, function() gradeToggle(1) end)
             MakeButton("Align Retrograde", "Disable Retrograde", buttonWidth, buttonHeight,
-                resolutionWidth / 2 - buttonWidth / 2 + brake.width + 50, resolutionHeight / 2 - buttonHeight + 380,
+                ResolutionX / 2 - buttonWidth / 2 + brake.width + 50, ResolutionY / 2 - buttonHeight + 380,
                 function()
                     return RetrogradeIsOn
                 end, gradeToggle, function()
                     return atmosDensity == 0
                 end) -- Hope this works
-            apbutton = MakeButton(getAPEnableName, getAPDisableName, 600, 60, resolutionWidth / 2 - 600 / 2,
-                                    resolutionHeight / 2 - 60 / 2 - 330, function()
+            apbutton = MakeButton(getAPEnableName, getAPDisableName, 600, 60, ResolutionX / 2 - 600 / 2,
+                                    ResolutionY / 2 - 60 / 2 - 330, function()
                     return Autopilot or VectorToTarget or spaceLaunch or IntoOrbit
                 end, function() end) -- No toggle function because we draw over this with things that do toggle
             -- Make 9 more buttons that only show when moused over the AP button
@@ -2011,8 +2011,8 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 end, function(b)
                     local index = getAtlasIndexFromAddition(b.apExtraIndex)
                     return getAPDisableName(index)
-                end, 600, 60, resolutionWidth/2 - 600/2, 
-                resolutionHeight/2 - 60/2 - 330 + 60*i, function(b)
+                end, 600, 60, ResolutionX/2 - 600/2, 
+                ResolutionY/2 - 60/2 - 330 + 60*i, function(b)
                     local index = getAtlasIndexFromAddition(b.apExtraIndex)
                     return index == AutopilotTargetIndex and (Autopilot or VectorToTarget or spaceLaunch or IntoOrbit)
                 end, function(b)
@@ -2071,7 +2071,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             buttonHeight = 60
             buttonWidth = 300
             local x = 0
-            local y = resolutionHeight / 2 - 150
+            local y = ResolutionY / 2 - 150
             MakeButton("Enable Check Damage", "Disable Check Damage", buttonWidth, buttonHeight, x, y - buttonHeight - 20, function()
                 return ShouldCheckDamage
             end, function() ShouldCheckDamage = not ShouldCheckDamage end)
@@ -2081,8 +2081,8 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 return TurnBurn
             end, ToggleTurnBurn)
             x = 10
-            y = resolutionHeight / 2 - 300
-            MakeButton("Horizontal Takeoff Mode", "Vertical Takeoff Mode", buttonWidth, buttonHeight, resolutionWidth/2-buttonWidth/2, y+20,
+            y = ResolutionY / 2 - 300
+            MakeButton("Horizontal Takeoff Mode", "Vertical Takeoff Mode", buttonWidth, buttonHeight, ResolutionX/2-buttonWidth/2, y+20,
                 function() return VertTakeOffEngine end, 
                 function () 
                     VertTakeOffEngine = not VertTakeOffEngine 
@@ -2100,7 +2100,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     end, AP.ToggleIntoOrbit, function()
                         return (atmosDensity == 0 and nearPlanet)
                     end)
-            y = resolutionHeight / 2 - 150
+            y = ResolutionY / 2 - 150
             MakeButton("Glide Re-Entry", "Cancel Glide Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
                 function() return Reentry end, function() spaceLand = 1 gradeToggle(1) end, function() return (planet.hasAtmosphere and not inAtmo) end )
             y = y + buttonHeight + 20
@@ -2207,7 +2207,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         -- so that "fill:none" gets applied
         local crx = ConvertResolutionX
         local cry = ConvertResolutionY
-            newContent[#newContent + 1] = stringf([[ <head> <style>body{margin: 0}svg{position:absolute;top:0;left:0;font-family:Montserrat;}.txt{font-size:10px;font-weight:bold;}.txttick{font-size:12px;font-weight:bold;}.txtbig{font-size:14px;font-weight:bold;}.altsm{font-size:16px;font-weight:normal;}.altbig{font-size:21px;font-weight:normal;}.line{stroke-width:2px;fill:none;stroke:%s}.linethick{stroke-width:3px;fill:none}.linethin{stroke-width:1px;fill:none}.warnings{font-size:26px;fill:red;text-anchor:middle;font-family:Bank;}.warn{fill:orange; font-size:24px}.crit{fill:darkred;font-size:28px}.bright{fill:%s;stroke:%s}text.bright{stroke:black; stroke-width:10px;paint-order:stroke;}.pbright{fill:%s;stroke:%s}text.pbright{stroke:black; stroke-width:10px;paint-order:stroke;}.dim{fill:%s;stroke:%s}text.dim{stroke:black; stroke-width:10px;paint-order:stroke;}.pdim{fill:%s;stroke:%s}text.pdim{stroke:black; stroke-width:10px;paint-order:stroke;}.red{fill:red;stroke:red}text.red{stroke:black; stroke-width:10px;paint-order:stroke;}.orange{fill:orange;stroke:orange}text.orange{stroke:black; stroke-width:10px;paint-order:stroke;}.redout{fill:none;stroke:red}.op30{opacity:0.3}.op10{opacity:0.1}.txtstart{text-anchor:start}.txtend{text-anchor:end}.txtmid{text-anchor:middle}.txtvspd{font-family:sans-serif;font-weight:normal}.txtvspdval{font-size:20px}.txtfuel{font-size:11px;font-weight:bold}.txtorb{font-size:12px}.txtorbbig{font-size:18px}.hudver{font-size:10px;font-weight:bold;fill:red;text-anchor:end;font-family:Bank}.msg{font-size:40px;fill:red;text-anchor:middle;font-weight:normal}.cursor{stroke:white}text{stroke:black; stroke-width:10px;paint-order:stroke;}.dimstroke{stroke:%s}.brightstroke{stroke:%s}.indicatorText{font-size:20px;fill:white}.size14{font-size:14px}.size20{font-size:20px}.topButton{fill:%s;opacity:0.5;stroke-width:2;stroke:%s}.topButtonActive{fill:url(#RadialGradientCenter);opacity:0.8;stroke-width:2;stroke:%s}.topButton text{font-size:13px; fill: %s; opacity:1; stroke-width:20px}.topButtonActive text{font-size:13px;fill:%s; stroke-width:0px; opacity:1}.indicatorFont{font-size:20px;font-family:Bank}.dimmer{stroke: %s;}.pdimfill{fill: %s;}.dimfill{fill: %s;}</style> </head> <body> <svg height="100%%" width="100%%" viewBox="0 0 %d %d"> <defs> <radialGradient id="RadialGradientCenterTop" cx="0.5" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="100%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientRightTop" cx="1" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="ThinRightTopGradient" cx="1" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientLeftTop" cx="0" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="ThinLeftTopGradient" cx="0" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientCenter" cx="0.5" cy="0.5" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.8"/> <stop offset="100%%" stop-color="%s" stop-opacity="0.5"/> </radialGradient> <radialGradient id="RadialPlanetCenter" cx="0.5" cy="0.5" r="0.5"> <stop offset="0%%" stop-color="%s" stop-opacity="1"/> <stop offset="100%%" stop-color="%s" stop-opacity="1"/> </radialGradient> <radialGradient id="RadialAtmo" cx="0.5" cy="0.5" r="0.5"> <stop offset="0%%" stop-color="%s" stop-opacity="1"/> <stop offset="66%%" stop-color="%s" stop-opacity="1"/> <stop offset="100%%" stop-color="%s" stop-opacity="0.1"/> </radialGradient> </defs> <g class="pdim txt txtend">]], bright, bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig,dim,bright,dimmer,dimOrig,bright,bright,dimmer,dimmer, dimmerOrig,dimmer, resolutionWidth, resolutionHeight, dim,dim,dim,dim,dim,brightOrig,dim,dimOrig, dimmerOrig, dimOrig, dimOrig, dimmerOrig)
+            newContent[#newContent + 1] = stringf([[ <head> <style>body{margin: 0}svg{position:absolute;top:0;left:0;font-family:Montserrat;}.txt{font-size:10px;font-weight:bold;}.txttick{font-size:12px;font-weight:bold;}.txtbig{font-size:14px;font-weight:bold;}.altsm{font-size:16px;font-weight:normal;}.altbig{font-size:21px;font-weight:normal;}.line{stroke-width:2px;fill:none;stroke:%s}.linethick{stroke-width:3px;fill:none}.linethin{stroke-width:1px;fill:none}.warnings{font-size:26px;fill:red;text-anchor:middle;font-family:Bank;}.warn{fill:orange; font-size:24px}.crit{fill:darkred;font-size:28px}.bright{fill:%s;stroke:%s}text.bright{stroke:black; stroke-width:10px;paint-order:stroke;}.pbright{fill:%s;stroke:%s}text.pbright{stroke:black; stroke-width:10px;paint-order:stroke;}.dim{fill:%s;stroke:%s}text.dim{stroke:black; stroke-width:10px;paint-order:stroke;}.pdim{fill:%s;stroke:%s}text.pdim{stroke:black; stroke-width:10px;paint-order:stroke;}.red{fill:red;stroke:red}text.red{stroke:black; stroke-width:10px;paint-order:stroke;}.orange{fill:orange;stroke:orange}text.orange{stroke:black; stroke-width:10px;paint-order:stroke;}.redout{fill:none;stroke:red}.op30{opacity:0.3}.op10{opacity:0.1}.txtstart{text-anchor:start}.txtend{text-anchor:end}.txtmid{text-anchor:middle}.txtvspd{font-family:sans-serif;font-weight:normal}.txtvspdval{font-size:20px}.txtfuel{font-size:11px;font-weight:bold}.txtorb{font-size:12px}.txtorbbig{font-size:18px}.hudver{font-size:10px;font-weight:bold;fill:red;text-anchor:end;font-family:Bank}.msg{font-size:40px;fill:red;text-anchor:middle;font-weight:normal}.cursor{stroke:white}text{stroke:black; stroke-width:10px;paint-order:stroke;}.dimstroke{stroke:%s}.brightstroke{stroke:%s}.indicatorText{font-size:20px;fill:white}.size14{font-size:14px}.size20{font-size:20px}.topButton{fill:%s;opacity:0.5;stroke-width:2;stroke:%s}.topButtonActive{fill:url(#RadialGradientCenter);opacity:0.8;stroke-width:2;stroke:%s}.topButton text{font-size:13px; fill: %s; opacity:1; stroke-width:20px}.topButtonActive text{font-size:13px;fill:%s; stroke-width:0px; opacity:1}.indicatorFont{font-size:20px;font-family:Bank}.dimmer{stroke: %s;}.pdimfill{fill: %s;}.dimfill{fill: %s;}</style> </head> <body> <svg height="100%%" width="100%%" viewBox="0 0 %d %d"> <defs> <radialGradient id="RadialGradientCenterTop" cx="0.5" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="100%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientRightTop" cx="1" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="ThinRightTopGradient" cx="1" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientLeftTop" cx="0" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="ThinLeftTopGradient" cx="0" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientCenter" cx="0.5" cy="0.5" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.8"/> <stop offset="100%%" stop-color="%s" stop-opacity="0.5"/> </radialGradient> <radialGradient id="RadialPlanetCenter" cx="0.5" cy="0.5" r="0.5"> <stop offset="0%%" stop-color="%s" stop-opacity="1"/> <stop offset="100%%" stop-color="%s" stop-opacity="1"/> </radialGradient> <radialGradient id="RadialAtmo" cx="0.5" cy="0.5" r="0.5"> <stop offset="0%%" stop-color="%s" stop-opacity="1"/> <stop offset="66%%" stop-color="%s" stop-opacity="1"/> <stop offset="100%%" stop-color="%s" stop-opacity="0.1"/> </radialGradient> </defs> <g class="pdim txt txtend">]], bright, bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig,dim,bright,dimmer,dimOrig,bright,bright,dimmer,dimmer, dimmerOrig,dimmer, ResolutionX, ResolutionY, dim,dim,dim,dim,dim,brightOrig,dim,dimOrig, dimmerOrig, dimOrig, dimOrig, dimmerOrig)
 
         
         -- These never change, set and store it on startup because that's a lot of calculations that we don't want to do every frame
@@ -2608,7 +2608,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
 
         -- Local Functions for hudTick
             local function DrawCursorLine(newContent)
-                local strokeColor = mfloor(uclamp((mouseDistance / (resolutionWidth / 4)) * 255, 0, 255))
+                local strokeColor = mfloor(uclamp((mouseDistance / (ResolutionX / 4)) * 255, 0, 255))
                 newContent[#newContent + 1] = stringf(
                                                 "<line x1='0' y1='0' x2='%fpx' y2='%fpx' style='stroke:rgb(%d,%d,%d);stroke-width:2;transform:translate(50%%, 50%%)' />",
                                                 simulatedX, simulatedY, mfloor(PrimaryR + 0.5) + strokeColor,
@@ -2642,8 +2642,8 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                         return false
                     end
                 end
-                local x = simulatedX + resolutionWidth / 2
-                local y = simulatedY + resolutionHeight / 2
+                local x = simulatedX + ResolutionX / 2
+                local y = simulatedY + ResolutionY / 2
                 for _, v in pairs(Buttons) do
                     -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
                     v.hovered = Contains(x, y, v.x, v.y, v.width, v.height)
@@ -2745,8 +2745,8 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     end
                 end
             end
-            local halfResolutionX = round(resolutionWidth / 2,0)
-            local halfResolutionY = round(resolutionHeight / 2,0)
+            local halfResolutionX = round(ResolutionX / 2,0)
+            local halfResolutionY = round(ResolutionY / 2,0)
         local newContent = {}
         if userScreen then newContent[#newContent + 1] = userScreen end
         --local t0 = s.getArkTime()
@@ -2767,7 +2767,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         HUD.HUDEpilogue(newContent)
         newContent[#newContent + 1] = stringf(
             [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
-            resolutionWidth, resolutionHeight)   
+            ResolutionX, ResolutionY)   
         if msgText ~= "empty" then
             HUD.DisplayMessage(newContent, msgText)
         end
@@ -2787,7 +2787,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 if not Animating and not Animated then
                     local collapsedContent = table.concat(newContent, "")
                     newContent = {}
-                    newContent[#newContent + 1] = stringf("<style>@keyframes test { from { opacity: 0; } to { opacity: 1; } }  body { animation-name: test; animation-duration: 0.5s; }</style><body><svg width='100%%' height='100%%' position='absolute' top='0' left='0'><rect width='100%%' height='100%%' x='0' y='0' position='absolute' style='fill:rgb(6,5,26);'/></svg><svg width='50%%' height='50%%' style='position:absolute;top:30%%;left:25%%' viewbox='0 0 %d %d'>", resolutionWidth, resolutionHeight)
+                    newContent[#newContent + 1] = stringf("<style>@keyframes test { from { opacity: 0; } to { opacity: 1; } }  body { animation-name: test; animation-duration: 0.5s; }</style><body><svg width='100%%' height='100%%' position='absolute' top='0' left='0'><rect width='100%%' height='100%%' x='0' y='0' position='absolute' style='fill:rgb(6,5,26);'/></svg><svg width='50%%' height='50%%' style='position:absolute;top:30%%;left:25%%' viewbox='0 0 %d %d'>", ResolutionX, ResolutionY)
                     newContent[#newContent + 1] = collapsedContent
                     newContent[#newContent + 1] = "</body>"
                     Animating = true
@@ -2796,7 +2796,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 elseif Animated then
                     local collapsedContent = table.concat(newContent, "")
                     newContent = {}
-                    newContent[#newContent + 1] = stringf("<body style='background-color:rgb(6,5,26)'><svg width='50%%' height='50%%' style='position:absolute;top:30%%;left:25%%' viewbox='0 0 %d %d'>", resolutionWidth, resolutionHeight)
+                    newContent[#newContent + 1] = stringf("<body style='background-color:rgb(6,5,26)'><svg width='50%%' height='50%%' style='position:absolute;top:30%%;left:25%%' viewbox='0 0 %d %d'>", ResolutionX, ResolutionY)
                     newContent[#newContent + 1] = collapsedContent
                     newContent[#newContent + 1] = "</body>"
                 end

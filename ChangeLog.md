@@ -1,9 +1,16 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 2.000 RELEASE CANDIDATE VERSION
+-   No Atmo (MOON) IMPROVEMENTS 
+    - Alt-6 now safe to use from no-atmo surface, will not instant take off at current height.  Once clear of ground detect range
+        will attempt to establish orbit at indicated height (max surface height+100 if on moon)
+    - Brake Landing now works on no atmo surfaces.  Ships with vertical space engines (that push downward) will use them when brake landing 
+        without atmosphere.  You must be less than 20000m altitude to activate this.
+- New user variable, MaintainOrbit, default true, will keep adjusting orbit if it decays when not orbiting to a landing point. 
+    (I.e. when you want to stay in current orbit, uses VERY little fuel once orbit established)
 - Removed atmosphere heights to use atlas.lua values.  Measured min space engine heights by hand.
 - Changed ExtraEscapeThrust to use friction burn speed as your max speed when escaping atmosphere if set to 1.0 
-    Setting other than 1.0 will be the value multiplied by your friction burn speed.
+    Setting other than 1.0 will be the value multiplied by your friction burn speed. (Defaults to 1.0)
 - Changed Alt-3 from Toggle Widget/HUD mode to Toggle HUD on/off.  With HUD off, only IPH and messages will be shown.
 - Added filtering out of Thades Asteroids from IPH if desired.
 - Fixed ExtraEngineTags having no effect if set to default "none"

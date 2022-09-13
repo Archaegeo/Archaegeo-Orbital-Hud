@@ -42,10 +42,12 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 return mabs(a - b) < math.max(mabs(a), mabs(b)) * epsilon
             end
         end
+        
         local function round(num, numDecimalPlaces) -- rounds variable num to numDecimalPlaces
             local mult = 10 ^ (numDecimalPlaces or 0)
             return mfloor(num * mult + 0.5) / mult
         end
+
         local function addTable(table1, table2) -- Function to add two tables together
             for k,v in pairs(table2) do
                 if type(k)=="string" then
@@ -56,6 +58,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             end
             return table1
         end
+
         local function saveableVariables(subset) -- returns saveable variables by catagory
             local returnSet = {}
                 -- Complete list of user variables above, must be in saveableVariables to be stored on databank
@@ -76,6 +79,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 return savableVariablesPhysics
             end            
         end
+
         local function SaveDataBank(copy) -- Save values to the databank.
             local function writeData(dataList)
                 for k, v in pairs(dataList) do
@@ -94,27 +98,28 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 end
             end
         end
+
         local function play(sound, ID, type)
             if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
             s.playSound(soundFolder.."/"..sound..".mp3")
         end
+
         local function svgText(x, y, text, class, style) -- processes a svg text string, saves code lines by doing it this way
-            class = class or ""
-            style = style or ""
-            return stringf([[<text class="%s" x=%s y=%s style="%s">%s</text>]], class,x, y, style, text)
+            return stringf([[<text class="%s" x=%s y=%s style="%s">%s</text>]], class or "",x, y, style or "", text)
         end
     
         local function getDistanceDisplayString(distance, places) -- Turn a distance into a string to a number of places
-            if places == nil then places = 1 end
+            places = places or 1
+            local unit = "m"
             if distance > 100000 then
                 -- Convert to SU
-                return round(distance / 1000 / 200, places).."SU"
-            elseif distance < 1000 then
-                return round(distance, places).."M"
-            else
-                -- Convert to KM
-                return round(distance / 1000, places).."KM"
+                distance = distance / 200000
+                unit = "su"
+            elseif distance > 1000 then
+                distance = distance / 1000
+                unit = "km"
             end
+            return round(distance, places)..unit
         end
     
         local function FormatTimeString(seconds) -- Format a time string for display
@@ -145,11 +150,12 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 return "0s"
             end
         end
-    local function radarSetup()
-        if radar_1 and FullRadar then 
-            RADAR = RadarClass(c, s, u, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
+
+        local function radarSetup()
+            if radar_1 and FullRadar then 
+                RADAR = RadarClass(c, s, u, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
+            end
         end
-    end
 
     function program.radarSetup()
         radarSetup()
@@ -181,7 +187,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                         processVariableList(autoVariables)
                     else
                         processVariableList(autoVariables)
-                        msgText = "Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use saved values"
+                        msgText = "Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use database saved values"
                         msgTimer = 5
                         valuesAreSet = false
                     end
@@ -194,10 +200,8 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                     end
                     if #SavedLocations>0 then customlocations = addTable(customlocations, SavedLocations) end
                 else
-                    msgText = "No databank found. Attach one to control u and rerun \nthe autoconfigure to save preferences and locations"
+                    msgText = "No databank found. Attach one to control unit and rerun \nthe autoconfigure to save preferences and locations"
                 end
-                resolutionWidth = ResolutionX
-                resolutionHeight = ResolutionY
                 BrakeToggleStatus = BrakeToggleDefault
                 userControlScheme = string.lower(userControlScheme)
                 autoRoll = autoRollPreference
