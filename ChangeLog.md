@@ -8,6 +8,8 @@ Version 2.000 RELEASE CANDIDATE VERSION
         without atmosphere.  You must be less than 20000m altitude to activate this.
 - New user variable, MaintainOrbit, default true, will keep adjusting orbit if it decays when not orbiting to a landing point. 
     (I.e. when you want to stay in current orbit, uses VERY little fuel once orbit established)
+- Changed FullRadar to control if Radar Widget is shown.  With FullRadar off, widget is never displayed, but all other radar functions 
+    are supported (Abandoned, collision, emergency warp, etc)
 - Removed atmosphere heights to use atlas.lua values.  Measured min space engine heights by hand.
 - Changed ExtraEscapeThrust to use friction burn speed as your max speed when escaping atmosphere if set to 1.0 
     Setting other than 1.0 will be the value multiplied by your friction burn speed. (Defaults to 1.0)

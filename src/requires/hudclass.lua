@@ -1818,7 +1818,6 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 elseif k == "FullRadar" then
                     if RADAR then 
                         RADAR.ToggleRadarPanel()
-                        RADAR = nil
                         FullRadar = false
                     else
                         FullRadar = true

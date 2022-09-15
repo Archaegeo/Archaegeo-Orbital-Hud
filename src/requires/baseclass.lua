@@ -152,7 +152,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
         end
 
         local function radarSetup()
-            if radar_1 and FullRadar then 
+            if radar_1 then 
                 RADAR = RadarClass(c, s, u, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
             end
         end
@@ -637,15 +637,6 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
     end
     
     function program.onUpdate()
-        if not SetupComplete then
-            local cont = coroutine.status (beginSetup)
-            if cont == "suspended" then 
-                local value, done = coroutine.resume(beginSetup)
-                if done then s.print("ERROR STARTUP: "..done) end
-            elseif cont == "dead" then
-                SetupComplete = true
-            end
-        end
         if SetupComplete then
             Nav:update()
             if inAtmo and AtmoSpeedAssist and throttleMode then
@@ -675,6 +666,14 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 u.exit()
             end
             if userBase then PROGRAM.ExtraOnUpdate() end
+        else
+            local cont = coroutine.status (beginSetup)
+            if cont == "suspended" then 
+                local value, done = coroutine.resume(beginSetup)
+                if done then s.print("ERROR STARTUP: "..done) end
+            elseif cont == "dead" then
+                SetupComplete = true
+            end
         end
     end
 
