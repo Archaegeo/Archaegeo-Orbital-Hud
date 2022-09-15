@@ -1307,7 +1307,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local radarWidgetId, perisWidgetId
             local radarDataId, perisDataId
         local function toggleRadarPanel()
-            if not FullRadar then return end
             if radarPanelId ~= nil and peris == 0 then
                 sysDestWid(radarPanelId)
                 s.destroyWidget(radarWidgetId)
@@ -1319,7 +1318,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     s.destroyData(perisDataId)
                     perisPanelID, perisWidgetId, perisDataId = nil, nil, nil
                 end
-            else
+            elseif FullRadar then
                 -- If radar is installed but no weapon, don't show periscope
                 if peris == 1 then
                     sysDestWid(radarPanelId)
@@ -3507,12 +3506,16 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     elseif k == "BrakeToggleDefault" then 
                         BrakeToggleStatus = BrakeToggleDefault
                     elseif k == "FullRadar" then
-                        if RADAR then 
+                        if not FullRadar then 
+                            p("HERE1")
                             RADAR.ToggleRadarPanel()
                             FullRadar = false
+                            p("HERE2")
                         else
+                            p("HERE3")
                             FullRadar = true
                             PROGRAM.radarSetup()
+                            p("HERE4")
                         end
                     end
                 end
