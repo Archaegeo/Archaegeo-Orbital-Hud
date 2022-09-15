@@ -44,7 +44,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
                 s.destroyData(perisDataId)
                 perisPanelID, perisWidgetId, perisDataId = nil, nil, nil
             end
-        else
+        elseif FullRadar then
             -- If radar is installed but no weapon, don't show periscope
             if peris == 1 then
                 sysDestWid(radarPanelId)
@@ -124,64 +124,70 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
 
         if radar_1 or radar_2 then RADAR.assignRadar() end
         if (activeRadar) then
-            radarContacts = #activeRadar.getConstructIds()
-            if radarContacts > 0 then
-                local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
+            radarContacts = #radarData
+            if #radarData > 0 then
                 local hasMatchingTransponder = activeRadar.hasMatchingTransponder
                 local getConstructKind = activeRadar.getConstructKind
                 local isConstructAbandoned = activeRadar.isConstructAbandoned
                 local getConstructName = activeRadar.getConstructName
+                local getDistance = activeRadar.getConstructDistance
+                local getSize = activeRadar.getConstructCoreSize
                 local wp = {worldPos["x"],worldPos["y"],worldPos["z"]}  --getTrueWorldPos()
                 local count, count2 = 0, 0
                 local radarDist = velMag * 10
                 local nearPlanet = nearPlanet
                 static, numKnown = 0, 0
                 friendlies = {}
-                for v in contactData do
-                    local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
-                    local sz = sizeMap[size]
-                    distance = tonum(distance)
-                    if hasMatchingTransponder(id) == 1 then
-                        insert(friendlies,id)
-                    end
-                    if not notPvPZone and warpdrive and distance < EmergencyWarp and  warpdrive.getStatus() == 15 then 
-                        msgText = "INITIATING WARP"
-                        msgTimer = 7
-                        warpdrive.initiate()
-                    end
-                    if CollisionSystem then
-                        local cType = getConstructKind(id)
-                        local abandoned = AbandonedRadar and isConstructAbandoned(id) == 1
-                        if abandoned or (distance < radarDist and (sz > 27 or cType == 4 or cType == 6)) then
-                            static = static + 1
-                            local name = getConstructName(id)
-                            local construct = contacts[id]
-                            if construct == nil then
-                                sz = sz+coreHalfDiag
-                                contacts[id] = {pts = {}, ref = wp, name = name, i = 0, radius = sz, skipCalc = false}
-                                construct = contacts[id]
-                            end
-                            if not construct.skipCalc then 
-                                updateVariables(construct, distance, wp)
-                                if abandoned and not construct.abandoned and construct.center then
-                                    local time = s.getArkTime()
-                                    if lastPlay+5 < time then 
-                                        lastPlay = time
-                                        play("abRdr", "RD")
-                                    end
-                                    s.print("Abandoned Construct: "..name.." ("..size.." ".. cTypeString[cType]..") at estimated ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
-                                    msgText = "Abandoned Radar Contact ("..size.." ".. cTypeString[cType]..") detected"
-                                    construct.abandoned = true
-                                end
-                                count2 = count2 + 1
-                            else
-                                insert(knownContacts, construct) 
-                            end
+                for _,v in pairs(radarData) do
+                    local distance = getDistance(v)
+                    if distance > 0.0 then 
+                        local size = getSize(v)
+                        local sz = sizeMap[size]
+                        distance = tonum(distance)
+                        if hasMatchingTransponder(v) == 1 then
+                            insert(friendlies,v)
                         end
-                        count = count + 1
-                        if (nearPlanet and count > 700 or count2 > 70) or (not nearPlanet and count > 300 or count2 > 30) then
-                            coroutine.yield()
-                            count, count2 = 0, 0
+                        if not notPvPZone and warpdrive and distance < EmergencyWarp and  warpdrive.getStatus() == 15 then 
+                            msgText = "INITIATING WARP"
+                            msgTimer = 7
+                            warpdrive.initiate()
+                        end
+                        if CollisionSystem then
+                            local cType = getConstructKind(v)
+                            local abandoned = AbandonedRadar and isConstructAbandoned(v) == 1
+                            local name = getConstructName(v)
+                            if sz == nil then p("ID: "..v.."* Name: "..name.."* Size:"..size.."* Dist:"..distance) end
+                            if abandoned or (distance < radarDist and (sz > 27 or cType == 4 or cType == 6)) then
+                                static = static + 1
+                                local name = getConstructName(v)
+                                local construct = contacts[v]
+                                if construct == nil then
+                                    sz = sz+coreHalfDiag
+                                    contacts[v] = {pts = {}, ref = wp, name = name, i = 0, radius = sz, skipCalc = false}
+                                    construct = contacts[v]
+                                end
+                                if not construct.skipCalc then 
+                                    updateVariables(construct, distance, wp)
+                                    if abandoned and not construct.abandoned and construct.center then
+                                        local time = s.getArkTime()
+                                        if lastPlay+5 < time then 
+                                            lastPlay = time
+                                            play("abRdr", "RD")
+                                        end
+                                        s.print("Abandoned Construct: "..name.." ("..size.." ".. cTypeString[cType]..") at estimated ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
+                                        msgText = "Abandoned Radar Contact ("..size.." ".. cTypeString[cType]..") detected"
+                                        construct.abandoned = true
+                                    end
+                                    count2 = count2 + 1
+                                else
+                                    insert(knownContacts, construct) 
+                                end
+                            end
+                            count = count + 1
+                            if (nearPlanet and count > 300 or count2 > 30) or (not nearPlanet and count > 300 or count2 > 30) then
+                                coroutine.yield()
+                                count, count2 = 0, 0
+                            end
                         end
                     end
                 end
@@ -206,14 +212,14 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
                     collisionTarget = nil
                 end
                 knownContacts = {}
-                target = radarData:find('identifiedConstructs":%[%]')
+                target = activeRadar.getTargetId()
             end
         end
     end
     local function pickType()
         if activeRadar then
             rType = "Atmo"
-            if radarData:find('worksInAtmosphere":false') then 
+            if activeRadar.getRange() > 10000 then 
                 rType = "Space" 
             end
         end
@@ -232,10 +238,10 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
                 end
             end
             radars = {activeRadar}
-            radarData = activeRadar.getWidgetData()
+            radarData = activeRadar.getConstructIds()
             pickType()
         else
-            radarData = activeRadar.getWidgetData()
+            radarData = activeRadar.getConstructIds()
         end
         activeRadarState = activeRadar.getOperationalState()
     end
@@ -277,7 +283,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
                 RADAR.ToggleRadarPanel()
             end
             if radarPanelId == nil then
-                RADAR.ToggleRadarPanel()
+                if showHud then RADAR.ToggleRadarPanel() end
             end
         else
             if activeRadarState ~= 1 then
@@ -295,13 +301,12 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
 
     function Radar.GetClosestName(name)
         if activeRadar then -- Just match the first one
-            local id,_ = activeRadar.getWidgetData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
-            if id ~= nil and id ~= "" then
-                name = name .. " " .. activeRadar.getConstructName(id)
-            end
+                local closeName = activeRadar.getConstructName(activeRadar.getConstructIds()[1])
+                if closeName then name = name .. " " .. closeName end
         end
         return name
     end
+
     function Radar.ToggleRadarPanel()
         toggleRadarPanel()
     end
@@ -340,7 +345,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
         end
         activeRadarState=activeRadar.getOperationalState()
         radars = {activeRadar}
-        radarData = activeRadar.getWidgetData()
+        radarData = activeRadar.getConstructIds()
         pickType()
         UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
 

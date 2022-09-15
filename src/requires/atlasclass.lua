@@ -794,7 +794,7 @@
                         if autopilotEntry and 
                           ((autopilotEntry ~= nil and autopilotEntry.name == "Space") or 
                            (iphCondition == "Custom Only" and autopilotEntry.center) or
-                           (iphCondition == "No Moons" and string.find(autopilotEntry.name, "Moon") ~= nil))
+                           (iphCondition == "No Moons-Asteroids" and (string.find(autopilotEntry.name, "Moon") ~= nil or string.find(autopilotEntry.name, "Asteroid") ~= nil)))
                         then 
                             if up == nil then 
                                 adjustAutopilotTargetIndex()

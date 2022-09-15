@@ -9,19 +9,20 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
     local currentAggModifier = antiGravButtonModifier
     local clearAllCheck = time
 
-    function Control.landingGear()
+    function Control.landingGear(eLL)
         GearExtended = not GearExtended
         if GearExtended then
             VectorToTarget = false
             LockPitch = nil
             AP.cmdThrottle(0)
             if vBooster or hover then 
-                if inAtmo and abvGndDet == -1 then
+                if (inAtmo or coreAltitude < 20000) and not eLL then
                     play("bklOn", "BL")
                     StrongBrakes = true -- We don't care about this anymore
                     Reentry = false
                     AutoTakeoff = false
                     VertTakeOff = false
+                    if IntoOrbit then AP.ToggleIntoOrbit() end
                     if BrakeLanding then apBrk = not apBrk end
                     BrakeLanding = true
                     autoRoll = true
@@ -212,14 +213,10 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 navCom:updateCommandFromActionStart(axisCommandId.lateral, -1.0)
                 LeftAmount = -1
         elseif action == "up" then
-            upAmount = upAmount + 1
+            AP.vertical(1)
             if abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 and GearExtended then CONTROL.landingGear() end
-            navCom:deactivateGroundEngineAltitudeStabilization()
-            navCom:updateCommandFromActionStart(axisCommandId.vertical, 1.0)
         elseif action == "down" then
-            upAmount = upAmount - 1
-            navCom:deactivateGroundEngineAltitudeStabilization()
-            navCom:updateCommandFromActionStart(axisCommandId.vertical, -1.0)
+            AP.vertical(-1)
         elseif action == "groundaltitudeup" then
             groundAltStart()
         elseif action == "groundaltitudedown" then
@@ -247,62 +244,6 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             end
             ATLAS.adjustAutopilotTargetIndex(1)
         elseif action == "option3" then
-            local function ToggleWidgets()
-                UnitHidden = not UnitHidden
-                if not UnitHidden then
-                    play("wid","DH")
-                    u.showWidget()
-                    c.showWidget()
-                    if atmofueltank_size > 0 then
-                        _autoconf.displayCategoryPanel(atmofueltank, atmofueltank_size,
-                            "Atmo Fuel", "fuel_container")
-                        fuelPanelID = _autoconf.panels[_autoconf.panels_size]
-                    end
-                    if spacefueltank_size > 0 then
-                        _autoconf.displayCategoryPanel(spacefueltank, spacefueltank_size,
-                            "Space Fuel", "fuel_container")
-                        spacefuelPanelID = _autoconf.panels[_autoconf.panels_size]
-                    end
-                    if rocketfueltank_size > 0 then
-                        _autoconf.displayCategoryPanel(rocketfueltank, rocketfueltank_size,
-                            "Rocket Fuel", "fuel_container")
-                        rocketfuelPanelID = _autoconf.panels[_autoconf.panels_size]
-                    end
-                    parentingPanelId = s.createWidgetPanel("Docking")
-                    parentingWidgetId = s.createWidget(parentingPanelId,"parenting")
-                    s.addDataToWidget(u.getWidgetDataId(),parentingWidgetId)
-                    coreCombatStressPanelId = s.createWidgetPanel("Core combat stress")
-                    coreCombatStressgWidgetId = s.createWidget(coreCombatStressPanelId,"core_stress")
-                    s.addDataToWidget(c.getWidgetDataId(),coreCombatStressgWidgetId)
-                    if shield ~= nil then shield.showWidget() end
-                else
-                    play("hud","DH")
-                    u.hideWidget()
-                    c.hideWidget()
-                    if fuelPanelID ~= nil then
-                        sysDestWid(fuelPanelID)
-                        fuelPanelID = nil
-                    end
-                    if parentingPanelId ~=nil then
-                        sysDestWid(parentingPanelId)
-                        parentingPanelId=nil
-                    end
-                    if coreCombatStressPanelId ~=nil then
-                        sysDestWid(coreCombatStressPanelId)
-                        coreCombatStressPanelId=nil
-                    end
-                    if spacefuelPanelID ~= nil then
-                        sysDestWid(spacefuelPanelID)
-                        spacefuelPanelID = nil
-                    end
-                    if rocketfuelPanelID ~= nil then
-                        sysDestWid(rocketfuelPanelID)
-                        rocketfuelPanelID = nil
-                    end
-                    if shield ~= nil then shield.hideWidget() end
-                end
-            end
-
             toggleView = false
             if AltIsOn and holdingShift then 
                 local onboard = ""
@@ -318,8 +259,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 else
                     showHud = true
                 end
+                if RADAR then RADAR.ToggleRadarPanel() end
             end
-            ToggleWidgets()
         elseif action == "option4" then
             toggleView = false      
             if AltIsOn and holdingShift then 
@@ -526,19 +467,9 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             navCom:updateCommandFromActionStop(axisCommandId.lateral, 1.0)
             LeftAmount = 0
         elseif action == "up" then
-            upAmount = 0
-            navCom:updateCommandFromActionStop(axisCommandId.vertical, -1.0)
-            if stablized then 
-                navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                sEFC = true
-            end
+            AP.vertical(0,-1)
         elseif action == "down" then
-            upAmount = 0
-            navCom:updateCommandFromActionStop(axisCommandId.vertical, 1.0)
-            if stablized then 
-                navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                sEFC = true 
-            end
+            AP.vertical(0,1)
         elseif action == "groundaltitudeup" then
             groundAltStop()
             toggleView = false

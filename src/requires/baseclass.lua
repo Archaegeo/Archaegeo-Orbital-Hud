@@ -28,7 +28,6 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
         local uclamp = utils.clamp
         local navCom = Nav.axisCommandManager
 
-        local targetGroundAltitude = LandingGearGroundHeight -- So it can tell if one loaded or not
         local coreHalfDiag = 13
         local elementsID = c.getElementIdList()
 
@@ -37,16 +36,18 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
         local function float_eq(a, b) -- float equation
             if a == 0 then
                 return mabs(b) < 1e-09
-            end
-            if b == 0 then
+            elseif b == 0 then
                 return mabs(a) < 1e-09
+            else
+                return mabs(a - b) < math.max(mabs(a), mabs(b)) * epsilon
             end
-            return mabs(a - b) < math.max(mabs(a), mabs(b)) * epsilon
         end
+        
         local function round(num, numDecimalPlaces) -- rounds variable num to numDecimalPlaces
             local mult = 10 ^ (numDecimalPlaces or 0)
             return mfloor(num * mult + 0.5) / mult
         end
+
         local function addTable(table1, table2) -- Function to add two tables together
             for k,v in pairs(table2) do
                 if type(k)=="string" then
@@ -57,6 +58,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             end
             return table1
         end
+
         local function saveableVariables(subset) -- returns saveable variables by catagory
             local returnSet = {}
                 -- Complete list of user variables above, must be in saveableVariables to be stored on databank
@@ -77,6 +79,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 return savableVariablesPhysics
             end            
         end
+
         local function SaveDataBank(copy) -- Save values to the databank.
             local function writeData(dataList)
                 for k, v in pairs(dataList) do
@@ -95,28 +98,28 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 end
             end
         end
+
         local function play(sound, ID, type)
             if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
             s.playSound(soundFolder.."/"..sound..".mp3")
         end
+
         local function svgText(x, y, text, class, style) -- processes a svg text string, saves code lines by doing it this way
-            if class == nil then class = "" end
-            if style == nil then style = "" end
-            return stringf([[<text class="%s" x=%s y=%s style="%s">%s</text>]], class,x, y, style, text)
+            return stringf([[<text class="%s" x=%s y=%s style="%s">%s</text>]], class or "",x, y, style or "", text)
         end
     
         local function getDistanceDisplayString(distance, places) -- Turn a distance into a string to a number of places
-            local su = distance > 100000
-            if places == nil then places = 1 end
-            if su then
+            places = places or 1
+            local unit = "m"
+            if distance > 100000 then
                 -- Convert to SU
-                return round(distance / 1000 / 200, places).."SU"
-            elseif distance < 1000 then
-                return round(distance, places).."M"
-            else
-                -- Convert to KM
-                return round(distance / 1000, places).."KM"
+                distance = distance / 200000
+                unit = "su"
+            elseif distance > 1000 then
+                distance = distance / 1000
+                unit = "km"
             end
+            return round(distance, places)..unit
         end
     
         local function FormatTimeString(seconds) -- Format a time string for display
@@ -147,11 +150,12 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 return "0s"
             end
         end
-    local function radarSetup()
-        if radar_1 and FullRadar then 
-            RADAR = RadarClass(c, s, u, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
+
+        local function radarSetup()
+            if radar_1 then 
+                RADAR = RadarClass(c, s, u, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
+            end
         end
-    end
 
     function program.radarSetup()
         radarSetup()
@@ -183,7 +187,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                         processVariableList(autoVariables)
                     else
                         processVariableList(autoVariables)
-                        msgText = "Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use saved values"
+                        msgText = "Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use database saved values"
                         msgTimer = 5
                         valuesAreSet = false
                     end
@@ -196,10 +200,8 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                     end
                     if #SavedLocations>0 then customlocations = addTable(customlocations, SavedLocations) end
                 else
-                    msgText = "No databank found. Attach one to control u and rerun \nthe autoconfigure to save preferences and locations"
+                    msgText = "No databank found. Attach one to control unit and rerun \nthe autoconfigure to save preferences and locations"
                 end
-                resolutionWidth = ResolutionX
-                resolutionHeight = ResolutionY
                 BrakeToggleStatus = BrakeToggleDefault
                 userControlScheme = string.lower(userControlScheme)
                 autoRoll = autoRollPreference
@@ -447,7 +449,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                     BrakeIsOn = false
                 end
 
-                navCom:setTargetGroundAltitude(targetGroundAltitude)
+                navCom:setTargetGroundAltitude(LandingGearGroundHeight)
 
                 WasInAtmo = inAtmo
 
@@ -489,7 +491,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                             }
                 end
 
-                local altTable = { [1]=4480, [6]=4480, [7]=6270, [27]=4150 } -- Alternate min space engine altitudes for madis, sinnen, sicari, haven
+                local altTable = { [1]=6637, [2]=3426, [26]=4242, [27]=4150, [3]=21452, [8]=3434, [9]=5916 } -- Measured min space engine altitudes for Madis, Alioth, Sanctuary, Haven, Thades, Teoma, Jago
                 -- No Atmo Heights for Madis, Alioth, Thades, Talemai, Feli, Sicari, Sinnen, Teoma, Jago, Sanctuary, Haven, Lacobus, Symeon, Ion.
                 local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[27]=7700,[100]=12511,[110]=7792,[120]=11766} 
                 for galaxyId,galaxy in pairs(atlas) do
@@ -503,8 +505,8 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                         planet.center = vec3(planet.center)
                         planet.name = planet.name[1]
                 
-                        planet.noAtmosphericDensityAltitude = noAtmoAlt[planet.id] or planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
-                        planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness)
+                        planet.noAtmosphericDensityAltitude = noAtmoAlt[planet.id] or planet.atmosphereThickness
+                        planet.spaceEngineMinAltitude = altTable[planet.id] or 0.5353125*(planet.atmosphereThickness)
                                 
                         planet.planetarySystemId = galaxyId
                         planet.bodyId = planet.id
@@ -635,15 +637,6 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
     end
     
     function program.onUpdate()
-        if not SetupComplete then
-            local cont = coroutine.status (beginSetup)
-            if cont == "suspended" then 
-                local value, done = coroutine.resume(beginSetup)
-                if done then s.print("ERROR STARTUP: "..done) end
-            elseif cont == "dead" then
-                SetupComplete = true
-            end
-        end
         if SetupComplete then
             Nav:update()
             if inAtmo and AtmoSpeedAssist and throttleMode then
@@ -673,6 +666,14 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 u.exit()
             end
             if userBase then PROGRAM.ExtraOnUpdate() end
+        else
+            local cont = coroutine.status (beginSetup)
+            if cont == "suspended" then 
+                local value, done = coroutine.resume(beginSetup)
+                if done then s.print("ERROR STARTUP: "..done) end
+            elseif cont == "dead" then
+                SetupComplete = true
+            end
         end
     end
 

@@ -8,14 +8,14 @@
 -- Broadcasts data to radars, that can access more information if their transponder tags are matching
 -----------------------------------------------------------------------------------
 
-require("engine")
+require("element")
 
 --- Broadcasts data to radars, that can access more information if their transponder tags are matching
 ---@class Transponder
 Transponder = {}
 Transponder.__index = Transponder
 function Transponder()
-    local self = Engine()
+    local self = Element()
 
     --- Activate the transponder
     function self.activate() end
