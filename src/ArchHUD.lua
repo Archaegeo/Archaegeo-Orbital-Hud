@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.750
+VERSION_NUMBER = 0.800
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -47,13 +47,14 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     DisplayOdometer = true -- (Default: true) If false the top odometer bar of information will be hidden.
     FullRadar = true -- (Default: true) If set to false, radar will not be activate on sitting down.  This will result in a much higher fps in crowded areas with radar hooked up while still allowing V to show contacts on screen.
     ECUHud = false -- (Default: false) If set to true, ECU will act like HUD when activated vice like ECU.
- 
+    MaintainOrbit = true --export: (Default: true) If true, ship will attempt to maintain orbit if it decays (when not autopiloting to a landing point) till fuel runs out.
+
     saveableVariablesBoolean = {userControlScheme={set=function (i)userControlScheme=i end,get=function() return userControlScheme end}, soundFolder={set=function (i)soundFolder=i end,get=function() return soundFolder end}, freeLookToggle={set=function (i)freeLookToggle=i end,get=function() return freeLookToggle end}, BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}, RemoteFreeze={set=function (i)RemoteFreeze=i end,get=function() return RemoteFreeze end}, brightHud={set=function (i)brightHud=i end,get=function() return brightHud end}, RemoteHud={set=function (i)RemoteHud=i end,get=function() return RemoteHud end}, VanillaRockets={set=function (i)VanillaRockets=i end,get=function() return VanillaRockets end},
     InvertMouse={set=function (i)InvertMouse=i end,get=function() return InvertMouse end}, autoRollPreference={set=function (i)autoRollPreference=i end,get=function() return autoRollPreference end}, ExternalAGG={set=function (i)ExternalAGG=i end,get=function() return ExternalAGG end}, UseSatNav={set=function (i)UseSatNav=i end,get=function() return UseSatNav end}, ShouldCheckDamage={set=function (i)ShouldCheckDamage=i end,get=function() return ShouldCheckDamage end}, 
     AtmoSpeedAssist={set=function (i)AtmoSpeedAssist=i end,get=function() return AtmoSpeedAssist end}, ForceAlignment={set=function (i)ForceAlignment=i end,get=function() return ForceAlignment end}, DisplayDeadZone={set=function (i)DisplayDeadZone=i end,get=function() return DisplayDeadZone end}, showHud={set=function (i)showHud=i end,get=function() return showHud end}, hideHudOnToggleWidgets={set=function (i)hideHudOnToggleWidgets=i end,get=function() return hideHudOnToggleWidgets end}, 
     ShiftShowsRemoteButtons={set=function (i)ShiftShowsRemoteButtons=i end,get=function() return ShiftShowsRemoteButtons end}, SetWaypointOnExit={set=function (i)SetWaypointOnExit=i end,get=function() return SetWaypointOnExit end}, AlwaysVSpd={set=function (i)AlwaysVSpd=i end,get=function() return AlwaysVSpd end}, BarFuelDisplay={set=function (i)BarFuelDisplay=i end,get=function() return BarFuelDisplay end}, 
     voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AbandonedRadar={set=function (i)AbandonedRadar=i end,get=function() return AbandonedRadar end},AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end},
-    DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end},FullRadar={set=function (i)FullRadar=i end,get=function() return FullRadar end},ECUHud={set=function (i)ECUHud=i end,get=function() return ECUHud end}}
+    DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end},FullRadar={set=function (i)FullRadar=i end,get=function() return FullRadar end},ECUHud={set=function (i)ECUHud=i end,get=function() return ECUHud end},MaintainOrbit={set=function (i)MaintainOrbit=i end,get=function() return MaintainOrbit end}}
 
 -- Ship Handling variables
     -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank system
@@ -146,7 +147,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     brakeFlatFactor = 1 -- (Default: 1) When braking, this factor will increase the brake force by a flat brakeFlatFactor * velocity direction> (higher value may be unstable)
     DampingMultiplier = 40 -- (Default: 40) How strongly autopilot dampens when nearing the correct orientation
     hudTickRate = 0.0666667 -- (Default: 0.0666667) Set the tick rate for your HUD.
-    ExtraEscapeThrust = 0.0 -- (Default: 0.0) Set this to some value (start low till you know your ship) to apply extra thrust between 10% and 0.05% atmosphere while using AtmoSpeedLimit.
+    ExtraEscapeThrust = 1.0 --export: (Default: 1.0) Set this to 1 to use friction burn speed as your max speed when escaping atmosphere. Setting other than 1 will be a the value multiplied by your friction burn speed.
     ExtraLongitudeTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "forward faster major" These will be added to the engines that are control by longitude.
     ExtraLateralTags = "none" -- (Default: "none") Enter any extra lateral tags you use inside '' seperated by space, i.e. "left right" These will be added to the engines that are control by lateral.
     ExtraVerticalTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "up down" These will be added to the engines that are control by vertical.
@@ -249,8 +250,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         coreAltitude = c.getAltitude() -- 3
         coreMass = DUConstruct.getMass() -- 2
         gyroIsOn = nil -- 4
-        resolutionWidth = ResolutionX -- 3
-        resolutionHeight = ResolutionY -- 3
         atmoTanks = {} -- 2
         spaceTanks = {} -- 2
         rocketTanks = {} -- 2
@@ -1108,7 +1107,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         if autopilotEntry and 
                           ((autopilotEntry ~= nil and autopilotEntry.name == "Space") or 
                            (iphCondition == "Custom Only" and autopilotEntry.center) or
-                           (iphCondition == "No Moons" and string.find(autopilotEntry.name, "Moon") ~= nil))
+                           (iphCondition == "No Moons-Asteroids" and (string.find(autopilotEntry.name, "Moon") ~= nil or string.find(autopilotEntry.name, "Asteroid") ~= nil)))
                         then 
                             if up == nil then 
                                 adjustAutopilotTargetIndex()
@@ -1308,6 +1307,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local radarWidgetId, perisWidgetId
             local radarDataId, perisDataId
         local function toggleRadarPanel()
+            if not FullRadar then return end
             if radarPanelId ~= nil and peris == 0 then
                 sysDestWid(radarPanelId)
                 s.destroyWidget(radarWidgetId)
@@ -1399,64 +1399,70 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
             if radar_1 or radar_2 then RADAR.assignRadar() end
             if (activeRadar) then
-                radarContacts = #activeRadar.getConstructIds()
-                if radarContacts > 0 then
-                    local contactData = radarData:gmatch('{"constructId[^}]*}[^}]*}') 
+                radarContacts = #radarData
+                if #radarData > 0 then
                     local hasMatchingTransponder = activeRadar.hasMatchingTransponder
                     local getConstructKind = activeRadar.getConstructKind
                     local isConstructAbandoned = activeRadar.isConstructAbandoned
                     local getConstructName = activeRadar.getConstructName
+                    local getDistance = activeRadar.getConstructDistance
+                    local getSize = activeRadar.getConstructCoreSize
                     local wp = {worldPos["x"],worldPos["y"],worldPos["z"]}  --getTrueWorldPos()
                     local count, count2 = 0, 0
                     local radarDist = velMag * 10
                     local nearPlanet = nearPlanet
                     static, numKnown = 0, 0
                     friendlies = {}
-                    for v in contactData do
-                        local id,distance,size = v:match([[{"constructId":"([%d%.]*)","distance":([%d%.]*).-"size":"(%a+)"]])
-                        local sz = sizeMap[size]
-                        distance = tonum(distance)
-                        if hasMatchingTransponder(id) == 1 then
-                            insert(friendlies,id)
-                        end
-                        if not notPvPZone and warpdrive and distance < EmergencyWarp and  warpdrive.getStatus() == 15 then 
-                            msgText = "INITIATING WARP"
-                            msgTimer = 7
-                            warpdrive.initiate()
-                        end
-                        if CollisionSystem then
-                            local cType = getConstructKind(id)
-                            local abandoned = AbandonedRadar and isConstructAbandoned(id) == 1
-                            if abandoned or (distance < radarDist and (sz > 27 or cType == 4 or cType == 6)) then
-                                static = static + 1
-                                local name = getConstructName(id)
-                                local construct = contacts[id]
-                                if construct == nil then
-                                    sz = sz+coreHalfDiag
-                                    contacts[id] = {pts = {}, ref = wp, name = name, i = 0, radius = sz, skipCalc = false}
-                                    construct = contacts[id]
-                                end
-                                if not construct.skipCalc then 
-                                    updateVariables(construct, distance, wp)
-                                    if abandoned and not construct.abandoned and construct.center then
-                                        local time = s.getArkTime()
-                                        if lastPlay+5 < time then 
-                                            lastPlay = time
-                                            play("abRdr", "RD")
-                                        end
-                                        s.print("Abandoned Construct: "..name.." ("..size.." ".. cTypeString[cType]..") at estimated ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
-                                        msgText = "Abandoned Radar Contact ("..size.." ".. cTypeString[cType]..") detected"
-                                        construct.abandoned = true
-                                    end
-                                    count2 = count2 + 1
-                                else
-                                    insert(knownContacts, construct) 
-                                end
+                    for _,v in pairs(radarData) do
+                        local distance = getDistance(v)
+                        if distance > 0.0 then 
+                            local size = getSize(v)
+                            local sz = sizeMap[size]
+                            distance = tonum(distance)
+                            if hasMatchingTransponder(v) == 1 then
+                                insert(friendlies,v)
                             end
-                            count = count + 1
-                            if (nearPlanet and count > 700 or count2 > 70) or (not nearPlanet and count > 300 or count2 > 30) then
-                                coroutine.yield()
-                                count, count2 = 0, 0
+                            if not notPvPZone and warpdrive and distance < EmergencyWarp and  warpdrive.getStatus() == 15 then 
+                                msgText = "INITIATING WARP"
+                                msgTimer = 7
+                                warpdrive.initiate()
+                            end
+                            if CollisionSystem then
+                                local cType = getConstructKind(v)
+                                local abandoned = AbandonedRadar and isConstructAbandoned(v) == 1
+                                local name = getConstructName(v)
+                                if sz == nil then p("ID: "..v.."* Name: "..name.."* Size:"..size.."* Dist:"..distance) end
+                                if abandoned or (distance < radarDist and (sz > 27 or cType == 4 or cType == 6)) then
+                                    static = static + 1
+                                    local name = getConstructName(v)
+                                    local construct = contacts[v]
+                                    if construct == nil then
+                                        sz = sz+coreHalfDiag
+                                        contacts[v] = {pts = {}, ref = wp, name = name, i = 0, radius = sz, skipCalc = false}
+                                        construct = contacts[v]
+                                    end
+                                    if not construct.skipCalc then 
+                                        updateVariables(construct, distance, wp)
+                                        if abandoned and not construct.abandoned and construct.center then
+                                            local time = s.getArkTime()
+                                            if lastPlay+5 < time then 
+                                                lastPlay = time
+                                                play("abRdr", "RD")
+                                            end
+                                            s.print("Abandoned Construct: "..name.." ("..size.." ".. cTypeString[cType]..") at estimated ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
+                                            msgText = "Abandoned Radar Contact ("..size.." ".. cTypeString[cType]..") detected"
+                                            construct.abandoned = true
+                                        end
+                                        count2 = count2 + 1
+                                    else
+                                        insert(knownContacts, construct) 
+                                    end
+                                end
+                                count = count + 1
+                                if (nearPlanet and count > 300 or count2 > 30) or (not nearPlanet and count > 300 or count2 > 30) then
+                                    coroutine.yield()
+                                    count, count2 = 0, 0
+                                end
                             end
                         end
                     end
@@ -1481,14 +1487,14 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         collisionTarget = nil
                     end
                     knownContacts = {}
-                    target = radarData:find('identifiedConstructs":%[%]')
+                    target = activeRadar.getTargetId()
                 end
             end
         end
         local function pickType()
             if activeRadar then
                 rType = "Atmo"
-                if radarData:find('worksInAtmosphere":false') then 
+                if activeRadar.getRange() > 10000 then 
                     rType = "Space" 
                 end
             end
@@ -1507,10 +1513,10 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                 end
                 radars = {activeRadar}
-                radarData = activeRadar.getWidgetData()
+                radarData = activeRadar.getConstructIds()
                 pickType()
             else
-                radarData = activeRadar.getWidgetData()
+                radarData = activeRadar.getConstructIds()
             end
             activeRadarState = activeRadar.getOperationalState()
         end
@@ -1552,7 +1558,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     RADAR.ToggleRadarPanel()
                 end
                 if radarPanelId == nil then
-                    RADAR.ToggleRadarPanel()
+                    if showHud then RADAR.ToggleRadarPanel() end
                 end
             else
                 if activeRadarState ~= 1 then
@@ -1570,13 +1576,12 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
         function Radar.GetClosestName(name)
             if activeRadar then -- Just match the first one
-                local id,_ = activeRadar.getWidgetData():match('"constructId":"([0-9]*)","distance":([%d%.]*)')
-                if id ~= nil and id ~= "" then
-                    name = name .. " " .. activeRadar.getConstructName(id)
-                end
+                    local closeName = activeRadar.getConstructName(activeRadar.getConstructIds()[1])
+                    if closeName then name = name .. " " .. closeName end
             end
             return name
         end
+    
         function Radar.ToggleRadarPanel()
             toggleRadarPanel()
         end
@@ -1615,7 +1620,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             end
             activeRadarState=activeRadar.getOperationalState()
             radars = {activeRadar}
-            radarData = activeRadar.getWidgetData()
+            radarData = activeRadar.getConstructIds()
             pickType()
             UpdateRadarCoroutine = coroutine.create(UpdateRadarRoutine)
     
@@ -1627,7 +1632,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
         return Radar
     end 
-    local function ShieldClass(shield, stringmatch, mfloor) -- Everything related to radar but draw data passed to HUD Class.
+    local function ShieldClass(shield, stringmatch, mfloor) -- Everything related to shield but draw data passed to HUD Class.
         local Shield = {}
         local RCD = shield.getResistancesCooldown()
     
@@ -1720,18 +1725,18 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         --Local Huds Functions
     
             local function ConvertResolutionX (v)
-                if resolutionWidth == 1920 then 
+                if ResolutionX == 1920 then 
                     return v
                 else
-                    return round(resolutionWidth * v / 1920, 0)
+                    return round(ResolutionX * v / 1920, 0)
                 end
             end
         
             local function ConvertResolutionY (v)
-                if resolutionHeight == 1080 then 
+                if ResolutionY == 1080 then 
                     return v
                 else
-                    return round(resolutionHeight * v / 1080, 0)
+                    return round(ResolutionY * v / 1080, 0)
                 end
             end
     
@@ -3504,7 +3509,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     elseif k == "FullRadar" then
                         if RADAR then 
                             RADAR.ToggleRadarPanel()
-                            RADAR = nil
                             FullRadar = false
                         else
                             FullRadar = true
@@ -3515,7 +3519,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 local buttonHeight = 50
                 local buttonWidth = 340 -- Defaults
                 local x = 500
-                local y = resolutionHeight / 2 - 400
+                local y = ResolutionY / 2 - 400
                 local cnt = 0
                 for k, v in pairs(saveableVariables("boolean")) do
                     if type(v.get()) == "boolean" then
@@ -3526,22 +3530,22 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         y = y + buttonHeight + 20
                         if cnt == 9 then 
                             x = x + buttonWidth + 20 
-                            y = resolutionHeight / 2 - 400
+                            y = ResolutionY / 2 - 400
                             cnt = 0
                         else
                             cnt = cnt + 1
                         end
                     end
                 end
-                MakeButton("Control View", "Control View", buttonWidth, buttonHeight, 10, resolutionHeight / 2 - 500, function() return true end, 
+                MakeButton("Control View", "Control View", buttonWidth, buttonHeight, 10, ResolutionY / 2 - 500, function() return true end, 
                     ToggleButtons, function() return true end, true)
-                MakeButton("View Handling Settings", 'Hide Handling Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight), 
+                MakeButton("View Handling Settings", 'Hide Handling Settings', buttonWidth, buttonHeight, 10, ResolutionY / 2 - (500 - buttonHeight), 
                     function() return showHandlingVariables end, function() ToggleShownSettings("handling") end, 
                     function() return true end, true)
-                MakeButton("View Hud Settings", 'Hide Hud Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight*2), 
+                MakeButton("View Hud Settings", 'Hide Hud Settings', buttonWidth, buttonHeight, 10, ResolutionY / 2 - (500 - buttonHeight*2), 
                     function() return showHudVariables end, function() ToggleShownSettings("hud") end, 
                     function() return true end, true)
-                MakeButton("View Physics Settings", 'Hide Physics Settings', buttonWidth, buttonHeight, 10, resolutionHeight / 2 - (500 - buttonHeight*3), 
+                MakeButton("View Physics Settings", 'Hide Physics Settings', buttonWidth, buttonHeight, 10, ResolutionY / 2 - (500 - buttonHeight*3), 
                     function() return showPhysicsVariables end, function() ToggleShownSettings("physics") end, 
                     function() return true end, true)
             end
@@ -3647,7 +3651,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 MakeButton("0", "0", orbitButtonSize, orbitButtonSize, orbitButtonX, orbitButtonY+orbitButtonSize*2+2,
                                     function() return false end, function() scopeFOV = 90 end, function() return SelectedTab == "SCOPE" and scopeFOV ~= 90 end, nil, "ZoomButton")
                 local brake = MakeButton("Enable Brake Toggle", "Disable Brake Toggle", buttonWidth, buttonHeight,
-                                    resolutionWidth / 2 - buttonWidth / 2, resolutionHeight / 2 + 350, function()
+                                    ResolutionX / 2 - buttonWidth / 2, ResolutionY / 2 + 350, function()
                         return BrakeToggleStatus
                     end, function()
                         BrakeToggleStatus = not BrakeToggleStatus
@@ -3658,19 +3662,19 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         end
                     end)
                 MakeButton("Align Prograde", "Disable Prograde", buttonWidth, buttonHeight,
-                    resolutionWidth / 2 - buttonWidth / 2 - 50 - brake.width, resolutionHeight / 2 - buttonHeight + 380,
+                    ResolutionX / 2 - buttonWidth / 2 - 50 - brake.width, ResolutionY / 2 - buttonHeight + 380,
                     function()
                         return ProgradeIsOn
                     end, function() gradeToggle(1) end)
                 MakeButton("Align Retrograde", "Disable Retrograde", buttonWidth, buttonHeight,
-                    resolutionWidth / 2 - buttonWidth / 2 + brake.width + 50, resolutionHeight / 2 - buttonHeight + 380,
+                    ResolutionX / 2 - buttonWidth / 2 + brake.width + 50, ResolutionY / 2 - buttonHeight + 380,
                     function()
                         return RetrogradeIsOn
                     end, gradeToggle, function()
                         return atmosDensity == 0
                     end) -- Hope this works
-                apbutton = MakeButton(getAPEnableName, getAPDisableName, 600, 60, resolutionWidth / 2 - 600 / 2,
-                                        resolutionHeight / 2 - 60 / 2 - 330, function()
+                apbutton = MakeButton(getAPEnableName, getAPDisableName, 600, 60, ResolutionX / 2 - 600 / 2,
+                                        ResolutionY / 2 - 60 / 2 - 330, function()
                         return Autopilot or VectorToTarget or spaceLaunch or IntoOrbit
                     end, function() end) -- No toggle function because we draw over this with things that do toggle
                 -- Make 9 more buttons that only show when moused over the AP button
@@ -3697,8 +3701,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end, function(b)
                         local index = getAtlasIndexFromAddition(b.apExtraIndex)
                         return getAPDisableName(index)
-                    end, 600, 60, resolutionWidth/2 - 600/2, 
-                    resolutionHeight/2 - 60/2 - 330 + 60*i, function(b)
+                    end, 600, 60, ResolutionX/2 - 600/2, 
+                    ResolutionY/2 - 60/2 - 330 + 60*i, function(b)
                         local index = getAtlasIndexFromAddition(b.apExtraIndex)
                         return index == AutopilotTargetIndex and (Autopilot or VectorToTarget or spaceLaunch or IntoOrbit)
                     end, function(b)
@@ -3757,7 +3761,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 buttonHeight = 60
                 buttonWidth = 300
                 local x = 0
-                local y = resolutionHeight / 2 - 150
+                local y = ResolutionY / 2 - 150
                 MakeButton("Enable Check Damage", "Disable Check Damage", buttonWidth, buttonHeight, x, y - buttonHeight - 20, function()
                     return ShouldCheckDamage
                 end, function() ShouldCheckDamage = not ShouldCheckDamage end)
@@ -3767,8 +3771,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     return TurnBurn
                 end, ToggleTurnBurn)
                 x = 10
-                y = resolutionHeight / 2 - 300
-                MakeButton("Horizontal Takeoff Mode", "Vertical Takeoff Mode", buttonWidth, buttonHeight, resolutionWidth/2-buttonWidth/2, y+20,
+                y = ResolutionY / 2 - 300
+                MakeButton("Horizontal Takeoff Mode", "Vertical Takeoff Mode", buttonWidth, buttonHeight, ResolutionX/2-buttonWidth/2, y+20,
                     function() return VertTakeOffEngine end, 
                     function () 
                         VertTakeOffEngine = not VertTakeOffEngine 
@@ -3786,7 +3790,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         end, AP.ToggleIntoOrbit, function()
                             return (atmosDensity == 0 and nearPlanet)
                         end)
-                y = resolutionHeight / 2 - 150
+                y = ResolutionY / 2 - 150
                 MakeButton("Glide Re-Entry", "Cancel Glide Re-Entry", buttonWidth, buttonHeight, x + buttonWidth + 20, y,
                     function() return Reentry end, function() spaceLand = 1 gradeToggle(1) end, function() return (planet.hasAtmosphere and not inAtmo) end )
                 y = y + buttonHeight + 20
@@ -3825,7 +3829,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     if iphCondition == "All" then
                         iphCondition = "Custom Only"
                     elseif iphCondition == "Custom Only" then
-                        iphCondition = "No Moons"
+                        iphCondition = "No Moons-Asteroids"
                     else
                         iphCondition = "All"
                     end
@@ -3893,7 +3897,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             -- so that "fill:none" gets applied
             local crx = ConvertResolutionX
             local cry = ConvertResolutionY
-                newContent[#newContent + 1] = stringf([[ <head> <style>body{margin: 0}svg{position:absolute;top:0;left:0;font-family:Montserrat;}.txt{font-size:10px;font-weight:bold;}.txttick{font-size:12px;font-weight:bold;}.txtbig{font-size:14px;font-weight:bold;}.altsm{font-size:16px;font-weight:normal;}.altbig{font-size:21px;font-weight:normal;}.line{stroke-width:2px;fill:none;stroke:%s}.linethick{stroke-width:3px;fill:none}.linethin{stroke-width:1px;fill:none}.warnings{font-size:26px;fill:red;text-anchor:middle;font-family:Bank;}.warn{fill:orange; font-size:24px}.crit{fill:darkred;font-size:28px}.bright{fill:%s;stroke:%s}text.bright{stroke:black; stroke-width:10px;paint-order:stroke;}.pbright{fill:%s;stroke:%s}text.pbright{stroke:black; stroke-width:10px;paint-order:stroke;}.dim{fill:%s;stroke:%s}text.dim{stroke:black; stroke-width:10px;paint-order:stroke;}.pdim{fill:%s;stroke:%s}text.pdim{stroke:black; stroke-width:10px;paint-order:stroke;}.red{fill:red;stroke:red}text.red{stroke:black; stroke-width:10px;paint-order:stroke;}.orange{fill:orange;stroke:orange}text.orange{stroke:black; stroke-width:10px;paint-order:stroke;}.redout{fill:none;stroke:red}.op30{opacity:0.3}.op10{opacity:0.1}.txtstart{text-anchor:start}.txtend{text-anchor:end}.txtmid{text-anchor:middle}.txtvspd{font-family:sans-serif;font-weight:normal}.txtvspdval{font-size:20px}.txtfuel{font-size:11px;font-weight:bold}.txtorb{font-size:12px}.txtorbbig{font-size:18px}.hudver{font-size:10px;font-weight:bold;fill:red;text-anchor:end;font-family:Bank}.msg{font-size:40px;fill:red;text-anchor:middle;font-weight:normal}.cursor{stroke:white}text{stroke:black; stroke-width:10px;paint-order:stroke;}.dimstroke{stroke:%s}.brightstroke{stroke:%s}.indicatorText{font-size:20px;fill:white}.size14{font-size:14px}.size20{font-size:20px}.topButton{fill:%s;opacity:0.5;stroke-width:2;stroke:%s}.topButtonActive{fill:url(#RadialGradientCenter);opacity:0.8;stroke-width:2;stroke:%s}.topButton text{font-size:13px; fill: %s; opacity:1; stroke-width:20px}.topButtonActive text{font-size:13px;fill:%s; stroke-width:0px; opacity:1}.indicatorFont{font-size:20px;font-family:Bank}.dimmer{stroke: %s;}.pdimfill{fill: %s;}.dimfill{fill: %s;}</style> </head> <body> <svg height="100%%" width="100%%" viewBox="0 0 %d %d"> <defs> <radialGradient id="RadialGradientCenterTop" cx="0.5" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="100%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientRightTop" cx="1" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="ThinRightTopGradient" cx="1" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientLeftTop" cx="0" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="ThinLeftTopGradient" cx="0" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientCenter" cx="0.5" cy="0.5" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.8"/> <stop offset="100%%" stop-color="%s" stop-opacity="0.5"/> </radialGradient> <radialGradient id="RadialPlanetCenter" cx="0.5" cy="0.5" r="0.5"> <stop offset="0%%" stop-color="%s" stop-opacity="1"/> <stop offset="100%%" stop-color="%s" stop-opacity="1"/> </radialGradient> <radialGradient id="RadialAtmo" cx="0.5" cy="0.5" r="0.5"> <stop offset="0%%" stop-color="%s" stop-opacity="1"/> <stop offset="66%%" stop-color="%s" stop-opacity="1"/> <stop offset="100%%" stop-color="%s" stop-opacity="0.1"/> </radialGradient> </defs> <g class="pdim txt txtend">]], bright, bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig,dim,bright,dimmer,dimOrig,bright,bright,dimmer,dimmer, dimmerOrig,dimmer, resolutionWidth, resolutionHeight, dim,dim,dim,dim,dim,brightOrig,dim,dimOrig, dimmerOrig, dimOrig, dimOrig, dimmerOrig)
+                newContent[#newContent + 1] = stringf([[ <head> <style>body{margin: 0}svg{position:absolute;top:0;left:0;font-family:Montserrat;}.txt{font-size:10px;font-weight:bold;}.txttick{font-size:12px;font-weight:bold;}.txtbig{font-size:14px;font-weight:bold;}.altsm{font-size:16px;font-weight:normal;}.altbig{font-size:21px;font-weight:normal;}.line{stroke-width:2px;fill:none;stroke:%s}.linethick{stroke-width:3px;fill:none}.linethin{stroke-width:1px;fill:none}.warnings{font-size:26px;fill:red;text-anchor:middle;font-family:Bank;}.warn{fill:orange; font-size:24px}.crit{fill:darkred;font-size:28px}.bright{fill:%s;stroke:%s}text.bright{stroke:black; stroke-width:10px;paint-order:stroke;}.pbright{fill:%s;stroke:%s}text.pbright{stroke:black; stroke-width:10px;paint-order:stroke;}.dim{fill:%s;stroke:%s}text.dim{stroke:black; stroke-width:10px;paint-order:stroke;}.pdim{fill:%s;stroke:%s}text.pdim{stroke:black; stroke-width:10px;paint-order:stroke;}.red{fill:red;stroke:red}text.red{stroke:black; stroke-width:10px;paint-order:stroke;}.orange{fill:orange;stroke:orange}text.orange{stroke:black; stroke-width:10px;paint-order:stroke;}.redout{fill:none;stroke:red}.op30{opacity:0.3}.op10{opacity:0.1}.txtstart{text-anchor:start}.txtend{text-anchor:end}.txtmid{text-anchor:middle}.txtvspd{font-family:sans-serif;font-weight:normal}.txtvspdval{font-size:20px}.txtfuel{font-size:11px;font-weight:bold}.txtorb{font-size:12px}.txtorbbig{font-size:18px}.hudver{font-size:10px;font-weight:bold;fill:red;text-anchor:end;font-family:Bank}.msg{font-size:40px;fill:red;text-anchor:middle;font-weight:normal}.cursor{stroke:white}text{stroke:black; stroke-width:10px;paint-order:stroke;}.dimstroke{stroke:%s}.brightstroke{stroke:%s}.indicatorText{font-size:20px;fill:white}.size14{font-size:14px}.size20{font-size:20px}.topButton{fill:%s;opacity:0.5;stroke-width:2;stroke:%s}.topButtonActive{fill:url(#RadialGradientCenter);opacity:0.8;stroke-width:2;stroke:%s}.topButton text{font-size:13px; fill: %s; opacity:1; stroke-width:20px}.topButtonActive text{font-size:13px;fill:%s; stroke-width:0px; opacity:1}.indicatorFont{font-size:20px;font-family:Bank}.dimmer{stroke: %s;}.pdimfill{fill: %s;}.dimfill{fill: %s;}</style> </head> <body> <svg height="100%%" width="100%%" viewBox="0 0 %d %d"> <defs> <radialGradient id="RadialGradientCenterTop" cx="0.5" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="100%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientRightTop" cx="1" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="ThinRightTopGradient" cx="1" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientLeftTop" cx="0" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.5"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="ThinLeftTopGradient" cx="0" cy="0" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.2"/> <stop offset="200%%" stop-color="black" stop-opacity="0"/> </radialGradient> <radialGradient id="RadialGradientCenter" cx="0.5" cy="0.5" r="1"> <stop offset="0%%" stop-color="%s" stop-opacity="0.8"/> <stop offset="100%%" stop-color="%s" stop-opacity="0.5"/> </radialGradient> <radialGradient id="RadialPlanetCenter" cx="0.5" cy="0.5" r="0.5"> <stop offset="0%%" stop-color="%s" stop-opacity="1"/> <stop offset="100%%" stop-color="%s" stop-opacity="1"/> </radialGradient> <radialGradient id="RadialAtmo" cx="0.5" cy="0.5" r="0.5"> <stop offset="0%%" stop-color="%s" stop-opacity="1"/> <stop offset="66%%" stop-color="%s" stop-opacity="1"/> <stop offset="100%%" stop-color="%s" stop-opacity="0.1"/> </radialGradient> </defs> <g class="pdim txt txtend">]], bright, bright, bright, brightOrig, brightOrig, dim, dim, dimOrig, dimOrig,dim,bright,dimmer,dimOrig,bright,bright,dimmer,dimmer, dimmerOrig,dimmer, ResolutionX, ResolutionY, dim,dim,dim,dim,dim,brightOrig,dim,dimOrig, dimmerOrig, dimOrig, dimOrig, dimmerOrig)
     
             
             -- These never change, set and store it on startup because that's a lot of calculations that we don't want to do every frame
@@ -4294,7 +4298,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
             -- Local Functions for hudTick
                 local function DrawCursorLine(newContent)
-                    local strokeColor = mfloor(uclamp((mouseDistance / (resolutionWidth / 4)) * 255, 0, 255))
+                    local strokeColor = mfloor(uclamp((mouseDistance / (ResolutionX / 4)) * 255, 0, 255))
                     newContent[#newContent + 1] = stringf(
                                                     "<line x1='0' y1='0' x2='%fpx' y2='%fpx' style='stroke:rgb(%d,%d,%d);stroke-width:2;transform:translate(50%%, 50%%)' />",
                                                     simulatedX, simulatedY, mfloor(PrimaryR + 0.5) + strokeColor,
@@ -4328,8 +4332,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             return false
                         end
                     end
-                    local x = simulatedX + resolutionWidth / 2
-                    local y = simulatedY + resolutionHeight / 2
+                    local x = simulatedX + ResolutionX / 2
+                    local y = simulatedY + ResolutionY / 2
                     for _, v in pairs(Buttons) do
                         -- enableName, disableName, width, height, x, y, toggleVar, toggleFunction, drawCondition
                         v.hovered = Contains(x, y, v.x, v.y, v.width, v.height)
@@ -4431,8 +4435,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         end
                     end
                 end
-                local halfResolutionX = round(resolutionWidth / 2,0)
-                local halfResolutionY = round(resolutionHeight / 2,0)
+                local halfResolutionX = round(ResolutionX / 2,0)
+                local halfResolutionY = round(ResolutionY / 2,0)
             local newContent = {}
             if userScreen then newContent[#newContent + 1] = userScreen end
             --local t0 = s.getArkTime()
@@ -4453,7 +4457,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             HUD.HUDEpilogue(newContent)
             newContent[#newContent + 1] = stringf(
                 [[<svg width="100%%" height="100%%" style="position:absolute;top:0;left:0"  viewBox="0 0 %d %d">]],
-                resolutionWidth, resolutionHeight)   
+                ResolutionX, ResolutionY)   
             if msgText ~= "empty" then
                 HUD.DisplayMessage(newContent, msgText)
             end
@@ -4473,7 +4477,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     if not Animating and not Animated then
                         local collapsedContent = table.concat(newContent, "")
                         newContent = {}
-                        newContent[#newContent + 1] = stringf("<style>@keyframes test { from { opacity: 0; } to { opacity: 1; } }  body { animation-name: test; animation-duration: 0.5s; }</style><body><svg width='100%%' height='100%%' position='absolute' top='0' left='0'><rect width='100%%' height='100%%' x='0' y='0' position='absolute' style='fill:rgb(6,5,26);'/></svg><svg width='50%%' height='50%%' style='position:absolute;top:30%%;left:25%%' viewbox='0 0 %d %d'>", resolutionWidth, resolutionHeight)
+                        newContent[#newContent + 1] = stringf("<style>@keyframes test { from { opacity: 0; } to { opacity: 1; } }  body { animation-name: test; animation-duration: 0.5s; }</style><body><svg width='100%%' height='100%%' position='absolute' top='0' left='0'><rect width='100%%' height='100%%' x='0' y='0' position='absolute' style='fill:rgb(6,5,26);'/></svg><svg width='50%%' height='50%%' style='position:absolute;top:30%%;left:25%%' viewbox='0 0 %d %d'>", ResolutionX, ResolutionY)
                         newContent[#newContent + 1] = collapsedContent
                         newContent[#newContent + 1] = "</body>"
                         Animating = true
@@ -4482,7 +4486,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     elseif Animated then
                         local collapsedContent = table.concat(newContent, "")
                         newContent = {}
-                        newContent[#newContent + 1] = stringf("<body style='background-color:rgb(6,5,26)'><svg width='50%%' height='50%%' style='position:absolute;top:30%%;left:25%%' viewbox='0 0 %d %d'>", resolutionWidth, resolutionHeight)
+                        newContent[#newContent + 1] = stringf("<body style='background-color:rgb(6,5,26)'><svg width='50%%' height='50%%' style='position:absolute;top:30%%;left:25%%' viewbox='0 0 %d %d'>", ResolutionX, ResolutionY)
                         newContent[#newContent + 1] = collapsedContent
                         newContent[#newContent + 1] = "</body>"
                     end
@@ -5135,7 +5139,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 cmdT = -1 
             end
             if eLL then
-                CONTROL.landingGear()
+                CONTROL.landingGear(eLL)
                 eLL = false
             end 
             if aptoggle then
@@ -5217,6 +5221,25 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 atmoDistance = math.min(nearSide,farSide)
             end
             if atmoDistance ~= nil then return intersectBody, atmoDistance else return nil, nil end
+        end
+    
+        local function vertical(factor,stop)
+            if stop then
+                upAmount = 0
+                navCom:updateCommandFromActionStop(axisCommandId.vertical, stop)
+                if stablized then 
+                    navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
+                    sEFC = true
+                end
+            else
+                upAmount = upAmount + factor
+                navCom:deactivateGroundEngineAltitudeStabilization()
+                navCom:updateCommandFromActionStart(axisCommandId.vertical, factor)
+            end
+        end
+    
+        function ap.vertical(factor, stop)
+            vertical(factor,stop)
         end
     
         function ap.ToggleAutopilot() -- Toggle autopilot mode on and off
@@ -5434,9 +5457,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         function ap.ToggleAltitudeHold()  -- Toggle Altitude Hold mode on and off
             if (time - ahDoubleClick) < 1.5 then
                 HoverMode = false
-                if planet.hasAtmosphere  then
+                if planet.hasAtmosphere then
                     if inAtmo then
-    
                         HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude
                         play("11","EP")
                     else
@@ -5456,7 +5478,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             else
                 ahDoubleClick = time
             end
-            if nearPlanet and not inAtmo then
+            if nearPlanet and not inAtmo and abvGndDet == -1 then
                 OrbitTargetOrbit = coreAltitude
                 OrbitTargetSet = true
                 orbitAligned = true
@@ -5488,7 +5510,11 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         if GearExtended then CONTROL.landingGear() end
                         play("lfs", "LS")
                         AutoTakeoff = true
-                        if ahDoubleClick > -1 then HoldAltitude = coreAltitude + AutoTakeoffAltitude end
+                        if inAtmo then 
+                            HoldAltitude = coreAltitude + AutoTakeoffAltitude 
+                        else
+                            HoldAltitude = planet.surfaceMaxAltitude+100  
+                        end
                         BrakeIsOn = "ATO Hold"
                         navCom:setTargetGroundAltitude(TargetHoverHeight)
                         if VertTakeOffEngine and UpVertAtmoEngine then 
@@ -5952,6 +5978,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local tolerancePercentToSkipOtherPriorities = 1 -- if we are within this tolerance (in%), we don't go to the next priorities
             local MousePitchFactor = 1 -- Mouse control only
             local MouseYawFactor = 1 -- Mouse control only
+            local spaceBrake = false
         function ap.onFlush()
             if antigrav and not ExternalAGG and not antigravOn and antigrav.getBaseAltitude() ~= AntigravTargetAltitude then
                     sba = AntigravTargetAltitude
@@ -6101,8 +6128,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             if sivl == 0 then
                 if isRemote() == 1 and holdingShift then
                     if not Animating then
-                        simulatedX = uclamp(simulatedX + deltaX/2,-resolutionWidth/2,resolutionWidth/2)
-                        simulatedY = uclamp(simulatedY + deltaY/2,-resolutionHeight/2,resolutionHeight/2)
+                        simulatedX = uclamp(simulatedX + deltaX/2,-ResolutionX/2,ResolutionX/2)
+                        simulatedY = uclamp(simulatedY + deltaY/2,-ResolutionY/2,ResolutionY/2)
                     end
                 else
                     simulatedX = 0
@@ -6110,8 +6137,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     -- Except of course autopilot, which is later.
                 end
             else
-                simulatedX = uclamp(simulatedX + deltaX/2,-resolutionWidth/2,resolutionWidth/2)
-                simulatedY = uclamp(simulatedY + deltaY/2,-resolutionHeight/2,resolutionHeight/2)
+                simulatedX = uclamp(simulatedX + deltaX/2,-ResolutionX/2,ResolutionX/2)
+                simulatedY = uclamp(simulatedY + deltaY/2,-ResolutionY/2,ResolutionY/2)
                 mouseDistance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
                 if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
                     local dx,dy = 1,1
@@ -6122,8 +6149,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         -- Do navigation things
     
                         if mouseDistance > DeadZone then
-                            yawInput2 = yawInput2 - (uclamp(mabs(simulatedX)-DeadZone,0,resolutionWidth/2)*utils.sign(simulatedX)) * MouseXSensitivity * dx
-                            pitchInput2 = pitchInput2 - (uclamp(mabs(simulatedY)-DeadZone,0,resolutionHeight/2)*utils.sign(simulatedY)) * MouseYSensitivity * dy
+                            yawInput2 = yawInput2 - (uclamp(mabs(simulatedX)-DeadZone,0,ResolutionX/2)*utils.sign(simulatedX)) * MouseXSensitivity * dx
+                            pitchInput2 = pitchInput2 - (uclamp(mabs(simulatedY)-DeadZone,0,ResolutionY/2)*utils.sign(simulatedY)) * MouseYSensitivity * dy
                         end
                     else
                         simulatedX = 0
@@ -6317,7 +6344,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
                 local targetVec
                 local yawAligned = false
-                local orbitHeightString = getDistanceDisplayString(OrbitTargetOrbit)
+                local orbitHeightString = getDistanceDisplayString(OrbitTargetOrbit,3)
     
                 if OrbitTargetPlanet == nil then
                     OrbitTargetPlanet = planet
@@ -6405,7 +6432,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                     if orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.eccentricity < 1 and coreAltitude > OrbitTargetOrbit*0.9 and coreAltitude < OrbitTargetOrbit*1.4 then
                         if orbit.apoapsis ~= nil then
-                            if orbitCheck() or OrbitAchieved then -- This should get us a stable orbit within 10% with the way we do it
+                            if (orbitCheck() or OrbitAchieved) and not MaintainOrbit then -- This should get us a stable orbit within 10% with the way we do it
                                 if OrbitAchieved then
                                     BrakeIsOn = false
                                     cmdT = 0
@@ -6424,27 +6451,31 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                                 end
                                 
                             else
-                                orbitMsg = "Adjusting Orbit - OrbitHeight: "..orbitHeightString
-                                orbitalRecover = true
-                                -- Just set cruise to endspeed...
-                                cmdC = endSpeed*3.6+1
-                                -- And set pitch to something that scales with vSpd
-                                -- Well, a pid is made for this stuff
-                                local altDiff = OrbitTargetOrbit - coreAltitude
-    
-                                if (VSpdPID == nil) then
-                                    VSpdPID = pid.new(0.1, 0, 1 * 0.1)
+                                if orbitCheck() then 
+                                    orbitMsg = "Maintaining " 
+                                else
+                                    orbitMsg = "Adjusting " 
+                                    orbitalRecover = true
+                                    -- Just set cruise to endspeed...
+                                    cmdC = endSpeed*3.6+1
+                                    -- And set pitch to something that scales with vSpd
+                                    -- Well, a pid is made for this stuff
+                                    local altDiff = OrbitTargetOrbit - coreAltitude
+        
+                                    if (VSpdPID == nil) then
+                                        VSpdPID = pid.new(0.1, 0, 1 * 0.1)
+                                    end
+                                    -- Scale vspd up to cubed as altDiff approaches 0, starting at 2km
+                                    -- 20's are kinda arbitrary but I've tested lots of others and these are consistent
+                                    -- The 2000's also.  
+                                    -- Also the smoothstep might not be entirely necessary alongside the cubing but, I'm sure it helps...
+                                    -- Well many of the numbers changed, including the cubing but.  This looks amazing.  
+                                    VSpdPID:inject(altDiff-vSpd*uclamp((utils.smoothstep(2000-altDiff,-2000,2000))^6*10,1,10)) 
+                                    
+        
+                                    orbitPitch = uclamp(VSpdPID:get(),-60,60) -- Prevent it from pitching so much that cruise starts braking
                                 end
-                                -- Scale vspd up to cubed as altDiff approaches 0, starting at 2km
-                                -- 20's are kinda arbitrary but I've tested lots of others and these are consistent
-                                -- The 2000's also.  
-                                -- Also the smoothstep might not be entirely necessary alongside the cubing but, I'm sure it helps...
-                                -- Well many of the numbers changed, including the cubing but.  This looks amazing.  
-                                VSpdPID:inject(altDiff-vSpd*uclamp((utils.smoothstep(2000-altDiff,-2000,2000))^6*10,1,10)) 
-                                
-    
-                                orbitPitch = uclamp(VSpdPID:get(),-60,60) -- Prevent it from pitching so much that cruise starts braking
-                                
+                                orbitMsg = orbitMsg .." - OrbitHeight: "..orbitHeightString
                             end
                         end
                     else
@@ -7021,7 +7052,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 -- Or 100m above and -30m/s vspeed.  So (Hold-Core) - vspd
                 -- Scenario 1: Hold-c = -100.  Scen2: Hold-c = 100
                 -- 1: 100-30 = 70     2: -100--30 = -70
-                --if not ExternalAGG and antigravOn and not Reentry and HoldAltitude < antigrav.getBaseAltitude() then p("HERE3") HoldAltitude = antigrav.getBaseAltitude() end
                 local altDiff = (HoldAltitude - coreAltitude) - vSpd -- Maybe a multiplier for vSpd here...
                 -- This may be better to smooth evenly regardless of HoldAltitude.  Let's say, 2km scaling?  Should be very smooth for atmo
                 -- Even better if we smooth based on their velocity
@@ -7285,7 +7315,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
     
                 -- Altitude hold and AutoTakeoff orbiting
-                if not inAtmo and (AltitudeHold and HoldAltitude > planet.noAtmosphericDensityAltitude) and not (spaceLaunch or IntoOrbit or Reentry ) then
+                if not inAtmo and abvGndDet == -1 and (AltitudeHold and HoldAltitude > planet.noAtmosphericDensityAltitude) and not (spaceLaunch or IntoOrbit or Reentry ) then
                     if not OrbitAchieved and not IntoOrbit then
                         OrbitTargetOrbit = HoldAltitude -- If AP/VectorToTarget, AP already set this.  
                         OrbitTargetSet = true
@@ -7307,12 +7337,14 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
                 if BrakeLanding then
                     if not initBL then
+                        spaceBrake = false
                         if not throttleMode then
                             cmdT = 0
                         end
                         navCom:setTargetGroundAltitude(500)
                         navCom:activateGroundEngineAltitudeStabilization(500)
                         stablized = true
+                        if not inAtmo then spaceBrake = true end
                         initBL = true
                     end
                     targetPitch = 0
@@ -7422,19 +7454,27 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
                         groundDistance = abvGndDet
                         if groundDistance > -1 then 
-                                if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading then -- Or if they start going back up
+                                if not aggBase and not GearExtended then
+                                    eLL = true
+                                    navCom:setTargetGroundAltitude(LandingGearGroundHeight)
+                                end
+                                if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading and groundDistance-5 < LandingGearGroundHeight then -- Or if they start going back up
                                     BrakeLanding = false
                                     AltitudeHold = false
-                                    if not aggBase then
-                                        eLL = true
-                                        navCom:setTargetGroundAltitude(LandingGearGroundHeight)
-                                    end
                                     upAmount = 0
+                                    if spaceBrake then
+                                        vertical(0,1)
+                                    end
                                     BrakeIsOn = "BL Complete"
                                     autoRoll = autoRollPreference 
                                     apBrk = false
+                                    initBL = false
                                 else
-                                    BrakeIsOn = "BL Slowing"
+                                    if vSpd < -5 then 
+                                        BrakeIsOn = "BL Slowing"
+                                    else
+                                        BrakeIsOn = false
+                                    end
                                 end
                         elseif not skipLandingRate then
                             if StrongBrakes and (constructVelocity:normalize():dot(-up) < 0.999) then
@@ -7444,7 +7484,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                                 BrakeIsOn = "BL hSpd"
                             elseif vSpd < -brakeLandingRate then
                                 BrakeIsOn = "BL BLR"
+                                if spaceBrake then
+                                    vertical(0,1)
+                                end
                             else
+                                if spaceBrake then
+                                    vertical(-1)
+                                end
                                 BrakeIsOn = false
                             end
                         end
@@ -7566,8 +7612,10 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
                 -- Add in vertical speed as well as the front speed, to help with ships that have very bad brakes
                 local addThrust = 0
-                if ExtraEscapeThrust > 0 and not Reentry and  atmosDensity > 0.005 and atmosDensity < 0.1 and vSpd > - 50 then
-                    addThrust = (0.1 - atmosDensity)*adjustedAtmoSpeedLimit*ExtraEscapeThrust
+                if ExtraEscapeThrust > 0 and not Reentry and atmosDensity > 0.005 and atmosDensity < 0.1 and vSpd > -10 then
+                    local fbs = C.getFrictionBurnSpeed() * ExtraEscapeThrust
+                    local aasl = adjustedAtmoSpeedLimit/3.6
+                    if fbs > aasl then addThrust = fbs - aasl - 1 end
                 end
                 throttlePID:inject(adjustedAtmoSpeedLimit/3.6 + addThrust - constructVelocity:dot(constructForward))
                 local pidGet = throttlePID:get()
@@ -7688,7 +7736,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
                 -- Longitudinal Translation
                 local longitudinalEngineTags = 'thrust analog longitudinal '
-                if (UseExtra=="All" or UseExtra=="Longitude") then longitudinalEngineTags = longitudinalEngineTags..ExtraLongitudeTags end
+                if ExtraLongitudeTags ~= "none" and (UseExtra=="All" or UseExtra=="Longitude") then longitudinalEngineTags = longitudinalEngineTags..ExtraLongitudeTags end
                 local longitudinalCommandType = navCom:getAxisCommandType(axisCommandId.longitudinal)
                 if (longitudinalCommandType == axisCommandType.byThrottle) then
                     local longitudinalAcceleration = navCom:composeAxisAccelerationFromThrottle(
@@ -7710,7 +7758,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
                 -- Lateral Translation
                 local lateralStrafeEngineTags = 'thrust analog lateral '
-                if (UseExtra=="All" or UseExtra=="Lateral") then lateralStrafeEngineTags = lateralStrafeEngineTags..ExtraLateralTags end
+                if ExtraLateralTags ~= "none" and (UseExtra=="All" or UseExtra=="Lateral") then lateralStrafeEngineTags = lateralStrafeEngineTags..ExtraLateralTags end
                 local lateralCommandType = navCom:getAxisCommandType(axisCommandId.lateral)
                 if (lateralCommandType == axisCommandType.byThrottle) then
                     local lateralStrafeAcceleration = navCom:composeAxisAccelerationFromThrottle(
@@ -7724,7 +7772,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
                 -- Vertical Translation
                 local verticalStrafeEngineTags = 'thrust analog vertical '
-                if (UseExtra=="All" or UseExtra=="Vertical") then verticalStrafeEngineTags = verticalStrafeEngineTags..ExtraVerticalTags end
+                if ExtraVerticalTags ~= "none" and (UseExtra=="All" or UseExtra=="Vertical") then verticalStrafeEngineTags = verticalStrafeEngineTags..ExtraVerticalTags end
                 local verticalCommandType = navCom:getAxisCommandType(axisCommandId.vertical)
                 if (verticalCommandType == axisCommandType.byThrottle)  then
                     local verticalStrafeAcceleration = navCom:composeAxisAccelerationFromThrottle(
@@ -7830,19 +7878,20 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         local currentAggModifier = antiGravButtonModifier
         local clearAllCheck = time
     
-        function Control.landingGear()
+        function Control.landingGear(eLL)
             GearExtended = not GearExtended
             if GearExtended then
                 VectorToTarget = false
                 LockPitch = nil
                 AP.cmdThrottle(0)
                 if vBooster or hover then 
-                    if inAtmo and abvGndDet == -1 then
+                    if (inAtmo or coreAltitude < 20000) and not eLL then
                         play("bklOn", "BL")
                         StrongBrakes = true -- We don't care about this anymore
                         Reentry = false
                         AutoTakeoff = false
                         VertTakeOff = false
+                        if IntoOrbit then AP.ToggleIntoOrbit() end
                         if BrakeLanding then apBrk = not apBrk end
                         BrakeLanding = true
                         autoRoll = true
@@ -8033,14 +8082,10 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     navCom:updateCommandFromActionStart(axisCommandId.lateral, -1.0)
                     LeftAmount = -1
             elseif action == "up" then
-                upAmount = upAmount + 1
+                AP.vertical(1)
                 if abvGndDet - 3 < LandingGearGroundHeight and coreAltitude > 0 and GearExtended then CONTROL.landingGear() end
-                navCom:deactivateGroundEngineAltitudeStabilization()
-                navCom:updateCommandFromActionStart(axisCommandId.vertical, 1.0)
             elseif action == "down" then
-                upAmount = upAmount - 1
-                navCom:deactivateGroundEngineAltitudeStabilization()
-                navCom:updateCommandFromActionStart(axisCommandId.vertical, -1.0)
+                AP.vertical(-1)
             elseif action == "groundaltitudeup" then
                 groundAltStart()
             elseif action == "groundaltitudedown" then
@@ -8068,62 +8113,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
                 ATLAS.adjustAutopilotTargetIndex(1)
             elseif action == "option3" then
-                local function ToggleWidgets()
-                    UnitHidden = not UnitHidden
-                    if not UnitHidden then
-                        play("wid","DH")
-                        u.showWidget()
-                        c.showWidget()
-                        if atmofueltank_size > 0 then
-                            _autoconf.displayCategoryPanel(atmofueltank, atmofueltank_size,
-                                "Atmo Fuel", "fuel_container")
-                            fuelPanelID = _autoconf.panels[_autoconf.panels_size]
-                        end
-                        if spacefueltank_size > 0 then
-                            _autoconf.displayCategoryPanel(spacefueltank, spacefueltank_size,
-                                "Space Fuel", "fuel_container")
-                            spacefuelPanelID = _autoconf.panels[_autoconf.panels_size]
-                        end
-                        if rocketfueltank_size > 0 then
-                            _autoconf.displayCategoryPanel(rocketfueltank, rocketfueltank_size,
-                                "Rocket Fuel", "fuel_container")
-                            rocketfuelPanelID = _autoconf.panels[_autoconf.panels_size]
-                        end
-                        parentingPanelId = s.createWidgetPanel("Docking")
-                        parentingWidgetId = s.createWidget(parentingPanelId,"parenting")
-                        s.addDataToWidget(u.getWidgetDataId(),parentingWidgetId)
-                        coreCombatStressPanelId = s.createWidgetPanel("Core combat stress")
-                        coreCombatStressgWidgetId = s.createWidget(coreCombatStressPanelId,"core_stress")
-                        s.addDataToWidget(c.getWidgetDataId(),coreCombatStressgWidgetId)
-                        if shield ~= nil then shield.showWidget() end
-                    else
-                        play("hud","DH")
-                        u.hideWidget()
-                        c.hideWidget()
-                        if fuelPanelID ~= nil then
-                            sysDestWid(fuelPanelID)
-                            fuelPanelID = nil
-                        end
-                        if parentingPanelId ~=nil then
-                            sysDestWid(parentingPanelId)
-                            parentingPanelId=nil
-                        end
-                        if coreCombatStressPanelId ~=nil then
-                            sysDestWid(coreCombatStressPanelId)
-                            coreCombatStressPanelId=nil
-                        end
-                        if spacefuelPanelID ~= nil then
-                            sysDestWid(spacefuelPanelID)
-                            spacefuelPanelID = nil
-                        end
-                        if rocketfuelPanelID ~= nil then
-                            sysDestWid(rocketfuelPanelID)
-                            rocketfuelPanelID = nil
-                        end
-                        if shield ~= nil then shield.hideWidget() end
-                    end
-                end
-    
                 toggleView = false
                 if AltIsOn and holdingShift then 
                     local onboard = ""
@@ -8139,8 +8128,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     else
                         showHud = true
                     end
+                    if RADAR then RADAR.ToggleRadarPanel() end
                 end
-                ToggleWidgets()
             elseif action == "option4" then
                 toggleView = false      
                 if AltIsOn and holdingShift then 
@@ -8347,19 +8336,9 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 navCom:updateCommandFromActionStop(axisCommandId.lateral, 1.0)
                 LeftAmount = 0
             elseif action == "up" then
-                upAmount = 0
-                navCom:updateCommandFromActionStop(axisCommandId.vertical, -1.0)
-                if stablized then 
-                    navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                    sEFC = true
-                end
+                AP.vertical(0,-1)
             elseif action == "down" then
-                upAmount = 0
-                navCom:updateCommandFromActionStop(axisCommandId.vertical, 1.0)
-                if stablized then 
-                    navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
-                    sEFC = true 
-                end
+                AP.vertical(0,1)
             elseif action == "groundaltitudeup" then
                 groundAltStop()
                 toggleView = false
@@ -8675,7 +8654,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local uclamp = utils.clamp
             local navCom = Nav.axisCommandManager
     
-            local targetGroundAltitude = LandingGearGroundHeight -- So it can tell if one loaded or not
             local coreHalfDiag = 13
             local elementsID = c.getElementIdList()
     
@@ -8684,16 +8662,18 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local function float_eq(a, b) -- float equation
                 if a == 0 then
                     return mabs(b) < 1e-09
-                end
-                if b == 0 then
+                elseif b == 0 then
                     return mabs(a) < 1e-09
+                else
+                    return mabs(a - b) < math.max(mabs(a), mabs(b)) * epsilon
                 end
-                return mabs(a - b) < math.max(mabs(a), mabs(b)) * epsilon
             end
+            
             local function round(num, numDecimalPlaces) -- rounds variable num to numDecimalPlaces
                 local mult = 10 ^ (numDecimalPlaces or 0)
                 return mfloor(num * mult + 0.5) / mult
             end
+    
             local function addTable(table1, table2) -- Function to add two tables together
                 for k,v in pairs(table2) do
                     if type(k)=="string" then
@@ -8704,6 +8684,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
                 return table1
             end
+    
             local function saveableVariables(subset) -- returns saveable variables by catagory
                 local returnSet = {}
                     -- Complete list of user variables above, must be in saveableVariables to be stored on databank
@@ -8724,6 +8705,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     return savableVariablesPhysics
                 end            
             end
+    
             local function SaveDataBank(copy) -- Save values to the databank.
                 local function writeData(dataList)
                     for k, v in pairs(dataList) do
@@ -8742,28 +8724,28 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                 end
             end
+    
             local function play(sound, ID, type)
                 if (type == nil and not voices) or (type ~= nil and not alerts) or soundFolder == "archHUD" then return end
                 s.playSound(soundFolder.."/"..sound..".mp3")
             end
+    
             local function svgText(x, y, text, class, style) -- processes a svg text string, saves code lines by doing it this way
-                if class == nil then class = "" end
-                if style == nil then style = "" end
-                return stringf([[<text class="%s" x=%s y=%s style="%s">%s</text>]], class,x, y, style, text)
+                return stringf([[<text class="%s" x=%s y=%s style="%s">%s</text>]], class or "",x, y, style or "", text)
             end
         
             local function getDistanceDisplayString(distance, places) -- Turn a distance into a string to a number of places
-                local su = distance > 100000
-                if places == nil then places = 1 end
-                if su then
+                places = places or 1
+                local unit = "m"
+                if distance > 100000 then
                     -- Convert to SU
-                    return round(distance / 1000 / 200, places).."SU"
-                elseif distance < 1000 then
-                    return round(distance, places).."M"
-                else
-                    -- Convert to KM
-                    return round(distance / 1000, places).."KM"
+                    distance = distance / 200000
+                    unit = "su"
+                elseif distance > 1000 then
+                    distance = distance / 1000
+                    unit = "km"
                 end
+                return round(distance, places)..unit
             end
         
             local function FormatTimeString(seconds) -- Format a time string for display
@@ -8794,11 +8776,12 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     return "0s"
                 end
             end
-        local function radarSetup()
-            if radar_1 and FullRadar then 
-                RADAR = RadarClass(c, s, u, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
+    
+            local function radarSetup()
+                if radar_1 then 
+                    RADAR = RadarClass(c, s, u, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
+                end
             end
-        end
     
         function program.radarSetup()
             radarSetup()
@@ -8830,7 +8813,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             processVariableList(autoVariables)
                         else
                             processVariableList(autoVariables)
-                            msgText = "Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use saved values"
+                            msgText = "Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use database saved values"
                             msgTimer = 5
                             valuesAreSet = false
                         end
@@ -8843,10 +8826,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         end
                         if #SavedLocations>0 then customlocations = addTable(customlocations, SavedLocations) end
                     else
-                        msgText = "No databank found. Attach one to control u and rerun \nthe autoconfigure to save preferences and locations"
+                        msgText = "No databank found. Attach one to control unit and rerun \nthe autoconfigure to save preferences and locations"
                     end
-                    resolutionWidth = ResolutionX
-                    resolutionHeight = ResolutionY
                     BrakeToggleStatus = BrakeToggleDefault
                     userControlScheme = string.lower(userControlScheme)
                     autoRoll = autoRollPreference
@@ -9094,7 +9075,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         BrakeIsOn = false
                     end
     
-                    navCom:setTargetGroundAltitude(targetGroundAltitude)
+                    navCom:setTargetGroundAltitude(LandingGearGroundHeight)
     
                     WasInAtmo = inAtmo
     
@@ -9136,7 +9117,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                                 }
                     end
     
-                    local altTable = { [1]=4480, [6]=4480, [7]=6270, [27]=4150 } -- Alternate min space engine altitudes for madis, sinnen, sicari, haven
+                    local altTable = { [1]=6637, [2]=3426, [26]=4242, [27]=4150, [3]=21452, [8]=3434, [9]=5916 } -- Measured min space engine altitudes for Madis, Alioth, Sanctuary, Haven, Thades, Teoma, Jago
                     -- No Atmo Heights for Madis, Alioth, Thades, Talemai, Feli, Sicari, Sinnen, Teoma, Jago, Sanctuary, Haven, Lacobus, Symeon, Ion.
                     local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[27]=7700,[100]=12511,[110]=7792,[120]=11766} 
                     for galaxyId,galaxy in pairs(atlas) do
@@ -9150,8 +9131,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             planet.center = vec3(planet.center)
                             planet.name = planet.name[1]
                     
-                            planet.noAtmosphericDensityAltitude = noAtmoAlt[planet.id] or planet.atmosphereThickness or (planet.atmosphereRadius-planet.radius)
-                            planet.spaceEngineMinAltitude = altTable[planet.id] or 0.68377*(planet.atmosphereThickness)
+                            planet.noAtmosphericDensityAltitude = noAtmoAlt[planet.id] or planet.atmosphereThickness
+                            planet.spaceEngineMinAltitude = altTable[planet.id] or 0.5353125*(planet.atmosphereThickness)
                                     
                             planet.planetarySystemId = galaxyId
                             planet.bodyId = planet.id
@@ -9282,15 +9263,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         end
         
         function program.onUpdate()
-            if not SetupComplete then
-                local cont = coroutine.status (beginSetup)
-                if cont == "suspended" then 
-                    local value, done = coroutine.resume(beginSetup)
-                    if done then s.print("ERROR STARTUP: "..done) end
-                elseif cont == "dead" then
-                    SetupComplete = true
-                end
-            end
             if SetupComplete then
                 Nav:update()
                 if inAtmo and AtmoSpeedAssist and throttleMode then
@@ -9320,6 +9292,14 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     u.exit()
                 end
                 if userBase then PROGRAM.ExtraOnUpdate() end
+            else
+                local cont = coroutine.status (beginSetup)
+                if cont == "suspended" then 
+                    local value, done = coroutine.resume(beginSetup)
+                    if done then s.print("ERROR STARTUP: "..done) end
+                elseif cont == "dead" then
+                    SetupComplete = true
+                end
             end
         end
     
