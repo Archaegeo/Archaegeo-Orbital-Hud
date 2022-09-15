@@ -1816,12 +1816,16 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 elseif k == "BrakeToggleDefault" then 
                     BrakeToggleStatus = BrakeToggleDefault
                 elseif k == "FullRadar" then
-                    if RADAR then 
+                    if not FullRadar then 
+                        p("HERE1")
                         RADAR.ToggleRadarPanel()
                         FullRadar = false
+                        p("HERE2")
                     else
+                        p("HERE3")
                         FullRadar = true
                         PROGRAM.radarSetup()
+                        p("HERE4")
                     end
                 end
             end
