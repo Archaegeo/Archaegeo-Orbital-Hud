@@ -130,7 +130,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
 
         if radar_1 or radar_2 then RADAR.assignRadar() end
         if (activeRadar) then
-            radarContacts = #radarData
+
             if #radarData > 0 then
 
                 local count, count2 = 0, 0
@@ -141,7 +141,6 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
                 for _,v in pairs(radarData) do
                     local distance = getDistance(v)
                     if distance > 0.0 then 
-                        --distance = tonum(distance)
                         if hasMatchingTransponder(v) == 1 then
                             insert(friendlies,v)
                         end
@@ -155,39 +154,39 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
                             local size = getSize(v)
                             local sz = sizeMap[size]
                             local cType = getConstructKind(v)
-                            if abandoned or (not abandoned and distance < radarDist and (sz > 27 or cType == 4 or cType == 6)) then
+                            if abandoned or (distance < radarDist and (sz > 27 or cType == 4 or cType == 6)) then
                                 static = static + 1
-                                local name = getConstructName(v)
+                                local wp = {worldPos["x"],worldPos["y"],worldPos["z"]} 
                                 local construct = contacts[v]
-                                local wp = {worldPos["x"],worldPos["y"],worldPos["z"]}  
                                 if construct == nil then
                                     sz = sz+coreHalfDiag
-                                    contacts[v] = {pts = {}, ref = wp, name = name, i = 0, radius = sz, skipCalc = false}
+                                    contacts[v] = {pts = {}, ref = wp, name = getConstructName(v), i = 0, radius = sz, skipCalc = false}
                                     construct = contacts[v]
                                 end
-                                if abandoned or cType == 4 or cType == 6 then
-                                    construct.center = vec3(conWorldPos(v))
-                                    construct.skipCalc = true
+                                if not construct.skipCalc then
+                                    if (abandoned or cType == 4 or cType == 6) then
+                                        construct.center = vec3(conWorldPos(v))
+                                        construct.skipCalc = true
+                                    else
+                                        updateVariables(construct, distance, wp)
+                                        count2 = count2 + 1
+                                    end                                        
                                     if abandoned and not construct.abandoned then
                                         local time = s.getArkTime()
                                         if lastPlay+5 < time then 
                                             lastPlay = time
                                             play("abRdr", "RD")
                                         end
-                                        s.print("Abandoned Construct: "..name.." ("..size.." ".. cTypeString[cType]..") at ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
+                                        s.print("Abandoned Construct: "..construct.name.." ("..size.." ".. cTypeString[cType]..") at ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
                                         msgText = "Abandoned Radar Contact ("..size.." ".. cTypeString[cType]..") detected"
                                         construct.abandoned = true
                                     end 
-                                end
-                                if not construct.skipCalc then 
-                                    updateVariables(construct, distance, wp)
-                                    count2 = count2 + 1
                                 else
                                     insert(knownContacts, construct) 
                                 end
                             end
                             count = count + 1
-                            if (nearPlanet and count > 300 or count2 > 30) or (not nearPlanet and count > 300 or count2 > 30) then
+                            if count > 300 or count2 > 30 then
                                 coroutine.yield()
                                 count, count2 = 0, 0
                             end
@@ -270,9 +269,10 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
     function Radar.GetRadarHud(friendx, friendy, radarX, radarY)
         local radarMessage, msg
         local num = numKnown or 0 
+        radarContacts = #radarData
         if radarContacts > 0 then 
             if CollisionSystem then 
-                msg = num.."/"..static.." Plotted : "..(radarContacts-static).." Ignored" 
+                msg = num.."/"..static.." Known/InRange : "..radarContacts.." Total" 
             else
                 msg = "Radar Contacts: "..radarContacts
             end

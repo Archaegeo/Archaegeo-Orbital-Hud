@@ -4,6 +4,7 @@ Version 1.805
 - More Radar refactor 
     - Positions for Static, Space, and Abandoned cores now 100% accurate with no trilateration.
     - Dynamic M+ still trilaterated in case they are stationary AGG for collision avoidance.
+- Fix (G) Brake Landing not applying brakes if withing ground height when applied.
 
 Version 1.800 
 - No Atmo (MOON) IMPROVEMENTS 
