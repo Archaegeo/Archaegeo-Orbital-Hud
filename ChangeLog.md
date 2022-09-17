@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 1.805
+- More Radar refactor 
+    - Positions for Static, Space, and Abandoned cores now 100% accurate with no trilateration.
+    - Dynamic M+ still trilaterated in case they are stationary AGG for collision avoidance.
+- Fix (G) Brake Landing not applying brakes if withing ground height when applied.
+
 Version 1.800 
 - No Atmo (MOON) IMPROVEMENTS 
     - Alt-6 is now safe to use from no-atmo surface, will not instant take off at current height.  Once clear of ground detect range

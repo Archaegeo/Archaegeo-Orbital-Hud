@@ -2670,7 +2670,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                                 apBrk = false
                                 initBL = false
                             else
-                                if vSpd < -5 then 
+                                if vSpd < -5 or absHspd > 0.05 then 
                                     BrakeIsOn = "BL Slowing"
                                 else
                                     BrakeIsOn = false
