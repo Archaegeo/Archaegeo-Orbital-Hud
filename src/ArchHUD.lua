@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.800
+VERSION_NUMBER = 0.805
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -1294,7 +1294,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local contacts = {}
             local radarData
             local lastPlay = 0
-            local vec3 = vec3
             local insert = table.insert
             local activeRadarState = -4
             local radarStatus = {
@@ -1306,6 +1305,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
               }
             local radarWidgetId, perisWidgetId
             local radarDataId, perisDataId
+            local hasMatchingTransponder 
+            local getConstructKind 
+            local isConstructAbandoned 
+            local getConstructName 
+            local getDistance 
+            local getSize 
+            local conWorldPos 
         local function toggleRadarPanel()
             if radarPanelId ~= nil and peris == 0 then
                 sysDestWid(radarPanelId)
@@ -1398,15 +1404,9 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
             if radar_1 or radar_2 then RADAR.assignRadar() end
             if (activeRadar) then
-                radarContacts = #radarData
+    
                 if #radarData > 0 then
-                    local hasMatchingTransponder = activeRadar.hasMatchingTransponder
-                    local getConstructKind = activeRadar.getConstructKind
-                    local isConstructAbandoned = activeRadar.isConstructAbandoned
-                    local getConstructName = activeRadar.getConstructName
-                    local getDistance = activeRadar.getConstructDistance
-                    local getSize = activeRadar.getConstructCoreSize
-                    local wp = {worldPos["x"],worldPos["y"],worldPos["z"]}  --getTrueWorldPos()
+    
                     local count, count2 = 0, 0
                     local radarDist = velMag * 10
                     local nearPlanet = nearPlanet
@@ -1415,9 +1415,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     for _,v in pairs(radarData) do
                         local distance = getDistance(v)
                         if distance > 0.0 then 
-                            local size = getSize(v)
-                            local sz = sizeMap[size]
-                            distance = tonum(distance)
                             if hasMatchingTransponder(v) == 1 then
                                 insert(friendlies,v)
                             end
@@ -1426,39 +1423,44 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                                 msgTimer = 7
                                 warpdrive.initiate()
                             end
-                            if CollisionSystem then
+                            local abandoned = AbandonedRadar and isConstructAbandoned(v) == 1
+                            if CollisionSystem or abandoned then
+                                local size = getSize(v)
+                                local sz = sizeMap[size]
                                 local cType = getConstructKind(v)
-                                local abandoned = AbandonedRadar and isConstructAbandoned(v) == 1
-                                local name = getConstructName(v)
-                                if sz == nil then p("ID: "..v.."* Name: "..name.."* Size:"..size.."* Dist:"..distance) end
                                 if abandoned or (distance < radarDist and (sz > 27 or cType == 4 or cType == 6)) then
                                     static = static + 1
-                                    local name = getConstructName(v)
+                                    local wp = {worldPos["x"],worldPos["y"],worldPos["z"]} 
                                     local construct = contacts[v]
                                     if construct == nil then
                                         sz = sz+coreHalfDiag
-                                        contacts[v] = {pts = {}, ref = wp, name = name, i = 0, radius = sz, skipCalc = false}
+                                        contacts[v] = {pts = {}, ref = wp, name = getConstructName(v), i = 0, radius = sz, skipCalc = false}
                                         construct = contacts[v]
                                     end
-                                    if not construct.skipCalc then 
-                                        updateVariables(construct, distance, wp)
-                                        if abandoned and not construct.abandoned and construct.center then
+                                    if not construct.skipCalc then
+                                        if (abandoned or cType == 4 or cType == 6) then
+                                            construct.center = vec3(conWorldPos(v))
+                                            construct.skipCalc = true
+                                        else
+                                            updateVariables(construct, distance, wp)
+                                            count2 = count2 + 1
+                                        end                                        
+                                        if abandoned and not construct.abandoned then
                                             local time = s.getArkTime()
                                             if lastPlay+5 < time then 
                                                 lastPlay = time
                                                 play("abRdr", "RD")
                                             end
-                                            s.print("Abandoned Construct: "..name.." ("..size.." ".. cTypeString[cType]..") at estimated ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
+                                            s.print("Abandoned Construct: "..construct.name.." ("..size.." ".. cTypeString[cType]..") at ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
                                             msgText = "Abandoned Radar Contact ("..size.." ".. cTypeString[cType]..") detected"
                                             construct.abandoned = true
-                                        end
-                                        count2 = count2 + 1
+                                        end 
                                     else
                                         insert(knownContacts, construct) 
                                     end
                                 end
                                 count = count + 1
-                                if (nearPlanet and count > 300 or count2 > 30) or (not nearPlanet and count > 300 or count2 > 30) then
+                                if count > 300 or count2 > 30 then
                                     coroutine.yield()
                                     count, count2 = 0, 0
                                 end
@@ -1512,6 +1514,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
                 end
                 radars = {activeRadar}
+                hasMatchingTransponder = activeRadar.hasMatchingTransponder
+                getConstructKind = activeRadar.getConstructKind
+                isConstructAbandoned = activeRadar.isConstructAbandoned
+                getConstructName = activeRadar.getConstructName
+                getDistance = activeRadar.getConstructDistance
+                getSize = activeRadar.getConstructCoreSize
+                conWorldPos = activeRadar.getConstructWorldPos
                 radarData = activeRadar.getConstructIds()
                 pickType()
             else
@@ -1534,9 +1543,10 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         function Radar.GetRadarHud(friendx, friendy, radarX, radarY)
             local radarMessage, msg
             local num = numKnown or 0 
+            radarContacts = #radarData
             if radarContacts > 0 then 
                 if CollisionSystem then 
-                    msg = num.."/"..static.." Plotted : "..(radarContacts-static).." Ignored" 
+                    msg = num.."/"..static.." Known/InRange : "..radarContacts.." Total" 
                 else
                     msg = "Radar Contacts: "..radarContacts
                 end
@@ -1618,6 +1628,13 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 activeRadar = radar_1
             end
             activeRadarState=activeRadar.getOperationalState()
+            hasMatchingTransponder = activeRadar.hasMatchingTransponder
+            getConstructKind = activeRadar.getConstructKind
+            isConstructAbandoned = activeRadar.isConstructAbandoned
+            getConstructName = activeRadar.getConstructName
+            getDistance = activeRadar.getConstructDistance
+            getSize = activeRadar.getConstructCoreSize
+            conWorldPos = activeRadar.getConstructWorldPos
             radars = {activeRadar}
             radarData = activeRadar.getConstructIds()
             pickType()
@@ -1630,7 +1647,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         setup()
     
         return Radar
-    end 
+    end  
     local function ShieldClass(shield, stringmatch, mfloor) -- Everything related to shield but draw data passed to HUD Class.
         local Shield = {}
         local RCD = shield.getResistancesCooldown()
@@ -3507,15 +3524,11 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         BrakeToggleStatus = BrakeToggleDefault
                     elseif k == "FullRadar" then
                         if not FullRadar then 
-                            p("HERE1")
                             RADAR.ToggleRadarPanel()
                             FullRadar = false
-                            p("HERE2")
                         else
-                            p("HERE3")
                             FullRadar = true
                             PROGRAM.radarSetup()
-                            p("HERE4")
                         end
                     end
                 end
@@ -7473,7 +7486,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                                     apBrk = false
                                     initBL = false
                                 else
-                                    if vSpd < -5 then 
+                                    if vSpd < -5 or absHspd > 0.05 then 
                                         BrakeIsOn = "BL Slowing"
                                     else
                                         BrakeIsOn = false
