@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.805
+VERSION_NUMBER = 0.000
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -9134,8 +9134,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     end
     
                     local altTable = { [1]=6637, [2]=3426, [26]=4242, [27]=4150, [3]=21452, [8]=3434, [9]=5916 } -- Measured min space engine altitudes for Madis, Alioth, Sanctuary, Haven, Thades, Teoma, Jago
-                    -- No Atmo Heights for Madis, Alioth, Thades, Talemai, Feli, Sicari, Sinnen, Teoma, Jago, Sanctuary, Haven, Lacobus, Symeon, Ion.
-                    local noAtmoAlt = {[1]=8041,[2]=6263,[3]=39281,[4]=10881,[5]=78382,[6]=8761,[7]=11616,[8]=6272,[9]=10891,[26]=7791,[27]=7700,[100]=12511,[110]=7792,[120]=11766} 
                     for galaxyId,galaxy in pairs(atlas) do
                         -- Create a copy of Space with the appropriate SystemId for each galaxy
                         atlas[galaxyId][0] = getSpaceEntry()
@@ -9147,7 +9145,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                             planet.center = vec3(planet.center)
                             planet.name = planet.name[1]
                     
-                            planet.noAtmosphericDensityAltitude = noAtmoAlt[planet.id] or planet.atmosphereThickness
+                            planet.noAtmosphericDensityAltitude = planet.atmosphereThickness
                             planet.spaceEngineMinAltitude = altTable[planet.id] or 0.5353125*(planet.atmosphereThickness)
                                     
                             planet.planetarySystemId = galaxyId
