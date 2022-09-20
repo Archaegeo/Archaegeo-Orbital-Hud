@@ -147,7 +147,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     brakeFlatFactor = 1 -- (Default: 1) When braking, this factor will increase the brake force by a flat brakeFlatFactor * velocity direction> (higher value may be unstable)
     DampingMultiplier = 40 -- (Default: 40) How strongly autopilot dampens when nearing the correct orientation
     hudTickRate = 0.0666667 -- (Default: 0.0666667) Set the tick rate for your HUD.
-    ExtraEscapeThrust = 1.0 --export: (Default: 1.0) Set this to 1 to use friction burn speed as your max speed when escaping atmosphere. Setting other than 1 will be a the value multiplied by your friction burn speed.
+    ExtraEscapeThrust = 1.0 -- (Default: 1.0) Set this to 1 to use friction burn speed as your max speed when escaping atmosphere. Setting other than 1 will be a the value multiplied by your friction burn speed.
     ExtraLongitudeTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "forward faster major" These will be added to the engines that are control by longitude.
     ExtraLateralTags = "none" -- (Default: "none") Enter any extra lateral tags you use inside '' seperated by space, i.e. "left right" These will be added to the engines that are control by lateral.
     ExtraVerticalTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "up down" These will be added to the engines that are control by vertical.
@@ -6077,7 +6077,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     
     
             brakeInput2 = 0
-    
+
         -- Start old APTick Code 
             atmosDensity = atmosphere()
             inAtmo = false or (coreAltitude < planet.noAtmosphericDensityAltitude and atmosDensity > 0.00001 )
@@ -7589,7 +7589,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             end
     
         -- End old APTick Code
-    
+
             if (inAtmo or Reentry or finalLand) and AtmoSpeedAssist and throttleMode then
                 -- This is meant to replace cruise
                 -- Uses AtmoSpeedLimit as the desired speed in which to 'cruise'
@@ -7609,7 +7609,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 -- Along with a message like, "Atmospheric Speed Limit Reached - Press Something to Disable Temporarily"
                 -- But of course, don't throttle up for them.  Only down. 
     
-    
+
     
                 if (throttlePID == nil) then
                     throttlePID = pid.new(0.1, 0, 1) -- First param, higher means less range in which to PID to a proper value
@@ -7633,6 +7633,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                     local aasl = adjustedAtmoSpeedLimit/3.6
                     if fbs > aasl then addThrust = fbs - aasl - 1 end
                 end
+ 
                 throttlePID:inject(adjustedAtmoSpeedLimit/3.6 + addThrust - constructVelocity:dot(constructForward))
                 local pidGet = throttlePID:get()
                 calculatedThrottle = uclamp(pidGet,-1,1)
@@ -7645,7 +7646,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         ThrottleValue = PlayerThrottle
                     end
                 end
-    
+
                 
                 -- Then additionally
                 if (brakePID == nil) then
@@ -7823,12 +7824,12 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         '', tolerancePercentToSkipOtherPriorities)
                 end
             end
-    
+  
             -- Rotation
             local angularAcceleration = torqueFactor * (targetAngularVelocity - constructAngularVelocity)
             local airAcceleration = vec3(C.getWorldAirFrictionAngularAcceleration())
             angularAcceleration = angularAcceleration - airAcceleration -- Try to compensate air friction
-            
+
             Nav:setEngineTorqueCommand('torque', angularAcceleration, keepCollinearity, 'airfoil', '', '',
                 tolerancePercentToSkipOtherPriorities)
     
