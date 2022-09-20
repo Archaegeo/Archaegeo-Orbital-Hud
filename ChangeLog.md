@@ -2,6 +2,7 @@
 
 Version 2.000
 - Works with Demo/Release.  No major changes from 1.805, just minor internal to reflect new atlas.lua
+- Fix GFN issue from 1.800
 
 Version 1.805
 - More Radar refactor 
