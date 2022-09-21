@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.000
+VERSION_NUMBER = 0.001
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -1495,7 +1495,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
         local function pickType()
             if activeRadar then
                 rType = "Atmo"
-                if activeRadar.getRange() > 10000 then 
+                if string.find(activeRadar.getName(),"Space") then  
                     rType = "Space" 
                 end
             end
@@ -1784,7 +1784,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 local tankSlotIndex = 7
                 local slottedTankType = ""
                 local slottedTanks = 0        
-                local fuelUpdateDelay = 120.0*hudTickRate
+                local fuelUpdateDelay = 15.0*hudTickRate
                 local fuelTimeLeftR = {}
                 local fuelPercentR = {}
                 local fuelTimeLeftS = {}
@@ -4898,15 +4898,21 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 vecB = vecB:project_on_plane(normal)
                 return atan(vecA:cross(vecB):dot(normal), vecA:dot(vecB))
             end
+            local vMaxDistance
+            local hMaxDistance
+            if hover then hMaxDistance = hover.getMaxDistance()*2 end
+            if vBooster then vMaxDistance = vBooster.getMaxDistance()*2 end
             local function AboveGroundLevel()
                 local function hoverDetectGround()
                     local vgroundDistance = -1
                     local hgroundDistance = -1
                     if vBooster then
                         vgroundDistance = vBooster.getDistance()
+                        if vgroundDistance > vMaxDistance then vgroundDistance = -1 end
                     end
                     if hover then
                         hgroundDistance = hover.getDistance()
+                        if hgroundDistance > hMaxDistance then hgroundDistance = -1 end
                     end
                     if vgroundDistance ~= -1 and hgroundDistance ~= -1 then
                         if vgroundDistance < hgroundDistance then
@@ -4930,6 +4936,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 end
                 if telemeter_1 then 
                     groundDistance = telemeter_1.raycast().distance
+                    if groundDistance == 0 then groundDistance = -1 end
                 end
                 if hovGndDet ~= -1 and groundDistance ~= -1 then
                     if hovGndDet < groundDistance then 
