@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.001
+
+- Fuel time remaining updates 8 times faster
+- Fix hover/vbooster distance returns affecting flight mechanics
+- Fix radar type detection with only space radar
+
 Version 2.000
 - Works with Demo/Release.  No major changes from 1.805, just minor internal to reflect new atlas.lua
 - Fix GFN issue from 1.800

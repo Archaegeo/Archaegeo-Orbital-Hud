@@ -221,7 +221,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
     local function pickType()
         if activeRadar then
             rType = "Atmo"
-            if activeRadar.getRange() > 10000 then 
+            if string.find(activeRadar.getName(),"Space") then 
                 rType = "Space" 
             end
         end

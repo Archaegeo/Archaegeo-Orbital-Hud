@@ -77,7 +77,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             local tankSlotIndex = 7
             local slottedTankType = ""
             local slottedTanks = 0        
-            local fuelUpdateDelay = 120.0*hudTickRate
+            local fuelUpdateDelay = 15.0*hudTickRate
             local fuelTimeLeftR = {}
             local fuelPercentR = {}
             local fuelTimeLeftS = {}
