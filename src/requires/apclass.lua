@@ -82,15 +82,21 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             vecB = vecB:project_on_plane(normal)
             return atan(vecA:cross(vecB):dot(normal), vecA:dot(vecB))
         end
+        local vMaxDistance
+        local hMaxDistance
+        if hover then hMaxDistance = hover.getMaxDistance()*2 end
+        if vBooster then vMaxDistance = vBooster.getMaxDistance()*2 end
         local function AboveGroundLevel()
             local function hoverDetectGround()
                 local vgroundDistance = -1
                 local hgroundDistance = -1
                 if vBooster then
                     vgroundDistance = vBooster.getDistance()
+                    if vgroundDistance > vMaxDistance then vgroundDistance = -1 end
                 end
                 if hover then
                     hgroundDistance = hover.getDistance()
+                    if hgroundDistance > hMaxDistance then hgroundDistance = -1 end
                 end
                 if vgroundDistance ~= -1 and hgroundDistance ~= -1 then
                     if vgroundDistance < hgroundDistance then
@@ -114,6 +120,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
             if telemeter_1 then 
                 groundDistance = telemeter_1.raycast().distance
+                if groundDistance == 0 then groundDistance = -1 end
             end
             if hovGndDet ~= -1 and groundDistance ~= -1 then
                 if hovGndDet < groundDistance then 
