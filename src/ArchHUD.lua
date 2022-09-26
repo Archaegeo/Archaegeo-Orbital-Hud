@@ -8,13 +8,14 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.001
+VERSION_NUMBER = 0.002
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
 useTheseSettings = false --  Change this to true to override databank saved settings
 userControlScheme = "virtual joystick" -- (Default: "virtual joystick") Set to "virtual joystick", "mouse", or "keyboard". This can be set by holding SHIFT and clicking the button in lower left of main Control buttons view.
 soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder with sound files in it. Must be changed from archHUD to prevent other scripts making your PC play sounds.
+privateFile = "name" --export: (Default "name") Set to the name of the file for private locations to prevent others from getting your private locations
 -- True/False variables
     -- NOTE: saveableVariablesBoolean below must contain any True/False variables that needs to be saved/loaded from databank.
 
@@ -27,7 +28,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     InvertMouse = false -- (Default: false) If true, then when controlling flight mouse Y axis is inverted (pushing up noses plane down) Does not affect selecting buttons or camera.
     autoRollPreference = false -- (Default: false) [Only in atmosphere] - When the pilot stops rolling, flight model will try to get back to horizontal (no roll)
     ExternalAGG = false -- (Default: false) Toggle On if using an external AGG system. If on will prevent this HUD from doing anything with AGG.
-    UseSatNav = false -- (Default: false) Toggle on if using Trog SatNav script. This will provide SatNav support.
     ShouldCheckDamage = false -- (Default: true) Whether or not damage checks are performed. Disable for performance improvement on very large ships or if using external Damage Report and you do not want the built in info.
     AtmoSpeedAssist = true -- (Default: true) Whether or not atmospheric speeds should be limited to a maximum of AtmoSpeedLimit (Hud built in speed limiter)
     ForceAlignment = false -- (Default: false) Whether velocity vector alignment should be forced when in Altitude Hold (needed for ships that drift alignment in altitude hold mode due to poor inertial matrix)
@@ -49,8 +49,8 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
     ECUHud = false -- (Default: false) If set to true, ECU will act like HUD when activated vice like ECU.
     MaintainOrbit = true --export: (Default: true) If true, ship will attempt to maintain orbit if it decays (when not autopiloting to a landing point) till fuel runs out.
 
-    saveableVariablesBoolean = {userControlScheme={set=function (i)userControlScheme=i end,get=function() return userControlScheme end}, soundFolder={set=function (i)soundFolder=i end,get=function() return soundFolder end}, freeLookToggle={set=function (i)freeLookToggle=i end,get=function() return freeLookToggle end}, BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}, RemoteFreeze={set=function (i)RemoteFreeze=i end,get=function() return RemoteFreeze end}, brightHud={set=function (i)brightHud=i end,get=function() return brightHud end}, RemoteHud={set=function (i)RemoteHud=i end,get=function() return RemoteHud end}, VanillaRockets={set=function (i)VanillaRockets=i end,get=function() return VanillaRockets end},
-    InvertMouse={set=function (i)InvertMouse=i end,get=function() return InvertMouse end}, autoRollPreference={set=function (i)autoRollPreference=i end,get=function() return autoRollPreference end}, ExternalAGG={set=function (i)ExternalAGG=i end,get=function() return ExternalAGG end}, UseSatNav={set=function (i)UseSatNav=i end,get=function() return UseSatNav end}, ShouldCheckDamage={set=function (i)ShouldCheckDamage=i end,get=function() return ShouldCheckDamage end}, 
+    saveableVariablesBoolean = {userControlScheme={set=function (i)userControlScheme=i end,get=function() return userControlScheme end}, soundFolder={set=function (i)soundFolder=i end,get=function() return soundFolder end}, privateFile={set=function (i)privateFile=i end,get=function() return privateFile end}, freeLookToggle={set=function (i)freeLookToggle=i end,get=function() return freeLookToggle end}, BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}, RemoteFreeze={set=function (i)RemoteFreeze=i end,get=function() return RemoteFreeze end}, brightHud={set=function (i)brightHud=i end,get=function() return brightHud end}, RemoteHud={set=function (i)RemoteHud=i end,get=function() return RemoteHud end}, VanillaRockets={set=function (i)VanillaRockets=i end,get=function() return VanillaRockets end},
+    InvertMouse={set=function (i)InvertMouse=i end,get=function() return InvertMouse end}, autoRollPreference={set=function (i)autoRollPreference=i end,get=function() return autoRollPreference end}, ExternalAGG={set=function (i)ExternalAGG=i end,get=function() return ExternalAGG end}, ShouldCheckDamage={set=function (i)ShouldCheckDamage=i end,get=function() return ShouldCheckDamage end}, 
     AtmoSpeedAssist={set=function (i)AtmoSpeedAssist=i end,get=function() return AtmoSpeedAssist end}, ForceAlignment={set=function (i)ForceAlignment=i end,get=function() return ForceAlignment end}, DisplayDeadZone={set=function (i)DisplayDeadZone=i end,get=function() return DisplayDeadZone end}, showHud={set=function (i)showHud=i end,get=function() return showHud end}, hideHudOnToggleWidgets={set=function (i)hideHudOnToggleWidgets=i end,get=function() return hideHudOnToggleWidgets end}, 
     ShiftShowsRemoteButtons={set=function (i)ShiftShowsRemoteButtons=i end,get=function() return ShiftShowsRemoteButtons end}, SetWaypointOnExit={set=function (i)SetWaypointOnExit=i end,get=function() return SetWaypointOnExit end}, AlwaysVSpd={set=function (i)AlwaysVSpd=i end,get=function() return AlwaysVSpd end}, BarFuelDisplay={set=function (i)BarFuelDisplay=i end,get=function() return BarFuelDisplay end}, 
     voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AbandonedRadar={set=function (i)AbandonedRadar=i end,get=function() return AbandonedRadar end},AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end},
@@ -1284,7 +1284,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             local radarContacts = 0
             local target
             local numKnown
-            local static
+            local static = 0
             local activeRadar
             local radars = {activeRadar}
             local rType = "Atmo"
@@ -5815,52 +5815,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
             end
             RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
         end
-    
-        function ap.SatNavTick()
-            if not UseSatNav then return end
-            -- Support for SatNav by Trog
-            myAutopilotTarget = dbHud_1.getStringValue("SPBAutopilotTargetName")
-            if myAutopilotTarget ~= nil and myAutopilotTarget ~= "" and myAutopilotTarget ~= "SatNavNotChanged" then
-                local result = jdecode(dbHud_1.getStringValue("SavedLocations"))
-                if result ~= nil then
-                    SavedLocations = result        
-                    local index = -1        
-                    local newLocation        
-                    for k, v in pairs(SavedLocations) do        
-                        if v.name and v.name == "SatNav Location" then                   
-                            index = k                
-                            break                
-                        end            
-                    end        
-                    if index ~= -1 then       
-                        newLocation = SavedLocations[index]            
-                        index = -1            
-                        for k, v in pairs(atlas[0]) do           
-                            if v.name and v.name == "SatNav Location" then               
-                                index = k                    
-                                break                  
-                            end                
-                        end            
-                        if index > -1 then           
-                            atlas[0][index] = newLocation                
-                        end            
-                        ATLAS.UpdateAtlasLocationsList()           
-                        msgText = newLocation.name .. " position updated"            
-                    end       
-                end
-    
-                for i=1,#AtlasOrdered do    
-                    if AtlasOrdered[i].name == myAutopilotTarget then
-                        AutopilotTargetIndex = i
-                        s.print("Index = "..AutopilotTargetIndex.." "..AtlasOrdered[i].name)          
-                        ATLAS.UpdateAutopilotTarget()
-                        dbHud_1.setStringValue("SPBAutopilotTargetName", "SatNavNotChanged")
-                        break            
-                    end     
-                end
-            end
-        end
-    
+   
         -- Local functions and static variables for onFlush
             local function composeAxisAccelerationFromTargetSpeedV(commandAxis, targetSpeed)
     
@@ -8872,7 +8827,7 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                         end
                         antigrav.setTargetAltitude(AntigravTargetAltitude)
                     end
-                    if pcall(require, "autoconf/custom/archhud/privatelocations") then
+                    if pcall(require, "autoconf/custom/archhud/"..privateFile) then
                         if #privatelocations>0 then customlocations = addTable(customlocations, privatelocations) end
                     end
                     VectorStatus = "Proceeding to Waypoint"
@@ -9244,7 +9199,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 u.setTimer("hudTick", hudTickRate)
                 u.setTimer("oneSecond", 1)
                 u.setTimer("tenthSecond", 1/10)
-                u.setTimer("fiveSecond", 5) 
                 if shield then u.setTimer("shieldTick", 0.0166667) end
                 if userBase then PROGRAM.ExtraOnStart() end
                 play("start","SU")
@@ -9414,8 +9368,6 @@ soundFolder = "archHUD" -- (Default: "archHUD") Set to the name of the folder wi
                 if HUD then HUD.TenthTick() end
             elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
                 if HUD then HUD.OneSecondTick() end
-            elseif timerId == "fiveSecond" then -- Timer executed every 5 seconds (SatNav only stuff for now)
-                AP.SatNavTick()
             elseif timerId == "msgTick" then -- Timer executed whenever msgText is applied somwehere
                 if HUD then HUD.MsgTick() end
             elseif timerId == "animateTick" then -- Timer for animation
