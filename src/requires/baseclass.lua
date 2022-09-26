@@ -594,7 +594,6 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             u.setTimer("hudTick", hudTickRate)
             u.setTimer("oneSecond", 1)
             u.setTimer("tenthSecond", 1/10)
-            u.setTimer("fiveSecond", 5) 
             if shield then u.setTimer("shieldTick", 0.0166667) end
             if userBase then PROGRAM.ExtraOnStart() end
             play("start","SU")
