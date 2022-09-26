@@ -809,7 +809,7 @@
                     msgText = "Disengage autopilot before changing Interplanetary Helper"
                     play("iph","AP")
                 end
-            end
+            end 
 
             local function ClearCurrentPosition()
                 local function clearPosition(private)

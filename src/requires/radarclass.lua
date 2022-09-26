@@ -10,7 +10,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
         local radarContacts = 0
         local target
         local numKnown
-        local static
+        local static = 0
         local activeRadar
         local radars = {activeRadar}
         local rType = "Atmo"
