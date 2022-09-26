@@ -1000,50 +1000,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
     end
 
-    function ap.SatNavTick()
-        if not UseSatNav then return end
-        -- Support for SatNav by Trog
-        myAutopilotTarget = dbHud_1.getStringValue("SPBAutopilotTargetName")
-        if myAutopilotTarget ~= nil and myAutopilotTarget ~= "" and myAutopilotTarget ~= "SatNavNotChanged" then
-            local result = jdecode(dbHud_1.getStringValue("SavedLocations"))
-            if result ~= nil then
-                SavedLocations = result        
-                local index = -1        
-                local newLocation        
-                for k, v in pairs(SavedLocations) do        
-                    if v.name and v.name == "SatNav Location" then                   
-                        index = k                
-                        break                
-                    end            
-                end        
-                if index ~= -1 then       
-                    newLocation = SavedLocations[index]            
-                    index = -1            
-                    for k, v in pairs(atlas[0]) do           
-                        if v.name and v.name == "SatNav Location" then               
-                            index = k                    
-                            break                  
-                        end                
-                    end            
-                    if index > -1 then           
-                        atlas[0][index] = newLocation                
-                    end            
-                    ATLAS.UpdateAtlasLocationsList()           
-                    msgText = newLocation.name .. " position updated"            
-                end       
-            end
 
-            for i=1,#AtlasOrdered do    
-                if AtlasOrdered[i].name == myAutopilotTarget then
-                    AutopilotTargetIndex = i
-                    s.print("Index = "..AutopilotTargetIndex.." "..AtlasOrdered[i].name)          
-                    ATLAS.UpdateAutopilotTarget()
-                    dbHud_1.setStringValue("SPBAutopilotTargetName", "SatNavNotChanged")
-                    break            
-                end     
-            end
-        end
-    end
 
     -- Local functions and static variables for onFlush
         local function composeAxisAccelerationFromTargetSpeedV(commandAxis, targetSpeed)

@@ -1,5 +1,13 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.002
+
+- Modified private locations support to require a user variable called privateFile.  Was pointed out that people could use a PB to get the private locations 
+    of anyone who flew by just by checking for the old file name.  File will still be looked for in "autoconf/custom/archhud/"
+- New User Variabe `privateFile` (Default value "name") Set to the name of the file for private locations to prevent others from getting your private locations. Filename should end in .lua
+- Removed SatNav support - not longer maintained since May and saves me 3kb of code for GFN
+- Fixed occasional radar error when sitting down
+
 Version 2.001
 
 - Fuel time remaining updates 8 times faster

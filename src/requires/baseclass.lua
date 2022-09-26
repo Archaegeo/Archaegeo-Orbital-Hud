@@ -222,7 +222,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                     end
                     antigrav.setTargetAltitude(AntigravTargetAltitude)
                 end
-                if pcall(require, "autoconf/custom/archhud/privatelocations") then
+                if pcall(require, "autoconf/custom/archhud/"..privateFile) then
                     if #privatelocations>0 then customlocations = addTable(customlocations, privatelocations) end
                 end
                 VectorStatus = "Proceeding to Waypoint"
@@ -594,7 +594,6 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             u.setTimer("hudTick", hudTickRate)
             u.setTimer("oneSecond", 1)
             u.setTimer("tenthSecond", 1/10)
-            u.setTimer("fiveSecond", 5) 
             if shield then u.setTimer("shieldTick", 0.0166667) end
             if userBase then PROGRAM.ExtraOnStart() end
             play("start","SU")
@@ -764,8 +763,6 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             if HUD then HUD.TenthTick() end
         elseif timerId == "oneSecond" then -- Timer for evaluation every 1 second
             if HUD then HUD.OneSecondTick() end
-        elseif timerId == "fiveSecond" then -- Timer executed every 5 seconds (SatNav only stuff for now)
-            AP.SatNavTick()
         elseif timerId == "msgTick" then -- Timer executed whenever msgText is applied somwehere
             if HUD then HUD.MsgTick() end
         elseif timerId == "animateTick" then -- Timer for animation
