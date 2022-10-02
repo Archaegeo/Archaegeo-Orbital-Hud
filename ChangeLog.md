@@ -2,8 +2,9 @@
 
 Version 2.003
 - Clicking LMB will now make the Buttons pop up, clicking LMB again will make them vanish (old shift key functionality)
-    This works whether in freelook or fixed view.  This will not work if mouse is over something that takes priority (other DU UI features)
+    This works whether in freelook or fixed view.  This will not work if mouse is over something that takes priority (other NQ UI features)
     (Thanks to Dimencia for the idea and code)
+- You no longer need to be out of freelook mode to click buttons.
 - Shift key no longer does buttons, now just a modifier for other keys as shown in keybinds section of manual.
 - Fixed fuel tanks showing huge number of days time remaining
 - Remove `FullRadar` user variable, no longer needed.
