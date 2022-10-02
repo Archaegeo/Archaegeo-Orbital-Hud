@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.002
+VERSION_NUMBER = 0.003
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -45,16 +45,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     AutoShieldToggle = true -- (Default: true) If true, system will toggle Shield off in safe space and on in PvP space automagically.
     PreventPvP = true -- (Default: true) If true, system will stop you before crossing from safe to pvp space while in autopilot.
     DisplayOdometer = true -- (Default: true) If false the top odometer bar of information will be hidden.
-    FullRadar = true -- (Default: true) If set to false, radar will not be activate on sitting down.  This will result in a much higher fps in crowded areas with radar hooked up while still allowing V to show contacts on screen.
     ECUHud = false -- (Default: false) If set to true, ECU will act like HUD when activated vice like ECU.
-    MaintainOrbit = true --export: (Default: true) If true, ship will attempt to maintain orbit if it decays (when not autopiloting to a landing point) till fuel runs out.
+    MaintainOrbit = true -- (Default: true) If true, ship will attempt to maintain orbit if it decays (when not autopiloting to a landing point) till fuel runs out.
 
     saveableVariablesBoolean = {userControlScheme={set=function (i)userControlScheme=i end,get=function() return userControlScheme end}, soundFolder={set=function (i)soundFolder=i end,get=function() return soundFolder end}, privateFile={set=function (i)privateFile=i end,get=function() return privateFile end}, freeLookToggle={set=function (i)freeLookToggle=i end,get=function() return freeLookToggle end}, BrakeToggleDefault={set=function (i)BrakeToggleDefault=i end,get=function() return BrakeToggleDefault end}, RemoteFreeze={set=function (i)RemoteFreeze=i end,get=function() return RemoteFreeze end}, brightHud={set=function (i)brightHud=i end,get=function() return brightHud end}, RemoteHud={set=function (i)RemoteHud=i end,get=function() return RemoteHud end}, VanillaRockets={set=function (i)VanillaRockets=i end,get=function() return VanillaRockets end},
     InvertMouse={set=function (i)InvertMouse=i end,get=function() return InvertMouse end}, autoRollPreference={set=function (i)autoRollPreference=i end,get=function() return autoRollPreference end}, ExternalAGG={set=function (i)ExternalAGG=i end,get=function() return ExternalAGG end}, ShouldCheckDamage={set=function (i)ShouldCheckDamage=i end,get=function() return ShouldCheckDamage end}, 
     AtmoSpeedAssist={set=function (i)AtmoSpeedAssist=i end,get=function() return AtmoSpeedAssist end}, ForceAlignment={set=function (i)ForceAlignment=i end,get=function() return ForceAlignment end}, DisplayDeadZone={set=function (i)DisplayDeadZone=i end,get=function() return DisplayDeadZone end}, showHud={set=function (i)showHud=i end,get=function() return showHud end}, hideHudOnToggleWidgets={set=function (i)hideHudOnToggleWidgets=i end,get=function() return hideHudOnToggleWidgets end}, 
     ShiftShowsRemoteButtons={set=function (i)ShiftShowsRemoteButtons=i end,get=function() return ShiftShowsRemoteButtons end}, SetWaypointOnExit={set=function (i)SetWaypointOnExit=i end,get=function() return SetWaypointOnExit end}, AlwaysVSpd={set=function (i)AlwaysVSpd=i end,get=function() return AlwaysVSpd end}, BarFuelDisplay={set=function (i)BarFuelDisplay=i end,get=function() return BarFuelDisplay end}, 
     voices={set=function (i)voices=i end,get=function() return voices end}, alerts={set=function (i)alerts=i end,get=function() return alerts end}, CollisionSystem={set=function (i)CollisionSystem=i end,get=function() return CollisionSystem end}, AbandonedRadar={set=function (i)AbandonedRadar=i end,get=function() return AbandonedRadar end},AutoShieldToggle={set=function (i)AutoShieldToggle=i end,get=function() return AutoShieldToggle end}, PreventPvP={set=function (i)PreventPvP=i end,get=function() return PreventPvP end},
-    DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end},FullRadar={set=function (i)FullRadar=i end,get=function() return FullRadar end},ECUHud={set=function (i)ECUHud=i end,get=function() return ECUHud end},MaintainOrbit={set=function (i)MaintainOrbit=i end,get=function() return MaintainOrbit end}}
+    DisplayOdometer={set=function (i)DisplayOdometer=i end,get=function() return DisplayOdometer end},ECUHud={set=function (i)ECUHud=i end,get=function() return ECUHud end},MaintainOrbit={set=function (i)MaintainOrbit=i end,get=function() return MaintainOrbit end}}
 
 -- Ship Handling variables
     -- NOTE: savableVariablesHandling below must contain any Ship Handling variables that needs to be saved/loaded from databank system
@@ -74,7 +73,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     TargetHoverHeight = 50 -- (Default: 50) Hover height above ground when G used to lift off, 50 is above all max hover heights.
     LandingGearGroundHeight = 0 -- (Default: 0) Set to AGL when on ground. Will help prevent ship landing on ground then bouncing back up to landing gear height. 
     ReEntryHeight = 100000 -- (Default: 100000) Height above a planets maximum surface altitude used for re-entry, if height exceeds min space engine height, then 11% atmo is used instead. (100000 means 11% is used)
-    MaxGameVelocity = -1.00 --export: (Default: -1.00) Max speed for your autopilot in m/s.  If -1 then when you sit down it will set to actual max speed.
+    MaxGameVelocity = -1.00 -- (Default: -1.00) Max speed for your autopilot in m/s.  If -1 then when you sit down it will set to actual max speed.
     AutopilotInterplanetaryThrottle = 1.0 -- (Default: 1.0) How much throttle, 0.0 to 1.0, you want it to use when in autopilot to another planet while reaching MaxGameVelocity
     warmup = 32 -- How long it takes your space engines to warmup. Basic Space Engines, from XS to XL: 0.25,1,4,16,32. Only affects turn and burn brake calculations.
     fuelTankHandlingAtmo = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
@@ -1324,7 +1323,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     s.destroyData(perisDataId)
                     perisPanelID, perisWidgetId, perisDataId = nil, nil, nil
                 end
-            elseif FullRadar then
+            else
                 -- If radar is installed but no weapon, don't show periscope
                 if peris == 1 then
                     sysDestWid(radarPanelId)
@@ -1495,7 +1494,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         local function pickType()
             if activeRadar then
                 rType = "Atmo"
-                if string.find(activeRadar.getName(),"Space") then  
+                if string.find(activeRadar.getName(),"Space") then 
                     rType = "Space" 
                 end
             end
@@ -1647,7 +1646,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         setup()
     
         return Radar
-    end  
+    end 
     local function ShieldClass(shield, stringmatch, mfloor) -- Everything related to shield but draw data passed to HUD Class.
         local Shield = {}
         local RCD = shield.getResistancesCooldown()
@@ -1737,6 +1736,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         local lastTravelTime = systime()
         local repairArrows = false
         local showWarpWidget = false
+        local activeRadar = false
     
         --Local Huds Functions
     
@@ -1848,9 +1848,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                 end
                             else
                                 fuelPercentTable[i] = mfloor(0.5 + fuelMass * 100 / tankTable[i][tankMaxVol])
-                                if fuelMassLast <= fuelMass then
-                                    fuelTimeLeftTable[i] = 0
-                                else
+                                if not fuelTimeLeftTable[i] then fuelTimeLeftTable[i] = 0 end
+                                if fuelMassLast > fuelMass then
                                     fuelTimeLeftTable[i] = mfloor(
                                                             0.5 + fuelMass /
                                                                 ((fuelMassLast - fuelMass) / (curTime - tankTable[i][tankLastTime])))
@@ -1866,10 +1865,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             name = name .. " *"
                         end
                         local fuelTimeDisplay
-                        if fuelTimeLeftTable[i] == 0 then
+                        fuelTimeDisplay = FormatTimeString(fuelTimeLeftTable[i])
+                        if fuelTimeLeftTable[i] == 0 or fuelTimeDisplay == ">1y" then
                             fuelTimeDisplay = ""
-                        else
-                            fuelTimeDisplay = FormatTimeString(fuelTimeLeftTable[i])
                         end
                         if fuelPercentTable[i] ~= nil then
                             local colorMod = mfloor(fuelPercentTable[i] * 2.55)
@@ -2544,7 +2542,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 end
                 if ProgradeIsOn then
-                    newContent[#newContent + 1] = svgText(warningX, apY, "Prograde Alignment", "crit")
+                    newContent[#newContent + 1] = svgText(warningX, apY+20, "Prograde Alignment", "crit")
                 end
                 if RetrogradeIsOn then
                     newContent[#newContent + 1] = svgText(warningX, apY, "Retrograde Alignment", "crit")
@@ -3499,11 +3497,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 showSettings = not showSettings 
                 if showSettings then 
                     Buttons = SettingButtons
-                    msgText = "Tap SHIFT to see Settings" 
+                    msgText = "Tap LMB to see Settings" 
                     oldShowHud = showHud
                 else
                     Buttons = ControlButtons
-                    msgText = "Tap SHIFT to see Control Buttons"
+                    msgText = "Tap LMB to see Control Buttons"
                     ToggleShownSettings()
                     showHud = oldShowHud
                 end
@@ -3522,14 +3520,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         oldShowHud = v.get()
                     elseif k == "BrakeToggleDefault" then 
                         BrakeToggleStatus = BrakeToggleDefault
-                    elseif k == "FullRadar" then
-                        if not FullRadar then 
-                            RADAR.ToggleRadarPanel()
-                            FullRadar = false
-                        else
-                            FullRadar = true
-                            PROGRAM.radarSetup()
-                        end
                     end
                 end
                 local buttonHeight = 50
@@ -4044,7 +4034,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local brakeValue = 0
             local flightStyle = GetFlightStyle()
             if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
-            if CollisionSystem and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
+            if CollisionSystem and activeRadar and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
             if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
             if TurnBurn then flightStyle = "TB-"..flightStyle end
             if HoverMode then flightStyle = "HOVERMODE-"..flightStyle end
@@ -4269,7 +4259,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local friendx = ConvertResolutionX(1225)
     
         function Hud.DrawRadarInfo()
-            radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY) 
+            radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY)
+            if radarMessage then activeRadar = true end 
         end
     
         function Hud.DrawTanks()
@@ -5815,7 +5806,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             end
             RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
         end
-   
+    
+    
+    
         -- Local functions and static variables for onFlush
             local function composeAxisAccelerationFromTargetSpeedV(commandAxis, targetSpeed)
     
@@ -6039,7 +6032,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
     
             brakeInput2 = 0
-
+    
         -- Start old APTick Code 
             atmosDensity = atmosphere()
             inAtmo = false or (coreAltitude < planet.noAtmosphericDensityAltitude and atmosDensity > 0.00001 )
@@ -6175,11 +6168,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 if spaceLand then 
                     BrakeIsOn = false -- wtf how does this keep turning on, and why does it matter if we're in cruise?
                     local aligned = false
-                    if CustomTarget and spaceLand == true then
-                        aligned = AlignToWorldVector(CustomTarget.position-worldPos,0.1) 
-                    else
-                        aligned = AlignToWorldVector(vec3(constructVelocity),0.01) 
-                    end
+                    aligned = AlignToWorldVector(CustomTarget.position-worldPos,0.1) 
                     autoRoll = true
                     if aligned then
                         cmdC = mfloor(adjustedAtmoSpeedLimit)
@@ -6501,6 +6490,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             if Autopilot and not inAtmo and not spaceLand then
                 local function finishAutopilot(msg, orbit)
                     s.print(msg)
+                    ProgradeIsOn = false
                     BrakeIsOn = false
                     AutopilotBraking = false
                     Autopilot = false
@@ -6781,6 +6771,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             AutopilotStatus = "Braking"
                         end
                         AutopilotBraking = true
+                        if not TurnBurn then 
+                            ProgradeIsOn = true 
+                            autoRoll = true
+                        end
                         cmdT = 0
                         apThrottleSet = false
                     end
@@ -6884,6 +6878,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             AutopilotStatus = "Braking"
                         end
                         AutopilotBraking = true
+                        if not TurnBurn then 
+                            ProgradeIsOn = true 
+                            autoRoll = true
+                        end
                     end
                     local throttle = u.getThrottle()
                     if AtmoSpeedAssist then throttle = PlayerThrottle end
@@ -7551,7 +7549,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             end
     
         -- End old APTick Code
-
+    
             if (inAtmo or Reentry or finalLand) and AtmoSpeedAssist and throttleMode then
                 -- This is meant to replace cruise
                 -- Uses AtmoSpeedLimit as the desired speed in which to 'cruise'
@@ -7571,7 +7569,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 -- Along with a message like, "Atmospheric Speed Limit Reached - Press Something to Disable Temporarily"
                 -- But of course, don't throttle up for them.  Only down. 
     
-
+    
     
                 if (throttlePID == nil) then
                     throttlePID = pid.new(0.1, 0, 1) -- First param, higher means less range in which to PID to a proper value
@@ -7595,7 +7593,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     local aasl = adjustedAtmoSpeedLimit/3.6
                     if fbs > aasl then addThrust = fbs - aasl - 1 end
                 end
- 
                 throttlePID:inject(adjustedAtmoSpeedLimit/3.6 + addThrust - constructVelocity:dot(constructForward))
                 local pidGet = throttlePID:get()
                 calculatedThrottle = uclamp(pidGet,-1,1)
@@ -7608,7 +7605,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         ThrottleValue = PlayerThrottle
                     end
                 end
-
+    
                 
                 -- Then additionally
                 if (brakePID == nil) then
@@ -7786,12 +7783,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         '', tolerancePercentToSkipOtherPriorities)
                 end
             end
-  
+    
             -- Rotation
             local angularAcceleration = torqueFactor * (targetAngularVelocity - constructAngularVelocity)
             local airAcceleration = vec3(C.getWorldAirFrictionAngularAcceleration())
             angularAcceleration = angularAcceleration - airAcceleration -- Try to compensate air friction
-
+            
             Nav:setEngineTorqueCommand('torque', angularAcceleration, keepCollinearity, 'airfoil', '', '',
                 tolerancePercentToSkipOtherPriorities)
     
@@ -8188,21 +8185,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     msgText = "No gyro found"
                 end
             elseif action == "lshift" then
-                apButtonsHovered = false
-                if AltIsOn then holdingShift = true
-                elseif holdingShift then
-                    holdingShiftOff()
-                else
-                    if sysIsVwLock() == 1 then
-                        holdingShift = true
-                        PrevViewLock = sysIsVwLock()
-                        sysLockVw(1)
-                    elseif isRemote() == 1 and ShiftShowsRemoteButtons then
-                        holdingShift = true
-                        Animated = false
-                        Animating = false
-                    end
-                end
+                if AltIsOn then holdingShift = true end
             elseif action == "brake" then
                 if BrakeToggleStatus or AltIsOn then
                     AP.BrakeToggle("Manual")
@@ -8275,8 +8258,14 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
             elseif action == "leftmouse" then
                 leftmouseclick=true 
-                holdingShiftOff() 
-                toggleView = false
+                if holdingShift then
+                    holdingShiftOff() 
+                    toggleView = false
+                else
+                        holdingShift = true
+                        PrevViewLock = sysIsVwLock()
+                        sysLockVw(1)
+                end
             end
         end
     
@@ -8743,7 +8732,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     days = mfloor ( seconds / 86400)
                     hours = mfloor ( (seconds % 86400) / 3600)
                 end
-                if days > 0 then 
+                if days > 365 then return ">1y" 
+                elseif days > 0 then 
                     return days .. "d " .. hours .."h "
                 elseif hours > 0 then
                     return hours .. "h " .. minutes .. "m "
