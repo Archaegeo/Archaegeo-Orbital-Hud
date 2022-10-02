@@ -426,9 +426,18 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 msgText = "No antigrav found"
             end
         elseif action == "leftmouse" then
+            --leftmouseclick=true 
+            --holdingShiftOff() 
+            --toggleView = false
             leftmouseclick=true 
-            holdingShiftOff() 
-            toggleView = false
+            if holdingShift then
+                holdingShiftOff() 
+                toggleView = false
+            else
+                    holdingShift = true
+                    PrevViewLock = sysIsVwLock()
+                    sysLockVw(1)
+            end
         end
     end
 

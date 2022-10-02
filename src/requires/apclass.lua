@@ -1361,11 +1361,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             if spaceLand then 
                 BrakeIsOn = false -- wtf how does this keep turning on, and why does it matter if we're in cruise?
                 local aligned = false
-                if CustomTarget and spaceLand == true then
-                    aligned = AlignToWorldVector(CustomTarget.position-worldPos,0.1) 
-                else
-                    aligned = AlignToWorldVector(vec3(constructVelocity),0.01) 
-                end
+                aligned = AlignToWorldVector(CustomTarget.position-worldPos,0.1) 
                 autoRoll = true
                 if aligned then
                     cmdC = mfloor(adjustedAtmoSpeedLimit)
@@ -1687,6 +1683,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         if Autopilot and not inAtmo and not spaceLand then
             local function finishAutopilot(msg, orbit)
                 s.print(msg)
+                ProgradeIsOn = false
                 BrakeIsOn = false
                 AutopilotBraking = false
                 Autopilot = false
@@ -1967,6 +1964,10 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         AutopilotStatus = "Braking"
                     end
                     AutopilotBraking = true
+                    if not TurnBurn then 
+                        ProgradeIsOn = true 
+                        autoRoll = true
+                    end
                     cmdT = 0
                     apThrottleSet = false
                 end
@@ -2070,6 +2071,10 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         AutopilotStatus = "Braking"
                     end
                     AutopilotBraking = true
+                    if not TurnBurn then 
+                        ProgradeIsOn = true 
+                        autoRoll = true
+                    end
                 end
                 local throttle = u.getThrottle()
                 if AtmoSpeedAssist then throttle = PlayerThrottle end
