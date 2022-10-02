@@ -1791,11 +1791,11 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             showSettings = not showSettings 
             if showSettings then 
                 Buttons = SettingButtons
-                msgText = "Tap SHIFT to see Settings" 
+                msgText = "Tap LMB to see Settings" 
                 oldShowHud = showHud
             else
                 Buttons = ControlButtons
-                msgText = "Tap SHIFT to see Control Buttons"
+                msgText = "Tap LMB to see Control Buttons"
                 ToggleShownSettings()
                 showHud = oldShowHud
             end

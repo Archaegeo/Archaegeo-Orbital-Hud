@@ -340,21 +340,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 msgText = "No gyro found"
             end
         elseif action == "lshift" then
-            apButtonsHovered = false
-            if AltIsOn then holdingShift = true
-            elseif holdingShift then
-                holdingShiftOff()
-            else
-                if sysIsVwLock() == 1 then
-                    holdingShift = true
-                    PrevViewLock = sysIsVwLock()
-                    sysLockVw(1)
-                elseif isRemote() == 1 and ShiftShowsRemoteButtons then
-                    holdingShift = true
-                    Animated = false
-                    Animating = false
-                end
-            end
+            if AltIsOn then holdingShift = true end
         elseif action == "brake" then
             if BrakeToggleStatus or AltIsOn then
                 AP.BrakeToggle("Manual")
@@ -426,9 +412,6 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 msgText = "No antigrav found"
             end
         elseif action == "leftmouse" then
-            --leftmouseclick=true 
-            --holdingShiftOff() 
-            --toggleView = false
             leftmouseclick=true 
             if holdingShift then
                 holdingShiftOff() 
