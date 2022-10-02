@@ -1,5 +1,15 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.003
+- Clicking LMB will now make the Buttons pop up, clicking LMB again will make them vanish (old shift key functionality)
+    This works whether in freelook or fixed view.  This will not work if mouse is over something that takes priority (other NQ UI features)
+    (Thanks to Dimencia for the idea and code)
+- You no longer need to be out of freelook mode to click buttons.
+- Shift key no longer does buttons, now just a modifier for other keys as shown in keybinds section of manual.
+- Fixed fuel tanks showing huge number of days time remaining
+- Remove `FullRadar` user variable, no longer needed.
+- Remove `Collision On` tag up top of hud if no working radar attached.
+
 Version 2.002
 
 - Modified private locations support to require a user variable called privateFile.  Was pointed out that people could use a PB to get the private locations 
@@ -7,6 +17,7 @@ Version 2.002
 - New User Variabe `privateFile` (Default value "name") Set to the name of the file for private locations to prevent others from getting your private locations. Filename should end in .lua
 - Removed SatNav support - not longer maintained since May and saves me 3kb of code for GFN
 - Fixed occasional radar error when sitting down
+- If not doing Turn and Burn braking, ship will align prograde and roll to 0 when shifting from Aut0pilot cruising to Autopilot braking to make smoother re-entry setup
 
 Version 2.001
 

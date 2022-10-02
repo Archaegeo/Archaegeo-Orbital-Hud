@@ -30,6 +30,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
     local lastTravelTime = systime()
     local repairArrows = false
     local showWarpWidget = false
+    local activeRadar = false
 
     --Local Huds Functions
 
@@ -141,9 +142,8 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                             end
                         else
                             fuelPercentTable[i] = mfloor(0.5 + fuelMass * 100 / tankTable[i][tankMaxVol])
-                            if fuelMassLast <= fuelMass then
-                                fuelTimeLeftTable[i] = 0
-                            else
+                            if not fuelTimeLeftTable[i] then fuelTimeLeftTable[i] = 0 end
+                            if fuelMassLast > fuelMass then
                                 fuelTimeLeftTable[i] = mfloor(
                                                         0.5 + fuelMass /
                                                             ((fuelMassLast - fuelMass) / (curTime - tankTable[i][tankLastTime])))
@@ -159,10 +159,9 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                         name = name .. " *"
                     end
                     local fuelTimeDisplay
-                    if fuelTimeLeftTable[i] == 0 then
+                    fuelTimeDisplay = FormatTimeString(fuelTimeLeftTable[i])
+                    if fuelTimeLeftTable[i] == 0 or fuelTimeDisplay == ">1y" then
                         fuelTimeDisplay = ""
-                    else
-                        fuelTimeDisplay = FormatTimeString(fuelTimeLeftTable[i])
                     end
                     if fuelPercentTable[i] ~= nil then
                         local colorMod = mfloor(fuelPercentTable[i] * 2.55)
@@ -837,7 +836,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 end
             end
             if ProgradeIsOn then
-                newContent[#newContent + 1] = svgText(warningX, apY, "Prograde Alignment", "crit")
+                newContent[#newContent + 1] = svgText(warningX, apY+20, "Prograde Alignment", "crit")
             end
             if RetrogradeIsOn then
                 newContent[#newContent + 1] = svgText(warningX, apY, "Retrograde Alignment", "crit")
@@ -1792,11 +1791,11 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             showSettings = not showSettings 
             if showSettings then 
                 Buttons = SettingButtons
-                msgText = "Tap SHIFT to see Settings" 
+                msgText = "Tap LMB to see Settings" 
                 oldShowHud = showHud
             else
                 Buttons = ControlButtons
-                msgText = "Tap SHIFT to see Control Buttons"
+                msgText = "Tap LMB to see Control Buttons"
                 ToggleShownSettings()
                 showHud = oldShowHud
             end
@@ -1815,14 +1814,6 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     oldShowHud = v.get()
                 elseif k == "BrakeToggleDefault" then 
                     BrakeToggleStatus = BrakeToggleDefault
-                elseif k == "FullRadar" then
-                    if not FullRadar then 
-                        RADAR.ToggleRadarPanel()
-                        FullRadar = false
-                    else
-                        FullRadar = true
-                        PROGRAM.radarSetup()
-                    end
                 end
             end
             local buttonHeight = 50
@@ -2337,7 +2328,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         local brakeValue = 0
         local flightStyle = GetFlightStyle()
         if VertTakeOffEngine then flightStyle = flightStyle.."-VERTICAL" end
-        if CollisionSystem and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
+        if CollisionSystem and activeRadar and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
         if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
         if TurnBurn then flightStyle = "TB-"..flightStyle end
         if HoverMode then flightStyle = "HOVERMODE-"..flightStyle end
@@ -2562,7 +2553,8 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         local friendx = ConvertResolutionX(1225)
 
     function Hud.DrawRadarInfo()
-        radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY) 
+        radarMessage = RADAR.GetRadarHud(friendx, friendy, radarX, radarY)
+        if radarMessage then activeRadar = true end 
     end
 
     function Hud.DrawTanks()

@@ -50,7 +50,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
                 s.destroyData(perisDataId)
                 perisPanelID, perisWidgetId, perisDataId = nil, nil, nil
             end
-        elseif FullRadar then
+        else
             -- If radar is installed but no weapon, don't show periscope
             if peris == 1 then
                 sysDestWid(radarPanelId)

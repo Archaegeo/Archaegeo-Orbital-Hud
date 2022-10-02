@@ -138,7 +138,8 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 days = mfloor ( seconds / 86400)
                 hours = mfloor ( (seconds % 86400) / 3600)
             end
-            if days > 0 then 
+            if days > 365 then return ">1y" 
+            elseif days > 0 then 
                 return days .. "d " .. hours .."h "
             elseif hours > 0 then
                 return hours .. "h " .. minutes .. "m "
