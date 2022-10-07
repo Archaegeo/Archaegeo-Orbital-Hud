@@ -129,7 +129,8 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
 
                         fuelMass = (eleMass(tankTable[i][tankID]) - tankTable[i][tankMassEmpty])
                         fuelMassLast = tankTable[i][tankLastMass]
-                        if fuelMassLast > fuelMass then 
+                        local usedFuel = fuelMassLast > fuelMass or false
+                        if usedFuel then 
                             fuelUsed[slottedTankType] = fuelUsed[slottedTankType]+(fuelMassLast - fuelMass) 
                         end
 
@@ -142,11 +143,12 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                             end
                         else
                             fuelPercentTable[i] = mfloor(0.5 + fuelMass * 100 / tankTable[i][tankMaxVol])
-                            if not fuelTimeLeftTable[i] then fuelTimeLeftTable[i] = 0 end
-                            if fuelMassLast > fuelMass then
+                            if usedFuel then
                                 fuelTimeLeftTable[i] = mfloor(
                                                         0.5 + fuelMass /
                                                             ((fuelMassLast - fuelMass) / (curTime - tankTable[i][tankLastTime])))
+                            else
+                                fuelTimeLeftTable[i] = 0 
                             end
                         end
                         tankTable[i][tankLastTime] = curTime
