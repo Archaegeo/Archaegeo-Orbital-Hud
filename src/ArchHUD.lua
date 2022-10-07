@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.003
+VERSION_NUMBER = 0.004
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -1326,8 +1326,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             else
                 -- If radar is installed but no weapon, don't show periscope
                 if peris == 1 then
-                    sysDestWid(radarPanelId)
-                    radarPanelId = nil
+                    --sysDestWid(radarPanelId)
+                    --radarPanelId = nil
                     perisPanelID = s.createWidgetPanel("PeriWinkle")
                     perisWidgetId = s.createWidget(perisPanelID, 'periscope')
                     perisDataId = activeRadar.getWidgetDataId()
@@ -1557,12 +1557,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         radarMessage = radarMessage..svgText(friendx, friendy, activeRadar.getConstructName(v), "pdim txtmid")
                     end
                 end
-    
-                if target == nil and perisPanelID == nil then
+                local idNum = #activeRadar.getIdentifiedConstructIds()
+                if perisPanelID == nil and idNum > 0 then
                     peris = 1
                     RADAR.ToggleRadarPanel()
                 end
-                if target ~= nil and perisPanelID ~= nil then
+                if perisPanelID ~= nil and idNum == 0 then
                     RADAR.ToggleRadarPanel()
                 end
                 if radarPanelId == nil then
@@ -1835,7 +1835,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
                             fuelMass = (eleMass(tankTable[i][tankID]) - tankTable[i][tankMassEmpty])
                             fuelMassLast = tankTable[i][tankLastMass]
-                            if fuelMassLast > fuelMass then 
+                            local usedFuel = fuelMassLast > fuelMass or false
+                            if usedFuel then 
                                 fuelUsed[slottedTankType] = fuelUsed[slottedTankType]+(fuelMassLast - fuelMass) 
                             end
     
@@ -1848,11 +1849,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                 end
                             else
                                 fuelPercentTable[i] = mfloor(0.5 + fuelMass * 100 / tankTable[i][tankMaxVol])
-                                if not fuelTimeLeftTable[i] then fuelTimeLeftTable[i] = 0 end
-                                if fuelMassLast > fuelMass then
+                                if usedFuel then
                                     fuelTimeLeftTable[i] = mfloor(
                                                             0.5 + fuelMass /
                                                                 ((fuelMassLast - fuelMass) / (curTime - tankTable[i][tankLastTime])))
+                                else
+                                    fuelTimeLeftTable[i] = 0 
                                 end
                             end
                             tankTable[i][tankLastTime] = curTime
