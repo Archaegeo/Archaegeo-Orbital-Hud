@@ -53,8 +53,8 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
         else
             -- If radar is installed but no weapon, don't show periscope
             if peris == 1 then
-                sysDestWid(radarPanelId)
-                radarPanelId = nil
+                --sysDestWid(radarPanelId)
+                --radarPanelId = nil
                 perisPanelID = s.createWidgetPanel("PeriWinkle")
                 perisWidgetId = s.createWidget(perisPanelID, 'periscope')
                 perisDataId = activeRadar.getWidgetDataId()
@@ -284,12 +284,12 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
                     radarMessage = radarMessage..svgText(friendx, friendy, activeRadar.getConstructName(v), "pdim txtmid")
                 end
             end
-
-            if target == nil and perisPanelID == nil then
+            local idNum = #activeRadar.getIdentifiedConstructIds()
+            if perisPanelID == nil and idNum > 0 then
                 peris = 1
                 RADAR.ToggleRadarPanel()
             end
-            if target ~= nil and perisPanelID ~= nil then
+            if perisPanelID ~= nil and idNum == 0 then
                 RADAR.ToggleRadarPanel()
             end
             if radarPanelId == nil then

@@ -1,5 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.004
+- Fixed radar issue that was preventing periscope view opening for id'd targets.  Periscope gadget will open if target is id'd and selected.  
+    Will close if no target id'd.
+- Fixed issue with unslotted fuel tank time remaining continuing to show after engine shutoff.
+
 Version 2.003
 - Clicking LMB will now make the Buttons pop up, clicking LMB again will make them vanish (old shift key functionality)
     This works whether in freelook or fixed view.  This will not work if mouse is over something that takes priority (other NQ UI features)
