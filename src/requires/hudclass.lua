@@ -78,7 +78,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             local tankSlotIndex = 7
             local slottedTankType = ""
             local slottedTanks = 0        
-            local fuelUpdateDelay = 15.0*hudTickRate
+            local fuelUpdateDelay = 90.0*hudTickRate
             local fuelTimeLeftR = {}
             local fuelPercentR = {}
             local fuelTimeLeftS = {}
@@ -2423,23 +2423,38 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         return used
     end
     local fps, fpsAvg, fpsCount, fpsAvgTotal, fpsTotal = 0,0,0,{},0
+    local safeAtmoMass = 0
+    local safeSpaceMass = 0
+    local safeHoverMass = 0
+
     function Hud.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
         if SelectedTab ~= "INFO" then return newContent end
         local gravity 
-        local maxMass = 0
-        local reqThrust = 0
         local brakeValue = 0
+        local reqThrust = 0
         local mass = coreMass > 1000000 and round(coreMass / 1000000,2).." kTons" or round(coreMass / 1000, 2).." Tons"
         if inAtmo then brakeValue = LastMaxBrakeInAtmo else brakeValue = LastMaxBrake end
         local brkDist, brkTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, brakeValue)
         brakeValue = round((brakeValue / (coreMass * gravConstant)),2).." g"
         local maxThrust = Nav:maxForceForward()
         gravity = c.getGravityIntensity()
+        if velMag < 5 then
+            local axisCRefDirection = vec3(C.getOrientationForward())
+            local maxKPAlongAxis = C.getMaxThrustAlongAxis('thrust analog longitudinal ', {axisCRefDirection:unpack()})
+            safeAtmoMass = 0.5*maxKPAlongAxis[1]/gravity
+            safeAtmoMass = safeAtmoMass > 1000000 and round(safeAtmoMass / 1000000,1).." kTons" or round(safeAtmoMass / 1000, 1).." Tons"
+            safeSpaceMass = 0.5*maxKPAlongAxis[3]/gravity
+            safeSpaceMass = safeSpaceMass > 1000000 and round(safeSpaceMass / 1000000,1).." kTons" or round(safeSpaceMass / 1000, 1).." Tons"
+            axisCRefDirection = vec3(C.getOrientationUp())
+            maxKPAlongAxis = C.getMaxThrustAlongAxis('hover_engine, booster_engine', {axisCRefDirection:unpack()})
+            safeHoverMass = 0.5*maxKPAlongAxis[1]/gravity
+            safeHoverMass = safeHoverMass > 1000000 and round(safeHoverMass / 1000000,1).." kTons" or round(safeHoverMass / 1000, 1).." Tons"
+        end
         if gravity > 0.1 then
             reqThrust = coreMass * gravity
             reqThrust = round((reqThrust / (coreMass * gravConstant)),2).." g"
-            maxMass = 0.5 * maxThrust / gravity
-            maxMass = maxMass > 1000000 and round(maxMass / 1000000,2).." kTons" or round(maxMass / 1000, 2).." Tons"
+        else
+            reqThrust = "n/a"
         end
         maxThrust = round((maxThrust / (coreMass * gravConstant)),2).." g"
         if isRemote() == 0 or RemoteHud then 
@@ -2474,17 +2489,10 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             newContent[#newContent + 1] = svgText(startX, startY+height*3, stringf("Mass: %s", mass)) 
             newContent[#newContent + 1] = svgText(midX, startY+height*3, stringf("Max Brake: %s",  brakeValue)) 
             newContent[#newContent + 1] = svgText(startX, startY+height*4, stringf("Max Thrust: %s", maxThrust)) 
-            if gravity > 0.1 then
-                newContent[#newContent + 1] = svgText(midX, startY+height*4, stringf("Max Thrust Mass: %s", (maxMass)))
-                newContent[#newContent + 1] = svgText(startX, startY+height*5, stringf("Req Thrust: %s", reqThrust )) 
-            else
-                newContent[#newContent + 1] = svgText(midX, startY+height*4, "Max Mass: n/a") 
-                newContent[#newContent + 1] = svgText(startX, startY+height*5, "Req Thrust: n/a") 
-            end
-
-            newContent[#newContent + 1] = svgText(midX, startY+height*5, HUD.FuelUsed("atmofueltank"))
-            newContent[#newContent + 1] = svgText(startX, startY+height*6, HUD.FuelUsed("spacefueltank"))
-            newContent[#newContent + 1] = svgText(midX, startY+height*6, HUD.FuelUsed("rocketfueltank"))
+            newContent[#newContent + 1] = svgText(midX, startY+height*4, stringf("Safe Atmo Mass: %s", (safeAtmoMass)))
+            newContent[#newContent + 1] = svgText(startX, startY+height*5, stringf("Req Thrust: %s", reqThrust )) 
+            newContent[#newContent + 1] = svgText(midX, startY+height*5, stringf("Safe Space Mass: %s", (safeSpaceMass)))
+            newContent[#newContent + 1] = svgText(midX, startY+height*6, stringf("Safe Hover Mass: %s", (safeHoverMass)))
             newContent[#newContent +1] = svgText(startX, startY+height*7, stringf("Set Max Speed: %s", mfloor(MaxGameVelocity*3.6+0.5)))
             newContent[#newContent +1] = svgText(midX, startY+height*7, stringf("Actual Max Speed: %s", mfloor(MaxSpeed*3.6+0.5)))
             newContent[#newContent +1] = svgText(startX, startY+height*8, stringf("Friction Burn Speed: %s", mfloor(C.getFrictionBurnSpeed()*3.6)))
@@ -3060,8 +3068,8 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 end
             end
         end
-        passengers = C.getPlayersOnBoard()
-        ships = C.getDockedConstructs()  
+
+ 
         local newContent = {}
         updateDistance()
         if ShouldCheckDamage then
