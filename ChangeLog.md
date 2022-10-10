@@ -1,11 +1,13 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 2.005
-- Removed fuel used from INFO panel, still printed out in lua chat when you exit seat.
+- Ship now sets docking mode when you sit down, default to automatic.
+- New User variable `DockingMode` (Default: 2) Docking mode of ship, default is 2 (Automatic), options are Manual = 1, Automatic = 2, Semi-automatic = 3 
 - Added Safe Atmo Mass, Safe Space Mass, and Safe Hover Mass to INFO panel.
     These values are 50% of what could be barely moved (Atmo and Space) or just get off pad (hover) (i.e. 50% of m=F/a)
     Exceeding the Safe values will affect AP performance, know your ship's limits.
-    NOTE: Values are only shown when moving < 5m/s.
+    NOTE: Values are only shown when moving < 5m/s, best used when on ground at heaviest gravity.
+- Removed fuel used from INFO panel, still tracked and printed out in lua chat when you exit seat.
 
 Version 2.004
 - Fixed radar issue that was preventing periscope view opening for id'd targets.  Periscope gadget will open if target is id'd and selected.  
