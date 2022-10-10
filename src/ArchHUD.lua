@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.004
+VERSION_NUMBER = 0.005
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -83,12 +83,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     FuelTankOptimization = 0 -- (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank optimization skill level of the person who placed the tank. Ignored for slotted tanks.
     AutoShieldPercent = 0 -- (Default: 0) Automatically adjusts shield resists once per minute if shield percent is less than this value.
     EmergencyWarp = 0 -- (Default: 0) If > 0 and a radar contact is detected in pvp space and the contact is closer than EmergencyWarp value, and all other warp conditions met, will initiate warp.
+    DockingMode = 2 -- (Default: 2) Docking mode of ship, default is 2 (Automatic), options are Manual = 1, Automatic = 2, Semi-automatic = 3
 
     savableVariablesHandling = {YawStallAngle={set=function (i)YawStallAngle=i end,get=function() return YawStallAngle end},PitchStallAngle={set=function (i)PitchStallAngle=i end,get=function() return PitchStallAngle end},brakeLandingRate={set=function (i)brakeLandingRate=i end,get=function() return brakeLandingRate end},MaxPitch={set=function (i)MaxPitch=i end,get=function() return MaxPitch end}, ReEntryPitch={set=function (i)ReEntryPitch=i end,get=function() return ReEntryPitch end},LockPitchTarget={set=function (i)LockPitchTarget=i end,get=function() return LockPitchTarget end}, AutopilotSpaceDistance={set=function (i)AutopilotSpaceDistance=i end,get=function() return AutopilotSpaceDistance end}, TargetOrbitRadius={set=function (i)TargetOrbitRadius=i end,get=function() return TargetOrbitRadius end}, LowOrbitHeight={set=function (i)LowOrbitHeight=i end,get=function() return LowOrbitHeight end},
     AtmoSpeedLimit={set=function (i)AtmoSpeedLimit=i end,get=function() return AtmoSpeedLimit end},SpaceSpeedLimit={set=function (i)SpaceSpeedLimit=i end,get=function() return SpaceSpeedLimit end},AutoTakeoffAltitude={set=function (i)AutoTakeoffAltitude=i end,get=function() return AutoTakeoffAltitude end},TargetHoverHeight={set=function (i)TargetHoverHeight=i end,get=function() return TargetHoverHeight end}, LandingGearGroundHeight={set=function (i)LandingGearGroundHeight=i end,get=function() return LandingGearGroundHeight end}, ReEntryHeight={set=function (i)ReEntryHeight=i end,get=function() return ReEntryHeight end},
     MaxGameVelocity={set=function (i)MaxGameVelocity=i end,get=function() return MaxGameVelocity end}, AutopilotInterplanetaryThrottle={set=function (i)AutopilotInterplanetaryThrottle=i end,get=function() return AutopilotInterplanetaryThrottle end},warmup={set=function (i)warmup=i end,get=function() return warmup end},fuelTankHandlingAtmo={set=function (i)fuelTankHandlingAtmo=i end,get=function() return fuelTankHandlingAtmo end},fuelTankHandlingSpace={set=function (i)fuelTankHandlingSpace=i end,get=function() return fuelTankHandlingSpace end},
     fuelTankHandlingRocket={set=function (i)fuelTankHandlingRocket=i end,get=function() return fuelTankHandlingRocket end},ContainerOptimization={set=function (i)ContainerOptimization=i end,get=function() return ContainerOptimization end},FuelTankOptimization={set=function (i)FuelTankOptimization=i end,get=function() return FuelTankOptimization end},AutoShieldPercent={set=function (i)AutoShieldPercent=i end,get=function() return AutoShieldPercent end},
-    EmergencyWarp={set=function (i)EmergencyWarp=i end,get=function() return EmergencyWarp end}}
+    EmergencyWarp={set=function (i)EmergencyWarp=i end,get=function() return EmergencyWarp end}, DockingMode={set=function (i)DockingMode=i end,get=function() return DockingMode end}}
 
 
 -- HUD Postioning variables
@@ -1784,7 +1785,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local tankSlotIndex = 7
                 local slottedTankType = ""
                 local slottedTanks = 0        
-                local fuelUpdateDelay = 15.0*hudTickRate
+                local fuelUpdateDelay = 90.0*hudTickRate
                 local fuelTimeLeftR = {}
                 local fuelPercentR = {}
                 local fuelTimeLeftS = {}
@@ -4129,23 +4130,38 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             return used
         end
         local fps, fpsAvg, fpsCount, fpsAvgTotal, fpsTotal = 0,0,0,{},0
+        local safeAtmoMass = 0
+        local safeSpaceMass = 0
+        local safeHoverMass = 0
+    
         function Hud.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
             if SelectedTab ~= "INFO" then return newContent end
             local gravity 
-            local maxMass = 0
-            local reqThrust = 0
             local brakeValue = 0
+            local reqThrust = 0
             local mass = coreMass > 1000000 and round(coreMass / 1000000,2).." kTons" or round(coreMass / 1000, 2).." Tons"
             if inAtmo then brakeValue = LastMaxBrakeInAtmo else brakeValue = LastMaxBrake end
             local brkDist, brkTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, brakeValue)
             brakeValue = round((brakeValue / (coreMass * gravConstant)),2).." g"
             local maxThrust = Nav:maxForceForward()
             gravity = c.getGravityIntensity()
+            if velMag < 5 then
+                local axisCRefDirection = vec3(C.getOrientationForward())
+                local maxKPAlongAxis = C.getMaxThrustAlongAxis('thrust analog longitudinal ', {axisCRefDirection:unpack()})
+                safeAtmoMass = 0.5*maxKPAlongAxis[1]/gravity
+                safeAtmoMass = safeAtmoMass > 1000000 and round(safeAtmoMass / 1000000,1).." kTons" or round(safeAtmoMass / 1000, 1).." Tons"
+                safeSpaceMass = 0.5*maxKPAlongAxis[3]/gravity
+                safeSpaceMass = safeSpaceMass > 1000000 and round(safeSpaceMass / 1000000,1).." kTons" or round(safeSpaceMass / 1000, 1).." Tons"
+                axisCRefDirection = vec3(C.getOrientationUp())
+                maxKPAlongAxis = C.getMaxThrustAlongAxis('hover_engine, booster_engine', {axisCRefDirection:unpack()})
+                safeHoverMass = 0.5*maxKPAlongAxis[1]/gravity
+                safeHoverMass = safeHoverMass > 1000000 and round(safeHoverMass / 1000000,1).." kTons" or round(safeHoverMass / 1000, 1).." Tons"
+            end
             if gravity > 0.1 then
                 reqThrust = coreMass * gravity
                 reqThrust = round((reqThrust / (coreMass * gravConstant)),2).." g"
-                maxMass = 0.5 * maxThrust / gravity
-                maxMass = maxMass > 1000000 and round(maxMass / 1000000,2).." kTons" or round(maxMass / 1000, 2).." Tons"
+            else
+                reqThrust = "n/a"
             end
             maxThrust = round((maxThrust / (coreMass * gravConstant)),2).." g"
             if isRemote() == 0 or RemoteHud then 
@@ -4180,17 +4196,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 newContent[#newContent + 1] = svgText(startX, startY+height*3, stringf("Mass: %s", mass)) 
                 newContent[#newContent + 1] = svgText(midX, startY+height*3, stringf("Max Brake: %s",  brakeValue)) 
                 newContent[#newContent + 1] = svgText(startX, startY+height*4, stringf("Max Thrust: %s", maxThrust)) 
-                if gravity > 0.1 then
-                    newContent[#newContent + 1] = svgText(midX, startY+height*4, stringf("Max Thrust Mass: %s", (maxMass)))
-                    newContent[#newContent + 1] = svgText(startX, startY+height*5, stringf("Req Thrust: %s", reqThrust )) 
-                else
-                    newContent[#newContent + 1] = svgText(midX, startY+height*4, "Max Mass: n/a") 
-                    newContent[#newContent + 1] = svgText(startX, startY+height*5, "Req Thrust: n/a") 
-                end
-    
-                newContent[#newContent + 1] = svgText(midX, startY+height*5, HUD.FuelUsed("atmofueltank"))
-                newContent[#newContent + 1] = svgText(startX, startY+height*6, HUD.FuelUsed("spacefueltank"))
-                newContent[#newContent + 1] = svgText(midX, startY+height*6, HUD.FuelUsed("rocketfueltank"))
+                newContent[#newContent + 1] = svgText(midX, startY+height*4, stringf("Safe Atmo Mass: %s", (safeAtmoMass)))
+                newContent[#newContent + 1] = svgText(startX, startY+height*5, stringf("Req Thrust: %s", reqThrust )) 
+                newContent[#newContent + 1] = svgText(midX, startY+height*5, stringf("Safe Space Mass: %s", (safeSpaceMass)))
+                newContent[#newContent + 1] = svgText(midX, startY+height*6, stringf("Safe Hover Mass: %s", (safeHoverMass)))
                 newContent[#newContent +1] = svgText(startX, startY+height*7, stringf("Set Max Speed: %s", mfloor(MaxGameVelocity*3.6+0.5)))
                 newContent[#newContent +1] = svgText(midX, startY+height*7, stringf("Actual Max Speed: %s", mfloor(MaxSpeed*3.6+0.5)))
                 newContent[#newContent +1] = svgText(startX, startY+height*8, stringf("Friction Burn Speed: %s", mfloor(C.getFrictionBurnSpeed()*3.6)))
@@ -4766,8 +4775,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 end
             end
-            passengers = C.getPlayersOnBoard()
-            ships = C.getDockedConstructs()  
+    
+     
             local newContent = {}
             updateDistance()
             if ShouldCheckDamage then
@@ -4859,6 +4868,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local myAutopilotTarget=""
             local parseRadar = false
             local lastMouseTime = 0
+            local shipsMass = 0
     
             local function safeZone() -- Thanks to @SeM for the base code, modified to work with existing Atlas
                 return (C.isInPvPZone()~=1), mabs(C.getDistanceToSafeZone())
@@ -5801,6 +5811,17 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     lastMaxBrakeAtG = gravity
                 end
             end
+            ships = C.getDockedConstructs() 
+            passengers = C.getPlayersOnBoard()
+            shipsMass = 0
+            for i=1, #ships do
+                shipsMass = shipsMass + C.getDockedConstructMass(ships[i])
+            end
+            local passengersMass = 0
+            for i=1, #passengers do
+                passengersMass = passengersMass + C.getBoardedPlayerMass(passengers[i])
+            end
+            if passengersMass > 20000 then shipsMass = shipsMass + passengersMass - 20000 end
             notPvPZone, pvpDist = safeZone()
             MaxSpeed = C.getMaxSpeed()  
             if AutopilotTargetName ~= "None" and (autopilotTargetPlanet or CustomTarget) then
@@ -5989,7 +6010,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             constructVelocity = vec3(C.getWorldVelocity())
             coreVelocity = vec3(C.getVelocity())
             worldPos = vec3(C.getWorldPosition())
-            coreMass =  C.getMass()
+            coreMass =  C.getMass() + shipsMass
             velMag = vec3(constructVelocity):len()
             vSpd = -worldVertical:dot(constructVelocity)
             adjustedRoll = getRoll(worldVertical, constructForward, constructRight) 
@@ -9191,6 +9212,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 u.setTimer("hudTick", hudTickRate)
                 u.setTimer("oneSecond", 1)
                 u.setTimer("tenthSecond", 1/10)
+                C.setDockingMode(DockingMode)
                 if shield then u.setTimer("shieldTick", 0.0166667) end
                 if userBase then PROGRAM.ExtraOnStart() end
                 play("start","SU")
