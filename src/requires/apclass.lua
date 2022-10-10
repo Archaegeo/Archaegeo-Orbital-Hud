@@ -50,6 +50,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         local myAutopilotTarget=""
         local parseRadar = false
         local lastMouseTime = 0
+        local shipsMass = 0
 
         local function safeZone() -- Thanks to @SeM for the base code, modified to work with existing Atlas
             return (C.isInPvPZone()~=1), mabs(C.getDistanceToSafeZone())
@@ -992,6 +993,17 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 lastMaxBrakeAtG = gravity
             end
         end
+        ships = C.getDockedConstructs() 
+        passengers = C.getPlayersOnBoard()
+        shipsMass = 0
+        for i=1, #ships do
+            shipsMass = shipsMass + C.getDockedConstructMass(ships[i])
+        end
+        local passengersMass = 0
+        for i=1, #passengers do
+            passengersMass = passengersMass + C.getBoardedPlayerMass(passengers[i])
+        end
+        if passengersMass > 20000 then shipsMass = shipsMass + passengersMass - 20000 end
         notPvPZone, pvpDist = safeZone()
         MaxSpeed = C.getMaxSpeed()  
         if AutopilotTargetName ~= "None" and (autopilotTargetPlanet or CustomTarget) then
@@ -1180,7 +1192,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         constructVelocity = vec3(C.getWorldVelocity())
         coreVelocity = vec3(C.getVelocity())
         worldPos = vec3(C.getWorldPosition())
-        coreMass =  C.getMass()
+        coreMass =  C.getMass() + shipsMass
         velMag = vec3(constructVelocity):len()
         vSpd = -worldVertical:dot(constructVelocity)
         adjustedRoll = getRoll(worldVertical, constructForward, constructRight) 

@@ -3068,8 +3068,8 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 end
             end
         end
-        passengers = C.getPlayersOnBoard()
-        ships = C.getDockedConstructs()  
+
+ 
         local newContent = {}
         updateDistance()
         if ShouldCheckDamage then
