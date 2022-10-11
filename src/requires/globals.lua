@@ -136,8 +136,8 @@
         collisionTarget = nil -- 2
         apButtonsHovered = false -- 2
         apScrollIndex = 0 -- 2
-        passengers = nil -- 2
-        ships = nil -- 2
+        passengers = {} -- 2
+        ships = {} -- 2
         planetAtlas = {} -- 3
         scopeFOV = 90 -- 2
         oldShowHud = showHud -- 2

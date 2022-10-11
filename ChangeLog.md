@@ -1,5 +1,11 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.006
+- Changed DockingMode default to 1 (Manual).  Automatic (2) docks with any ship it gets near, not just landing on.
+    And noone can tell what Semi-Automatic (3) does.
+- On startup, you will get a message showing # of docked ships or boarded passengers (not including pilot)
+- Refactor pop up message display to prevent them getting lost if another comes in.
+
 Version 2.005
 - HUD now accounts for docked ships mass and boarded players mass. (Did not previously) 
     Boarded players mass only counts after 20 tons.  NOTE: I do not think offline boarded player mass is retrievable.

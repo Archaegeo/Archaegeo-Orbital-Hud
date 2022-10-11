@@ -1,7 +1,7 @@
 function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapon,
     mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
     navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
-    getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
+    getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp, msg)
 
     local C = DUConstruct
     local gravConstant = 9.80665
@@ -1793,11 +1793,11 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             showSettings = not showSettings 
             if showSettings then 
                 Buttons = SettingButtons
-                msgText = "Tap LMB to see Settings" 
+                msg ("Tap LMB to see Settings" )
                 oldShowHud = showHud
             else
                 Buttons = ControlButtons
-                msgText = "Tap LMB to see Control Buttons"
+                msg ("Tap LMB to see Control Buttons")
                 ToggleShownSettings()
                 showHud = oldShowHud
             end
@@ -1808,9 +1808,9 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
 
                 v.set(not v.get())
                 if v.get() then 
-                    msgText = k.." set to true"
+                    msg (k.." set to true")
                 else
-                    msgText = k.." set to false"
+                    msg (k.." set to false")
                 end
                 if k == "showHud" then
                     oldShowHud = v.get()
@@ -1930,7 +1930,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                         end
                     end
                 else
-                    msgText = "Follow Mode only works with Remote controller"
+                    msg ("Follow Mode only works with Remote controller")
                     followMode = false
                 end
             end
@@ -1958,9 +1958,9 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 end, function()
                     BrakeToggleStatus = not BrakeToggleStatus
                     if (BrakeToggleStatus) then
-                        msgText = "Brakes in Toggle Mode"
+                        msg ("Brakes in Toggle Mode")
                     else
-                        msgText = "Brakes in Default Mode"
+                        msg ("Brakes in Default Mode")
                     end
                 end)
             MakeButton("Align Prograde", "Disable Prograde", buttonWidth, buttonHeight,
@@ -2058,7 +2058,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 function()
                     return #AP.routeWP(true) > 0
                 end, function() if #AP.routeWP(true) > 0 then AP.routeWP(false, true) elseif  Autopilot or VectorToTarget then 
-                    msgText = "Disable Autopilot before loading route" return else AP.routeWP(false, false, 1) end end, function() return true end)   
+                    msg ("Disable Autopilot before loading route") return else AP.routeWP(false, false, 1) end end, function() return true end)   
             -- The rest are sort of standardized
             buttonHeight = 60
             buttonWidth = 300
@@ -2079,9 +2079,9 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 function () 
                     VertTakeOffEngine = not VertTakeOffEngine 
                     if VertTakeOffEngine then 
-                        msgText = "Vertical Takeoff Mode"
+                        msg ("Vertical Takeoff Mode")
                     else
-                        msgText = "Horizontal Takeoff Mode"
+                        msg ("Horizontal Takeoff Mode")
                     end
                 end, function() return UpVertAtmoEngine end)
             y = y + buttonHeight + 20    
@@ -2109,9 +2109,9 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 end, function()
                     repairArrows = not repairArrows
                     if (repairArrows) then
-                        msgText = "Repair Arrows Enabled"
+                        msg ("Repair Arrows Enabled")
                     else
-                        msgText = "Repair Arrows Diabled"
+                        msg ("Repair Arrows Diabled")
                     end
                 end, function()
                     return isRemote() == 1
@@ -2135,7 +2135,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 else
                     iphCondition = "All"
                 end
-                msgText = "IPH Mode: "..iphCondition
+                msg ("IPH Mode: "..iphCondition)
             end)
             y = y + buttonHeight + 20
             MakeButton(function() return stringf("Toggle Control Scheme - Current: %s", userControlScheme)
@@ -2151,7 +2151,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     else
                         userControlScheme = "keyboard"
                     end
-                    msgText = "New Control Scheme: "..userControlScheme
+                    msg ("New Control Scheme: "..userControlScheme)
                 end)
 
 
