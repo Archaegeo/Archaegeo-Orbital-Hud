@@ -4,6 +4,10 @@ Version 2.006
 - Changed DockingMode default to 1 (Manual).  Automatic (2) docks with any ship it gets near, not just landing on.
     And noone can tell what Semi-Automatic (3) does.
 - On startup, you will get a message showing # of docked ships or boarded passengers (not including pilot)
+- Tapping G while in above ground detection range will behave like it use to, where you either land or takeoff to hover height.
+    This will let you stop landing when you hit hover range if desired (for maneuvering).  Tapping G above ground detect
+    behaves like normal.
+- Changed Brake Landing to only slow to `brakeLandingRate` if slowing due to unknown landing altitude and avoiding surface max altitude.
 - Refactor pop up message display to prevent them getting lost if another comes in.
 
 Version 2.005

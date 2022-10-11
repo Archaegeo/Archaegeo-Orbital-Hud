@@ -16,7 +16,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             LockPitch = nil
             AP.cmdThrottle(0)
             if vBooster or hover then 
-                if (inAtmo or coreAltitude < 20000) and not eLL then
+                if (inAtmo or coreAltitude < 20000) and not eLL and abvGndDet==-1 then
                     play("bklOn", "BL")
                     StrongBrakes = true -- We don't care about this anymore
                     Reentry = false
@@ -28,6 +28,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     autoRoll = true
                     GearExtended = false -- Don't actually toggle the gear yet though
                 else
+                    BrakeLanding = false
+                    autoRoll = autoRollPreference
                     if hasGear then
                         play("grOut","LG",1)
                         Nav.control.deployLandingGears()                            
@@ -38,6 +40,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                         BrakeIsOn = "Landing"
                     end
                 end
+
                 AltitudeHold = false
                 HoverMode = false
             elseif hasGear and not BrakeLanding  then

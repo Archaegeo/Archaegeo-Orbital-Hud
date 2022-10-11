@@ -291,6 +291,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         IntoOrbit = false
         apBrk = false
         alignHeading = nil
+        finalLand = false
     end
 
     function ap.GetAutopilotBrakeDistanceAndTime(speed)
@@ -2623,7 +2624,9 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                                 local distanceToGround = coreAltitude - targetAltitude 
                                 skipLandingRate = true
                                 if distanceToGround <= stopDistance or stopDistance == -1 or (absHspd > 0.05 and apBrk) then
-                                    if (absHspd > 0.05 and apBrk) then
+                                    if targetAltitude==planet.surfaceMaxAltitude and vSpd < -brakeLandingRate then
+                                        BrakeIsOn = "BL Stop BLR"
+                                    elseif (absHspd > 0.05 and apBrk) then
                                         BrakeIsOn = "BL AP Hzn"
                                     else
                                         BrakeIsOn = "BL Stop Dist"
