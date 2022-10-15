@@ -444,7 +444,7 @@
     function Kinematics(Nav, c, u, s, msqrt, mabs) -- Part of Jaylebreak's flight files, modified slightly for hud
 
         local Kinematic = {} -- just a namespace
-        local C = 100000000 / 3600
+        local C = 90000000 / 3600
         local C2 = C * C
         local ITERATIONS = 100 -- iterations over engine "warm-up" period
     
@@ -660,7 +660,7 @@
     end 
 
 -- ArchHUD AtlasOrdering
-    function AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round) -- Atlas and Interplanetary functions including Update Autopilot Target
+    function AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round, msg) -- Atlas and Interplanetary functions including Update Autopilot Target
 
         -- Atlas functions
             local function getPlanet(position)
@@ -806,7 +806,7 @@
                         end
                     end        
                 else
-                    msgText = "Disengage autopilot before changing Interplanetary Helper"
+                    msg ("Disengage autopilot before changing Interplanetary Helper")
                     play("iph","AP")
                 end
             end 
@@ -823,7 +823,7 @@
                     index = -1
                     index = findAtlasIndex(positions)
                     if index ~= -1 then
-                        msgText = CustomTarget.name .. " saved location cleared"
+                        msg (CustomTarget.name .. " saved location cleared")
                         table.remove(positions, index)
                     end
                     adjustAutopilotTargetIndex()
@@ -860,10 +860,10 @@
                         UpdateAtlasLocationsList()
                         UpdateAutopilotTarget() -- This is safe and necessary to do right?
                         -- Store atmosphere so we know whether the location is in space or not
-                        msgText = "Location saved as " .. name.."("..p.name..")"
+                        msg ("Location saved as " .. name.."("..p.name..")")
                         return positions
                     else
-                        msgText = "Databank must be installed to save permanent locations"
+                        msg ("Databank must be installed to save permanent locations")
                     end
                 end
                 if string.sub(name,1,1)=="*" then privatelocations=addPosition(true) else SavedLocations=addPosition(false) end
@@ -903,22 +903,22 @@
                             local alt = coreAltitude
                             if alt < 1000 then alt = 1000 end
                             positions[index].agg = round(alt,0)
-                            msgText = positions[index].name .. " AGG Altitude:"..positions[index].agg.." saved ("..positions[index].planetname..")"
+                            msg (positions[index].name .. " AGG Altitude:"..positions[index].agg.." saved ("..positions[index].planetname..")")
                             return
                         elseif saveAgg == false then 
                             positions[index].agg = nil 
-                            msgText = positions[index].name .. " AGG Altitude cleared ("..positions[index].planetname..")"
+                            msg (positions[index].name .. " AGG Altitude cleared ("..positions[index].planetname..")")
                             return
                         end                        
                     else
                         local location = positions[index]
                         if saveHeading then 
                             location.heading = constructRight:cross(worldVertical)*5000 
-                            msgText = positions[index].name .. " heading saved ("..positions[index].planetname..")"
+                            msg = positions[index].name .. " heading saved ("..positions[index].planetname..")"
                             return
                         elseif saveHeading == false then 
                             location.heading = nil 
-                            msgText = positions[index].name .. " heading cleared ("..positions[index].planetname..")"
+                            msg = positions[index].name .. " heading cleared ("..positions[index].planetname..")"
                             return
                         end
                         location.gravity = c.getGravityIntensity()
@@ -926,10 +926,10 @@
                         location.safe = true
                     end
                     --UpdateAtlasLocationsList() -- Do we need these, if we only changed the name?  They are already done in AddNewLocation otherwise
-                    msgText = positions[index].name .. " position updated ("..positions[index].planetname..")"
+                    msg (positions[index].name .. " position updated ("..positions[index].planetname..")")
                     --UpdateAutopilotTarget()
                 else
-                    msgText = "Name Not Found"
+                    msg ("Name Not Found")
                 end
             end
             if string.sub(AutopilotTargetName,1,1)=="*" then updatePosition(true) else updatePosition(false) end

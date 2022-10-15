@@ -1,5 +1,5 @@
 function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
-    isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
+    isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank, msg)
     local C = DUConstruct
     local Control = {}
     local UnitHidden = true
@@ -16,7 +16,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             LockPitch = nil
             AP.cmdThrottle(0)
             if vBooster or hover then 
-                if (inAtmo or coreAltitude < 20000) and not eLL then
+                if (inAtmo or coreAltitude < 20000) and not eLL and abvGndDet==-1 then
                     play("bklOn", "BL")
                     StrongBrakes = true -- We don't care about this anymore
                     Reentry = false
@@ -24,20 +24,21 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     VertTakeOff = false
                     if IntoOrbit then AP.ToggleIntoOrbit() end
                     if BrakeLanding then apBrk = not apBrk end
-                    BrakeLanding = true
                     autoRoll = true
                     GearExtended = false -- Don't actually toggle the gear yet though
                 else
+                    autoRoll = autoRollPreference
                     if hasGear then
                         play("grOut","LG",1)
                         Nav.control.deployLandingGears()                            
                     end
                     apBrk = false
-                    navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                     if inAtmo then
                         BrakeIsOn = "Landing"
                     end
                 end
+                BrakeLanding = true
+                navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                 AltitudeHold = false
                 HoverMode = false
             elseif hasGear and not BrakeLanding  then
@@ -45,6 +46,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 Nav.control.deployLandingGears() -- Actually extend
             end
         else
+            if BrakeLanding then BrakeLanding = false end
             if hasGear then
                 play("grIn","LG",1)
                 Nav.control.retractLandingGears()
@@ -120,7 +122,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             end
             local function assistedFlight(vectorType)
                 if not inAtmo then
-                    msgText = "Flight Assist in Atmo only"
+                    msg ("Flight Assist in Atmo only")
                     return
                 end
                 local t = type(vectorType)
@@ -239,7 +241,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     C.forceDeboard(passengers[i])
                     C.forceInterruptVRSession(passengers[i])
                 end
-                msgText = "Deboarded All Passengers"
+                msg ("Deboarded All Passengers")
                 return
             end
             ATLAS.adjustAutopilotTargetIndex(1)
@@ -248,7 +250,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             if AltIsOn and holdingShift then 
                 local onboard = ""
                 for i=1, #ships do
-                    onboard = onboard.."| ID: "..ships[i].." Mass: "..round(c.getDockedConstructMass(ships[i])/1000,1).."t "
+                    onboard = onboard.."| ID: "..ships[i].." Mass: "..round(C.getDockedConstructMass(ships[i])/1000,1).."t "
                 end
                 s.print("Docked Ships: "..onboard)
                 return
@@ -265,9 +267,9 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             toggleView = false      
             if AltIsOn and holdingShift then 
                 for i=1, #ships do
-                    c.forceUndock(ships[i])
+                    C.forceUndock(ships[i])
                 end
-                msgText = "Undocked all ships"
+                msg ("Undocked all ships")
                 return
             end
             ReversalIsOn = nil
@@ -281,7 +283,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 if shield then 
                     SHIELD.ventShield()
                 else
-                    msgText = "No shield found"
+                    msg ("No shield found")
                 end
                 return
             end
@@ -293,15 +295,15 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     shield.toggle() 
                     return 
                 else
-                    msgText = "No shield found"
+                    msg ("No shield found")
                     return
                 end
             end
             CollisionSystem = not CollisionSystem
             if CollisionSystem then 
-                msgText = "Collision System Enabled"
+                msg ("Collision System Enabled")
             else 
-                msgText = "Collision System Secured"
+                msg ("Collision System Secured")
             end
         elseif action == "option8" then
             toggleView = false
@@ -309,17 +311,17 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 if AutopilotTargetIndex > 0 and CustomTarget ~= nil then
                     AP.routeWP()
                 else
-                    msgText = "Select a saved wp on IPH to add to or remove from route"
+                    msg ("Select a saved wp on IPH to add to or remove from route")
                 end
                 return
             end
             stablized = not stablized
             if not stablized then
-                msgText = "DeCoupled Mode - Ground Stabilization off"
+                msg ("DeCoupled Mode - Ground Stabilization off")
                 navCom:deactivateGroundEngineAltitudeStabilization()
                 play("gsOff", "GS")
             else
-                msgText = "Coupled Mode - Ground Stabilization on"
+                msg ("Coupled Mode - Ground Stabilization on")
                 navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
                 sEFC = true
                 play("gsOn", "GS") 
@@ -337,7 +339,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 gyroIsOn = gyro.isActive() == 1
                 if gyroIsOn then play("gyOn", "GA") else play("gyOff", "GA") end
             else
-                msgText = "No gyro found"
+                msg ("No gyro found")
             end
         elseif action == "lshift" then
             if AltIsOn then holdingShift = true end
@@ -409,7 +411,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             if antigrav ~= nil then
                 AP.ToggleAntigrav()
             else
-                msgText = "No antigrav found"
+                msg ("No antigrav found")
             end
         elseif action == "leftmouse" then
             leftmouseclick=true 
@@ -599,13 +601,13 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             return   
         elseif command == "/setname" then 
             if arguement == nil or arguement == "" then
-                msgText = "Usage: ah-setname Newname"
+                msg ("Usage: ah-setname Newname")
                 return
             end
             if AutopilotTargetIndex > 0 and CustomTarget ~= nil then
                 ATLAS.UpdatePosition(arguement)
             else
-                msgText = "Select a saved target to rename first"
+                msg ("Select a saved target to rename first")
             end
         elseif shield and command =="/resist" then
             SHIELD.setResist(arguement)
@@ -622,16 +624,16 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             AddNewLocationByWaypoint(savename, pos, temp)
             elseif command == "/agg" then
             if arguement == nil or arguement == "" then
-                msgText = "Usage: /agg targetheight"
+                msg ("Usage: /agg targetheight")
                 return
             end
             arguement = tonum(arguement)
             if arguement < 1000 then arguement = 1000 end
             AntigravTargetAltitude = arguement
-            msgText = "AGG Target Height set to "..arguement
+            msg ("AGG Target Height set to "..arguement)
         elseif command == "/G" then
             if arguement == nil or arguement == "" then
-                msgText = "Usage: /G VariableName variablevalue\n/G dump - shows all variables"
+                msg ("Usage: /G VariableName variablevalue\n/G dump - shows all variables")
                 return
             end
             if arguement == "dump" then
@@ -660,12 +662,12 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                         newGlobalValue = tonum(newGlobalValue)
                         if k=="AtmoSpeedLimit" then adjustedAtmoSpeedLimit = newGlobalValue end
                     end
-                    msgText = "Variable "..globalVariableName.." changed to "..newGlobalValue
+                    msg ("Variable "..globalVariableName.." changed to "..newGlobalValue)
                     if k=="MaxGameVelocity" then 
                         newGlobalValue = newGlobalValue/3.6
                         if newGlobalValue > MaxSpeed-0.2 then 
                             newGlobalValue = MaxSpeed-0.2 
-                            msgText = "Variable "..globalVariableName.." changed to "..round(newGlobalValue*3.6,1)
+                            msg = "Variable "..globalVariableName.." changed to "..round(newGlobalValue*3.6,1)
                         end
                     end
                     if varType == "boolean" then
@@ -679,28 +681,28 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     return
                 end
             end
-            msgText = "No such global variable: "..globalVariableName
+            msg ("No such global variable: "..globalVariableName)
         
         elseif command == "/deletewp" then
             if AutopilotTargetIndex > 0 and CustomTarget ~= nil then
                 ATLAS.ClearCurrentPosition()
             else
-                msgText = "Select a custom wp to delete first in IPH"
+                msg ("Select a custom wp to delete first in IPH")
             end
         elseif command == "/copydatabank" then 
             if dbHud_2 then 
                 SaveDataBank(true) 
             else
-                msgText = "Spare Databank required to copy databank"
+                msg ("Spare Databank required to copy databank")
             end
 
         elseif command == "/iphWP" then
             if AutopilotTargetIndex > 0 then
                 s.print(AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords, true))
                 s.print(json.encode(AutopilotTargetCoords))
-                msgText = "::pos waypoint shown in lua chat in local and world format"
+                msg ("::pos waypoint shown in lua chat in local and world format")
             else
-                msgText = "No target selected in IPH"
+                msg ("No target selected in IPH")
             end
         elseif command == "/createPrivate" then
             local saveStr = "privatelocations = {\n"
@@ -725,7 +727,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             end
             saveStr = saveStr.."}\n return privatelocations"
             if screenHud_1 then screenHud_1.setHTML(saveStr) end
-            msgText = msgStr.."locations dumped to screen if present.\n Cut and paste to privatelocations.lua to use"
+            msg (msgStr.."locations dumped to screen if present.\n Cut and paste to privatelocations.lua to use")
             msgTimer = 7
         end
     end
@@ -737,7 +739,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
         elseif UseExtra == "Lateral" then UseExtra = "Vertical"
         else UseExtra = "Off"
         end
-        msgText = "Extra Engine Tags: "..UseExtra 
+        msg ("Extra Engine Tags: "..UseExtra )
         u.stopTimer("tagTick")
     end
 

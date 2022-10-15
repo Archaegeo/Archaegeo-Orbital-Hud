@@ -59,7 +59,7 @@ end
         ReEntryPitch = -30 --export: (Default: -30) Maximum downward pitch allowed during freefall portion of re-entry.
         LockPitchTarget = 0 --export: (Default: 0) Target pitch ship tries to hold when LALT-LSHIFT-5 is pressed.
         AutopilotSpaceDistance = 5000 --export: (Default: 5000) Target distance AP will try to stop from a custom waypoint in space.  Good ships can lower this value a lot.
-        TargetOrbitRadius = 1.2 --export: (Default: 1.2) How tight you want to orbit the planet at end of autopilot.  The smaller the value the tighter the orbit.  Value is multiple of Atmospheric Height
+        TargetOrbitRadius = 1.3 --export: (Default: 1.3) How tight you want to orbit the planet at end of autopilot.  The smaller the value the tighter the orbit.  Value is multiple of Atmospheric Height
         LowOrbitHeight = 2000 --export: (Default: 2000) Height of Orbit above top of atmospehre when using Alt-4-4 same planet autopilot or alt-6-6 in space.
         AtmoSpeedLimit = 1175 --export: (Default: 1175) Speed limit in Atmosphere in km/h. AtmoSpeedAssist will cause ship to throttle back when this speed is reached.
         SpaceSpeedLimit = 66000 --export: (Default: 66000) Space speed limit in KM/H. If you hit this speed and are NOT in active autopilot, engines will turn off to prevent using all fuel (66000 means they wont turn off)
@@ -77,7 +77,7 @@ end
         FuelTankOptimization = 0 --export: (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank optimization skill level of the person who placed the tank. Ignored for slotted tanks.
         AutoShieldPercent = 0 --export: (Default: 0) Automatically adjusts shield resists once per minute if shield percent is less than this value.
         EmergencyWarp = 0 --export: (Default: 0) If > 0 and a radar contact is detected in pvp space and the contact is closer than EmergencyWarp value, and all other warp conditions met, will initiate warp.
-        DockingMode = 2 --export: (Default: 2) Docking mode of ship, default is 2 (Automatic), options are Manual = 1, Automatic = 2, Semi-automatic = 3
+        DockingMode = 1 --export: (Default: 1) Docking mode of ship, default is 1 (Manual), options are Manual = 1, Automatic = 2, Semi-automatic = 3
         savableVariablesHandling = {YawStallAngle={set=function (i)YawStallAngle=i end,get=function() return YawStallAngle end},PitchStallAngle={set=function (i)PitchStallAngle=i end,get=function() return PitchStallAngle end},brakeLandingRate={set=function (i)brakeLandingRate=i end,get=function() return brakeLandingRate end},MaxPitch={set=function (i)MaxPitch=i end,get=function() return MaxPitch end}, ReEntryPitch={set=function (i)ReEntryPitch=i end,get=function() return ReEntryPitch end},LockPitchTarget={set=function (i)LockPitchTarget=i end,get=function() return LockPitchTarget end}, AutopilotSpaceDistance={set=function (i)AutopilotSpaceDistance=i end,get=function() return AutopilotSpaceDistance end}, TargetOrbitRadius={set=function (i)TargetOrbitRadius=i end,get=function() return TargetOrbitRadius end}, LowOrbitHeight={set=function (i)LowOrbitHeight=i end,get=function() return LowOrbitHeight end},
         AtmoSpeedLimit={set=function (i)AtmoSpeedLimit=i end,get=function() return AtmoSpeedLimit end},SpaceSpeedLimit={set=function (i)SpaceSpeedLimit=i end,get=function() return SpaceSpeedLimit end},AutoTakeoffAltitude={set=function (i)AutoTakeoffAltitude=i end,get=function() return AutoTakeoffAltitude end},TargetHoverHeight={set=function (i)TargetHoverHeight=i end,get=function() return TargetHoverHeight end}, LandingGearGroundHeight={set=function (i)LandingGearGroundHeight=i end,get=function() return LandingGearGroundHeight end}, ReEntryHeight={set=function (i)ReEntryHeight=i end,get=function() return ReEntryHeight end},
         MaxGameVelocity={set=function (i)MaxGameVelocity=i end,get=function() return MaxGameVelocity end}, AutopilotInterplanetaryThrottle={set=function (i)AutopilotInterplanetaryThrottle=i end,get=function() return AutopilotInterplanetaryThrottle end},warmup={set=function (i)warmup=i end,get=function() return warmup end},fuelTankHandlingAtmo={set=function (i)fuelTankHandlingAtmo=i end,get=function() return fuelTankHandlingAtmo end},fuelTankHandlingSpace={set=function (i)fuelTankHandlingSpace=i end,get=function() return fuelTankHandlingSpace end},
@@ -158,7 +158,7 @@ end
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 2.005
+VERSION_NUMBER = 2.006
 
 
 -- DU Events written for wrap and minimization. Written by Dimencia and Archaegeo. Optimization and Automation of scripting by ChronosWS  Linked sources where appropriate, most have been modified.

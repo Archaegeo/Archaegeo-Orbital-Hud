@@ -1,5 +1,19 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.006 - CRITICAL UPDATE
+- Applied "band-aid" fix to vBoosters and hovers randomly indicating 0.00000009m height when they cannot get reading or do not see ground. NQ informed.
+- Applied "band-aid" fix to vBoosters not lowering to new hover height. NQ Informed
+- Changed `DockingMode` default to 1 (Manual).  Automatic (2) docks with any ship it gets near, not just landing on.
+    And noone can tell what Semi-Automatic (3) does.
+- On startup, you will get a message showing # of docked ships or boarded passengers (not including pilot)
+- Tapping G while within above ground detection range will behave like it use to, where you either land or takeoff to hover height.
+    This will let you stop landing when you hit hover range if desired (for maneuvering).  Tapping G when above ground detect
+    behaves like normal.
+- Changed Brake Landing to only slow to `brakeLandingRate` if slowing due to unknown landing altitude and avoiding surface max altitude.
+- Refactor pop up message display to prevent them getting lost if another comes in.
+- Changed default `TargetOrbitRadius` to 1.3 (was 1.2)
+
+
 Version 2.005
 - HUD now accounts for docked ships mass and boarded players mass. (Did not previously) 
     Boarded players mass only counts after 20 tons.  NOTE: I do not think offline boarded player mass is retrievable.

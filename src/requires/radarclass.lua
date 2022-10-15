@@ -1,5 +1,5 @@
 function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
-    mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) -- Everything related to radar but draw data passed to HUD Class.
+    mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play, msg) -- Everything related to radar but draw data passed to HUD Class.
     local Radar = {}
     -- Radar Class locals
 
@@ -145,7 +145,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
                             insert(friendlies,v)
                         end
                         if not notPvPZone and warpdrive and distance < EmergencyWarp and  warpdrive.getStatus() == 15 then 
-                            msgText = "INITIATING WARP"
+                            msg ("INITIATING WARP")
                             msgTimer = 7
                             warpdrive.initiate()
                         end
@@ -178,7 +178,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
                                             play("abRdr", "RD")
                                         end
                                         s.print("Abandoned Construct: "..construct.name.." ("..size.." ".. cTypeString[cType]..") at ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
-                                        msgText = "Abandoned Radar Contact ("..size.." ".. cTypeString[cType]..") detected"
+                                        msg ("Abandoned Radar Contact ("..size.." ".. cTypeString[cType]..") detected")
                                         construct.abandoned = true
                                     end 
                                 else
@@ -324,7 +324,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
     function Radar.ContactTick()
         if not contactTimer then contactTimer = 0 end
         if time > contactTimer+10 then
-            msgText = "Radar Contact" 
+            msg ("Radar Contact" )
             play("rdrCon","RC")
             contactTimer = time
         end

@@ -80,6 +80,17 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             end            
         end
 
+        local function msg(msg)
+            if msgText ~= "empty" then 
+                if msgText ~= msg then 
+                    msgText = msgText.."\n"..msg 
+                    msgTimer = 7 
+                end
+            else 
+                msgText = msg 
+            end
+        end
+
         local function SaveDataBank(copy) -- Save values to the databank.
             local function writeData(dataList)
                 for k, v in pairs(dataList) do
@@ -94,7 +105,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 writeData(saveableVariables())
                 s.print("Saved Variables to Datacore")
                 if copy and dbHud_2 then
-                    msgText = "Databank copied.  Remove copy when ready."
+                    msg ("Databank copied.  Remove copy when ready.")
                 end
             end
         end
@@ -154,7 +165,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
 
         local function radarSetup()
             if radar_1 then 
-                RADAR = RadarClass(c, s, u, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
+                RADAR = RadarClass(c, s, u, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play, msg) 
             end
         end
 
@@ -188,20 +199,20 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                         processVariableList(autoVariables)
                     else
                         processVariableList(autoVariables)
-                        msgText = "Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use database saved values"
+                        msg ("Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use database saved values")
                         msgTimer = 5
                         valuesAreSet = false
                     end
                     coroutine.yield()
                     if valuesAreSet then
-                        msgText = "Loaded Saved Variables"
+                        msg ("Loaded Saved Variables")
                     elseif not useTheseSettings then
-                        msgText = "No Databank Saved Variables Found\nVariables will save to Databank on standing"
+                        msg ("No Databank Saved Variables Found\nVariables will save to Databank on standing")
                         msgTimer = 5
                     end
                     if #SavedLocations>0 then customlocations = addTable(customlocations, SavedLocations) end
                 else
-                    msgText = "No databank found. Attach one to control unit and rerun \nthe autoconfigure to save preferences and locations"
+                    msg ("No databank found. Attach one to control unit and rerun \nthe autoconfigure to save preferences and locations")
                 end
                 BrakeToggleStatus = BrakeToggleDefault
                 userControlScheme = string.lower(userControlScheme)
@@ -213,7 +224,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 LastStartTime = time
                 userControlScheme = string.lower(userControlScheme)
                 if string.find("keyboard virtual joystick mouse",  userControlScheme) == nil then 
-                    msgText = "Invalid User Control Scheme selected.\nChange userControlScheme in Lua Parameters to keyboard, mouse, or virtual joystick\nOr use shift and button in screen"
+                    msg ("Invalid User Control Scheme selected.\nChange userControlScheme in Lua Parameters to keyboard, mouse, or virtual joystick\nOr use shift and button in screen")
                     msgTimer = 7
                 end
             
@@ -534,7 +545,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 Kinematic = Kinematics(Nav, c, u, s, msqrt, mabs)
                 Kep = Keplers(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
 
-                ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round)
+                ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round, msg)
                 planet = galaxyReference[0]:closestBody(C.getWorldPosition())
             end
 
@@ -562,7 +573,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             AP = APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, 
                 mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
                 navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq, 
-                getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode)
+                getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, msg)
 
             SetupChecks() -- All the if-thens to set up for particular ship.  Specifically override these with the saved variables if available
 
@@ -573,14 +584,14 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
 
             if HudClass then 
                 HUD = HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapon, mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, navCom, 
-                    sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables, getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp) 
+                    sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables, getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp, msg) 
             end
             if HUD then 
                 HUD.ButtonSetup() 
             end
             CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
-                isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
-            if shield then SHIELD = ShieldClass(shield, stringmatch, mfloor) end
+                isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank, msg)
+            if shield then SHIELD = ShieldClass(shield, stringmatch, mfloor, msg) end
             coroutine.yield()
             u.hideWidget()
             s.showScreen(1)
@@ -631,6 +642,12 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             elseif ECUHud and (ecuThrottle[3]+3) > systime() then
                 ecuResume()
             end
+            ships = C.getDockedConstructs() 
+            passengers = C.getPlayersOnBoard()
+            local dockmsg
+            dockmsg = #passengers>1 and "Passengers: "..(#passengers-1).." " or ""
+            dockmsg = dockmsg..(#ships>0 and "Ships: "..#ships or "")
+            if dockmsg ~= "" then msg("NOTICE: Docked "..dockmsg) end
         end)
         coroutine.resume(beginSetup)
     end
