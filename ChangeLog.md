@@ -1,9 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 2.006 - CRITICAL UPDATE
-- Applied "band-aid" fix to vBoosters and hovers indicating 0.00000009m height when they cannot get reading. NQ informed.
-- Applied "band-aid" fix to vBoosters not lowering to new hover height.
-- Changed DockingMode default to 1 (Manual).  Automatic (2) docks with any ship it gets near, not just landing on.
+- Applied "band-aid" fix to vBoosters and hovers randomly indicating 0.00000009m height when they cannot get reading or do not see ground. NQ informed.
+- Applied "band-aid" fix to vBoosters not lowering to new hover height. NQ Informed
+- Changed `DockingMode` default to 1 (Manual).  Automatic (2) docks with any ship it gets near, not just landing on.
     And noone can tell what Semi-Automatic (3) does.
 - On startup, you will get a message showing # of docked ships or boarded passengers (not including pilot)
 - Tapping G while within above ground detection range will behave like it use to, where you either land or takeoff to hover height.
