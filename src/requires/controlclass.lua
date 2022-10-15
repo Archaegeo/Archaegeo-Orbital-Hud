@@ -24,23 +24,21 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     VertTakeOff = false
                     if IntoOrbit then AP.ToggleIntoOrbit() end
                     if BrakeLanding then apBrk = not apBrk end
-                    BrakeLanding = true
                     autoRoll = true
                     GearExtended = false -- Don't actually toggle the gear yet though
                 else
-                    BrakeLanding = false
                     autoRoll = autoRollPreference
                     if hasGear then
                         play("grOut","LG",1)
                         Nav.control.deployLandingGears()                            
                     end
                     apBrk = false
-                    navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                     if inAtmo then
                         BrakeIsOn = "Landing"
                     end
                 end
-
+                BrakeLanding = true
+                navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                 AltitudeHold = false
                 HoverMode = false
             elseif hasGear and not BrakeLanding  then
@@ -48,6 +46,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 Nav.control.deployLandingGears() -- Actually extend
             end
         else
+            if BrakeLanding then BrakeLanding = false end
             if hasGear then
                 play("grIn","LG",1)
                 Nav.control.retractLandingGears()

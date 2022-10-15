@@ -83,21 +83,19 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             vecB = vecB:project_on_plane(normal)
             return atan(vecA:cross(vecB):dot(normal), vecA:dot(vecB))
         end
-        local vMaxDistance
-        local hMaxDistance
-        if hover then hMaxDistance = hover.getMaxDistance()*2 end
-        if vBooster then vMaxDistance = vBooster.getMaxDistance()*2 end
+        local lastvgd = -1
+        local lasthgd = -1
         local function AboveGroundLevel()
             local function hoverDetectGround()
                 local vgroundDistance = -1
                 local hgroundDistance = -1
                 if vBooster then
                     vgroundDistance = vBooster.getDistance()
-                    if vgroundDistance > vMaxDistance then vgroundDistance = -1 end
+                    if vgroundDistance > -1 and vgroundDistance < 0.01 then vgroundDistance = lastvgd else lastvgd = vgroundDistance end
                 end
                 if hover then
                     hgroundDistance = hover.getDistance()
-                    if hgroundDistance > hMaxDistance then hgroundDistance = -1 end
+                    if hgroundDistance > -1 and hgroundDistance < 0.01 then hgroundDistance = lasthgd else lasthgd = hgroundDistance end
                 end
                 if vgroundDistance ~= -1 and hgroundDistance ~= -1 then
                     if vgroundDistance < hgroundDistance then
@@ -381,7 +379,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 end
                 if AltitudeHold then AltitudeHold = false AutoTakeoff = false end
             else
-                msg ("Unable to engage auto-orbit, not near a planet")
+                msg("Unable to engage auto-orbit, not near a planet")
             end
         else
             -- If this got called while in atmo, make sure it's all false
@@ -488,7 +486,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         return 
                     end
                 else
-                    msg ("No space engines detected, Orbital Hop not supported")
+                    msg("No space engines detected, Orbital Hop not supported")
                     return
                 end
             elseif planet.hasAtmosphere then
@@ -511,7 +509,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             if #apRoute>0 and not finalLand then 
                 AutopilotTargetIndex = getIndex(apRoute[1])
                 ATLAS.UpdateAutopilotTarget()
-                msg ("Route Autopilot in Progress")
+                msg("Route Autopilot in Progress")
                 local targetVec = CustomTarget.position - worldPos
                 local distanceToTarget = targetVec:project_on_plane(worldVertical):len()
                 if distanceToTarget > 50000 and CustomTarget.planetname == planet.name then 
@@ -611,15 +609,15 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 apRoute = {}
                 apRoute = addTable(apRoute,saveRoute)
                 if #apRoute>0 then 
-                    msg ("Route Loaded" )
+                    msg("Route Loaded" )
                 else
-                    msg ("No Saved Route found on Databank")
+                    msg("No Saved Route found on Databank")
                 end
             return apRoute 
             else
                 saveRoute = {} 
                 saveRoute = addTable(saveRoute, apRoute) 
-                msg ("Route Saved")
+                msg("Route Saved")
                 SaveDataBank() 
                 return 
             end
@@ -627,10 +625,10 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         if getRoute then return apRoute end
         if clear then 
             apRoute = {}
-            msg ("Current Route Cleared")
+            msg("Current Route Cleared")
         else
             apRoute[#apRoute+1]=CustomTarget.name
-            msg ("Added "..CustomTarget.name.." to route. ")
+            msg("Added "..CustomTarget.name.." to route. ")
         end
         return apRoute
     end
@@ -831,13 +829,13 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
 
     function ap.BeginReentry() -- Begins re-entry process
         if Reentry then
-            msg ("Re-Entry cancelled")
+            msg("Re-Entry cancelled")
             play("reOff", "RE")
             Reentry = false
             autoRoll = autoRollPreference
             AltitudeHold = false
         elseif not planet.hasAtmosphere then
-            msg ("Re-Entry requirements not met: you must start out of atmosphere\n and within a planets gravity well over a planet with atmosphere")
+            msg("Re-Entry requirements not met: you must start out of atmosphere\n and within a planets gravity well over a planet with atmosphere")
             msgTimer = 5
         elseif not reentryMode then-- Parachute ReEntry
             Reentry = true
@@ -846,7 +844,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end                
             autoRoll = true
             BrakeIsOn = false
-            msg ("Beginning Parachute Re-Entry - Strap In.  Target speed: " .. adjustedAtmoSpeedLimit)
+            msg("Beginning Parachute Re-Entry - Strap In.  Target speed: " .. adjustedAtmoSpeedLimit)
             play("par", "RE")
         else --Glide Reentry
             Reentry = true
@@ -858,7 +856,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude 
             end
             local text = getDistanceDisplayString(HoldAltitude)
-            msg ( "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text )
+            msg( "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text )
             play("glide","RE")
             cmdC = mfloor(adjustedAtmoSpeedLimit)
         end
@@ -1135,7 +1133,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     cmdT = 0
                     if AltitudeHold then AP.ToggleAltitudeHold() end
                     if LockPitch then AP.ToggleLockPitch() end
-                    msg ("Autopilot Cancelled due to possible collision")
+                    msg("Autopilot Cancelled due to possible collision")
                     s.print(body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2))
                     AP.ResetAutopilots(1)
                     StrongBrakes = true
@@ -1168,7 +1166,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             sEFC = false
         end
         throttleMode = (navCom:getAxisCommandType(0) == axisCommandType.byThrottle)
-
         -- validate params
         pitchSpeedFactor = math.max(pitchSpeedFactor, 0.01)
         yawSpeedFactor = math.max(yawSpeedFactor, 0.01)
@@ -1346,7 +1343,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         local isWarping = (velMag > 27777)
 
         if velMag > SpaceSpeedLimit/3.6 and not inAtmo and not Autopilot and not isWarping then
-            msg ("Space Speed Engine Shutoff reached")
+            msg("Space Speed Engine Shutoff reached")
             cmdT = 0
         end
 
@@ -1430,7 +1427,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             autoRoll = true
             local targetAltitude = HoldAltitude
             if vSpd < -30 then -- saftey net
-                msg ("Unable to achieve lift. Safety Landing.")
+                msg("Unable to achieve lift. Safety Landing.")
                 upAmount = 0
                 autoRoll = autoRollPreference
                 VertTakeOff = false
@@ -1456,11 +1453,11 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                             BrakeIsOn = "VTO Complete"
                             VertTakeOff = false
                         end
-                        msg ("Takeoff complete. Singularity engaged")
+                        msg("Takeoff complete. Singularity engaged")
                         play("aggLk","AG")
                     else
                         BrakeIsOn = false
-                        msg ("VTO complete. Engaging Horizontal Flight")
+                        msg("VTO complete. Engaging Horizontal Flight")
                         play("vtoc", "VT")
                         AP.ToggleVerticalTakeoff()
                     end
@@ -1589,11 +1586,11 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         orbitMsg = "Orbiting to Target"
                         if (coreAltitude - 100) <= OrbitTargetPlanet.noAtmosphericDensityAltitude or  (travelTime> orbit.timeToPeriapsis and  orbit.periapsis.altitude  < OrbitTargetPlanet.noAtmosphericDensityAltitude) or 
                             (not orbitCheck() and orbit.eccentricity > 0.1) then 
-                            msg ("Re-Aligning Orbit")
+                            msg("Re-Aligning Orbit")
                             OrbitAchieved = false 
                         end
                     elseif OrbitAchieved or targetVec:len() < 15000+brakeDistance+coreAltitude then
-                        msg ("Orbit complete, proceeding with reentry")
+                        msg("Orbit complete, proceeding with reentry")
                         play("orCom", "OB")
                         -- We can skip prograde completely if we're approaching from an orbit?
                         --BrakeIsOn = false -- Leave brakes on to be safe while we align prograde
@@ -1615,7 +1612,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                                 orbitPitch = 0
                                 
                                 if not orbitalParams.VectorToTarget then
-                                    msg ("Orbit complete")
+                                    msg("Orbit complete")
                                     play("orCom", "OB")
                                     AP.ToggleIntoOrbit()
                                 end
@@ -1707,7 +1704,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 AutopilotStatus = "Aligning" -- Disable autopilot and reset
                 cmdT = 0
                 apThrottleSet = false
-                msg (msgt)
+                msg(msgt)
                 play("apCom","AP")
                 if orbit or spaceLand then
                     if orbit and AutopilotTargetOrbit ~= nil and not spaceLand then 
@@ -1966,7 +1963,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                             if pvpDist < lastPvPDist and pvpDist > 2000 then
                                 AP.ResetAutopilots(1)
-                                msg ("Autopilot cancelled to prevent crossing PvP Line" )
+                                msg("Autopilot cancelled to prevent crossing PvP Line" )
                                 BrakeIsOn = "PvP Prevent"
                                 lastPvPDist = pvpDist
                             else
@@ -2073,7 +2070,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                         if pvpDist < lastPvPDist and pvpDist > 2000 then 
                             if not aptoggle then aptoggle = true end
-                            msg ("Autopilot cancelled to prevent crossing PvP Line" )
+                            msg("Autopilot cancelled to prevent crossing PvP Line" )
                             BrakeIsOn = "Prevent PvP"
                             lastPvPDist = pvpDist
                         else
@@ -2135,7 +2132,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
             -- If we accidentally hit atmo while autopiloting to a custom target, cancel it and go straight to pulling up
         elseif Autopilot and (CustomTarget ~= nil and CustomTarget.planetname ~= "Space" and inAtmo) then
-            msg ("Autopilot complete, starting reentry")
+            msg("Autopilot complete, starting reentry")
             play("apCom", "AP")
             AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
             BrakeIsOn = false -- Leaving these on makes it screw up alignment...?
@@ -2300,7 +2297,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 if not reentryMode then
                     targetPitch = -80
                     if coreAltitude < (planet.surfaceMaxAltitude+(planet.atmosphereThickness-planet.surfaceMaxAltitude)*0.25) then
-                        msg ("PARACHUTE DEPLOYED at "..round(coreAltitude,0))
+                        msg("PARACHUTE DEPLOYED at "..round(coreAltitude,0))
                         Reentry = false
                         BrakeLanding = true
                         StrongBrakes = true
@@ -2526,8 +2523,10 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     if not throttleMode then
                         cmdT = 0
                     end
-                    navCom:setTargetGroundAltitude(500)
-                    navCom:activateGroundEngineAltitudeStabilization(500)
+                    if abvGndDet == -1 then 
+                        navCom:setTargetGroundAltitude(500)
+                        navCom:activateGroundEngineAltitudeStabilization(500)
+                    end
                     stablized = true
                     if not inAtmo then spaceBrake = true end
                     initBL = true
@@ -2637,30 +2636,29 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                             end
                         end
                     end
-
-
-                    groundDistance = abvGndDet
+                    groundDistance = abvGndDet 
                     if groundDistance > -1 then 
+                            BrakeIsOn = false
                             if not aggBase and not GearExtended then
                                 eLL = true
                                 navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                             end
-                            if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading and groundDistance-5 < LandingGearGroundHeight then -- Or if they start going back up
+                            if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading and groundDistance-3 < LandingGearGroundHeight then -- Or if they start going back up
                                 BrakeLanding = false
                                 AltitudeHold = false
                                 upAmount = 0
-                                if spaceBrake then
-                                    vertical(0,1)
-                                end
+                                vertical(0,1)
                                 BrakeIsOn = "BL Complete"
                                 autoRoll = autoRollPreference 
                                 apBrk = false
                                 initBL = false
                             else
-                                if vSpd < -5 or absHspd > 0.05 then 
+                                if vSpd < -5 or absHspd > 0.5 then
+                                    vertical(0,1)
                                     BrakeIsOn = "BL Slowing"
                                 else
                                     BrakeIsOn = false
+                                    vertical(-1)
                                 end
                             end
                     elseif not skipLandingRate then
@@ -2671,13 +2669,9 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                             BrakeIsOn = "BL hSpd"
                         elseif vSpd < -brakeLandingRate then
                             BrakeIsOn = "BL BLR"
-                            if spaceBrake then
-                                vertical(0,1)
-                            end
+                            vertical(0,1)
                         else
-                            if spaceBrake then
-                                vertical(-1)
-                            end
+                            vertical(-1)
                             BrakeIsOn = false
                         end
                     end
