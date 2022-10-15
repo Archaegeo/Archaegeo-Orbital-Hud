@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.005
+VERSION_NUMBER = 0.006
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -65,7 +65,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     ReEntryPitch = -30 -- (Default: -30) Maximum downward pitch allowed during freefall portion of re-entry.
     LockPitchTarget = 0 -- (Default: 0) Target pitch ship tries to hold when LALT-LSHIFT-5 is pressed.
     AutopilotSpaceDistance = 5000 -- (Default: 5000) Target distance AP will try to stop from a custom waypoint in space.  Good ships can lower this value a lot.
-    TargetOrbitRadius = 1.2 -- (Default: 1.2) How tight you want to orbit the planet at end of autopilot.  The smaller the value the tighter the orbit.  Value is multiple of Atmospheric Height
+    TargetOrbitRadius = 1.3 -- (Default: 1.3) How tight you want to orbit the planet at end of autopilot.  The smaller the value the tighter the orbit.  Value is multiple of Atmospheric Height
     LowOrbitHeight = 2000 -- (Default: 2000) Height of Orbit above top of atmospehre when using Alt-4-4 same planet autopilot or alt-6-6 in space.
     AtmoSpeedLimit = 1175 -- (Default: 1175) Speed limit in Atmosphere in km/h. AtmoSpeedAssist will cause ship to throttle back when this speed is reached.
     SpaceSpeedLimit = 66000 -- (Default: 66000) Space speed limit in KM/H. If you hit this speed and are NOT in active autopilot, engines will turn off to prevent using all fuel (66000 means they wont turn off)
@@ -83,7 +83,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     FuelTankOptimization = 0 -- (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank optimization skill level of the person who placed the tank. Ignored for slotted tanks.
     AutoShieldPercent = 0 -- (Default: 0) Automatically adjusts shield resists once per minute if shield percent is less than this value.
     EmergencyWarp = 0 -- (Default: 0) If > 0 and a radar contact is detected in pvp space and the contact is closer than EmergencyWarp value, and all other warp conditions met, will initiate warp.
-    DockingMode = 2 -- (Default: 2) Docking mode of ship, default is 2 (Automatic), options are Manual = 1, Automatic = 2, Semi-automatic = 3
+    DockingMode = 1 -- (Default: 1) Docking mode of ship, default is 2 (Automatic), options are Manual = 1, Automatic = 2, Semi-automatic = 3
 
     savableVariablesHandling = {YawStallAngle={set=function (i)YawStallAngle=i end,get=function() return YawStallAngle end},PitchStallAngle={set=function (i)PitchStallAngle=i end,get=function() return PitchStallAngle end},brakeLandingRate={set=function (i)brakeLandingRate=i end,get=function() return brakeLandingRate end},MaxPitch={set=function (i)MaxPitch=i end,get=function() return MaxPitch end}, ReEntryPitch={set=function (i)ReEntryPitch=i end,get=function() return ReEntryPitch end},LockPitchTarget={set=function (i)LockPitchTarget=i end,get=function() return LockPitchTarget end}, AutopilotSpaceDistance={set=function (i)AutopilotSpaceDistance=i end,get=function() return AutopilotSpaceDistance end}, TargetOrbitRadius={set=function (i)TargetOrbitRadius=i end,get=function() return TargetOrbitRadius end}, LowOrbitHeight={set=function (i)LowOrbitHeight=i end,get=function() return LowOrbitHeight end},
     AtmoSpeedLimit={set=function (i)AtmoSpeedLimit=i end,get=function() return AtmoSpeedLimit end},SpaceSpeedLimit={set=function (i)SpaceSpeedLimit=i end,get=function() return SpaceSpeedLimit end},AutoTakeoffAltitude={set=function (i)AutoTakeoffAltitude=i end,get=function() return AutoTakeoffAltitude end},TargetHoverHeight={set=function (i)TargetHoverHeight=i end,get=function() return TargetHoverHeight end}, LandingGearGroundHeight={set=function (i)LandingGearGroundHeight=i end,get=function() return LandingGearGroundHeight end}, ReEntryHeight={set=function (i)ReEntryHeight=i end,get=function() return ReEntryHeight end},
@@ -294,8 +294,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         collisionTarget = nil -- 2
         apButtonsHovered = false -- 2
         apScrollIndex = 0 -- 2
-        passengers = nil -- 2
-        ships = nil -- 2
+        passengers = {} -- 2
+        ships = {} -- 2
         planetAtlas = {} -- 3
         scopeFOV = 90 -- 2
         oldShowHud = showHud -- 2
@@ -759,7 +759,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     local function Kinematics(Nav, c, u, s, msqrt, mabs) -- Part of Jaylebreak's flight files, modified slightly for hud
 
         local Kinematic = {} -- just a namespace
-        local C = 100000000 / 3600
+        local C = 90000000 / 3600
         local C2 = C * C
         local ITERATIONS = 100 -- iterations over engine "warm-up" period
     
@@ -973,7 +973,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         })
     end  
     -- ArchHUD AtlasOrdering
-    local function AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round) -- Atlas and Interplanetary functions including Update Autopilot Target
+    local function AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round, msg) -- Atlas and Interplanetary functions including Update Autopilot Target
 
         -- Atlas functions
             local function getPlanet(position)
@@ -1119,10 +1119,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         end
                     end        
                 else
-                    msgText = "Disengage autopilot before changing Interplanetary Helper"
+                    msg ("Disengage autopilot before changing Interplanetary Helper")
                     play("iph","AP")
                 end
-            end
+            end 
 
             local function ClearCurrentPosition()
                 local function clearPosition(private)
@@ -1136,7 +1136,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     index = -1
                     index = findAtlasIndex(positions)
                     if index ~= -1 then
-                        msgText = CustomTarget.name .. " saved location cleared"
+                        msg (CustomTarget.name .. " saved location cleared")
                         table.remove(positions, index)
                     end
                     adjustAutopilotTargetIndex()
@@ -1173,10 +1173,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         UpdateAtlasLocationsList()
                         UpdateAutopilotTarget() -- This is safe and necessary to do right?
                         -- Store atmosphere so we know whether the location is in space or not
-                        msgText = "Location saved as " .. name.."("..p.name..")"
+                        msg ("Location saved as " .. name.."("..p.name..")")
                         return positions
                     else
-                        msgText = "Databank must be installed to save permanent locations"
+                        msg ("Databank must be installed to save permanent locations")
                     end
                 end
                 if string.sub(name,1,1)=="*" then privatelocations=addPosition(true) else SavedLocations=addPosition(false) end
@@ -1216,22 +1216,22 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             local alt = coreAltitude
                             if alt < 1000 then alt = 1000 end
                             positions[index].agg = round(alt,0)
-                            msgText = positions[index].name .. " AGG Altitude:"..positions[index].agg.." saved ("..positions[index].planetname..")"
+                            msg (positions[index].name .. " AGG Altitude:"..positions[index].agg.." saved ("..positions[index].planetname..")")
                             return
                         elseif saveAgg == false then 
                             positions[index].agg = nil 
-                            msgText = positions[index].name .. " AGG Altitude cleared ("..positions[index].planetname..")"
+                            msg (positions[index].name .. " AGG Altitude cleared ("..positions[index].planetname..")")
                             return
                         end                        
                     else
                         local location = positions[index]
                         if saveHeading then 
                             location.heading = constructRight:cross(worldVertical)*5000 
-                            msgText = positions[index].name .. " heading saved ("..positions[index].planetname..")"
+                            msg = positions[index].name .. " heading saved ("..positions[index].planetname..")"
                             return
                         elseif saveHeading == false then 
                             location.heading = nil 
-                            msgText = positions[index].name .. " heading cleared ("..positions[index].planetname..")"
+                            msg = positions[index].name .. " heading cleared ("..positions[index].planetname..")"
                             return
                         end
                         location.gravity = c.getGravityIntensity()
@@ -1239,10 +1239,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         location.safe = true
                     end
                     --UpdateAtlasLocationsList() -- Do we need these, if we only changed the name?  They are already done in AddNewLocation otherwise
-                    msgText = positions[index].name .. " position updated ("..positions[index].planetname..")"
+                    msg (positions[index].name .. " position updated ("..positions[index].planetname..")")
                     --UpdateAutopilotTarget()
                 else
-                    msgText = "Name Not Found"
+                    msg ("Name Not Found")
                 end
             end
             if string.sub(AutopilotTargetName,1,1)=="*" then updatePosition(true) else updatePosition(false) end
@@ -1273,7 +1273,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     end
     -- ArchHUD classes  
     local function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
-        mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) -- Everything related to radar but draw data passed to HUD Class.
+        mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play, msg) -- Everything related to radar but draw data passed to HUD Class.
         local Radar = {}
         -- Radar Class locals
     
@@ -1419,7 +1419,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                 insert(friendlies,v)
                             end
                             if not notPvPZone and warpdrive and distance < EmergencyWarp and  warpdrive.getStatus() == 15 then 
-                                msgText = "INITIATING WARP"
+                                msg ("INITIATING WARP")
                                 msgTimer = 7
                                 warpdrive.initiate()
                             end
@@ -1452,7 +1452,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                                 play("abRdr", "RD")
                                             end
                                             s.print("Abandoned Construct: "..construct.name.." ("..size.." ".. cTypeString[cType]..") at ::pos{0,0,"..construct.center.x..","..construct.center.y..","..construct.center.z.."}")
-                                            msgText = "Abandoned Radar Contact ("..size.." ".. cTypeString[cType]..") detected"
+                                            msg ("Abandoned Radar Contact ("..size.." ".. cTypeString[cType]..") detected")
                                             construct.abandoned = true
                                         end 
                                     else
@@ -1598,7 +1598,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         function Radar.ContactTick()
             if not contactTimer then contactTimer = 0 end
             if time > contactTimer+10 then
-                msgText = "Radar Contact" 
+                msg ("Radar Contact" )
                 play("rdrCon","RC")
                 contactTimer = time
             end
@@ -1647,8 +1647,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         setup()
     
         return Radar
-    end 
-    local function ShieldClass(shield, stringmatch, mfloor) -- Everything related to shield but draw data passed to HUD Class.
+    end
+    local function ShieldClass(shield, stringmatch, mfloor, msg) -- Everything related to shield but draw data passed to HUD Class.
         local Shield = {}
         local RCD = shield.getResistancesCooldown()
     
@@ -1668,7 +1668,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local tot = 0.5999
             if sRR[1] == 0.0 and sRR[2] == 0.0 and sRR[3] == 0.0 and sRR[4] == 0.0 then return end
             local setResist = shield.setResistances((tot*sRR[1]),(tot*sRR[2]),(tot*sRR[3]),(tot*sRR[4]))
-            if setResist == 1 then msgText="Shield Resistances updated" else msgText = "Value Exceeded. Failed to update Shield Resistances" end
+            if setResist == 1 then msg ("Shield Resistances updated") else msg ("Value Exceeded. Failed to update Shield Resistances") end
         end
     
         function Shield.shieldTick()
@@ -1680,23 +1680,23 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
         function Shield.setResist(arguement)
             if not shield then
-                msgText = "No shield found"
+                msg ("No shield found")
                 return
             elseif arguement == nil or RCD>0 then
-                msgText = "Usable once per min.  Usage: /resist 0.15, 0.15, 0.15, 0.15"
+                msg ("Usable once per min.  Usage: /resist 0.15, 0.15, 0.15, 0.15")
                 return
             end
             local num  = ' *([+-]?%d+%.?%d*e?[+-]?%d*)'
             local posPattern = num .. ', ' .. num .. ', ' ..  num .. ', ' .. num    
             local antimatter, electromagnetic, kinetic, thermic = stringmatch(arguement, posPattern)
-            if thermic == nil or (antimatter + electromagnetic+ kinetic + thermic) > 0.6 then msgText="Improperly formatted or total exceeds 0.6" return end
-            if shield.setResistances(antimatter,electromagnetic,kinetic,thermic)==1 then msgText="Shield Resistances set" else msgText="Resistance setting failed." end
+            if thermic == nil or (antimatter + electromagnetic+ kinetic + thermic) > 0.6 then msg ("Improperly formatted or total exceeds 0.6") return end
+            if shield.setResistances(antimatter,electromagnetic,kinetic,thermic)==1 then msg ("Shield Resistances set") else msg ("Resistance setting failed.") end
         end
     
         function Shield.ventShield()
             local vcd = shield.getVentingCooldown()
-            if vcd > 0 then msgText="Cannot vent again for "..vcd.." seconds" return end
-            if shield.getShieldHitpoints()<shield.getMaxShieldHitpoints() then shield.startVenting() msgText="Shields Venting Enabled - NO SHIELDS WHILE VENTING" else msgText="Shields already at max hitpoints" end
+            if vcd > 0 then msg ("Cannot vent again for "..vcd.." seconds") return end
+            if shield.getShieldHitpoints()<shield.getMaxShieldHitpoints() then shield.startVenting() msg ("Shields Venting Enabled - NO SHIELDS WHILE VENTING") else msg ("Shields already at max hitpoints") end
         end
     
         if userShield then 
@@ -1708,7 +1708,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     local function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapon,
         mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, 
         navCom, sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables,
-        getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp)
+        getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp, msg)
     
         local C = DUConstruct
         local gravConstant = 9.80665
@@ -2535,14 +2535,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 end
                 if BrakeLanding then
-                    if StrongBrakes then
                         local str = "Brake Landing"
                         if alignHeading then str = str.."-Aligning" end
                         if apBrk then str = str.."-Drift Limited" end
                         newContent[#newContent + 1] = svgText(warningX, apY, str, "warnings")
-                    else
-                        newContent[#newContent + 1] = svgText(warningX, apY, "Coast-Landing", "warnings")
-                    end
                 end
                 if ProgradeIsOn then
                     newContent[#newContent + 1] = svgText(warningX, apY+20, "Prograde Alignment", "crit")
@@ -3500,11 +3496,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 showSettings = not showSettings 
                 if showSettings then 
                     Buttons = SettingButtons
-                    msgText = "Tap LMB to see Settings" 
+                    msg ("Tap LMB to see Settings" )
                     oldShowHud = showHud
                 else
                     Buttons = ControlButtons
-                    msgText = "Tap LMB to see Control Buttons"
+                    msg ("Tap LMB to see Control Buttons")
                     ToggleShownSettings()
                     showHud = oldShowHud
                 end
@@ -3515,9 +3511,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
                     v.set(not v.get())
                     if v.get() then 
-                        msgText = k.." set to true"
+                        msg (k.." set to true")
                     else
-                        msgText = k.." set to false"
+                        msg (k.." set to false")
                     end
                     if k == "showHud" then
                         oldShowHud = v.get()
@@ -3637,7 +3633,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             end
                         end
                     else
-                        msgText = "Follow Mode only works with Remote controller"
+                        msg ("Follow Mode only works with Remote controller")
                         followMode = false
                     end
                 end
@@ -3665,9 +3661,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end, function()
                         BrakeToggleStatus = not BrakeToggleStatus
                         if (BrakeToggleStatus) then
-                            msgText = "Brakes in Toggle Mode"
+                            msg ("Brakes in Toggle Mode")
                         else
-                            msgText = "Brakes in Default Mode"
+                            msg ("Brakes in Default Mode")
                         end
                     end)
                 MakeButton("Align Prograde", "Disable Prograde", buttonWidth, buttonHeight,
@@ -3765,7 +3761,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     function()
                         return #AP.routeWP(true) > 0
                     end, function() if #AP.routeWP(true) > 0 then AP.routeWP(false, true) elseif  Autopilot or VectorToTarget then 
-                        msgText = "Disable Autopilot before loading route" return else AP.routeWP(false, false, 1) end end, function() return true end)   
+                        msg ("Disable Autopilot before loading route") return else AP.routeWP(false, false, 1) end end, function() return true end)   
                 -- The rest are sort of standardized
                 buttonHeight = 60
                 buttonWidth = 300
@@ -3786,9 +3782,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     function () 
                         VertTakeOffEngine = not VertTakeOffEngine 
                         if VertTakeOffEngine then 
-                            msgText = "Vertical Takeoff Mode"
+                            msg ("Vertical Takeoff Mode")
                         else
-                            msgText = "Horizontal Takeoff Mode"
+                            msg ("Horizontal Takeoff Mode")
                         end
                     end, function() return UpVertAtmoEngine end)
                 y = y + buttonHeight + 20    
@@ -3816,9 +3812,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end, function()
                         repairArrows = not repairArrows
                         if (repairArrows) then
-                            msgText = "Repair Arrows Enabled"
+                            msg ("Repair Arrows Enabled")
                         else
-                            msgText = "Repair Arrows Diabled"
+                            msg ("Repair Arrows Diabled")
                         end
                     end, function()
                         return isRemote() == 1
@@ -3842,7 +3838,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     else
                         iphCondition = "All"
                     end
-                    msgText = "IPH Mode: "..iphCondition
+                    msg ("IPH Mode: "..iphCondition)
                 end)
                 y = y + buttonHeight + 20
                 MakeButton(function() return stringf("Toggle Control Scheme - Current: %s", userControlScheme)
@@ -3858,7 +3854,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         else
                             userControlScheme = "keyboard"
                         end
-                        msgText = "New Control Scheme: "..userControlScheme
+                        msg ("New Control Scheme: "..userControlScheme)
                     end)
     
     
@@ -4819,7 +4815,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     local function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1,
         mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
         navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq,
-        getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode)  
+        getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, msg)  
         local s = DUSystem
         local C = DUConstruct
     
@@ -4901,21 +4897,19 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 vecB = vecB:project_on_plane(normal)
                 return atan(vecA:cross(vecB):dot(normal), vecA:dot(vecB))
             end
-            local vMaxDistance
-            local hMaxDistance
-            if hover then hMaxDistance = hover.getMaxDistance()*2 end
-            if vBooster then vMaxDistance = vBooster.getMaxDistance()*2 end
+            local lastvgd = -1
+            local lasthgd = -1
             local function AboveGroundLevel()
                 local function hoverDetectGround()
                     local vgroundDistance = -1
                     local hgroundDistance = -1
                     if vBooster then
                         vgroundDistance = vBooster.getDistance()
-                        if vgroundDistance > vMaxDistance then vgroundDistance = -1 end
+                        if vgroundDistance > -1 and vgroundDistance < 0.01 then vgroundDistance = lastvgd else lastvgd = vgroundDistance end
                     end
                     if hover then
                         hgroundDistance = hover.getDistance()
-                        if hgroundDistance > hMaxDistance then hgroundDistance = -1 end
+                        if hgroundDistance > -1 and hgroundDistance < 0.01 then hgroundDistance = lasthgd else lasthgd = hgroundDistance end
                     end
                     if vgroundDistance ~= -1 and hgroundDistance ~= -1 then
                         if vgroundDistance < hgroundDistance then
@@ -5109,6 +5103,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             IntoOrbit = false
             apBrk = false
             alignHeading = nil
+            finalLand = false
         end
     
         function ap.GetAutopilotBrakeDistanceAndTime(speed)
@@ -5198,7 +5193,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                     if AltitudeHold then AltitudeHold = false AutoTakeoff = false end
                 else
-                    msgText = "Unable to engage auto-orbit, not near a planet"
+                    msg("Unable to engage auto-orbit, not near a planet")
                 end
             else
                 -- If this got called while in atmo, make sure it's all false
@@ -5305,7 +5300,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             return 
                         end
                     else
-                        msgText = "No space engines detected, Orbital Hop not supported"
+                        msg("No space engines detected, Orbital Hop not supported")
                         return
                     end
                 elseif planet.hasAtmosphere then
@@ -5324,11 +5319,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             TargetSet = false -- No matter what
             -- Toggle Autopilot, as long as the target isn't None
             if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
-                if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then  msgText = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
+                if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then  msg = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
                 if #apRoute>0 and not finalLand then 
                     AutopilotTargetIndex = getIndex(apRoute[1])
                     ATLAS.UpdateAutopilotTarget()
-                    msgText = "Route Autopilot in Progress"
+                    msg("Route Autopilot in Progress")
                     local targetVec = CustomTarget.position - worldPos
                     local distanceToTarget = targetVec:project_on_plane(worldVertical):len()
                     if distanceToTarget > 50000 and CustomTarget.planetname == planet.name then 
@@ -5428,23 +5423,26 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     apRoute = {}
                     apRoute = addTable(apRoute,saveRoute)
                     if #apRoute>0 then 
-                        msgText = "Route Loaded" 
+                        msg("Route Loaded" )
                     else
-                        msgText = "No Saved Route found on Databank"
+                        msg("No Saved Route found on Databank")
                     end
                 return apRoute 
                 else
                     saveRoute = {} 
-                    saveRoute = addTable(saveRoute, apRoute) msgText = "Route Saved" SaveDataBank() return 
+                    saveRoute = addTable(saveRoute, apRoute) 
+                    msg("Route Saved")
+                    SaveDataBank() 
+                    return 
                 end
             end
             if getRoute then return apRoute end
             if clear then 
                 apRoute = {}
-                msgText = "Current Route Cleared"
+                msg("Current Route Cleared")
             else
                 apRoute[#apRoute+1]=CustomTarget.name
-                msgText = "Added "..CustomTarget.name.." to route. "
+                msg("Added "..CustomTarget.name.." to route. ")
             end
             return apRoute
         end
@@ -5645,13 +5643,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
         function ap.BeginReentry() -- Begins re-entry process
             if Reentry then
-                msgText = "Re-Entry cancelled"
+                msg("Re-Entry cancelled")
                 play("reOff", "RE")
                 Reentry = false
                 autoRoll = autoRollPreference
                 AltitudeHold = false
             elseif not planet.hasAtmosphere then
-                msgText = "Re-Entry requirements not met: you must start out of atmosphere\n and within a planets gravity well over a planet with atmosphere"
+                msg("Re-Entry requirements not met: you must start out of atmosphere\n and within a planets gravity well over a planet with atmosphere")
                 msgTimer = 5
             elseif not reentryMode then-- Parachute ReEntry
                 Reentry = true
@@ -5660,7 +5658,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end                
                 autoRoll = true
                 BrakeIsOn = false
-                msgText = "Beginning Parachute Re-Entry - Strap In.  Target speed: " .. adjustedAtmoSpeedLimit
+                msg("Beginning Parachute Re-Entry - Strap In.  Target speed: " .. adjustedAtmoSpeedLimit)
                 play("par", "RE")
             else --Glide Reentry
                 Reentry = true
@@ -5672,7 +5670,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude 
                 end
                 local text = getDistanceDisplayString(HoldAltitude)
-                msgText = "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text 
+                msg( "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text )
                 play("glide","RE")
                 cmdC = mfloor(adjustedAtmoSpeedLimit)
             end
@@ -5793,7 +5791,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 gravity = round(gravity, 5) -- round to avoid insignificant updates
                 if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
                     local speed = coreVelocity:len()
-                    local maxBrake = jdecode(u.getWidgetData()).maxBrake 
+                    local maxBrake = C.getMaxBrake()
                     if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
                         maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
                         maxBrake = maxBrake / atmosDensity
@@ -5949,7 +5947,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         cmdT = 0
                         if AltitudeHold then AP.ToggleAltitudeHold() end
                         if LockPitch then AP.ToggleLockPitch() end
-                        msgText = "Autopilot Cancelled due to possible collision"
+                        msg("Autopilot Cancelled due to possible collision")
                         s.print(body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2))
                         AP.ResetAutopilots(1)
                         StrongBrakes = true
@@ -5982,7 +5980,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 sEFC = false
             end
             throttleMode = (navCom:getAxisCommandType(0) == axisCommandType.byThrottle)
-    
             -- validate params
             pitchSpeedFactor = math.max(pitchSpeedFactor, 0.01)
             yawSpeedFactor = math.max(yawSpeedFactor, 0.01)
@@ -6160,7 +6157,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local isWarping = (velMag > 27777)
     
             if velMag > SpaceSpeedLimit/3.6 and not inAtmo and not Autopilot and not isWarping then
-                msgText = "Space Speed Engine Shutoff reached"
+                msg("Space Speed Engine Shutoff reached")
                 cmdT = 0
             end
     
@@ -6244,7 +6241,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 autoRoll = true
                 local targetAltitude = HoldAltitude
                 if vSpd < -30 then -- saftey net
-                    msgText = "Unable to achieve lift. Safety Landing."
+                    msg("Unable to achieve lift. Safety Landing.")
                     upAmount = 0
                     autoRoll = autoRollPreference
                     VertTakeOff = false
@@ -6270,11 +6267,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                 BrakeIsOn = "VTO Complete"
                                 VertTakeOff = false
                             end
-                            msgText = "Takeoff complete. Singularity engaged"
+                            msg("Takeoff complete. Singularity engaged")
                             play("aggLk","AG")
                         else
                             BrakeIsOn = false
-                            msgText = "VTO complete. Engaging Horizontal Flight"
+                            msg("VTO complete. Engaging Horizontal Flight")
                             play("vtoc", "VT")
                             AP.ToggleVerticalTakeoff()
                         end
@@ -6403,11 +6400,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             orbitMsg = "Orbiting to Target"
                             if (coreAltitude - 100) <= OrbitTargetPlanet.noAtmosphericDensityAltitude or  (travelTime> orbit.timeToPeriapsis and  orbit.periapsis.altitude  < OrbitTargetPlanet.noAtmosphericDensityAltitude) or 
                                 (not orbitCheck() and orbit.eccentricity > 0.1) then 
-                                msgText = "Re-Aligning Orbit"
+                                msg("Re-Aligning Orbit")
                                 OrbitAchieved = false 
                             end
                         elseif OrbitAchieved or targetVec:len() < 15000+brakeDistance+coreAltitude then
-                            msgText = "Orbit complete, proceeding with reentry"
+                            msg("Orbit complete, proceeding with reentry")
                             play("orCom", "OB")
                             -- We can skip prograde completely if we're approaching from an orbit?
                             --BrakeIsOn = false -- Leave brakes on to be safe while we align prograde
@@ -6429,7 +6426,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                     orbitPitch = 0
                                     
                                     if not orbitalParams.VectorToTarget then
-                                        msgText = "Orbit complete"
+                                        msg("Orbit complete")
                                         play("orCom", "OB")
                                         AP.ToggleIntoOrbit()
                                     end
@@ -6511,8 +6508,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             end
     
             if Autopilot and not inAtmo and not spaceLand then
-                local function finishAutopilot(msg, orbit)
-                    s.print(msg)
+                local function finishAutopilot(msgt, orbit)
+                    s.print(msgt)
                     ProgradeIsOn = false
                     BrakeIsOn = false
                     AutopilotBraking = false
@@ -6521,7 +6518,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     AutopilotStatus = "Aligning" -- Disable autopilot and reset
                     cmdT = 0
                     apThrottleSet = false
-                    msgText = msg
+                    msg(msgt)
                     play("apCom","AP")
                     if orbit or spaceLand then
                         if orbit and AutopilotTargetOrbit ~= nil and not spaceLand then 
@@ -6620,7 +6617,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     AutopilotDistance = atmoDistance -- If we're going to hit atmo before our target, use that distance instead.
                     -- Can we put this on the HUD easily?
                     --local value, units = getDistanceDisplayString(atmoDistance)
-                    --msgText = "Adjusting Brake Distance, will hit atmo in: " .. value .. units
+                    --msg = "Adjusting Brake Distance, will hit atmo in: " .. value .. units
                 end
     
                 
@@ -6722,12 +6719,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     local intersectBody, atmoDistance = AP.checkLOS( (AutopilotTargetCoords-worldPos):normalize())
                     if autopilotTargetPlanet.name ~= planet.name then 
                         if intersectBody ~= nil and autopilotTargetPlanet.name ~= intersectBody.name and atmoDistance < AutopilotDistance then 
-                            msgText = "Collision with "..intersectBody.name.." in ".. getDistanceDisplayString(atmoDistance).."\nClear LOS to continue."
+                            msg("Collision with "..intersectBody.name.." Clear LOS to continue.")
                             msgTimer = 5
                             AutopilotPaused = true
                         else
                             AutopilotPaused = false
-                            msgText = ""
+                            msgText = "empty"
                         end
                     end
                 end
@@ -6780,7 +6777,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                                 if pvpDist < lastPvPDist and pvpDist > 2000 then
                                     AP.ResetAutopilots(1)
-                                    msgText = "Autopilot cancelled to prevent crossing PvP Line" 
+                                    msg("Autopilot cancelled to prevent crossing PvP Line" )
                                     BrakeIsOn = "PvP Prevent"
                                     lastPvPDist = pvpDist
                                 else
@@ -6887,7 +6884,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                             if pvpDist < lastPvPDist and pvpDist > 2000 then 
                                 if not aptoggle then aptoggle = true end
-                                msgText = "Autopilot cancelled to prevent crossing PvP Line" 
+                                msg("Autopilot cancelled to prevent crossing PvP Line" )
                                 BrakeIsOn = "Prevent PvP"
                                 lastPvPDist = pvpDist
                             else
@@ -6949,7 +6946,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
                 -- If we accidentally hit atmo while autopiloting to a custom target, cancel it and go straight to pulling up
             elseif Autopilot and (CustomTarget ~= nil and CustomTarget.planetname ~= "Space" and inAtmo) then
-                msgText = "Autopilot complete, starting reentry"
+                msg("Autopilot complete, starting reentry")
                 play("apCom", "AP")
                 AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
                 BrakeIsOn = false -- Leaving these on makes it screw up alignment...?
@@ -7114,7 +7111,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if not reentryMode then
                         targetPitch = -80
                         if coreAltitude < (planet.surfaceMaxAltitude+(planet.atmosphereThickness-planet.surfaceMaxAltitude)*0.25) then
-                            msgText = "PARACHUTE DEPLOYED at "..round(coreAltitude,0)
+                            msg("PARACHUTE DEPLOYED at "..round(coreAltitude,0))
                             Reentry = false
                             BrakeLanding = true
                             StrongBrakes = true
@@ -7340,8 +7337,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         if not throttleMode then
                             cmdT = 0
                         end
-                        navCom:setTargetGroundAltitude(500)
-                        navCom:activateGroundEngineAltitudeStabilization(500)
+                        if abvGndDet == -1 then 
+                            navCom:setTargetGroundAltitude(500)
+                            navCom:activateGroundEngineAltitudeStabilization(500)
+                        end
                         stablized = true
                         if not inAtmo then spaceBrake = true end
                         initBL = true
@@ -7438,7 +7437,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                     local distanceToGround = coreAltitude - targetAltitude 
                                     skipLandingRate = true
                                     if distanceToGround <= stopDistance or stopDistance == -1 or (absHspd > 0.05 and apBrk) then
-                                        if (absHspd > 0.05 and apBrk) then
+                                        if targetAltitude==planet.surfaceMaxAltitude and vSpd < -brakeLandingRate then
+                                            BrakeIsOn = "BL Stop BLR"
+                                        elseif (absHspd > 0.05 and apBrk) then
                                             BrakeIsOn = "BL AP Hzn"
                                         else
                                             BrakeIsOn = "BL Stop Dist"
@@ -7449,30 +7450,29 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                 end
                             end
                         end
-    
-    
-                        groundDistance = abvGndDet
+                        groundDistance = abvGndDet 
                         if groundDistance > -1 then 
+                                BrakeIsOn = false
                                 if not aggBase and not GearExtended then
                                     eLL = true
                                     navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                                 end
-                                if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading and groundDistance-5 < LandingGearGroundHeight then -- Or if they start going back up
+                                if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading and groundDistance-3 < LandingGearGroundHeight then -- Or if they start going back up
                                     BrakeLanding = false
                                     AltitudeHold = false
                                     upAmount = 0
-                                    if spaceBrake then
-                                        vertical(0,1)
-                                    end
+                                    vertical(0,1)
                                     BrakeIsOn = "BL Complete"
                                     autoRoll = autoRollPreference 
                                     apBrk = false
                                     initBL = false
                                 else
-                                    if vSpd < -5 or absHspd > 0.05 then 
+                                    if vSpd < -5 or absHspd > 0.5 then
+                                        vertical(0,1)
                                         BrakeIsOn = "BL Slowing"
                                     else
                                         BrakeIsOn = false
+                                        vertical(-1)
                                     end
                                 end
                         elseif not skipLandingRate then
@@ -7483,13 +7483,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                 BrakeIsOn = "BL hSpd"
                             elseif vSpd < -brakeLandingRate then
                                 BrakeIsOn = "BL BLR"
-                                if spaceBrake then
-                                    vertical(0,1)
-                                end
+                                vertical(0,1)
                             else
-                                if spaceBrake then
-                                    vertical(-1)
-                                end
+                                vertical(-1)
                                 BrakeIsOn = false
                             end
                         end
@@ -7867,7 +7863,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         return ap
     end
     local function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
-        isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
+        isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank, msg)
         local C = DUConstruct
         local Control = {}
         local UnitHidden = true
@@ -7884,7 +7880,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 LockPitch = nil
                 AP.cmdThrottle(0)
                 if vBooster or hover then 
-                    if (inAtmo or coreAltitude < 20000) and not eLL then
+                    if (inAtmo or coreAltitude < 20000) and not eLL and abvGndDet==-1 then
                         play("bklOn", "BL")
                         StrongBrakes = true -- We don't care about this anymore
                         Reentry = false
@@ -7892,20 +7888,21 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         VertTakeOff = false
                         if IntoOrbit then AP.ToggleIntoOrbit() end
                         if BrakeLanding then apBrk = not apBrk end
-                        BrakeLanding = true
                         autoRoll = true
                         GearExtended = false -- Don't actually toggle the gear yet though
                     else
+                        autoRoll = autoRollPreference
                         if hasGear then
                             play("grOut","LG",1)
                             Nav.control.deployLandingGears()                            
                         end
                         apBrk = false
-                        navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                         if inAtmo then
                             BrakeIsOn = "Landing"
                         end
                     end
+                    BrakeLanding = true
+                    navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                     AltitudeHold = false
                     HoverMode = false
                 elseif hasGear and not BrakeLanding  then
@@ -7913,6 +7910,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     Nav.control.deployLandingGears() -- Actually extend
                 end
             else
+                if BrakeLanding then BrakeLanding = false end
                 if hasGear then
                     play("grIn","LG",1)
                     Nav.control.retractLandingGears()
@@ -7988,7 +7986,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
                 local function assistedFlight(vectorType)
                     if not inAtmo then
-                        msgText = "Flight Assist in Atmo only"
+                        msg ("Flight Assist in Atmo only")
                         return
                     end
                     local t = type(vectorType)
@@ -8107,7 +8105,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         C.forceDeboard(passengers[i])
                         C.forceInterruptVRSession(passengers[i])
                     end
-                    msgText = "Deboarded All Passengers"
+                    msg ("Deboarded All Passengers")
                     return
                 end
                 ATLAS.adjustAutopilotTargetIndex(1)
@@ -8116,7 +8114,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 if AltIsOn and holdingShift then 
                     local onboard = ""
                     for i=1, #ships do
-                        onboard = onboard.."| ID: "..ships[i].." Mass: "..round(c.getDockedConstructMass(ships[i])/1000,1).."t "
+                        onboard = onboard.."| ID: "..ships[i].." Mass: "..round(C.getDockedConstructMass(ships[i])/1000,1).."t "
                     end
                     s.print("Docked Ships: "..onboard)
                     return
@@ -8133,9 +8131,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 toggleView = false      
                 if AltIsOn and holdingShift then 
                     for i=1, #ships do
-                        c.forceUndock(ships[i])
+                        C.forceUndock(ships[i])
                     end
-                    msgText = "Undocked all ships"
+                    msg ("Undocked all ships")
                     return
                 end
                 ReversalIsOn = nil
@@ -8149,7 +8147,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if shield then 
                         SHIELD.ventShield()
                     else
-                        msgText = "No shield found"
+                        msg ("No shield found")
                     end
                     return
                 end
@@ -8161,15 +8159,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         shield.toggle() 
                         return 
                     else
-                        msgText = "No shield found"
+                        msg ("No shield found")
                         return
                     end
                 end
                 CollisionSystem = not CollisionSystem
                 if CollisionSystem then 
-                    msgText = "Collision System Enabled"
+                    msg ("Collision System Enabled")
                 else 
-                    msgText = "Collision System Secured"
+                    msg ("Collision System Secured")
                 end
             elseif action == "option8" then
                 toggleView = false
@@ -8177,17 +8175,17 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if AutopilotTargetIndex > 0 and CustomTarget ~= nil then
                         AP.routeWP()
                     else
-                        msgText = "Select a saved wp on IPH to add to or remove from route"
+                        msg ("Select a saved wp on IPH to add to or remove from route")
                     end
                     return
                 end
                 stablized = not stablized
                 if not stablized then
-                    msgText = "DeCoupled Mode - Ground Stabilization off"
+                    msg ("DeCoupled Mode - Ground Stabilization off")
                     navCom:deactivateGroundEngineAltitudeStabilization()
                     play("gsOff", "GS")
                 else
-                    msgText = "Coupled Mode - Ground Stabilization on"
+                    msg ("Coupled Mode - Ground Stabilization on")
                     navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
                     sEFC = true
                     play("gsOn", "GS") 
@@ -8205,7 +8203,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     gyroIsOn = gyro.isActive() == 1
                     if gyroIsOn then play("gyOn", "GA") else play("gyOff", "GA") end
                 else
-                    msgText = "No gyro found"
+                    msg ("No gyro found")
                 end
             elseif action == "lshift" then
                 if AltIsOn then holdingShift = true end
@@ -8277,7 +8275,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 if antigrav ~= nil then
                     AP.ToggleAntigrav()
                 else
-                    msgText = "No antigrav found"
+                    msg ("No antigrav found")
                 end
             elseif action == "leftmouse" then
                 leftmouseclick=true 
@@ -8467,13 +8465,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 return   
             elseif command == "/setname" then 
                 if arguement == nil or arguement == "" then
-                    msgText = "Usage: ah-setname Newname"
+                    msg ("Usage: ah-setname Newname")
                     return
                 end
                 if AutopilotTargetIndex > 0 and CustomTarget ~= nil then
                     ATLAS.UpdatePosition(arguement)
                 else
-                    msgText = "Select a saved target to rename first"
+                    msg ("Select a saved target to rename first")
                 end
             elseif shield and command =="/resist" then
                 SHIELD.setResist(arguement)
@@ -8490,16 +8488,16 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 AddNewLocationByWaypoint(savename, pos, temp)
                 elseif command == "/agg" then
                 if arguement == nil or arguement == "" then
-                    msgText = "Usage: /agg targetheight"
+                    msg ("Usage: /agg targetheight")
                     return
                 end
                 arguement = tonum(arguement)
                 if arguement < 1000 then arguement = 1000 end
                 AntigravTargetAltitude = arguement
-                msgText = "AGG Target Height set to "..arguement
+                msg ("AGG Target Height set to "..arguement)
             elseif command == "/G" then
                 if arguement == nil or arguement == "" then
-                    msgText = "Usage: /G VariableName variablevalue\n/G dump - shows all variables"
+                    msg ("Usage: /G VariableName variablevalue\n/G dump - shows all variables")
                     return
                 end
                 if arguement == "dump" then
@@ -8528,12 +8526,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             newGlobalValue = tonum(newGlobalValue)
                             if k=="AtmoSpeedLimit" then adjustedAtmoSpeedLimit = newGlobalValue end
                         end
-                        msgText = "Variable "..globalVariableName.." changed to "..newGlobalValue
+                        msg ("Variable "..globalVariableName.." changed to "..newGlobalValue)
                         if k=="MaxGameVelocity" then 
                             newGlobalValue = newGlobalValue/3.6
                             if newGlobalValue > MaxSpeed-0.2 then 
                                 newGlobalValue = MaxSpeed-0.2 
-                                msgText = "Variable "..globalVariableName.." changed to "..round(newGlobalValue*3.6,1)
+                                msg = "Variable "..globalVariableName.." changed to "..round(newGlobalValue*3.6,1)
                             end
                         end
                         if varType == "boolean" then
@@ -8547,28 +8545,28 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         return
                     end
                 end
-                msgText = "No such global variable: "..globalVariableName
+                msg ("No such global variable: "..globalVariableName)
             
             elseif command == "/deletewp" then
                 if AutopilotTargetIndex > 0 and CustomTarget ~= nil then
                     ATLAS.ClearCurrentPosition()
                 else
-                    msgText = "Select a custom wp to delete first in IPH"
+                    msg ("Select a custom wp to delete first in IPH")
                 end
             elseif command == "/copydatabank" then 
                 if dbHud_2 then 
                     SaveDataBank(true) 
                 else
-                    msgText = "Spare Databank required to copy databank"
+                    msg ("Spare Databank required to copy databank")
                 end
     
             elseif command == "/iphWP" then
                 if AutopilotTargetIndex > 0 then
                     s.print(AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords, true))
                     s.print(json.encode(AutopilotTargetCoords))
-                    msgText = "::pos waypoint shown in lua chat in local and world format"
+                    msg ("::pos waypoint shown in lua chat in local and world format")
                 else
-                    msgText = "No target selected in IPH"
+                    msg ("No target selected in IPH")
                 end
             elseif command == "/createPrivate" then
                 local saveStr = "privatelocations = {\n"
@@ -8593,7 +8591,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
                 saveStr = saveStr.."}\n return privatelocations"
                 if screenHud_1 then screenHud_1.setHTML(saveStr) end
-                msgText = msgStr.."locations dumped to screen if present.\n Cut and paste to privatelocations.lua to use"
+                msg (msgStr.."locations dumped to screen if present.\n Cut and paste to privatelocations.lua to use")
                 msgTimer = 7
             end
         end
@@ -8605,7 +8603,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             elseif UseExtra == "Lateral" then UseExtra = "Vertical"
             else UseExtra = "Off"
             end
-            msgText = "Extra Engine Tags: "..UseExtra 
+            msg ("Extra Engine Tags: "..UseExtra )
             u.stopTimer("tagTick")
         end
     
@@ -8697,6 +8695,17 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end            
             end
     
+            local function msg(msg)
+                if msgText ~= "empty" then 
+                    if msgText ~= msg then 
+                        msgText = msgText.."\n"..msg 
+                        msgTimer = 7 
+                    end
+                else 
+                    msgText = msg 
+                end
+            end
+    
             local function SaveDataBank(copy) -- Save values to the databank.
                 local function writeData(dataList)
                     for k, v in pairs(dataList) do
@@ -8711,7 +8720,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     writeData(saveableVariables())
                     s.print("Saved Variables to Datacore")
                     if copy and dbHud_2 then
-                        msgText = "Databank copied.  Remove copy when ready."
+                        msg ("Databank copied.  Remove copy when ready.")
                     end
                 end
             end
@@ -8771,7 +8780,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
             local function radarSetup()
                 if radar_1 then 
-                    RADAR = RadarClass(c, s, u, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play) 
+                    RADAR = RadarClass(c, s, u, radar_1, radar_2, warpdrive, mabs, sysDestWid, msqrt, svgText, tonum, coreHalfDiag, play, msg) 
                 end
             end
     
@@ -8805,20 +8814,20 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             processVariableList(autoVariables)
                         else
                             processVariableList(autoVariables)
-                            msgText = "Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use database saved values"
+                            msg ("Updated user preferences used.  Will be saved when you exit seat.\nToggle off useTheseSettings to use database saved values")
                             msgTimer = 5
                             valuesAreSet = false
                         end
                         coroutine.yield()
                         if valuesAreSet then
-                            msgText = "Loaded Saved Variables"
+                            msg ("Loaded Saved Variables")
                         elseif not useTheseSettings then
-                            msgText = "No Databank Saved Variables Found\nVariables will save to Databank on standing"
+                            msg ("No Databank Saved Variables Found\nVariables will save to Databank on standing")
                             msgTimer = 5
                         end
                         if #SavedLocations>0 then customlocations = addTable(customlocations, SavedLocations) end
                     else
-                        msgText = "No databank found. Attach one to control unit and rerun \nthe autoconfigure to save preferences and locations"
+                        msg ("No databank found. Attach one to control unit and rerun \nthe autoconfigure to save preferences and locations")
                     end
                     BrakeToggleStatus = BrakeToggleDefault
                     userControlScheme = string.lower(userControlScheme)
@@ -8830,7 +8839,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     LastStartTime = time
                     userControlScheme = string.lower(userControlScheme)
                     if string.find("keyboard virtual joystick mouse",  userControlScheme) == nil then 
-                        msgText = "Invalid User Control Scheme selected.\nChange userControlScheme in Lua Parameters to keyboard, mouse, or virtual joystick\nOr use shift and button in screen"
+                        msg ("Invalid User Control Scheme selected.\nChange userControlScheme in Lua Parameters to keyboard, mouse, or virtual joystick\nOr use shift and button in screen")
                         msgTimer = 7
                     end
                 
@@ -9151,7 +9160,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     Kinematic = Kinematics(Nav, c, u, s, msqrt, mabs)
                     Kep = Keplers(Nav, c, u, s, stringf, uclamp, tonum, msqrt, float_eq)
     
-                    ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round)
+                    ATLAS = AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round, msg)
                     planet = galaxyReference[0]:closestBody(C.getWorldPosition())
                 end
     
@@ -9179,7 +9188,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 AP = APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, 
                     mabs, mfloor, atmosphere, isRemote, atan, systime, uclamp, 
                     navCom, sysUpData, sysIsVwLock, msqrt, round, play, addTable, float_eq, 
-                    getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode)
+                    getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, msg)
     
                 SetupChecks() -- All the if-thens to set up for particular ship.  Specifically override these with the saved variables if available
     
@@ -9190,14 +9199,14 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
                 if HudClass then 
                     HUD = HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapon, mabs, mfloor, stringf, jdecode, atmosphere, eleMass, isRemote, atan, systime, uclamp, navCom, 
-                        sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables, getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp) 
+                        sysAddData, sysUpData, sysDestWid, sysIsVwLock, msqrt, round, svgText, play, addTable, saveableVariables, getDistanceDisplayString, FormatTimeString, elementsID, eleTotalMaxHp, msg) 
                 end
                 if HUD then 
                     HUD.ButtonSetup() 
                 end
                 CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
-                    isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank)
-                if shield then SHIELD = ShieldClass(shield, stringmatch, mfloor) end
+                    isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank, msg)
+                if shield then SHIELD = ShieldClass(shield, stringmatch, mfloor, msg) end
                 coroutine.yield()
                 u.hideWidget()
                 s.showScreen(1)
@@ -9248,6 +9257,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 elseif ECUHud and (ecuThrottle[3]+3) > systime() then
                     ecuResume()
                 end
+                ships = C.getDockedConstructs() 
+                passengers = C.getPlayersOnBoard()
+                local dockmsg
+                dockmsg = #passengers>1 and "Passengers: "..(#passengers-1).." " or ""
+                dockmsg = dockmsg..(#ships>0 and "Ships: "..#ships or "")
+                if dockmsg ~= "" then msg("NOTICE: Docked "..dockmsg) end
             end)
             coroutine.resume(beginSetup)
         end
