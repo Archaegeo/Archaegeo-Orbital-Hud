@@ -620,7 +620,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                     end
                 end
             end
-            ECU = string.find(u.getName(),"Emergency") or false
+            ECU = string.find(s.getItem(u.getItemId())['displayName'],"Emergency") or false
             if ECU then 
                 if abvGndDet > -1 and velMag < 1 and (abvGndDet - 3) < LandingGearGroundHeight then 
                     u.exit()

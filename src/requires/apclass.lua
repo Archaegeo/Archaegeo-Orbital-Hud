@@ -953,7 +953,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             elseif brakeDistance + accelDistance < AutopilotDistance then
                 -- Add any remaining distance
                 cruiseDistance = AutopilotDistance - (brakeDistance + accelDistance)
-                cruiseTime = Kinematic.computeTravelTime(8333.0556, 0, cruiseDistance)
+                cruiseTime = Kinematic.computeTravelTime(MaxGameVelocity, 0, cruiseDistance)
             else
                 local accelRatio = (AutopilotDistance - brakeDistance) / accelDistance
                 accelDistance = AutopilotDistance - brakeDistance -- Accel until we brake
