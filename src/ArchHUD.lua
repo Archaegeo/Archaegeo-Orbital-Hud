@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.006
+VERSION_NUMBER = 0.007
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -5767,7 +5767,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 elseif brakeDistance + accelDistance < AutopilotDistance then
                     -- Add any remaining distance
                     cruiseDistance = AutopilotDistance - (brakeDistance + accelDistance)
-                    cruiseTime = Kinematic.computeTravelTime(8333.0556, 0, cruiseDistance)
+                    cruiseTime = Kinematic.computeTravelTime(MaxGameVelocity, 0, cruiseDistance)
                 else
                     local accelRatio = (AutopilotDistance - brakeDistance) / accelDistance
                     accelDistance = AutopilotDistance - brakeDistance -- Accel until we brake
@@ -6719,12 +6719,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     local intersectBody, atmoDistance = AP.checkLOS( (AutopilotTargetCoords-worldPos):normalize())
                     if autopilotTargetPlanet.name ~= planet.name then 
                         if intersectBody ~= nil and autopilotTargetPlanet.name ~= intersectBody.name and atmoDistance < AutopilotDistance then 
-                            msg("Collision with "..intersectBody.name.." Clear LOS to continue.")
-                            msgTimer = 5
+                            collisionAlertStatus = "Collision with "..intersectBody.name.." Clear LOS to continue."
                             AutopilotPaused = true
                         else
                             AutopilotPaused = false
-                            msgText = "empty"
+                            collisionAlertStatus = false
                         end
                     end
                 end
@@ -9235,7 +9234,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         end
                     end
                 end
-                ECU = string.find(u.getName(),"Emergency") or false
+                ECU = string.find(s.getItem(u.getItemId())['displayName'],"Emergency") or false
                 if ECU then 
                     if abvGndDet > -1 and velMag < 1 and (abvGndDet - 3) < LandingGearGroundHeight then 
                         u.exit()
