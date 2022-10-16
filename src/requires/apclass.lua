@@ -953,7 +953,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             elseif brakeDistance + accelDistance < AutopilotDistance then
                 -- Add any remaining distance
                 cruiseDistance = AutopilotDistance - (brakeDistance + accelDistance)
-                cruiseTime = Kinematic.computeTravelTime(8333.0556, 0, cruiseDistance)
+                cruiseTime = Kinematic.computeTravelTime(MaxGameVelocity, 0, cruiseDistance)
             else
                 local accelRatio = (AutopilotDistance - brakeDistance) / accelDistance
                 accelDistance = AutopilotDistance - brakeDistance -- Accel until we brake
@@ -1905,12 +1905,11 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 local intersectBody, atmoDistance = AP.checkLOS( (AutopilotTargetCoords-worldPos):normalize())
                 if autopilotTargetPlanet.name ~= planet.name then 
                     if intersectBody ~= nil and autopilotTargetPlanet.name ~= intersectBody.name and atmoDistance < AutopilotDistance then 
-                        msg("Collision with "..intersectBody.name.." Clear LOS to continue.")
-                        msgTimer = 5
+                        collisionAlertStatus = "Collision with "..intersectBody.name.." Clear LOS to continue."
                         AutopilotPaused = true
                     else
                         AutopilotPaused = false
-                        msgText = "empty"
+                        collisionAlertStatus = false
                     end
                 end
             end

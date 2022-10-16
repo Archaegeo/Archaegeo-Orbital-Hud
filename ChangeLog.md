@@ -1,5 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.007
+- Fix spam message/lag when LOS block when starting AP between planets.
+- Fix time remaining to be more accurate (assuming going to max speed) when accelerating during space AP (Thanks JCP)
+- Fix localization issue for recognizing ECU control when using full hud on ECU (Thanks Merl)
+
 Version 2.006 - CRITICAL UPDATE
 - Applied "band-aid" fix to vBoosters and hovers randomly indicating 0.00000009m height when they cannot get reading or do not see ground. NQ informed.
 - Applied "band-aid" fix to vBoosters not lowering to new hover height. NQ Informed
