@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.008
+- INFO panel will now display `Influence: ` with name of current planet considered for hud mechanics.
+- Fixed erroneous brake distance error (should be a LOT more accurate now for manual and AP flight)
+    (Alioth takeoff to 3SU out space point with 1k stop distance stopped at 1400m (gravity pulling))
+- Fixed G (brake landing/gear out) causing autoroll when in space.
+- Fixed downward engines not firing if putting out brakes in space and nothing detected underneath.
+
 Version 2.007
 - Fix spam message/lag when LOS block when starting AP between planets.
 - Fix time remaining to be more accurate (assuming going to max speed) when accelerating during space AP (Thanks JCP)

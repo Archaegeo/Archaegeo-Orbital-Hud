@@ -2489,6 +2489,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             newContent[#newContent + 1] = svgText(startX, startY+height*5, stringf("Req Thrust: %s", reqThrust )) 
             newContent[#newContent + 1] = svgText(midX, startY+height*5, stringf("Safe Space Mass: %s", (safeSpaceMass)))
             newContent[#newContent + 1] = svgText(midX, startY+height*6, stringf("Safe Hover Mass: %s", (safeHoverMass)))
+            newContent[#newContent + 1] = svgText(startX, startY+height*6, stringf("Influence: %s", planet.name))
             newContent[#newContent +1] = svgText(startX, startY+height*7, stringf("Set Max Speed: %s", mfloor(MaxGameVelocity*3.6+0.5)))
             newContent[#newContent +1] = svgText(midX, startY+height*7, stringf("Actual Max Speed: %s", mfloor(MaxSpeed*3.6+0.5)))
             newContent[#newContent +1] = svgText(startX, startY+height*8, stringf("Friction Burn Speed: %s", mfloor(C.getFrictionBurnSpeed()*3.6)))
