@@ -26,18 +26,19 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     if BrakeLanding then apBrk = not apBrk end
                     autoRoll = true
                     GearExtended = false -- Don't actually toggle the gear yet though
+                    BrakeLanding = true
                 else
-                    autoRoll = autoRollPreference
                     if hasGear then
                         play("grOut","LG",1)
                         Nav.control.deployLandingGears()                            
                     end
                     apBrk = false
                     if inAtmo then
+                        autoRoll = autoRollPreference
                         BrakeIsOn = "Landing"
                     end
                 end
-                BrakeLanding = true
+                if eLL or (abvGndDet ~= -1 and abvGndDet > (LandingGearGroundHeight-3)) then BrakeLanding = true end
                 navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                 AltitudeHold = false
                 HoverMode = false

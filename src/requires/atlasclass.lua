@@ -444,7 +444,7 @@
     function Kinematics(Nav, c, u, s, msqrt, mabs) -- Part of Jaylebreak's flight files, modified slightly for hud
 
         local Kinematic = {} -- just a namespace
-        local C = 90000000 / 3600
+        local C = 999000000000 / 3600
         local C2 = C * C
         local ITERATIONS = 100 -- iterations over engine "warm-up" period
     
