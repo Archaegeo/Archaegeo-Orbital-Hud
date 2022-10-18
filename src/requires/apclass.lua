@@ -505,7 +505,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         TargetSet = false -- No matter what
         -- Toggle Autopilot, as long as the target isn't None
         if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
-            if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then  msg = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
+            if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then msg("WARNING: Heavy Loads may affect autopilot performance.") end
             if #apRoute>0 and not finalLand then 
                 AutopilotTargetIndex = getIndex(apRoute[1])
                 ATLAS.UpdateAutopilotTarget()
@@ -1590,7 +1590,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                             OrbitAchieved = false 
                         end
                     elseif OrbitAchieved or targetVec:len() < 15000+brakeDistance+coreAltitude then
-                        msg("Orbit complete, proceeding with reentry")
+
                         play("orCom", "OB")
                         -- We can skip prograde completely if we're approaching from an orbit?
                         --BrakeIsOn = false -- Leave brakes on to be safe while we align prograde
@@ -1600,6 +1600,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         orbitalParams.VectorToTarget, orbitalParams.AutopilotAlign = false, false -- Let it disable orbit
                         AP.ToggleIntoOrbit()
                         AP.BeginReentry()
+                        msg("Orbit complete, proceeding with reentry")
                         return
                     end
                 end
