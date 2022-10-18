@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.008
+VERSION_NUMBER = 0.009
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -5320,7 +5320,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             TargetSet = false -- No matter what
             -- Toggle Autopilot, as long as the target isn't None
             if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
-                if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then  msg = "WARNING: Heavy Loads may affect autopilot performance." msgTimer=5 end
+                if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then  msg("WARNING: Heavy Loads may affect autopilot performance.") end
                 if #apRoute>0 and not finalLand then 
                     AutopilotTargetIndex = getIndex(apRoute[1])
                     ATLAS.UpdateAutopilotTarget()
@@ -8696,14 +8696,14 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end            
             end
     
-            local function msg(msg)
+            local function msg(msgt)
                 if msgText ~= "empty" then 
-                    if msgText ~= msg then 
-                        msgText = msgText.."\n"..msg 
+                    if msgText ~= msgt then 
+                        msgText = msgText.."\n"..msgt 
                         msgTimer = 7 
                     end
                 else 
-                    msgText = msg 
+                    msgText = msgt
                 end
             end
     
