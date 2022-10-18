@@ -80,14 +80,15 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             end            
         end
 
-        local function msg(msg)
+        local function msg(msgt)
+            if not msgt then return end
             if msgText ~= "empty" then 
-                if msgText ~= msg then 
-                    msgText = msgText.."\n"..msg 
+                if msgText ~= msgt then 
+                    msgText = msgText.."\n"..msgt
                     msgTimer = 7 
                 end
             else 
-                msgText = msg 
+                msgText = msgt 
             end
         end
 

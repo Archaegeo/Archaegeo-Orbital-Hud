@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.009
+- Fix for occasional bug reported in lua chat regarding msg string - Was only happening to folks flying heavy, resulted in tumbling on re-entry.
+
 Version 2.008
 - INFO panel will now display `Influence: ` with name of current planet considered for hud mechanics.
 - Fixed erroneous brake distance error (should be a LOT more accurate now for manual and AP flight)
