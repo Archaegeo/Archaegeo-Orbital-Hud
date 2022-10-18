@@ -1590,7 +1590,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                             OrbitAchieved = false 
                         end
                     elseif OrbitAchieved or targetVec:len() < 15000+brakeDistance+coreAltitude then
-
+                        msg("Orbit complete, proceeding with reentry")
                         play("orCom", "OB")
                         -- We can skip prograde completely if we're approaching from an orbit?
                         --BrakeIsOn = false -- Leave brakes on to be safe while we align prograde
@@ -1600,7 +1600,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         orbitalParams.VectorToTarget, orbitalParams.AutopilotAlign = false, false -- Let it disable orbit
                         AP.ToggleIntoOrbit()
                         AP.BeginReentry()
-                        msg("Orbit complete, proceeding with reentry")
                         return
                     end
                 end
