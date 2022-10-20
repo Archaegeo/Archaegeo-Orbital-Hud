@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.009
+VERSION_NUMBER = 0.010
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -759,98 +759,129 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     local function Kinematics(Nav, c, u, s, msqrt, mabs) -- Part of Jaylebreak's flight files, modified slightly for hud
 
         local Kinematic = {} -- just a namespace
-        local C = 999000000000 / 3600
-        local C2 = C * C
+
         local ITERATIONS = 100 -- iterations over engine "warm-up" period
-    
+        
+        --
+        -- computeAccelerationTime - solve vf = vi + a*t for t
+        -- initial      [in]: initial (positive) speed in meters per second.
+        -- acceleration [in]: constant acceleration until 'finalSpeed' is reached.
+        -- final        [in]: the speed at the end of the time interval.
+        -- return: the time in seconds to reach the "final" velocity
+        --
         function Kinematic.computeAccelerationTime(initial, acceleration, final)
-            -- The low speed limit of following is: t=(vf-vi)/a (from: vf=vi+at)
-            local k1 = C * math.asin(initial / C)
-            return (C * math.asin(final / C) - k1) / acceleration
+            -- ans: t = (vf - vi)/a
+            return (final - initial)/acceleration
         end
-    
-        function Kinematic.computeDistanceAndTime(initial, final, restMass, thrust, t50, brakeThrust)
-    
-            t50 = t50 or 0
-            brakeThrust = brakeThrust or 0 -- usually zero when accelerating
-            local speedUp = initial <= final
-            local a0 = thrust * (speedUp and 1 or -1) / restMass
-            local b0 = -brakeThrust / restMass
-            local totA = a0 + b0
-            if speedUp and totA <= 0 or not speedUp and totA >= 0 then
+        
+        --
+        -- computeDistanceAndTime - Return distance & time needed to reach final speed.
+        -- initial[in]:     Initial speed in meters per second.
+        -- final[in]:       Final speed in meters per second.
+        -- mass[in]:        Mass of the construct in Kg.
+        -- thrust[in]:      Engine's maximum thrust in Newtons.
+        -- t50[in]:         (default: 0) Time interval to reach 50% thrust in seconds.
+        -- brakeThrust[in]: (default: 0) Constant thrust term when braking.
+        -- return: Distance (in meters), time (in seconds) required for change.
+        --
+        function Kinematic.computeDistanceAndTime(initial,
+                                                  final,
+                                                  mass,
+                                                  thrust,
+                                                  t50,
+                                                  brakeThrust)
+            -- This function assumes that the applied thrust is colinear with the
+            -- velocity. Furthermore, it does not take into account the influence
+            -- of gravity, not just in terms of its impact on velocity, but also
+            -- its impact on the orientation of thrust relative to velocity.
+            -- These factors will introduce (usually) small errors which grow as
+            -- the length of the trip increases.
+            t50            = t50 or 0
+            brakeThrust    = brakeThrust or 0 -- usually zero when accelerating
+        
+            local speedUp  = initial < final
+            local a0       = thrust / (speedUp and mass or -mass)
+            local b0       = -brakeThrust/mass
+            local totA     = a0+b0
+        
+            if initial == final then
+                return 0, 0   -- trivial
+            elseif speedUp and totA <= 0 or not speedUp and totA >= 0 then
                 return -1, -1 -- no solution
             end
+        
             local distanceToMax, timeToMax = 0, 0
-    
+        
+            -- If, the T50 time is set, then assume engine is at zero thrust and will
+            -- reach full thrust in 2*T50 seconds. Thrust curve is given by:
+            -- Thrust: F(z)=(m*a0*(1+sin(z))+2*m*b0)/2 where z=pi*(t/t50 - 1)/2
+            -- Acceleration is given by F(z)/m
+            -- or v(z)' = (a0*(1+sin(z))+2*b0)/2
+        
             if a0 ~= 0 and t50 > 0 then
-    
-                local k1 = math.asin(initial / C)
-                local c1 = math.pi * (a0 / 2 + b0)
-                local c2 = a0 * t50
-                local c3 = C * math.pi
+                -- Closed form solution for velocity exists (t <= 2*t50):
+                -- v(t) = a0*(t/2 - t50*sin(pi*(t/2)/t50)/pi)+b0*t)+c
+                -- @ t=0, v(0) = vi => c=vi
+        
+                local c1  = math.pi/t50/2
+        
                 local v = function(t)
-                    local w = (c1 * t - c2 * math.sin(math.pi * t / 2 / t50) + c3 * k1) / c3
-                    local tan = math.tan(w)
-                    return C * tan / msqrt(tan * tan + 1)
+                    return a0*(t/2 - t50*math.sin(c1*t)/math.pi) + b0*t + initial
                 end
-                local speedchk = speedUp and function(s)
-                    return s >= final
-                end or function(s)
-                    return s <= final
-                end
-                timeToMax = 2 * t50
+        
+                local speedchk = speedUp and function(s) return s >= final end or
+                                             function(s) return s <= final end
+                timeToMax  = 2*t50
+        
                 if speedchk(v(timeToMax)) then
                     local lasttime = 0
-                    while mabs(timeToMax - lasttime) > 0.5 do
-                        local t = (timeToMax + lasttime) / 2
+        
+                    while math.abs(timeToMax - lasttime) > 0.25 do
+                        local t = (timeToMax + lasttime)/2
                         if speedchk(v(t)) then
-                            timeToMax = t
+                            timeToMax = t 
                         else
                             lasttime = t
                         end
                     end
                 end
-                -- There is no closed form solution for distance in this case.
-                -- Numerically integrate for time t=0 to t=2*T50 (or less)
-                local lastv = initial
-                local tinc = timeToMax / ITERATIONS
-                for step = 1, ITERATIONS do
-                    local speed = v(step * tinc)
-                    distanceToMax = distanceToMax + (speed + lastv) * tinc / 2
-                    lastv = speed
-                end
-                if timeToMax < 2 * t50 then
+        
+                -- Closed form solution for distance exists (t <= 2*t50):
+                local K       = 2*a0*t50^2/math.pi^2
+                distanceToMax = K*(math.cos(c1*timeToMax) - 1) +
+                                (a0+2*b0)*timeToMax^2/4 + initial*timeToMax
+        
+                if timeToMax < 2*t50 then
                     return distanceToMax, timeToMax
                 end
-                initial = lastv
+                initial = v(timeToMax)
             end
-    
-            local k1 = C * math.asin(initial / C)
-            local time = (C * math.asin(final / C) - k1) / totA
-            local k2 = C2 * math.cos(k1 / C) / totA
-            local distance = k2 - C2 * math.cos((totA * time + k1) / C) / totA
-            return distance + distanceToMax, time + timeToMax
+            -- At full thrust, motion follows Newton's formula:
+            local a = a0+b0
+            local t = Kinematic.computeAccelerationTime(initial, a, final)
+            local d = initial*t + a*t*t/2
+            return distanceToMax+d, timeToMax+t
         end
-    
+        
+        --
+        -- computeTravelTime - solve d=vi*t+a*t**2/2 for t
+        -- initialSpeed [in]: initial (positive) speed in meters per second
+        -- acceleration [in]: constant acceleration until 'distance' is traversed
+        -- distance [in]: the distance traveled in meters
+        -- return: the time in seconds spent in traversing the distance
+        --
         function Kinematic.computeTravelTime(initial, acceleration, distance)
-            -- The low speed limit of following is: t=(sqrt(2ad+v^2)-v)/a
-            -- (from: d=vt+at^2/2)
-            if distance == 0 then
-                return 0
-            end
-            -- So then what's with all the weird ass sines and cosines?
-            if acceleration > 0 then
-                local k1 = C * math.asin(initial / C)
-                local k2 = C2 * math.cos(k1 / C) / acceleration
-                return (C * math.acos(acceleration * (k2 - distance) / C2) - k1) / acceleration
-            end
-            if initial == 0 then
-                return -1 -- IDK something like that should make sure we never hit the assert yelling at us
+            -- quadratic equation: t=(sqrt(2ad+v^2)-v)/a
+            if distance == 0 then return 0 end
+        
+            if acceleration ~= 0 then
+                return (math.sqrt(2*acceleration*distance+initial^2) - initial)/
+                            acceleration
             end
             assert(initial > 0, 'Acceleration and initial speed are both zero.')
-            return distance / initial
+            return distance/initial
         end
-    
+        
         return Kinematic
     end
 
@@ -2507,7 +2538,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             displayText = getDistanceDisplayString(antigrav.getBaseAltitude(),2).." AGG singularity height"
                         end
                         newContent[#newContent + 1] = svgText(warningX, apY, "VTO to "..displayText , "warn")
-                    elseif AutoTakeoff and not IntoOrbit then
+                    elseif (AutoTakeoff or spaceLaunch) and not IntoOrbit then
                         if spaceLaunch then
                             newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..AutopilotTargetName, "warn")
                         else
@@ -3039,10 +3070,21 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     newContent[#newContent + 1] = '<g clip-path="url(#orbitRect)">'
                     local fov = scopeFOV
                     -- Sort the atlas by distance so closer planets draw on top
+                    local cameraPos = vec3(DUSystem.getCameraWorldPos())
+                    local cameraRight = vec3(DUSystem.getCameraWorldRight())
+                    local cameraForward = vec3(DUSystem.getCameraWorldForward())
+                    
+                    -- If view is locked, use ship forward and position instead
+                    if sysIsVwLock() == 1 then
+                        cameraPos = worldPos
+                        cameraRight = constructRight
+                        cameraForward = constructForward
+                    end
+                    
                     
                     -- If atmoDensity == 0, this already gets sorted in a hudTick
                     if atmosDensity > 0 then
-                        table.sort(planetAtlas, function(a1,b2) local a,b = a1.center,b2.center return (a.x-worldPos.x)^2+(a.y-worldPos.y)^2+(a.z-worldPos.z)^2 < (b.x-worldPos.x)^2+(b.y-worldPos.y)^2+(b.z-worldPos.z)^2  end)
+                        table.sort(planetAtlas, function(a1,b2) local a,b = a1.center,b2.center return (a.x-cameraPos.x)^2+(a.y-cameraPos.y)^2+(a.z-cameraPos.z)^2 < (b.x-cameraPos.x)^2+(b.y-cameraPos.y)^2+(b.z-cameraPos.z)^2  end)
                     end
     
                     local data = {} -- structure for text data which gets built first
@@ -3058,23 +3100,23 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     for i,v in ipairs(planetAtlas) do
                         
     
-                        local target =  (v.center)-worldPos -- +v.radius*constructForward
+                        local target =  (v.center)-cameraPos -- +v.radius*constructForward
                         local targetDistance = target:len()
                         local targetN = target:normalize()
                        
-                        local horizontalRight = target:cross(constructForward):normalize()
-                        local rollRad = math.acos(horizontalRight:dot(constructRight))
+                        local horizontalRight = target:cross(cameraForward):normalize()
+                        local rollRad = math.acos(horizontalRight:dot(cameraRight))
                         if rollRad ~= rollRad then rollRad = 0 end -- I don't know why this would fail but it does... so this fixes it... 
-                        if horizontalRight:cross(constructRight):dot(constructForward) < 0 then rollRad = -rollRad end
+                        if horizontalRight:cross(cameraRight):dot(cameraForward) < 0 then rollRad = -rollRad end
     
-                        local flatlen = target:project_on_plane(constructForward):len()
+                        local flatlen = target:project_on_plane(cameraForward):len()
                         -- Triangle math is a bit more efficient than vector math, we just have a triangle with hypotenuse targetDistance
                         -- and the opposite leg is flatlen, so asin gets us the angle
                         -- We then sin it with rollRad to prevent janky square movement when rolling
                         local xAngle = math.sin(rollRad)*math.asin(flatlen/targetDistance)*constants.rad2deg
                         local yAngle = math.cos(rollRad)*math.asin(flatlen/targetDistance)*constants.rad2deg
                         -- These only output from 0 to 90 so we need to handle quadrants
-                        if targetN:dot(constructForward) < 0 then
+                        if targetN:dot(cameraForward) < 0 then
                             -- If it's in top or bottom quadrant, ie yAngle is 90 or -90ish, do this...
                             
                             yAngle = 90*math.cos(rollRad) + (90*math.cos(rollRad) - yAngle)
@@ -3324,16 +3366,16 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         -- TODO: Rework DrawPrograde to be able to accept x,y values for the marker
                         local target = constructVelocity
                         local targetN = target:normalize()
-                        local flatlen = target:project_on_plane(constructForward):len()
-                        local horizontalRight = target:cross(constructForward):normalize()
-                        local rollRad = math.acos(horizontalRight:dot(constructRight))
+                        local flatlen = target:project_on_plane(cameraForward):len()
+                        local horizontalRight = target:cross(cameraForward):normalize()
+                        local rollRad = math.acos(horizontalRight:dot(cameraRight))
                         if rollRad ~= rollRad then rollRad = 0 end -- Again, idk how this could happen but it does
-                        if horizontalRight:cross(constructRight):dot(constructForward) < 0 then rollRad = -rollRad end
+                        if horizontalRight:cross(cameraRight):dot(cameraForward) < 0 then rollRad = -rollRad end
                         local xAngle = math.sin(rollRad)*math.asin(flatlen/target:len())*constants.rad2deg
                         local yAngle = math.cos(rollRad)*math.asin(flatlen/target:len())*constants.rad2deg
                         
                         -- Fix quadrants
-                        if targetN:dot(constructForward) < 0 then
+                        if targetN:dot(cameraForward) < 0 then
                             -- If it's in top or bottom quadrant, ie yAngle is 90 or -90ish, do this...
                             
                             yAngle = 90*math.cos(rollRad) + (90*math.cos(rollRad) - yAngle)
@@ -4553,14 +4595,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     widgetTravelTimeText = sysCrData('{"label": "Travel Time", "value": "N/A", "unit":""}')
                     sysAddData(widgetTravelTimeText, widgetTravelTime)
                 
-                    widgetMaxMass = sysCrWid(panelInterplanetary, "value")
-                    widgetMaxMassText = sysCrData('{"label": "Maximum Mass", "value": "N/A", "unit":""}')
-                    sysAddData(widgetMaxMassText, widgetMaxMass)
-                
+              
                     widgetTargetOrbit = sysCrWid(panelInterplanetary, "value")
                     widgetTargetOrbitText = sysCrData('{"label": "Target Altitude", "value": "N/A", "unit":""}')
                     sysAddData(widgetTargetOrbitText, widgetTargetOrbit)
-                
+                    
+                    widgetStopSpeed = sysCrWid(panelInterplanetary, "value")
+                    widgetStopSpeedText = sysCrData('{"label": "End Speed", "value": "N/A", "unit":""}')
+    
+    
                     widgetCurBrakeDistance = sysCrWid(panelInterplanetary, "value")
                     widgetCurBrakeDistanceText = sysCrData('{"label": "Cur Brake distance", "value": "N/A", "unit":""}')
                     widgetCurBrakeTime = sysCrWid(panelInterplanetary, "value")
@@ -4572,6 +4615,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     widgetTrajectoryAltitude = sysCrWid(panelInterplanetary, "value")
                     widgetTrajectoryAltitudeText = sysCrData('{"label": "Projected Altitude", "value": "N/A", "unit":""}')
                     if not inAtmo then
+                        sysAddData(widgetStopSpeedText, widgetStopSpeed)
                         sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
                         sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime)
                         sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
@@ -4593,11 +4637,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 if AutopilotTargetName ~= nil then
                     local targetDistance
                     local customLocation = CustomTarget ~= nil
-                    local planetMaxMass = 0.5 * LastMaxBrakeInAtmo /
-                        (autopilotTargetPlanet:getGravity(
-                        autopilotTargetPlanet.center + (vec3(0, 0, 1) * autopilotTargetPlanet.radius))
-                        :len())
-                    planetMaxMass = planetMaxMass > 1000000 and round(planetMaxMass / 1000000,2).." kTons" or round(planetMaxMass / 1000, 2).." Tons"
+                    local stopSpeed = Autopilot and (AutopilotEndSpeed*3.6) or 0
                     sysUpData(interplanetaryHeaderText,
                         '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "unit":""}')
                     if customLocation and not Autopilot then -- If in autopilot, keep this displaying properly
@@ -4627,13 +4667,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         displayText.. '"}')
                     sysUpData(widgetMaxBrakeTimeText, '{"label": "Max Brake Time", "value": "' ..
                         FormatTimeString(maxBrakeTime) .. '", "unit":""}')
-                    sysUpData(widgetMaxMassText, '{"label": "Max Brake Mass", "value": "' ..
-                        stringf("%s", planetMaxMass ) .. '", "unit":""}')
+                    sysUpData(widgetStopSpeedText, '{"label": "End Speed", "value": "' ..
+                        stringf("%.0fkph", stopSpeed ) .. '", "unit":""}')
                     displayText = getDistanceDisplayString(AutopilotTargetOrbit)
                     sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
                     displayText .. '"}')
                     if inAtmo and not WasInAtmo then
+                        p("HERE")
                         s.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
+                        s.removeDataFromWidget(widgetStopSpeedText, widgetStopSpeed)
                         s.removeDataFromWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
                         s.removeDataFromWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
                         s.removeDataFromWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
@@ -4650,6 +4692,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if not inAtmo and WasInAtmo then
                         if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) == 1 then
                             sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
+                        if sysUpData(widgetMaxBrakeTimeText, widgetStopSpeed) == 1 then
+                            sysAddData(widgetStopSpeedText, widgetStopSpeed) end
                         if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) == 1 then
                             sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
                         if sysUpData(widgetCurBrakeTimeText, widgetCurBrakeTime) == 1 then
@@ -5320,7 +5364,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             TargetSet = false -- No matter what
             -- Toggle Autopilot, as long as the target isn't None
             if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
-                if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then  msg("WARNING: Heavy Loads may affect autopilot performance.") end
+                if AltitudeHold then AltitudeHold = false end
+                if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then msg("WARNING: Heavy Loads may affect autopilot performance.") end
                 if #apRoute>0 and not finalLand then 
                     AutopilotTargetIndex = getIndex(apRoute[1])
                     ATLAS.UpdateAutopilotTarget()
@@ -5527,7 +5572,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 LockPitch = nil
                 OrbitAchieved = false
                 if abvGndDet ~= -1 then 
-                    if not GearExtended and not VectorToTarget then
+                    if not GearExtended and not VectorToTarget and not spaceLaunch then
                         HoldAltitude = coreAltitude 
                         HoverMode = abvGndDet
                         navCom:setTargetGroundAltitude(HoverMode)
@@ -5795,13 +5840,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     local maxBrake = C.getMaxBrake()
                     if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
                         maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
-                        maxBrake = maxBrake / atmosDensity
+                        --maxBrake = maxBrake / atmosDensity
                         if atmosDensity > 0.10 then 
-                            if LastMaxBrakeInAtmo then
-                                LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
-                            else
+                            --if LastMaxBrakeInAtmo then
+                               -- LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
+                            --else
                                 LastMaxBrakeInAtmo = maxBrake 
-                            end
+                            --end
                         end -- Now that we're calculating actual brake values, we want this updated
                     end
                     if maxBrake ~= nil and maxBrake > 0 then
@@ -6232,7 +6277,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
             end
     
-            if finalLand and CustomTarget and (coreAltitude < (HoldAltitude + 250) and coreAltitude > (HoldAltitude - 250)) and ((velMag*3.6) > (adjustedAtmoSpeedLimit-250)) and mabs(vSpd) < 25 and atmosDensity >= 0.1
+            if finalLand and CustomTarget and (coreAltitude < (HoldAltitude + 250) and coreAltitude > (HoldAltitude - 250)) and mabs(vSpd) < 25 and atmosDensity >= 0.1
                 and (CustomTarget.position-worldPos):len() > 2000 + coreAltitude then -- Only engage if far enough away to be able to turn back for it
                     if not aptoggle then aptoggle = true end
                 finalLand = false
@@ -6720,7 +6765,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     local intersectBody, atmoDistance = AP.checkLOS( (AutopilotTargetCoords-worldPos):normalize())
                     if autopilotTargetPlanet.name ~= planet.name then 
                         if intersectBody ~= nil and autopilotTargetPlanet.name ~= intersectBody.name and atmoDistance < AutopilotDistance then 
-                            collisionAlertStatus = "Collision with "..intersectBody.name.." Clear LOS to continue."
+                            collisionAlertStatus = "Attempting to clear LOS between "..intersectBody.name.." and waypoint."
                             AutopilotPaused = true
                         else
                             AutopilotPaused = false
@@ -7499,6 +7544,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         intersectBody, nearSide, farSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (AutopilotTargetCoords-worldPos):normalize(), 
                             function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
                     end
+                    if intersectBody ~= nil then 
+                        if intersectBody.name ~= autopilotTargetPlanet.name and not inAtmo then
+                            collisionAlertStatus = "Clearing LOS between "..intersectBody.name.." and waypoint."
+                        end
+                    end
                     if antigravOn and not spaceLaunch then
                         if coreAltitude >= (HoldAltitude-50) and velMag > minAutopilotSpeed then
                             AutoTakeoff = false
@@ -7876,7 +7926,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         function Control.landingGear(eLL)
             GearExtended = not GearExtended
             if GearExtended then
-                VectorToTarget = false
+                if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then AP.ResetAutopilots(true) end
                 LockPitch = nil
                 AP.cmdThrottle(0)
                 if vBooster or hover then 
@@ -7886,7 +7936,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         Reentry = false
                         AutoTakeoff = false
                         VertTakeOff = false
-                        if IntoOrbit then AP.ToggleIntoOrbit() end
+    
                         if BrakeLanding then apBrk = not apBrk end
                         autoRoll = true
                         GearExtended = false -- Don't actually toggle the gear yet though
@@ -8028,6 +8078,14 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             if action == "gear" then
                 CONTROL.landingGear()
             elseif action == "light" then
+                if AltIsOn then
+                    if isRemote() == 1 then
+                        if DUPlayer.isFrozen()==1 then DUPlayer.freeze(0) msg("Player Unfrozen, pitch/yaw/roll disabled") else DUPlayer.freeze(1) msg("Player Frozen, pitch/yaw/roll enabled") end
+                    else
+                        msg("Player Freeze/Unfreeze only used with remote")
+                    end
+                    return
+                end
                 if Nav.control.isAnyHeadlightSwitchedOn() == 1 then
                     Nav.control.switchOffHeadlights()
                 else
@@ -8207,7 +8265,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     msg ("No gyro found")
                 end
             elseif action == "lshift" then
-                if AltIsOn then holdingShift = true end
+                if AltIsOn then 
+                    holdingShift = true 
+                end
             elseif action == "brake" then
                 if BrakeToggleStatus or AltIsOn then
                     AP.BrakeToggle("Manual")
