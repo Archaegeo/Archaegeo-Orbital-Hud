@@ -12,7 +12,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
     function Control.landingGear(eLL)
         GearExtended = not GearExtended
         if GearExtended then
-            VectorToTarget = false
+            if Autopilot or VectorToTarget or spaceLaunch or IntoOrbit then AP.ResetAutopilots(true) end
             LockPitch = nil
             AP.cmdThrottle(0)
             if vBooster or hover then 
@@ -22,7 +22,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     Reentry = false
                     AutoTakeoff = false
                     VertTakeOff = false
-                    if IntoOrbit then AP.ToggleIntoOrbit() end
+
                     if BrakeLanding then apBrk = not apBrk end
                     autoRoll = true
                     GearExtended = false -- Don't actually toggle the gear yet though
@@ -164,6 +164,14 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
         if action == "gear" then
             CONTROL.landingGear()
         elseif action == "light" then
+            if AltIsOn then
+                if isRemote() == 1 then
+                    if DUPlayer.isFrozen()==1 then DUPlayer.freeze(0) msg("Player Unfrozen, pitch/yaw/roll disabled") else DUPlayer.freeze(1) msg("Player Frozen, pitch/yaw/roll enabled") end
+                else
+                    msg("Player Freeze/Unfreeze only used with remote")
+                end
+                return
+            end
             if Nav.control.isAnyHeadlightSwitchedOn() == 1 then
                 Nav.control.switchOffHeadlights()
             else
@@ -343,7 +351,9 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 msg ("No gyro found")
             end
         elseif action == "lshift" then
-            if AltIsOn then holdingShift = true end
+            if AltIsOn then 
+                holdingShift = true 
+            end
         elseif action == "brake" then
             if BrakeToggleStatus or AltIsOn then
                 AP.BrakeToggle("Manual")
