@@ -1,6 +1,6 @@
 ## ChangeLog - Most recent changes at the top
 
-Version 2.010
+Version 2.010 - Significant Changes
 - Change: SCOPE feature now displays based on camera if freelook, or ship heading if locked view. (Dimencia Update)
 - Change: Hitting alt-shift-L will freeze/unfreeze player using remote.  When frozen, pitch/roll/yaw control
     is enabled, but player is unable to move.
