@@ -1,5 +1,21 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.010 - Significant Changes
+- Change: SCOPE feature now displays based on camera if freelook, or ship heading if locked view. (Dimencia Update)
+- Change: Hitting alt-shift-L will freeze/unfreeze player using remote.  When frozen, pitch/roll/yaw control
+    is enabled, but player is unable to move.
+- Fix: Hitting G will turn off autopilot completely (as it should)
+- Fix: Removed requirement to be within 250km/hr of AtmoSpeedLimit to end re-entry.
+- Fix: Hitting alt-4 when off ground but within ground detect will no longer cause wild full power prograde issues
+- Updated Kinematics to Jaylebreak's new Newtonian formulas, RIP Relativity. This results in even more accurate
+    breaking distance and time.
+- Added End Speed to IPH to show speed that braking values are based on in IPH.
+Regarding BrakeDist discrepancies between that shown in IPH and that shown on the Odometer or in INFO panel
+    When not in Autopilot, all 3 will be the same value.  When in Autopilot, the value in the IPH will possibly be less
+    than the value shown in INFO and Odometer. This is due the value in the INFO and Odometer being value to 0 km/hr.
+    The value in the IPH during Autopilot is the distance to the end speed at the stop point, which might not be 0 
+    (Re-Entry speed or Orbital Speed).
+
 Version 2.009
 - Fix for occasional bug reported in lua chat regarding msg string - Was only happening to folks flying heavy, resulted in tumbling on re-entry.
 

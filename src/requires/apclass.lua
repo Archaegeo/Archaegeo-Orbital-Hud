@@ -505,6 +505,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         TargetSet = false -- No matter what
         -- Toggle Autopilot, as long as the target isn't None
         if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
+            if AltitudeHold then AltitudeHold = false end
             if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then msg("WARNING: Heavy Loads may affect autopilot performance.") end
             if #apRoute>0 and not finalLand then 
                 AutopilotTargetIndex = getIndex(apRoute[1])
@@ -712,7 +713,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             LockPitch = nil
             OrbitAchieved = false
             if abvGndDet ~= -1 then 
-                if not GearExtended and not VectorToTarget then
+                if not GearExtended and not VectorToTarget and not spaceLaunch then
                     HoldAltitude = coreAltitude 
                     HoverMode = abvGndDet
                     navCom:setTargetGroundAltitude(HoverMode)
@@ -980,13 +981,13 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 local maxBrake = C.getMaxBrake()
                 if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
                     maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
-                    maxBrake = maxBrake / atmosDensity
+                    --maxBrake = maxBrake / atmosDensity
                     if atmosDensity > 0.10 then 
-                        if LastMaxBrakeInAtmo then
-                            LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
-                        else
+                        --if LastMaxBrakeInAtmo then
+                           -- LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
+                        --else
                             LastMaxBrakeInAtmo = maxBrake 
-                        end
+                        --end
                     end -- Now that we're calculating actual brake values, we want this updated
                 end
                 if maxBrake ~= nil and maxBrake > 0 then
@@ -1417,7 +1418,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
         end
 
-        if finalLand and CustomTarget and (coreAltitude < (HoldAltitude + 250) and coreAltitude > (HoldAltitude - 250)) and ((velMag*3.6) > (adjustedAtmoSpeedLimit-250)) and mabs(vSpd) < 25 and atmosDensity >= 0.1
+        if finalLand and CustomTarget and (coreAltitude < (HoldAltitude + 250) and coreAltitude > (HoldAltitude - 250)) and mabs(vSpd) < 25 and atmosDensity >= 0.1
             and (CustomTarget.position-worldPos):len() > 2000 + coreAltitude then -- Only engage if far enough away to be able to turn back for it
                 if not aptoggle then aptoggle = true end
             finalLand = false
@@ -1905,7 +1906,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 local intersectBody, atmoDistance = AP.checkLOS( (AutopilotTargetCoords-worldPos):normalize())
                 if autopilotTargetPlanet.name ~= planet.name then 
                     if intersectBody ~= nil and autopilotTargetPlanet.name ~= intersectBody.name and atmoDistance < AutopilotDistance then 
-                        collisionAlertStatus = "Collision with "..intersectBody.name.." Clear LOS to continue."
+                        collisionAlertStatus = "Attempting to clear LOS between "..intersectBody.name.." and waypoint."
                         AutopilotPaused = true
                     else
                         AutopilotPaused = false
@@ -2683,6 +2684,11 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 if AutopilotTargetCoords ~= nil then
                     intersectBody, nearSide, farSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (AutopilotTargetCoords-worldPos):normalize(), 
                         function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
+                end
+                if intersectBody ~= nil then 
+                    if intersectBody.name ~= autopilotTargetPlanet.name and not inAtmo then
+                        collisionAlertStatus = "Clearing LOS between "..intersectBody.name.." and waypoint."
+                    end
                 end
                 if antigravOn and not spaceLaunch then
                     if coreAltitude >= (HoldAltitude-50) and velMag > minAutopilotSpeed then

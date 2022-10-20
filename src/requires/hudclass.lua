@@ -800,7 +800,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                         displayText = getDistanceDisplayString(antigrav.getBaseAltitude(),2).." AGG singularity height"
                     end
                     newContent[#newContent + 1] = svgText(warningX, apY, "VTO to "..displayText , "warn")
-                elseif AutoTakeoff and not IntoOrbit then
+                elseif (AutoTakeoff or spaceLaunch) and not IntoOrbit then
                     if spaceLaunch then
                         newContent[#newContent + 1] = svgText(warningX, apY, "Takeoff to "..AutopilotTargetName, "warn")
                     else
@@ -1332,10 +1332,21 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 newContent[#newContent + 1] = '<g clip-path="url(#orbitRect)">'
                 local fov = scopeFOV
                 -- Sort the atlas by distance so closer planets draw on top
-                
+                local cameraPos = vec3(DUSystem.getCameraWorldPos())
+				local cameraRight = vec3(DUSystem.getCameraWorldRight())
+				local cameraForward = vec3(DUSystem.getCameraWorldForward())
+				
+				-- If view is locked, use ship forward and position instead
+				if sysIsVwLock() == 1 then
+					cameraPos = worldPos
+					cameraRight = constructRight
+					cameraForward = constructForward
+				end
+				
+				
                 -- If atmoDensity == 0, this already gets sorted in a hudTick
                 if atmosDensity > 0 then
-                    table.sort(planetAtlas, function(a1,b2) local a,b = a1.center,b2.center return (a.x-worldPos.x)^2+(a.y-worldPos.y)^2+(a.z-worldPos.z)^2 < (b.x-worldPos.x)^2+(b.y-worldPos.y)^2+(b.z-worldPos.z)^2  end)
+                    table.sort(planetAtlas, function(a1,b2) local a,b = a1.center,b2.center return (a.x-cameraPos.x)^2+(a.y-cameraPos.y)^2+(a.z-cameraPos.z)^2 < (b.x-cameraPos.x)^2+(b.y-cameraPos.y)^2+(b.z-cameraPos.z)^2  end)
                 end
 
                 local data = {} -- structure for text data which gets built first
@@ -1351,23 +1362,23 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 for i,v in ipairs(planetAtlas) do
                     
 
-                    local target =  (v.center)-worldPos -- +v.radius*constructForward
+                    local target =  (v.center)-cameraPos -- +v.radius*constructForward
                     local targetDistance = target:len()
                     local targetN = target:normalize()
-                   
-                    local horizontalRight = target:cross(constructForward):normalize()
-                    local rollRad = math.acos(horizontalRight:dot(constructRight))
+				   
+                    local horizontalRight = target:cross(cameraForward):normalize()
+                    local rollRad = math.acos(horizontalRight:dot(cameraRight))
                     if rollRad ~= rollRad then rollRad = 0 end -- I don't know why this would fail but it does... so this fixes it... 
-                    if horizontalRight:cross(constructRight):dot(constructForward) < 0 then rollRad = -rollRad end
+                    if horizontalRight:cross(cameraRight):dot(cameraForward) < 0 then rollRad = -rollRad end
 
-                    local flatlen = target:project_on_plane(constructForward):len()
+                    local flatlen = target:project_on_plane(cameraForward):len()
                     -- Triangle math is a bit more efficient than vector math, we just have a triangle with hypotenuse targetDistance
                     -- and the opposite leg is flatlen, so asin gets us the angle
                     -- We then sin it with rollRad to prevent janky square movement when rolling
                     local xAngle = math.sin(rollRad)*math.asin(flatlen/targetDistance)*constants.rad2deg
                     local yAngle = math.cos(rollRad)*math.asin(flatlen/targetDistance)*constants.rad2deg
                     -- These only output from 0 to 90 so we need to handle quadrants
-                    if targetN:dot(constructForward) < 0 then
+                    if targetN:dot(cameraForward) < 0 then
                         -- If it's in top or bottom quadrant, ie yAngle is 90 or -90ish, do this...
                         
                         yAngle = 90*math.cos(rollRad) + (90*math.cos(rollRad) - yAngle)
@@ -1617,16 +1628,16 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     -- TODO: Rework DrawPrograde to be able to accept x,y values for the marker
                     local target = constructVelocity
                     local targetN = target:normalize()
-                    local flatlen = target:project_on_plane(constructForward):len()
-                    local horizontalRight = target:cross(constructForward):normalize()
-                    local rollRad = math.acos(horizontalRight:dot(constructRight))
+                    local flatlen = target:project_on_plane(cameraForward):len()
+                    local horizontalRight = target:cross(cameraForward):normalize()
+                    local rollRad = math.acos(horizontalRight:dot(cameraRight))
                     if rollRad ~= rollRad then rollRad = 0 end -- Again, idk how this could happen but it does
-                    if horizontalRight:cross(constructRight):dot(constructForward) < 0 then rollRad = -rollRad end
+                    if horizontalRight:cross(cameraRight):dot(cameraForward) < 0 then rollRad = -rollRad end
                     local xAngle = math.sin(rollRad)*math.asin(flatlen/target:len())*constants.rad2deg
                     local yAngle = math.cos(rollRad)*math.asin(flatlen/target:len())*constants.rad2deg
                     
                     -- Fix quadrants
-                    if targetN:dot(constructForward) < 0 then
+                    if targetN:dot(cameraForward) < 0 then
                         -- If it's in top or bottom quadrant, ie yAngle is 90 or -90ish, do this...
                         
                         yAngle = 90*math.cos(rollRad) + (90*math.cos(rollRad) - yAngle)
@@ -2846,14 +2857,15 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 widgetTravelTimeText = sysCrData('{"label": "Travel Time", "value": "N/A", "unit":""}')
                 sysAddData(widgetTravelTimeText, widgetTravelTime)
             
-                widgetMaxMass = sysCrWid(panelInterplanetary, "value")
-                widgetMaxMassText = sysCrData('{"label": "Maximum Mass", "value": "N/A", "unit":""}')
-                sysAddData(widgetMaxMassText, widgetMaxMass)
-            
+          
                 widgetTargetOrbit = sysCrWid(panelInterplanetary, "value")
                 widgetTargetOrbitText = sysCrData('{"label": "Target Altitude", "value": "N/A", "unit":""}')
                 sysAddData(widgetTargetOrbitText, widgetTargetOrbit)
-            
+                
+                widgetStopSpeed = sysCrWid(panelInterplanetary, "value")
+                widgetStopSpeedText = sysCrData('{"label": "End Speed", "value": "N/A", "unit":""}')
+
+
                 widgetCurBrakeDistance = sysCrWid(panelInterplanetary, "value")
                 widgetCurBrakeDistanceText = sysCrData('{"label": "Cur Brake distance", "value": "N/A", "unit":""}')
                 widgetCurBrakeTime = sysCrWid(panelInterplanetary, "value")
@@ -2865,6 +2877,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 widgetTrajectoryAltitude = sysCrWid(panelInterplanetary, "value")
                 widgetTrajectoryAltitudeText = sysCrData('{"label": "Projected Altitude", "value": "N/A", "unit":""}')
                 if not inAtmo then
+                    sysAddData(widgetStopSpeedText, widgetStopSpeed)
                     sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
                     sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime)
                     sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
@@ -2886,11 +2899,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             if AutopilotTargetName ~= nil then
                 local targetDistance
                 local customLocation = CustomTarget ~= nil
-                local planetMaxMass = 0.5 * LastMaxBrakeInAtmo /
-                    (autopilotTargetPlanet:getGravity(
-                    autopilotTargetPlanet.center + (vec3(0, 0, 1) * autopilotTargetPlanet.radius))
-                    :len())
-                planetMaxMass = planetMaxMass > 1000000 and round(planetMaxMass / 1000000,2).." kTons" or round(planetMaxMass / 1000, 2).." Tons"
+                local stopSpeed = Autopilot and (AutopilotEndSpeed*3.6) or 0
                 sysUpData(interplanetaryHeaderText,
                     '{"label": "Target", "value": "' .. AutopilotTargetName .. '", "unit":""}')
                 if customLocation and not Autopilot then -- If in autopilot, keep this displaying properly
@@ -2920,13 +2929,15 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     displayText.. '"}')
                 sysUpData(widgetMaxBrakeTimeText, '{"label": "Max Brake Time", "value": "' ..
                     FormatTimeString(maxBrakeTime) .. '", "unit":""}')
-                sysUpData(widgetMaxMassText, '{"label": "Max Brake Mass", "value": "' ..
-                    stringf("%s", planetMaxMass ) .. '", "unit":""}')
+                sysUpData(widgetStopSpeedText, '{"label": "End Speed", "value": "' ..
+                    stringf("%.0fkph", stopSpeed ) .. '", "unit":""}')
                 displayText = getDistanceDisplayString(AutopilotTargetOrbit)
                 sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
                 displayText .. '"}')
                 if inAtmo and not WasInAtmo then
+                    p("HERE")
                     s.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
+                    s.removeDataFromWidget(widgetStopSpeedText, widgetStopSpeed)
                     s.removeDataFromWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
                     s.removeDataFromWidget(widgetCurBrakeTimeText, widgetCurBrakeTime)
                     s.removeDataFromWidget(widgetCurBrakeDistanceText, widgetCurBrakeDistance)
@@ -2943,6 +2954,8 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 if not inAtmo and WasInAtmo then
                     if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) == 1 then
                         sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
+                    if sysUpData(widgetMaxBrakeTimeText, widgetStopSpeed) == 1 then
+                        sysAddData(widgetStopSpeedText, widgetStopSpeed) end
                     if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) == 1 then
                         sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
                     if sysUpData(widgetCurBrakeTimeText, widgetCurBrakeTime) == 1 then
