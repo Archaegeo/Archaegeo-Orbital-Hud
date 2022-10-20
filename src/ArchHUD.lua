@@ -4673,7 +4673,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
                     displayText .. '"}')
                     if inAtmo and not WasInAtmo then
-                        p("HERE")
                         s.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
                         s.removeDataFromWidget(widgetStopSpeedText, widgetStopSpeed)
                         s.removeDataFromWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
@@ -5364,7 +5363,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             TargetSet = false -- No matter what
             -- Toggle Autopilot, as long as the target isn't None
             if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
-                if AltitudeHold then AltitudeHold = false end
                 if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then msg("WARNING: Heavy Loads may affect autopilot performance.") end
                 if #apRoute>0 and not finalLand then 
                     AutopilotTargetIndex = getIndex(apRoute[1])
