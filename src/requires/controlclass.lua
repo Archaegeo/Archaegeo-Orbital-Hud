@@ -601,7 +601,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 "/createPrivate (all) - dumps private lcoations to screen if present to cut and paste to privatelocations.lua, all if present will make it include all databank locations."
         i = string.find(text, " ")
         command = text
-        if i ~= nil then
+        if i ~= nil and string.find(text, "::") ~= 1 then
             command = string.sub(text, 0, i-1)
             arguement = string.sub(text, i+1)
         end
@@ -632,6 +632,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             i = string.find(arguement, "::")
             if not temp then savename = string.sub(arguement, 1, i-2) end
             local pos = string.sub(arguement, i)
+            pos = pos:gsub("%s+", "")
             AddNewLocationByWaypoint(savename, pos, temp)
             elseif command == "/agg" then
             if arguement == nil or arguement == "" then

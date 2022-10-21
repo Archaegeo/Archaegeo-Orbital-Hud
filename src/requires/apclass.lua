@@ -2621,7 +2621,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                             if targetAltitude ~= nil then
                                 local distanceToGround = coreAltitude - targetAltitude 
                                 skipLandingRate = true
-                                if distanceToGround <= stopDistance or stopDistance == -1 or (absHspd > 0.05 and apBrk) then
+                                if distanceToGround <= stopDistance or stopDistance == -1 or (absHspd > drift and apBrk) then
                                     if targetAltitude==planet.surfaceMaxAltitude and vSpd < -brakeLandingRate then
                                         BrakeIsOn = "BL Stop BLR"
                                     elseif (absHspd > drift and apBrk) then

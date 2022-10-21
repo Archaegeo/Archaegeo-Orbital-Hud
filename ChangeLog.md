@@ -2,6 +2,9 @@
 
 Version 2.012
 - Fix: Infrequent msg errors from missed msg refactor code lines.
+- Fix: One missed place where `allowedHorizontalDrift` should be used.
+- Fix: Pasting a ::pos with spaces in it will no longer throw errors, rest of format still matters
+    ::pos{A,B,X,Y,Z} i.e. ::pos{0,0,-94134464.00,12765536.00,-3634464.00}
 
 Version 2.011 - Critical Fix
 - Fix critical re-entry error when coming in at default ReEntryHeight (11% atmosphere)
