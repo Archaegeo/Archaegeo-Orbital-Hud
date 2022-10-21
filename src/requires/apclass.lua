@@ -971,20 +971,18 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 return accelTime + brakeTime + cruiseTime
             end
         end
-        local function RefreshLastMaxBrake(gravity, force)
-            if gravity == nil then
-                gravity = c.getGravityIntensity()
-            end
+        local function RefreshLastMaxBrake()
+            local gravity = c.getGravityIntensity()
             gravity = round(gravity, 5) -- round to avoid insignificant updates
-            if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
+            if lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity then
                 local speed = coreVelocity:len()
                 local maxBrake = C.getMaxBrake()
                 if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
                     maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
-                    --maxBrake = maxBrake / atmosDensity
+                    maxBrake = maxBrake / atmosDensity
                     if atmosDensity > 0.10 then 
                         --if LastMaxBrakeInAtmo then
-                           -- LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
+                           --LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
                         --else
                             LastMaxBrakeInAtmo = maxBrake 
                         --end
@@ -1012,7 +1010,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         if AutopilotTargetName ~= "None" and (autopilotTargetPlanet or CustomTarget) then
             travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
         end
-        RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
+        RefreshLastMaxBrake() -- force refresh, in case we took damage
     end
 
 
@@ -2518,6 +2516,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local groundDistance = -1
 
             if BrakeLanding then
+                local drift = allowedHorizontalDrift
                 if not initBL then
                     spaceBrake = false
                     if not throttleMode then
@@ -2544,7 +2543,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     aggBase = false
                 end
                 if alignHeading then
-                    if absHspd < 0.05 then
+                    if absHspd < drift then
                         if vSpd > -brakeLandingRate then BrakeIsOn = false else BrakeIsOn = "BL Align BLR" end
                         if AlignToWorldVector(alignHeading, 0.001) then 
                             alignHeading = nil 
@@ -2625,7 +2624,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                                 if distanceToGround <= stopDistance or stopDistance == -1 or (absHspd > 0.05 and apBrk) then
                                     if targetAltitude==planet.surfaceMaxAltitude and vSpd < -brakeLandingRate then
                                         BrakeIsOn = "BL Stop BLR"
-                                    elseif (absHspd > 0.05 and apBrk) then
+                                    elseif (absHspd > drift and apBrk) then
                                         BrakeIsOn = "BL AP Hzn"
                                     else
                                         BrakeIsOn = "BL Stop Dist"
@@ -2653,7 +2652,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                                 apBrk = false
                                 initBL = false
                             else
-                                if vSpd < -5 or absHspd > 0.5 then
+                                if vSpd < -5 or absHspd > (drift*10) then
                                     vertical(0,1)
                                     BrakeIsOn = "BL Slowing"
                                 else
@@ -2665,7 +2664,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         if StrongBrakes and (constructVelocity:normalize():dot(-up) < 0.999) then
                             BrakeIsOn = "BL Strong"
                             AlignToWorldVector()
-                        elseif absHspd > 10 or (absHspd > 0.05 and apBrk) then
+                        elseif absHspd > 10 or (absHspd > drift and apBrk) then
                             BrakeIsOn = "BL hSpd"
                         elseif vSpd < -brakeLandingRate then
                             BrakeIsOn = "BL BLR"
@@ -2798,7 +2797,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
             -- Add in vertical speed as well as the front speed, to help with ships that have very bad brakes
             local addThrust = 0
-            if ExtraEscapeThrust > 0 and not Reentry and atmosDensity > 0.005 and atmosDensity < 0.1 and vSpd > -10 then
+            if ExtraEscapeThrust > 0 and not Reentry and atmosDensity > 0.005 and atmosDensity < 0.1 and vSpd > -50 then
                 local fbs = C.getFrictionBurnSpeed() * ExtraEscapeThrust
                 local aasl = adjustedAtmoSpeedLimit/3.6
                 if fbs > aasl then addThrust = fbs - aasl - 1 end
