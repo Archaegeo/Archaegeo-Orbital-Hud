@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.010
+VERSION_NUMBER = 0.011
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -151,11 +151,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     ExtraLongitudeTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "forward faster major" These will be added to the engines that are control by longitude.
     ExtraLateralTags = "none" -- (Default: "none") Enter any extra lateral tags you use inside '' seperated by space, i.e. "left right" These will be added to the engines that are control by lateral.
     ExtraVerticalTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "up down" These will be added to the engines that are control by vertical.
+    allowedHorizontalDrift = 0.05 -- (Default: 0.05) Allowed horizontal drift rate, in m/s, during brakelanding with Alignment or Drift prevention active.
+
     savableVariablesPhysics = {speedChangeLarge={set=function (i)speedChangeLarge=i end,get=function() return speedChangeLarge end}, speedChangeSmall={set=function (i)speedChangeSmall=i end,get=function() return speedChangeSmall end}, MouseXSensitivity={set=function (i)MouseXSensitivity=i end,get=function() return MouseXSensitivity end}, MouseYSensitivity={set=function (i)MouseYSensitivity=i end,get=function() return MouseYSensitivity end}, autoRollFactor={set=function (i)autoRollFactor=i end,get=function() return autoRollFactor end},
     rollSpeedFactor={set=function (i)rollSpeedFactor=i end,get=function() return rollSpeedFactor end}, autoRollRollThreshold={set=function (i)autoRollRollThreshold=i end,get=function() return autoRollRollThreshold end}, minRollVelocity={set=function (i)minRollVelocity=i end,get=function() return minRollVelocity end}, TrajectoryAlignmentStrength={set=function (i)TrajectoryAlignmentStrength=i end,get=function() return TrajectoryAlignmentStrength end},
     torqueFactor={set=function (i)torqueFactor=i end,get=function() return torqueFactor end}, pitchSpeedFactor={set=function (i)pitchSpeedFactor=i end,get=function() return pitchSpeedFactor end}, yawSpeedFactor={set=function (i)yawSpeedFactor=i end,get=function() return yawSpeedFactor end}, brakeSpeedFactor={set=function (i)brakeSpeedFactor=i end,get=function() return brakeSpeedFactor end}, brakeFlatFactor={set=function (i)brakeFlatFactor=i end,get=function() return brakeFlatFactor end}, DampingMultiplier={set=function (i)DampingMultiplier=i end,get=function() return DampingMultiplier end}, 
     hudTickRate={set=function (i)hudTickRate=i end,get=function() return hudTickRate end}, ExtraEscapeThrust={set=function (i)ExtraEscapeThrust=i end,get=function() return ExtraEscapeThrust end}, 
-    ExtraLongitudeTags={set=function (i)ExtraLongitudeTags=i end,get=function() return ExtraLongitudeTags end}, ExtraLateralTags={set=function (i)ExtraLateralTags=i end,get=function() return ExtraLateralTags end}, ExtraVerticalTags={set=function (i)ExtraVerticalTags=i end,get=function() return ExtraVerticalTags end}}
+    ExtraLongitudeTags={set=function (i)ExtraLongitudeTags=i end,get=function() return ExtraLongitudeTags end}, ExtraLateralTags={set=function (i)ExtraLateralTags=i end,get=function() return ExtraLateralTags end},
+    ExtraVerticalTags={set=function (i)ExtraVerticalTags=i end,get=function() return ExtraVerticalTags end}, allowedHorizontalDrift={set=function (i)allowedHorizontalDrift=i end,get=function() return allowedHorizontalDrift end} }
+
 
 -- Auto Variable declarations that store status of ship on databank. Do not edit directly here unless you know what you are doing, these change as ship flies.
     -- NOTE: autoVariables below must contain any variable that needs to be saved/loaded from databank system
@@ -5363,6 +5367,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             TargetSet = false -- No matter what
             -- Toggle Autopilot, as long as the target isn't None
             if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
+                if AltitudeHold then AltitudeHold = false end
                 if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then msg("WARNING: Heavy Loads may affect autopilot performance.") end
                 if #apRoute>0 and not finalLand then 
                     AutopilotTargetIndex = getIndex(apRoute[1])
@@ -5828,20 +5833,18 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     return accelTime + brakeTime + cruiseTime
                 end
             end
-            local function RefreshLastMaxBrake(gravity, force)
-                if gravity == nil then
-                    gravity = c.getGravityIntensity()
-                end
+            local function RefreshLastMaxBrake()
+                local gravity = c.getGravityIntensity()
                 gravity = round(gravity, 5) -- round to avoid insignificant updates
-                if (force ~= nil and force) or (lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity) then
+                if lastMaxBrakeAtG == nil or lastMaxBrakeAtG ~= gravity then
                     local speed = coreVelocity:len()
                     local maxBrake = C.getMaxBrake()
                     if maxBrake ~= nil and maxBrake > 0 and inAtmo then 
                         maxBrake = maxBrake / uclamp(speed/100, 0.1, 1)
-                        --maxBrake = maxBrake / atmosDensity
+                        maxBrake = maxBrake / atmosDensity
                         if atmosDensity > 0.10 then 
                             --if LastMaxBrakeInAtmo then
-                               -- LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
+                               --LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
                             --else
                                 LastMaxBrakeInAtmo = maxBrake 
                             --end
@@ -5869,7 +5872,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             if AutopilotTargetName ~= "None" and (autopilotTargetPlanet or CustomTarget) then
                 travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
             end
-            RefreshLastMaxBrake(nil, true) -- force refresh, in case we took damage
+            RefreshLastMaxBrake() -- force refresh, in case we took damage
         end
     
     
@@ -7375,6 +7378,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local groundDistance = -1
     
                 if BrakeLanding then
+                    local drift = allowedHorizontalDrift
                     if not initBL then
                         spaceBrake = false
                         if not throttleMode then
@@ -7401,7 +7405,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         aggBase = false
                     end
                     if alignHeading then
-                        if absHspd < 0.05 then
+                        if absHspd < drift then
                             if vSpd > -brakeLandingRate then BrakeIsOn = false else BrakeIsOn = "BL Align BLR" end
                             if AlignToWorldVector(alignHeading, 0.001) then 
                                 alignHeading = nil 
@@ -7482,7 +7486,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                     if distanceToGround <= stopDistance or stopDistance == -1 or (absHspd > 0.05 and apBrk) then
                                         if targetAltitude==planet.surfaceMaxAltitude and vSpd < -brakeLandingRate then
                                             BrakeIsOn = "BL Stop BLR"
-                                        elseif (absHspd > 0.05 and apBrk) then
+                                        elseif (absHspd > drift and apBrk) then
                                             BrakeIsOn = "BL AP Hzn"
                                         else
                                             BrakeIsOn = "BL Stop Dist"
@@ -7510,7 +7514,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                     apBrk = false
                                     initBL = false
                                 else
-                                    if vSpd < -5 or absHspd > 0.5 then
+                                    if vSpd < -5 or absHspd > (drift*10) then
                                         vertical(0,1)
                                         BrakeIsOn = "BL Slowing"
                                     else
@@ -7522,7 +7526,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             if StrongBrakes and (constructVelocity:normalize():dot(-up) < 0.999) then
                                 BrakeIsOn = "BL Strong"
                                 AlignToWorldVector()
-                            elseif absHspd > 10 or (absHspd > 0.05 and apBrk) then
+                            elseif absHspd > 10 or (absHspd > drift and apBrk) then
                                 BrakeIsOn = "BL hSpd"
                             elseif vSpd < -brakeLandingRate then
                                 BrakeIsOn = "BL BLR"
@@ -7655,7 +7659,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
                 -- Add in vertical speed as well as the front speed, to help with ships that have very bad brakes
                 local addThrust = 0
-                if ExtraEscapeThrust > 0 and not Reentry and atmosDensity > 0.005 and atmosDensity < 0.1 and vSpd > -10 then
+                if ExtraEscapeThrust > 0 and not Reentry and atmosDensity > 0.005 and atmosDensity < 0.1 and vSpd > -50 then
                     local fbs = C.getFrictionBurnSpeed() * ExtraEscapeThrust
                     local aasl = adjustedAtmoSpeedLimit/3.6
                     if fbs > aasl then addThrust = fbs - aasl - 1 end
