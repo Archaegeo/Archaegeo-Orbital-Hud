@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.011
+VERSION_NUMBER = 0.012
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -1262,11 +1262,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         local location = positions[index]
                         if saveHeading then 
                             location.heading = constructRight:cross(worldVertical)*5000 
-                            msg = positions[index].name .. " heading saved ("..positions[index].planetname..")"
+                            msg (positions[index].name .. " heading saved ("..positions[index].planetname..")")
                             return
                         elseif saveHeading == false then 
                             location.heading = nil 
-                            msg = positions[index].name .. " heading cleared ("..positions[index].planetname..")"
+                            msg (positions[index].name .. " heading cleared ("..positions[index].planetname..")")
                             return
                         end
                         location.gravity = c.getGravityIntensity()
@@ -7483,7 +7483,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                 if targetAltitude ~= nil then
                                     local distanceToGround = coreAltitude - targetAltitude 
                                     skipLandingRate = true
-                                    if distanceToGround <= stopDistance or stopDistance == -1 or (absHspd > 0.05 and apBrk) then
+                                    if distanceToGround <= stopDistance or stopDistance == -1 or (absHspd > drift and apBrk) then
                                         if targetAltitude==planet.surfaceMaxAltitude and vSpd < -brakeLandingRate then
                                             BrakeIsOn = "BL Stop BLR"
                                         elseif (absHspd > drift and apBrk) then
@@ -8517,7 +8517,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     "/createPrivate (all) - dumps private lcoations to screen if present to cut and paste to privatelocations.lua, all if present will make it include all databank locations."
             i = string.find(text, " ")
             command = text
-            if i ~= nil then
+            if i ~= nil and string.find(text, "::") ~= 1 then
                 command = string.sub(text, 0, i-1)
                 arguement = string.sub(text, i+1)
             end
@@ -8548,6 +8548,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 i = string.find(arguement, "::")
                 if not temp then savename = string.sub(arguement, 1, i-2) end
                 local pos = string.sub(arguement, i)
+                pos = pos:gsub("%s+", "")
                 AddNewLocationByWaypoint(savename, pos, temp)
                 elseif command == "/agg" then
                 if arguement == nil or arguement == "" then
@@ -8594,7 +8595,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             newGlobalValue = newGlobalValue/3.6
                             if newGlobalValue > MaxSpeed-0.2 then 
                                 newGlobalValue = MaxSpeed-0.2 
-                                msg = "Variable "..globalVariableName.." changed to "..round(newGlobalValue*3.6,1)
+                                msg ("Variable "..globalVariableName.." changed to "..round(newGlobalValue*3.6,1))
                             end
                         end
                         if varType == "boolean" then
