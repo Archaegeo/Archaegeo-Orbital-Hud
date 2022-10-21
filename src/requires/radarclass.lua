@@ -267,16 +267,16 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
     end
 
     function Radar.GetRadarHud(friendx, friendy, radarX, radarY)
-        local radarMessage, msg
+        local radarMessage, msgt
         local num = numKnown or 0 
         radarContacts = #radarData
         if radarContacts > 0 then 
             if CollisionSystem then 
-                msg = num.."/"..static.." Known/InRange : "..radarContacts.." Total" 
+                msgt = num.."/"..static.." Known/InRange : "..radarContacts.." Total" 
             else
-                msg = "Radar Contacts: "..radarContacts
+                msgt = "Radar Contacts: "..radarContacts
             end
-            radarMessage = svgText(radarX, radarY, msg, "pbright txtbig txtmid")
+            radarMessage = svgText(radarX, radarY, msgt, "pbright txtbig txtmid")
             if #friendlies > 0 then
                 radarMessage = radarMessage..svgText( friendx, friendy, "Friendlies In Range", "pbright txtbig txtmid")
                 for k, v in pairs(friendlies) do

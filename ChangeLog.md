@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.012
+- Fix: Infrequent msg errors from missed msg refactor code lines.
+
 Version 2.011 - Critical Fix
 - Fix critical re-entry error when coming in at default ReEntryHeight (11% atmosphere)
 - New User Variable `allowedHorizontalDrift` (Default: 0.05) Allowed horizontal drift rate, in m/s, during brakelanding 

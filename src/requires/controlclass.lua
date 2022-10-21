@@ -678,7 +678,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                         newGlobalValue = newGlobalValue/3.6
                         if newGlobalValue > MaxSpeed-0.2 then 
                             newGlobalValue = MaxSpeed-0.2 
-                            msg = "Variable "..globalVariableName.." changed to "..round(newGlobalValue*3.6,1)
+                            msg ("Variable "..globalVariableName.." changed to "..round(newGlobalValue*3.6,1))
                         end
                     end
                     if varType == "boolean" then

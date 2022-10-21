@@ -943,11 +943,11 @@
                         local location = positions[index]
                         if saveHeading then 
                             location.heading = constructRight:cross(worldVertical)*5000 
-                            msg = positions[index].name .. " heading saved ("..positions[index].planetname..")"
+                            msg (positions[index].name .. " heading saved ("..positions[index].planetname..")")
                             return
                         elseif saveHeading == false then 
                             location.heading = nil 
-                            msg = positions[index].name .. " heading cleared ("..positions[index].planetname..")"
+                            msg (positions[index].name .. " heading cleared ("..positions[index].planetname..")")
                             return
                         end
                         location.gravity = c.getGravityIntensity()
