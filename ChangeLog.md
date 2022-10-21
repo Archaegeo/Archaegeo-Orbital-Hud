@@ -1,5 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.011 - Critical Fix
+- Fix critical re-entry error when coming in at default ReEntryHeight (11% atmosphere)
+- New User Variable `allowedHorizontalDrift` (Default: 0.05) Allowed horizontal drift rate, in m/s, during brakelanding 
+    with Alignment or Drift prevention active, before brakes are applied to prevent drift (see manual on BrakeLanding for more details.)
+
 Version 2.010 - Significant Changes
 - Change: SCOPE feature now displays based on camera if freelook, or ship heading if locked view. (Dimencia Update)
 - Change: Hitting alt-shift-L will freeze/unfreeze player using remote.  When frozen, pitch/roll/yaw control

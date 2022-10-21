@@ -2935,7 +2935,6 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
                 displayText .. '"}')
                 if inAtmo and not WasInAtmo then
-                    p("HERE")
                     s.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
                     s.removeDataFromWidget(widgetStopSpeedText, widgetStopSpeed)
                     s.removeDataFromWidget(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)
