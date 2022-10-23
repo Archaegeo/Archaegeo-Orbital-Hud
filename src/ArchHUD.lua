@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.012
+VERSION_NUMBER = 0.013
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -1100,7 +1100,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if autopilotTargetPlanet.hasAtmosphere then 
                         AutopilotTargetOrbit = mfloor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.noAtmosphericDensityAltitude)
                     else
-                        AutopilotTargetOrbit = mfloor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.surfaceMaxAltitude)
+                        AutopilotTargetOrbit = mfloor(LowOrbitHeight + autopilotTargetPlanet.surfaceMaxAltitude)
                     end
                 else
                     AutopilotTargetOrbit = AutopilotSpaceDistance
@@ -2173,6 +2173,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
     
                 if nearPlanet and ((altitude < 200000 and not inAtmo) or (altitude and inAtmo)) then
+                    newContent[#newContent + 1] = svgText(rectX+rectW, rectY-10, stringf("%s", planet.name), "pdim altsm txtend")
                     table.insert(newContent, stringf([[
                         <g class="pdim">                        
                             <rect class="line" x="%d" y="%d" width="%d" height="%d"/> 
@@ -2589,7 +2590,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, collisionAlertStatus, type)
                 elseif atmosDensity == 0 then
                     local intersectBody, atmoDistance = AP.checkLOS((constructVelocity):normalize())
-                    if atmoDistance ~= nil then
+                    if atmoDistance ~= nil and velMag > 0 then
     
                         local displayText = getDistanceDisplayString(atmoDistance)
                         local travelTime = Kinematic.computeTravelTime(velMag, 0, atmoDistance)
@@ -4175,6 +4176,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         local safeAtmoMass = 0
         local safeSpaceMass = 0
         local safeHoverMass = 0
+        local safeBrakeMass = 0
     
         function Hud.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
             if SelectedTab ~= "INFO" then return newContent end
@@ -4184,10 +4186,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local mass = coreMass > 1000000 and round(coreMass / 1000000,2).." kTons" or round(coreMass / 1000, 2).." Tons"
             if inAtmo then brakeValue = LastMaxBrakeInAtmo else brakeValue = LastMaxBrake end
             local brkDist, brkTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, brakeValue)
-            brakeValue = round((brakeValue / (coreMass * gravConstant)),2).." g"
+    
             local maxThrust = Nav:maxForceForward()
             gravity = c.getGravityIntensity()
-            if velMag < 5 then
+            if velMag < 1 and abvGndDet ~= -1 then
                 local axisCRefDirection = vec3(C.getOrientationForward())
                 local maxKPAlongAxis = C.getMaxThrustAlongAxis('thrust analog longitudinal ', {axisCRefDirection:unpack()})
                 safeAtmoMass = 0.5*maxKPAlongAxis[1]/gravity
@@ -4198,7 +4200,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 maxKPAlongAxis = C.getMaxThrustAlongAxis('hover_engine, booster_engine', {axisCRefDirection:unpack()})
                 safeHoverMass = 0.5*maxKPAlongAxis[1]/gravity
                 safeHoverMass = safeHoverMass > 1000000 and round(safeHoverMass / 1000000,1).." kTons" or round(safeHoverMass / 1000, 1).." Tons"
+                safeBrakeMass = 0.5*brakeValue/gravity
+                safeBrakeMass = safeBrakeMass > 1000000 and round(safeBrakeMass / 1000000,1).." kTons" or round(safeBrakeMass / 1000, 1).." Tons"
             end
+            brakeValue = round((brakeValue / (coreMass * gravConstant)),2).." g"
             if gravity > 0.1 then
                 reqThrust = coreMass * gravity
                 reqThrust = round((reqThrust / (coreMass * gravConstant)),2).." g"
@@ -4236,10 +4241,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 newContent[#newContent + 1] = svgText(startX, startY+height*2, "Trip Time: "..FormatTimeString(flightTime)) 
                 newContent[#newContent + 1] = svgText(midX, startY+height*2, "Total Time: "..FormatTimeString(TotalFlightTime)) 
                 newContent[#newContent + 1] = svgText(startX, startY+height*3, stringf("Mass: %s", mass)) 
-                newContent[#newContent + 1] = svgText(midX, startY+height*3, stringf("Max Brake: %s",  brakeValue)) 
+                newContent[#newContent + 1] = svgText(midX, startY+height*3, stringf("Safe Brake Mass: %s",  safeBrakeMass)) 
                 newContent[#newContent + 1] = svgText(startX, startY+height*4, stringf("Max Thrust: %s", maxThrust)) 
                 newContent[#newContent + 1] = svgText(midX, startY+height*4, stringf("Safe Atmo Mass: %s", (safeAtmoMass)))
-                newContent[#newContent + 1] = svgText(startX, startY+height*5, stringf("Req Thrust: %s", reqThrust )) 
+                newContent[#newContent + 1] = svgText(startX, startY+height*5, stringf("Max Brake: %s", brakeValue )) 
                 newContent[#newContent + 1] = svgText(midX, startY+height*5, stringf("Safe Space Mass: %s", (safeSpaceMass)))
                 newContent[#newContent + 1] = svgText(midX, startY+height*6, stringf("Safe Hover Mass: %s", (safeHoverMass)))
                 newContent[#newContent + 1] = svgText(startX, startY+height*6, stringf("Influence: %s", planet.name))
@@ -4307,7 +4312,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             return newContent
         end
     
-            -- DrawRadarInfo() variables
+        -- DrawRadarInfo() variables
     
             local friendy = ConvertResolutionY(125)
             local friendx = ConvertResolutionX(1225)
@@ -4820,7 +4825,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
             end
     
-     
             local newContent = {}
             updateDistance()
             if ShouldCheckDamage then
@@ -5413,7 +5417,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                 Autopilot = true
                             elseif not inAtmo then
                                 if IntoOrbit then AP.ToggleIntoOrbit() end -- Reset all appropriate vars
-                                OrbitTargetOrbit = planet.noAtmosphericDensityAltitude + LowOrbitHeight
+                                OrbitTargetOrbit = ((planet.noAtmosphericDensityAltitude > 0 and planet.noAtmosphericDensityAltitude) or planet.surfaceMaxAltitude) + LowOrbitHeight
                                 OrbitTargetSet = true
                                 orbitalParams.AutopilotAlign = true
                                 orbitalParams.VectorToTarget = true
@@ -5437,6 +5441,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         WaypointSet = false
                         OrbitAchieved = false
                         orbitAligned = false
+                        OrbitTargetOrbit = ((planet.noAtmosphericDensityAltitude > 0 and planet.noAtmosphericDensityAltitude) or planet.surfaceMaxAltitude) + LowOrbitHeight
+                        OrbitTargetSet = true
                         AP.ToggleIntoOrbit() -- this works much better here
                     else
                         play("apP","AP")
@@ -6044,9 +6050,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
             -- Axis
             worldVertical = vec3(c.getWorldVertical()) -- along gravity
-            if worldVertical == nil or worldVertical:len() == 0 then
+            --if worldVertical == nil or worldVertical:len() == 0 then
                 worldVertical = (planet.center - worldPos):normalize() -- I think also along gravity hopefully?
-            end
+            --end
     
             constructUp = vec3(C.getWorldOrientationUp())
             constructForward = vec3(C.getWorldOrientationForward())
@@ -6102,9 +6108,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
         -- Start old APTick Code 
             atmosDensity = atmosphere()
+            coreAltitude = (worldPos-planet.center):len()-planet.radius
             inAtmo = false or (coreAltitude < planet.noAtmosphericDensityAltitude and atmosDensity > 0.00001 )
     
-            coreAltitude = c.getAltitude()
             abvGndDet = AboveGroundLevel()
             time = systime()
             lastApTickTime = time
@@ -6154,9 +6160,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             planet = sys:closestBody(cWorldPos)
             kepPlanet = Kep(planet)
             orbit = kepPlanet:orbitalParameters(cWorldPos, constructVelocity)
-            if coreAltitude == 0 then
-                coreAltitude = (worldPos - planet.center):len() - planet.radius
-            end
             nearPlanet = u.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
     
             local gravity = planet:getGravity(cWorldPos):len() * coreMass
@@ -7577,6 +7580,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         end --coreAltitude > 75000
                     elseif spaceLaunch and not inAtmo and autopilotTargetPlanet ~= nil and (intersectBody == nil or intersectBody.name == autopilotTargetPlanet.name) then
                         Autopilot = true
+                        collisionAlertStatus = false
                         spaceLaunch = false
                         AltitudeHold = false
                         AutoTakeoff = false
@@ -9134,7 +9138,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                     GearExtended = (Nav.control.isAnyLandingGearDeployed() == 1) or (abvGndDet ~=-1 and (abvGndDet - 3) < LandingGearGroundHeight)
                     -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
-                    if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 50) then
+                    if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 10) then
                         BrakeIsOn = "Startup"
                     else
                         BrakeIsOn = false
