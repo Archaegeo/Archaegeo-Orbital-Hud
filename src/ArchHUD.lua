@@ -2173,7 +2173,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
     
                 if nearPlanet and ((altitude < 200000 and not inAtmo) or (altitude and inAtmo)) then
-                    newContent[#newContent + 1] = svgText(rectX+rectW, rectY-10, stringf("%s", planet.name), "pdim altsm txtend")
+                    newContent[#newContent + 1] = svgText(rectX+rectW, rectY-10, stringf("%s",planet.name), "pdim altsm txtend")
                     table.insert(newContent, stringf([[
                         <g class="pdim">                        
                             <rect class="line" x="%d" y="%d" width="%d" height="%d"/> 
@@ -4189,7 +4189,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
             local maxThrust = Nav:maxForceForward()
             gravity = c.getGravityIntensity()
-            if velMag < 1 and abvGndDet ~= -1 then
+            if velMag < 5 and abvGndDet ~= -1 then
                 local axisCRefDirection = vec3(C.getOrientationForward())
                 local maxKPAlongAxis = C.getMaxThrustAlongAxis('thrust analog longitudinal ', {axisCRefDirection:unpack()})
                 safeAtmoMass = 0.5*maxKPAlongAxis[1]/gravity
@@ -4312,7 +4312,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             return newContent
         end
     
-        -- DrawRadarInfo() variables
+            -- DrawRadarInfo() variables
     
             local friendy = ConvertResolutionY(125)
             local friendx = ConvertResolutionX(1225)
@@ -4825,6 +4825,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
             end
     
+     
             local newContent = {}
             updateDistance()
             if ShouldCheckDamage then
@@ -5371,7 +5372,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             TargetSet = false -- No matter what
             -- Toggle Autopilot, as long as the target isn't None
             if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
-                if AltitudeHold then AltitudeHold = false end
+                --if AltitudeHold then AltitudeHold = false end
                 if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then msg("WARNING: Heavy Loads may affect autopilot performance.") end
                 if #apRoute>0 and not finalLand then 
                     AutopilotTargetIndex = getIndex(apRoute[1])
@@ -6049,10 +6050,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local finalBrakeInput = (BrakeIsOn and 1) or 0
     
             -- Axis
-            worldVertical = vec3(c.getWorldVertical()) -- along gravity
-            --if worldVertical == nil or worldVertical:len() == 0 then
-                worldVertical = (planet.center - worldPos):normalize() -- I think also along gravity hopefully?
-            --end
+            if inAtmo then
+                worldVertical = vec3(c.getWorldVertical()) -- along gravity
+                if worldVertical == nil or worldVertical:len() == 0 then
+                    worldVertical = (planet.center - worldPos):normalize() -- I think also along gravity hopefully?
+                end
+            else
+                worldVertical = (planet.center - worldPos):normalize()
+            end
+                    
     
             constructUp = vec3(C.getWorldOrientationUp())
             constructForward = vec3(C.getWorldOrientationForward())
@@ -6108,9 +6114,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
         -- Start old APTick Code 
             atmosDensity = atmosphere()
-            coreAltitude = (worldPos-planet.center):len()-planet.radius
             inAtmo = false or (coreAltitude < planet.noAtmosphericDensityAltitude and atmosDensity > 0.00001 )
     
+            --coreAltitude = c.getAltitude()
+            coreAltitude = (worldPos - planet.center):len() - planet.radius
             abvGndDet = AboveGroundLevel()
             time = systime()
             lastApTickTime = time
@@ -6160,6 +6167,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             planet = sys:closestBody(cWorldPos)
             kepPlanet = Kep(planet)
             orbit = kepPlanet:orbitalParameters(cWorldPos, constructVelocity)
+            --if coreAltitude == 0 then
+                --coreAltitude = (worldPos - planet.center):len() - planet.radius
+            --end
             nearPlanet = u.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
     
             local gravity = planet:getGravity(cWorldPos):len() * coreMass
@@ -7084,7 +7094,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(hSpd, 100, coreMass, 0, 0,
                                                     curBrake)
     
-                    local lastDist, brakeTime2 = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, curBrake*0.55)
+                    local lastDist, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, curBrake*0.55)
                     brakeDistance = brakeDistance + lastDist
                 else 
                     brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(hSpd, 0, coreMass, 0, 0, curBrake*0.55)
@@ -7381,7 +7391,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local groundDistance = -1
     
                 if BrakeLanding then
-                    local drift = allowedHorizontalDrift
+                    local drift = allowedHorizontalDrift or 0.05
                     if not initBL then
                         spaceBrake = false
                         if not throttleMode then
@@ -8764,13 +8774,14 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             end
     
             local function msg(msgt)
+                if not msgt then return end
                 if msgText ~= "empty" then 
                     if msgText ~= msgt then 
-                        msgText = msgText.."\n"..msgt 
+                        msgText = msgText.."\n"..msgt
                         msgTimer = 7 
                     end
                 else 
-                    msgText = msgt
+                    msgText = msgt 
                 end
             end
     
@@ -9138,7 +9149,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                     GearExtended = (Nav.control.isAnyLandingGearDeployed() == 1) or (abvGndDet ~=-1 and (abvGndDet - 3) < LandingGearGroundHeight)
                     -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
-                    if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 10) then
+                    if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 30) then
                         BrakeIsOn = "Startup"
                     else
                         BrakeIsOn = false
