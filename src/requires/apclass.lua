@@ -1183,10 +1183,15 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         local finalBrakeInput = (BrakeIsOn and 1) or 0
 
         -- Axis
-        worldVertical = vec3(c.getWorldVertical()) -- along gravity
-        if worldVertical == nil or worldVertical:len() == 0 then
-            worldVertical = (planet.center - worldPos):normalize() -- I think also along gravity hopefully?
+        if inAtmo then
+            worldVertical = vec3(c.getWorldVertical()) -- along gravity
+            if worldVertical == nil or worldVertical:len() == 0 then
+                worldVertical = (planet.center - worldPos):normalize() -- I think also along gravity hopefully?
+            end
+        else
+            worldVertical = (planet.center - worldPos):normalize()
         end
+                
 
         constructUp = vec3(C.getWorldOrientationUp())
         constructForward = vec3(C.getWorldOrientationForward())
@@ -2222,7 +2227,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(hSpd, 100, coreMass, 0, 0,
                                                 curBrake)
 
-                local lastDist, brakeTime2 = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, curBrake*0.55)
+                local lastDist, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, curBrake*0.55)
                 brakeDistance = brakeDistance + lastDist
             else 
                 brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(hSpd, 0, coreMass, 0, 0, curBrake*0.55)
