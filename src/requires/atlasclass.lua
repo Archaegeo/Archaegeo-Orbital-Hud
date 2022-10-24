@@ -781,7 +781,7 @@
                     if autopilotTargetPlanet.hasAtmosphere then 
                         AutopilotTargetOrbit = mfloor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.noAtmosphericDensityAltitude)
                     else
-                        AutopilotTargetOrbit = mfloor(autopilotTargetPlanet.radius*(TargetOrbitRadius-1) + autopilotTargetPlanet.surfaceMaxAltitude)
+                        AutopilotTargetOrbit = mfloor(LowOrbitHeight + autopilotTargetPlanet.surfaceMaxAltitude)
                     end
                 else
                     AutopilotTargetOrbit = AutopilotSpaceDistance
