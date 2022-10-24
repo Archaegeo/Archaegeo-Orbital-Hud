@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.014 - Fix GFN version
+- Fix error with GFN version.  0.014 and 2.014 are the current
+
 Version 2.013 - Thades (Moonlets)
 - Corrected issues that were caused by the new Thades Moonlets causing confusing altitude and vertical speed issues.
     Performace around Thades should be much more reliable now - Recommend any AP flights around the moonlets not be done AFK till tested.
@@ -9,7 +12,6 @@ Version 2.013 - Thades (Moonlets)
 - Add: Planet name thats considered closest shown above Altitude display.
 - Fix: Reentry Atmo changing from 11% to current value when re-entry finishes.
 - Fix: Collision Alert message displaying when LOS is clear
-
 
 Version 2.012
 - Fix: Infrequent msg errors from missed msg refactor code lines.
