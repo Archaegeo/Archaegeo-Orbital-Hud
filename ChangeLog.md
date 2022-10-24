@@ -1,5 +1,16 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.013 - Thades (Moonlets)
+- Corrected issues that were caused by the new Thades Moonlets causing confusing altitude and vertical speed issues.
+    Performace around Thades should be much more reliable now - Recommend any AP flights around the moonlets not be done AFK till tested.
+    HUD will orbit moonlets, fly from moonlet orbit to moonlet orbit, etc now.
+- Add: Safe Brake Mass - Like the other Safe Mass values, it is only updated when within ground detect range and not moving.
+    Also, like the others, it is 50% of the actual brake mass.
+- Add: Planet name thats considered closest shown above Altitude display.
+- Fix: Reentry Atmo changing from 11% to current value when re-entry finishes.
+- Fix: Collision Alert message displaying when LOS is clear
+
+
 Version 2.012
 - Fix: Infrequent msg errors from missed msg refactor code lines.
 - Fix: One missed place where `allowedHorizontalDrift` should be used.

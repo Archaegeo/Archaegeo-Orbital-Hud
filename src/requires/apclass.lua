@@ -505,7 +505,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         TargetSet = false -- No matter what
         -- Toggle Autopilot, as long as the target isn't None
         if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
-            if AltitudeHold then AltitudeHold = false end
+            --if AltitudeHold then AltitudeHold = false end
             if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then msg("WARNING: Heavy Loads may affect autopilot performance.") end
             if #apRoute>0 and not finalLand then 
                 AutopilotTargetIndex = getIndex(apRoute[1])
@@ -551,7 +551,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                             Autopilot = true
                         elseif not inAtmo then
                             if IntoOrbit then AP.ToggleIntoOrbit() end -- Reset all appropriate vars
-                            OrbitTargetOrbit = planet.noAtmosphericDensityAltitude + LowOrbitHeight
+                            OrbitTargetOrbit = ((planet.noAtmosphericDensityAltitude > 0 and planet.noAtmosphericDensityAltitude) or planet.surfaceMaxAltitude) + LowOrbitHeight
                             OrbitTargetSet = true
                             orbitalParams.AutopilotAlign = true
                             orbitalParams.VectorToTarget = true
@@ -575,6 +575,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     WaypointSet = false
                     OrbitAchieved = false
                     orbitAligned = false
+                    OrbitTargetOrbit = ((planet.noAtmosphericDensityAltitude > 0 and planet.noAtmosphericDensityAltitude) or planet.surfaceMaxAltitude) + LowOrbitHeight
+                    OrbitTargetSet = true
                     AP.ToggleIntoOrbit() -- this works much better here
                 else
                     play("apP","AP")
@@ -1181,10 +1183,15 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         local finalBrakeInput = (BrakeIsOn and 1) or 0
 
         -- Axis
-        worldVertical = vec3(c.getWorldVertical()) -- along gravity
-        if worldVertical == nil or worldVertical:len() == 0 then
-            worldVertical = (planet.center - worldPos):normalize() -- I think also along gravity hopefully?
+        if inAtmo then
+            worldVertical = vec3(c.getWorldVertical()) -- along gravity
+            if worldVertical == nil or worldVertical:len() == 0 then
+                worldVertical = (planet.center - worldPos):normalize() -- I think also along gravity hopefully?
+            end
+        else
+            worldVertical = (planet.center - worldPos):normalize()
         end
+                
 
         constructUp = vec3(C.getWorldOrientationUp())
         constructForward = vec3(C.getWorldOrientationForward())
@@ -1242,7 +1249,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         atmosDensity = atmosphere()
         inAtmo = false or (coreAltitude < planet.noAtmosphericDensityAltitude and atmosDensity > 0.00001 )
 
-        coreAltitude = c.getAltitude()
+        --coreAltitude = c.getAltitude()
+        coreAltitude = (worldPos - planet.center):len() - planet.radius
         abvGndDet = AboveGroundLevel()
         time = systime()
         lastApTickTime = time
@@ -1292,9 +1300,9 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         planet = sys:closestBody(cWorldPos)
         kepPlanet = Kep(planet)
         orbit = kepPlanet:orbitalParameters(cWorldPos, constructVelocity)
-        if coreAltitude == 0 then
-            coreAltitude = (worldPos - planet.center):len() - planet.radius
-        end
+        --if coreAltitude == 0 then
+            --coreAltitude = (worldPos - planet.center):len() - planet.radius
+        --end
         nearPlanet = u.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
 
         local gravity = planet:getGravity(cWorldPos):len() * coreMass
@@ -2219,7 +2227,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(hSpd, 100, coreMass, 0, 0,
                                                 curBrake)
 
-                local lastDist, brakeTime2 = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, curBrake*0.55)
+                local lastDist, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, curBrake*0.55)
                 brakeDistance = brakeDistance + lastDist
             else 
                 brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(hSpd, 0, coreMass, 0, 0, curBrake*0.55)
@@ -2516,7 +2524,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local groundDistance = -1
 
             if BrakeLanding then
-                local drift = allowedHorizontalDrift
+                local drift = allowedHorizontalDrift or 0.05
                 if not initBL then
                     spaceBrake = false
                     if not throttleMode then
@@ -2715,6 +2723,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     end --coreAltitude > 75000
                 elseif spaceLaunch and not inAtmo and autopilotTargetPlanet ~= nil and (intersectBody == nil or intersectBody.name == autopilotTargetPlanet.name) then
                     Autopilot = true
+                    collisionAlertStatus = false
                     spaceLaunch = false
                     AltitudeHold = false
                     AutoTakeoff = false
