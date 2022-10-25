@@ -1,5 +1,13 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.015 - I HATE YOU ALL
+- Added "Fast Orbit" support.  Usage:
+    If `MaintainOrbit` is true, and `FastOrbit` is set to > 0.0, then Orbit speed will be equal to 
+    OrbitSpeed + FastOrbit*OrbitSpeed.  So a value of 1.0 for `FastOrbit` will make you attempt to 
+    "Orbit" at 2x normal orbit speed.   Recommend SLOWLY raising FastOrbit based on what your ships
+    Adjustors can handle to avoid getting shot into space, or into atmo at 10k k/hr.
+- New User Variable, `FastOrbit` (Default: 0.0) If > 0, and MaintainOrbit is true, ship will add OrbitVelocity * FastOrbit to OrbitVelocity and use engines to maintain. USE AT OWN RISK.
+
 Version 2.014 - Fix GFN version
 - Fix error with GFN version.  0.014 and 2.014 are the current
 

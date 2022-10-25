@@ -1544,6 +1544,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 targetVec = CustomTarget.position - worldPos
             end
             local escapeVel, endSpeed = Kep(OrbitTargetPlanet):escapeAndOrbitalSpeed((worldPos -OrbitTargetPlanet.center):len()-OrbitTargetPlanet.radius)
+            endSpeed = endSpeed*3.6+1 + ((MaintainOrbit and FastOrbit*(endSpeed*3.6)) or 0)
             local orbitalRoll = adjustedRoll
             -- Getting as close to orbit distance as comfortably possible
             if not orbitAligned then
@@ -1637,7 +1638,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                                 orbitMsg = "Adjusting " 
                                 orbitalRecover = true
                                 -- Just set cruise to endspeed...
-                                cmdC = endSpeed*3.6+1
+                                cmdC = endSpeed
                                 -- And set pitch to something that scales with vSpd
                                 -- Well, a pid is made for this stuff
                                 local altDiff = OrbitTargetOrbit - coreAltitude
