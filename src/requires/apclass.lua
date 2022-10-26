@@ -359,6 +359,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         orbitPitch = nil
         orbitRoll = nil
         OrbitTicks = 0
+        orbitalRecover = false
         if not inAtmo then
             if IntoOrbit then
                 play("orOff", "AP")
@@ -1518,6 +1519,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
 
         if IntoOrbit then
             local function orbitCheck()
+                if not orbit.apoapsis or not orbit.periapsis then return false end
                 if (orbit.periapsis.altitude >= OrbitTargetOrbit*0.99 and orbit.apoapsis.altitude >= OrbitTargetOrbit*0.99 and 
                             orbit.periapsis.altitude < orbit.apoapsis.altitude and orbit.periapsis.altitude*1.05 >= orbit.apoapsis.altitude) and 
                             mabs(OrbitTargetOrbit - coreAltitude) < 1000 then
@@ -1584,6 +1586,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     orbitAligned = true
                 end
             else
+
                 if orbitalParams.VectorToTarget then
                     AlignToWorldVector(targetVec:normalize():project_on_plane(worldVertical))
                 elseif velMag > 150 then
@@ -1615,8 +1618,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         return
                     end
                 end
-                if orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.eccentricity < 1 and coreAltitude > OrbitTargetOrbit*0.9 and coreAltitude < OrbitTargetOrbit*1.4 then
-                    if orbit.apoapsis ~= nil then
+                if orbitalRecover or (orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.eccentricity < 1 and coreAltitude > OrbitTargetOrbit*0.9 and coreAltitude < OrbitTargetOrbit*1.4) then
+                    if orbit.apoapsis ~= nil or orbitalRecover then
                         if (orbitCheck() or OrbitAchieved) and not MaintainOrbit then -- This should get us a stable orbit within 10% with the way we do it
                             if OrbitAchieved then
                                 BrakeIsOn = false
@@ -1634,7 +1637,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                                     OrbitAchieved = true
                                 end
                             end
-                            
                         else
                             if orbitCheck() then 
                                 orbitMsg = "Maintaining " 
@@ -1652,9 +1654,9 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                                 -- 20's are kinda arbitrary but I've tested lots of others and these are consistent
                                 -- The 2000's also.  
                                 -- Also the smoothstep might not be entirely necessary alongside the cubing but, I'm sure it helps...
-                                -- Well many of the numbers changed, including the cubing but.  This looks amazing.  
+                                -- Well many of the numbers changed, including the cubing but.  This looks amazing.
                                 VSpdPID:inject(altDiff-vSpd*uclamp((utils.smoothstep(2000-altDiff,-2000,2000))^6*10,1,10)) 
-                                orbitPitch = uclamp(VSpdPID:get(),-60,60) -- Prevent it from pitching so much that cruise starts braking
+                                orbitPitch = uclamp(VSpdPID:get(),-75,75) -- Prevent it from pitching so much that cruise starts braking
                             end
                             orbitMsg = orbitMsg .." - OrbitHeight: "..orbitHeightString
                         end
