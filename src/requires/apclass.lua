@@ -359,6 +359,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         orbitPitch = nil
         orbitRoll = nil
         OrbitTicks = 0
+        orbitalRecover = false
         if not inAtmo then
             if IntoOrbit then
                 play("orOff", "AP")
@@ -1016,7 +1017,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
     end
 
 
-
+        local targetSpeedPID2 = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
+        
     -- Local functions and static variables for onFlush
         local function composeAxisAccelerationFromTargetSpeedV(commandAxis, targetSpeed)
 
@@ -1047,9 +1049,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         
             local targetAxisSpeedMS = targetSpeed * constants.kph2m
         
-            if targetSpeedPID2 == nil then -- CHanged first param from 1 to 10...
-                targetSpeedPID2 = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
-            end
+
         
             targetSpeedPID2:inject(targetAxisSpeedMS - currentAxisSpeedMS) -- update PID
         
@@ -1063,6 +1063,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         
             return finalAcceleration
         end
+        local targetSpeedPID = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
 
         local function composeAxisAccelerationFromTargetSpeed(commandAxis, targetSpeed)
 
@@ -1092,9 +1093,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         
             local targetAxisSpeedMS = targetSpeed * constants.kph2m
         
-            if targetSpeedPID == nil then -- CHanged first param from 1 to 10...
-                targetSpeedPID = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
-            end
+
         
             targetSpeedPID:inject(targetAxisSpeedMS - currentAxisSpeedMS) -- update PID
         
@@ -1158,6 +1157,18 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         local MousePitchFactor = 1 -- Mouse control only
         local MouseYawFactor = 1 -- Mouse control only
         local spaceBrake = false
+        local VSpdPID = pid.new(0.1, 0, 1 * 0.1)
+        local OrbitPitchPID = pid.new(1 * 0.01, 0, 5 * 0.1)
+        local rollPID = pid.new(autoRollFactor * 0.01, 0, autoRollFactor * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
+        local vTpitchPID = pid.new(2 * 0.01, 0, 2 * 0.1)
+        local OrbitPitchPID = pid.new(1 * 0.01, 0, 5 * 0.1)
+        local apPitchPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
+        local apYawPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
+        local pitchPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
+        local yawPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
+        local throttlePID = pid.new(0.1, 0, 1) 
+        local brakePID = pid.new(1 * 0.01, 0, 1 * 0.1)
+
     function ap.onFlush()
         if antigrav and not ExternalAGG and not antigravOn and antigrav.getBaseAltitude() ~= AntigravTargetAltitude then
                 sba = AntigravTargetAltitude
@@ -1225,15 +1236,11 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 (inAtmo and currentRollDelta < autoRollRollThreshold and autoRollPreference))  
                 and finalRollInput == 0 and mabs(adjustedPitch) < 85 then
                 local targetRollDeg = targetRoll
-                local rollFactor = autoRollFactor
                 if not inAtmo then
-                    rollFactor = rollFactor/4 -- Better or worse, you think?
                     targetRoll = 0 -- Always roll to 0 out of atmo
                     targetRollDeg = 0
                 end
-                if (rollPID == nil) then
-                    rollPID = pid.new(rollFactor * 0.01, 0, rollFactor * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
-                end
+
                 rollPID:inject(targetRollDeg - adjustedRoll)
                 local autoRollInput = rollPID:get()
                 targetAngularVelocity = targetAngularVelocity + autoRollInput * constructForward
@@ -1259,6 +1266,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             if navCom.targetGroundAltitudeActivated then 
                 navCom:deactivateGroundEngineAltitudeStabilization()
             end
+            navCom:updateCommandFromActionStart(axisCommandId.vertical, -1)
         end        
 
         if RADAR then
@@ -1502,9 +1510,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 end
             end
             if VtPitch ~= nil then
-                if (vTpitchPID == nil) then
-                    vTpitchPID = pid.new(2 * 0.01, 0, 2 * 0.1)
-                end
                 local vTpitchDiff = uclamp(VtPitch-adjustedPitch, -PitchStallAngle*0.80, PitchStallAngle*0.80)
                 vTpitchPID:inject(vTpitchDiff)
                 local vTPitchInput = uclamp(vTpitchPID:get(),-1,1)
@@ -1514,6 +1519,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
 
         if IntoOrbit then
             local function orbitCheck()
+                if not orbit.apoapsis or not orbit.periapsis then return false end
                 if (orbit.periapsis.altitude >= OrbitTargetOrbit*0.99 and orbit.apoapsis.altitude >= OrbitTargetOrbit*0.99 and 
                             orbit.periapsis.altitude < orbit.apoapsis.altitude and orbit.periapsis.altitude*1.05 >= orbit.apoapsis.altitude) and 
                             mabs(OrbitTargetOrbit - coreAltitude) < 1000 then
@@ -1524,7 +1530,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
             local targetVec
             local yawAligned = false
-            local orbitHeightString = getDistanceDisplayString(OrbitTargetOrbit,3)
+            local orbitHeightString = getDistanceDisplayString(OrbitTargetOrbit,4)
 
             if OrbitTargetPlanet == nil then
                 OrbitTargetPlanet = planet
@@ -1544,6 +1550,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 targetVec = CustomTarget.position - worldPos
             end
             local escapeVel, endSpeed = Kep(OrbitTargetPlanet):escapeAndOrbitalSpeed((worldPos -OrbitTargetPlanet.center):len()-OrbitTargetPlanet.radius)
+            endSpeed = endSpeed*3.6+1 + ((MaintainOrbit and FastOrbit*(endSpeed*3.6)) or 0)
             local orbitalRoll = adjustedRoll
             -- Getting as close to orbit distance as comfortably possible
             if not orbitAligned then
@@ -1579,6 +1586,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     orbitAligned = true
                 end
             else
+
                 if orbitalParams.VectorToTarget then
                     AlignToWorldVector(targetVec:normalize():project_on_plane(worldVertical))
                 elseif velMag > 150 then
@@ -1610,8 +1618,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         return
                     end
                 end
-                if orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.eccentricity < 1 and coreAltitude > OrbitTargetOrbit*0.9 and coreAltitude < OrbitTargetOrbit*1.4 then
-                    if orbit.apoapsis ~= nil then
+                if orbitalRecover or (orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.eccentricity < 1 and coreAltitude > OrbitTargetOrbit*0.9 and coreAltitude < OrbitTargetOrbit*1.4) then
+                    if orbit.apoapsis ~= nil or orbitalRecover then
                         if (orbitCheck() or OrbitAchieved) and not MaintainOrbit then -- This should get us a stable orbit within 10% with the way we do it
                             if OrbitAchieved then
                                 BrakeIsOn = false
@@ -1629,7 +1637,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                                     OrbitAchieved = true
                                 end
                             end
-                            
                         else
                             if orbitCheck() then 
                                 orbitMsg = "Maintaining " 
@@ -1637,23 +1644,19 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                                 orbitMsg = "Adjusting " 
                                 orbitalRecover = true
                                 -- Just set cruise to endspeed...
-                                cmdC = endSpeed*3.6+1
+                                cmdC = endSpeed
                                 -- And set pitch to something that scales with vSpd
                                 -- Well, a pid is made for this stuff
                                 local altDiff = OrbitTargetOrbit - coreAltitude
     
-                                if (VSpdPID == nil) then
-                                    VSpdPID = pid.new(0.1, 0, 1 * 0.1)
-                                end
+
                                 -- Scale vspd up to cubed as altDiff approaches 0, starting at 2km
                                 -- 20's are kinda arbitrary but I've tested lots of others and these are consistent
                                 -- The 2000's also.  
                                 -- Also the smoothstep might not be entirely necessary alongside the cubing but, I'm sure it helps...
-                                -- Well many of the numbers changed, including the cubing but.  This looks amazing.  
+                                -- Well many of the numbers changed, including the cubing but.  This looks amazing.
                                 VSpdPID:inject(altDiff-vSpd*uclamp((utils.smoothstep(2000-altDiff,-2000,2000))^6*10,1,10)) 
-                                
-    
-                                orbitPitch = uclamp(VSpdPID:get(),-60,60) -- Prevent it from pitching so much that cruise starts braking
+                                orbitPitch = uclamp(VSpdPID:get(),-75,75) -- Prevent it from pitching so much that cruise starts braking
                             end
                             orbitMsg = orbitMsg .." - OrbitHeight: "..orbitHeightString
                         end
@@ -1690,9 +1693,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 end
             end
             if orbitPitch ~= nil then
-                if (OrbitPitchPID == nil) then
-                    OrbitPitchPID = pid.new(1 * 0.01, 0, 5 * 0.1)
-                end
                 local orbitPitchDiff = orbitPitch - adjustedPitch
                 OrbitPitchPID:inject(orbitPitchDiff)
                 local orbitPitchInput = uclamp(OrbitPitchPID:get(),-0.5,0.5)
@@ -1858,17 +1858,12 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 local currentYaw = -math.deg(signedRotationAngle(constructUp, constructForward, constructVelocity:normalize()))
                 local currentPitch = -math.deg(signedRotationAngle(constructRight, constructForward, constructVelocity:normalize()))
 
-                if (apPitchPID == nil) then
-                    apPitchPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
-                end
                 apPitchPID:inject(targetPitch - currentPitch)
                 local autoPitchInput = uclamp(apPitchPID:get(),-1,1)
 
                 pitchInput2 = pitchInput2 + autoPitchInput
 
-                if (apYawPID == nil) then -- Changed from 2 to 8 to tighten it up around the target
-                    apYawPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
-                end
+
                 --yawPID:inject(yawDiff) -- Aim for 85% stall angle, not full
                 apYawPID:inject(targetYaw - currentYaw)
                 local autoYawInput = uclamp(apYawPID:get(),-1,1) -- Keep it reasonable so player can override
@@ -2193,9 +2188,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local autoPitchThreshold = 0
             -- Copied from autoroll let's hope this is how a PID works... 
             if mabs(targetPitch - adjustedPitch) > autoPitchThreshold then
-                if (pitchPID == nil) then
-                    pitchPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
-                end
+
                 pitchPID:inject(targetPitch - adjustedPitch)
                 local autoPitchInput = pitchPID:get()
 
@@ -2402,9 +2395,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 end
 
                 if not stalling and velMag > minRollVelocity and inAtmo then
-                    if (yawPID == nil) then
-                        yawPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
-                    end
+
                     yawPID:inject(yawDiff)
                     local autoYawInput = uclamp(yawPID:get(),-1,1) -- Keep it reasonable so player can override
                     yawInput2 = yawInput2 + autoYawInput
@@ -2534,7 +2525,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         navCom:setTargetGroundAltitude(500)
                         navCom:activateGroundEngineAltitudeStabilization(500)
                     end
-                    stablized = true
+                    --stablized = true
                     if not inAtmo then spaceBrake = true end
                     initBL = true
                 end
@@ -2650,7 +2641,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                                 eLL = true
                                 navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                             end
-                            if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading and groundDistance-3 < LandingGearGroundHeight then -- Or if they start going back up
+                            if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading and groundDistance-3 < LandingGearGroundHeight and 
+                                (stablized or velMag == 0) then -- Or if they start going back up
                                 BrakeLanding = false
                                 AltitudeHold = false
                                 upAmount = 0
@@ -2750,9 +2742,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 pitchDiff = uclamp(targetPitch-pitchToUse, -MaxPitch, MaxPitch) -- I guess
             end
             if (((mabs(adjustedRoll) < 5 or VectorToTarget or ReversalIsOn)) or BrakeLanding or onGround or AltitudeHold) then
-                if (pitchPID == nil) then -- Changed from 8 to 5 to help reduce problems?
-                    pitchPID = pid.new(5 * 0.01, 0, 5 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
-                end
+
                 pitchPID:inject(pitchDiff)
                 local autoPitchInput = pitchPID:get()
                 pitchInput2 = pitchInput2 + autoPitchInput
@@ -2789,21 +2779,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
 
 
 
-            if (throttlePID == nil) then
-                throttlePID = pid.new(0.1, 0, 1) -- First param, higher means less range in which to PID to a proper value
-                -- IE 1 there means it tries to get within 1m/s of target, 0.5 there means it tries to get within 5m/s of target
-                -- The smaller the value, the further the end-speed is from the target, but also the sooner it starts reducing throttle
-                -- It is also the same as taking the result * (firstParam), it's a direct scalar
 
-                -- Second value makes it change constantly over time.  This doesn't work in this case, it just builds up forever while they're not at max
-
-                -- And third value affects how hard it tries to fix it.  Higher values mean it will very quickly go to negative values as you approach target
-                -- Lower values means it steps down slower
-
-                -- 0.5, 0, 20 works pretty great
-                -- And I think it was, 0.5, 0, 0.001 is smooth, but gets some braking early
-                -- 0.5, 0, 1 is v good.  One early braking bit then stabilizes easily .  10 as the last is way too much, it's bouncy.  Even 2.  1 will do
-            end
             -- Add in vertical speed as well as the front speed, to help with ships that have very bad brakes
             local addThrust = 0
             if ExtraEscapeThrust > 0 and not Reentry and atmosDensity > 0.005 and atmosDensity < 0.1 and vSpd > -50 then
@@ -2824,11 +2800,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 end
             end
 
-            
-            -- Then additionally
-            if (brakePID == nil) then
-                brakePID = pid.new(1 * 0.01, 0, 1 * 0.1)
-            end
             brakePID:inject(constructVelocity:len() - (adjustedAtmoSpeedLimit/3.6) - addThrust) 
             local calculatedBrake = uclamp(brakePID:get(),0,1)
             if (inAtmo and vSpd < -80) or (atmosDensity > 0.005 or Reentry or finalLand) then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
@@ -2910,9 +2881,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local targetSpeed = u.getAxisCommandValue(0)
 
             if not throttleMode then -- Use a PID to brake past targetSpeed
-                if (brakePID == nil) then
-                    brakePID = pid.new(1 * 0.01, 0, 1 * 0.1)
-                end
                 brakePID:inject(constructVelocity:len() - (targetSpeed/3.6)) 
                 local calculatedBrake = uclamp(brakePID:get(),0,1)
                 finalBrakeInput = uclamp(finalBrakeInput + calculatedBrake,0,1)

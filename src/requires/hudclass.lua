@@ -1828,8 +1828,8 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             end
             local buttonHeight = 50
             local buttonWidth = 340 -- Defaults
-            local x = 500
-            local y = ResolutionY / 2 - 400
+            local x = ResolutionX / 2 - 530
+            local y = ResolutionY / 2 - 330 + buttonHeight/2
             local cnt = 0
             for k, v in pairs(saveableVariables("boolean")) do
                 if type(v.get()) == "boolean" then
@@ -1840,9 +1840,13 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     y = y + buttonHeight + 20
                     if cnt == 9 then 
                         x = x + buttonWidth + 20 
-                        y = ResolutionY / 2 - 400
+                        y = ResolutionY / 2 - 400 + buttonHeight/2
                         cnt = 0
                     else
+                        if x > ResolutionX/2 - buttonWidth and x < ResolutionX/2 + buttonWidth/2 and y > ResolutionY /2 - buttonHeight and y < ResolutionY/2 + buttonHeight then
+                            y = y + buttonHeight + 20
+                            cnt = cnt + 1
+                        end
                         cnt = cnt + 1
                     end
                 end

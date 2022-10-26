@@ -1,5 +1,23 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.015 - I HATE YOU ALL
+- Added "Fast Orbit" support.  Usage: USE AT OWN RISK. THIS WILL PROBABLY RESULT IN YOUR SHIPS DESTRUCTION.  YOU WERE WARNED.
+    If `MaintainOrbit` is true, and `FastOrbit` is set to > 0.0, then Orbit speed will be equal to 
+    OrbitSpeed + FastOrbit*OrbitSpeed.  So a value of 0.5 for `FastOrbit` will make you attempt to 
+    "Orbit" at 1.5x normal orbit speed.   Recommend SLOWLY raising FastOrbit based on what your ships
+    Adjustors can handle to avoid getting shot into space, or into atmo at 10k k/hr.  Ship will fly higher than
+    desired orbit when going faster than default orbit speed, but will try to maintain height.
+- New User Variable, `FastOrbit` (Default: 0.0) If > 0, and MaintainOrbit is true, ship will add OrbitVelocity * FastOrbit to OrbitVelocity and use engines to maintain. 
+- Improved water performance.  
+    In coupled mode (ground stabilization on), hitting G will slowly brakeland down to bottom of body of water.  Hitting G on bottom will take you up to hover
+    height above water.  
+    In decoupled mode (alt-8), hitting G on bottom will start to take you up to hover height above water.  Tapping C will stop you at current level. 
+    You can then travel at this level or hover at it.  Hitting G will slowly land you like coupled mode.
+- Fix: Fix issue with hovers/vBoosters staying on when AboveGroundLevel-3m is < LandingGearGroundHeight (i.e. they turn off if you are within 3m of LandingGearGroundHeight.)
+- Fix: Prevent any true/false button appearing under cursor when LMB to show settings (so dont accidentally click)
+** Reminder, LandingGearGroundHeight should be set to Above Ground Level when on ground, even if you dont have landing gear.
+** Reminder, the HUD is meant to be used with AutoSpeedLimit on, some AP features may not work correctly if it is off.
+
 Version 2.014 - Fix GFN version
 - Fix error with GFN version.  0.014 and 2.014 are the current
 
