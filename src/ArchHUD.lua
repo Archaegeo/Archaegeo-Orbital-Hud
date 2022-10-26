@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.014
+VERSION_NUMBER = 0.015
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -152,13 +152,14 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     ExtraLateralTags = "none" -- (Default: "none") Enter any extra lateral tags you use inside '' seperated by space, i.e. "left right" These will be added to the engines that are control by lateral.
     ExtraVerticalTags = "none" -- (Default: "none") Enter any extra longitudinal tags you use inside '' seperated by space, i.e. "up down" These will be added to the engines that are control by vertical.
     allowedHorizontalDrift = 0.05 -- (Default: 0.05) Allowed horizontal drift rate, in m/s, during brakelanding with Alignment or Drift prevention active.
+    FastOrbit = 0.0 -- (Default: 0.0) If > 0, and MaintainOrbit is true, ship will add OrbitVelocity * FastOrbit to OrbitVelocity and use engines to maintain. USE AT OWN RISK.
 
     savableVariablesPhysics = {speedChangeLarge={set=function (i)speedChangeLarge=i end,get=function() return speedChangeLarge end}, speedChangeSmall={set=function (i)speedChangeSmall=i end,get=function() return speedChangeSmall end}, MouseXSensitivity={set=function (i)MouseXSensitivity=i end,get=function() return MouseXSensitivity end}, MouseYSensitivity={set=function (i)MouseYSensitivity=i end,get=function() return MouseYSensitivity end}, autoRollFactor={set=function (i)autoRollFactor=i end,get=function() return autoRollFactor end},
     rollSpeedFactor={set=function (i)rollSpeedFactor=i end,get=function() return rollSpeedFactor end}, autoRollRollThreshold={set=function (i)autoRollRollThreshold=i end,get=function() return autoRollRollThreshold end}, minRollVelocity={set=function (i)minRollVelocity=i end,get=function() return minRollVelocity end}, TrajectoryAlignmentStrength={set=function (i)TrajectoryAlignmentStrength=i end,get=function() return TrajectoryAlignmentStrength end},
     torqueFactor={set=function (i)torqueFactor=i end,get=function() return torqueFactor end}, pitchSpeedFactor={set=function (i)pitchSpeedFactor=i end,get=function() return pitchSpeedFactor end}, yawSpeedFactor={set=function (i)yawSpeedFactor=i end,get=function() return yawSpeedFactor end}, brakeSpeedFactor={set=function (i)brakeSpeedFactor=i end,get=function() return brakeSpeedFactor end}, brakeFlatFactor={set=function (i)brakeFlatFactor=i end,get=function() return brakeFlatFactor end}, DampingMultiplier={set=function (i)DampingMultiplier=i end,get=function() return DampingMultiplier end}, 
     hudTickRate={set=function (i)hudTickRate=i end,get=function() return hudTickRate end}, ExtraEscapeThrust={set=function (i)ExtraEscapeThrust=i end,get=function() return ExtraEscapeThrust end}, 
     ExtraLongitudeTags={set=function (i)ExtraLongitudeTags=i end,get=function() return ExtraLongitudeTags end}, ExtraLateralTags={set=function (i)ExtraLateralTags=i end,get=function() return ExtraLateralTags end},
-    ExtraVerticalTags={set=function (i)ExtraVerticalTags=i end,get=function() return ExtraVerticalTags end}, allowedHorizontalDrift={set=function (i)allowedHorizontalDrift=i end,get=function() return allowedHorizontalDrift end} }
+    ExtraVerticalTags={set=function (i)ExtraVerticalTags=i end,get=function() return ExtraVerticalTags end}, allowedHorizontalDrift={set=function (i)allowedHorizontalDrift=i end,get=function() return allowedHorizontalDrift end}, FastOrbit={set=function (i)FastOrbit=i end,get=function() return FastOrbit end} }
 
 
 -- Auto Variable declarations that store status of ship on databank. Do not edit directly here unless you know what you are doing, these change as ship flies.
@@ -3570,8 +3571,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
                 local buttonHeight = 50
                 local buttonWidth = 340 -- Defaults
-                local x = 500
-                local y = ResolutionY / 2 - 400
+                local x = ResolutionX / 2 - 530
+                local y = ResolutionY / 2 - 330 + buttonHeight/2
                 local cnt = 0
                 for k, v in pairs(saveableVariables("boolean")) do
                     if type(v.get()) == "boolean" then
@@ -3582,9 +3583,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         y = y + buttonHeight + 20
                         if cnt == 9 then 
                             x = x + buttonWidth + 20 
-                            y = ResolutionY / 2 - 400
+                            y = ResolutionY / 2 - 400 + buttonHeight/2
                             cnt = 0
                         else
+                            if x > ResolutionX/2 - buttonWidth and x < ResolutionX/2 + buttonWidth/2 and y > ResolutionY /2 - buttonHeight and y < ResolutionY/2 + buttonHeight then
+                                y = y + buttonHeight + 20
+                                cnt = cnt + 1
+                            end
                             cnt = cnt + 1
                         end
                     end
@@ -5226,6 +5231,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             orbitPitch = nil
             orbitRoll = nil
             OrbitTicks = 0
+            orbitalRecover = false
             if not inAtmo then
                 if IntoOrbit then
                     play("orOff", "AP")
@@ -5883,7 +5889,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         end
     
     
-    
+            local targetSpeedPID2 = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
+            
         -- Local functions and static variables for onFlush
             local function composeAxisAccelerationFromTargetSpeedV(commandAxis, targetSpeed)
     
@@ -5914,9 +5921,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             
                 local targetAxisSpeedMS = targetSpeed * constants.kph2m
             
-                if targetSpeedPID2 == nil then -- CHanged first param from 1 to 10...
-                    targetSpeedPID2 = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
-                end
+    
             
                 targetSpeedPID2:inject(targetAxisSpeedMS - currentAxisSpeedMS) -- update PID
             
@@ -5930,6 +5935,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             
                 return finalAcceleration
             end
+            local targetSpeedPID = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
     
             local function composeAxisAccelerationFromTargetSpeed(commandAxis, targetSpeed)
     
@@ -5959,9 +5965,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             
                 local targetAxisSpeedMS = targetSpeed * constants.kph2m
             
-                if targetSpeedPID == nil then -- CHanged first param from 1 to 10...
-                    targetSpeedPID = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
-                end
+    
             
                 targetSpeedPID:inject(targetAxisSpeedMS - currentAxisSpeedMS) -- update PID
             
@@ -6025,6 +6029,18 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local MousePitchFactor = 1 -- Mouse control only
             local MouseYawFactor = 1 -- Mouse control only
             local spaceBrake = false
+            local VSpdPID = pid.new(0.1, 0, 1 * 0.1)
+            local OrbitPitchPID = pid.new(1 * 0.01, 0, 5 * 0.1)
+            local rollPID = pid.new(autoRollFactor * 0.01, 0, autoRollFactor * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
+            local vTpitchPID = pid.new(2 * 0.01, 0, 2 * 0.1)
+            local OrbitPitchPID = pid.new(1 * 0.01, 0, 5 * 0.1)
+            local apPitchPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
+            local apYawPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
+            local pitchPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
+            local yawPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
+            local throttlePID = pid.new(0.1, 0, 1) 
+            local brakePID = pid.new(1 * 0.01, 0, 1 * 0.1)
+    
         function ap.onFlush()
             if antigrav and not ExternalAGG and not antigravOn and antigrav.getBaseAltitude() ~= AntigravTargetAltitude then
                     sba = AntigravTargetAltitude
@@ -6092,15 +6108,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     (inAtmo and currentRollDelta < autoRollRollThreshold and autoRollPreference))  
                     and finalRollInput == 0 and mabs(adjustedPitch) < 85 then
                     local targetRollDeg = targetRoll
-                    local rollFactor = autoRollFactor
                     if not inAtmo then
-                        rollFactor = rollFactor/4 -- Better or worse, you think?
                         targetRoll = 0 -- Always roll to 0 out of atmo
                         targetRollDeg = 0
                     end
-                    if (rollPID == nil) then
-                        rollPID = pid.new(rollFactor * 0.01, 0, rollFactor * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
-                    end
+    
                     rollPID:inject(targetRollDeg - adjustedRoll)
                     local autoRollInput = rollPID:get()
                     targetAngularVelocity = targetAngularVelocity + autoRollInput * constructForward
@@ -6126,6 +6138,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 if navCom.targetGroundAltitudeActivated then 
                     navCom:deactivateGroundEngineAltitudeStabilization()
                 end
+                navCom:updateCommandFromActionStart(axisCommandId.vertical, -1)
             end        
     
             if RADAR then
@@ -6369,9 +6382,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 end
                 if VtPitch ~= nil then
-                    if (vTpitchPID == nil) then
-                        vTpitchPID = pid.new(2 * 0.01, 0, 2 * 0.1)
-                    end
                     local vTpitchDiff = uclamp(VtPitch-adjustedPitch, -PitchStallAngle*0.80, PitchStallAngle*0.80)
                     vTpitchPID:inject(vTpitchDiff)
                     local vTPitchInput = uclamp(vTpitchPID:get(),-1,1)
@@ -6381,6 +6391,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
             if IntoOrbit then
                 local function orbitCheck()
+                    if not orbit.apoapsis or not orbit.periapsis then return false end
                     if (orbit.periapsis.altitude >= OrbitTargetOrbit*0.99 and orbit.apoapsis.altitude >= OrbitTargetOrbit*0.99 and 
                                 orbit.periapsis.altitude < orbit.apoapsis.altitude and orbit.periapsis.altitude*1.05 >= orbit.apoapsis.altitude) and 
                                 mabs(OrbitTargetOrbit - coreAltitude) < 1000 then
@@ -6391,7 +6402,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
                 local targetVec
                 local yawAligned = false
-                local orbitHeightString = getDistanceDisplayString(OrbitTargetOrbit,3)
+                local orbitHeightString = getDistanceDisplayString(OrbitTargetOrbit,4)
     
                 if OrbitTargetPlanet == nil then
                     OrbitTargetPlanet = planet
@@ -6411,6 +6422,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     targetVec = CustomTarget.position - worldPos
                 end
                 local escapeVel, endSpeed = Kep(OrbitTargetPlanet):escapeAndOrbitalSpeed((worldPos -OrbitTargetPlanet.center):len()-OrbitTargetPlanet.radius)
+                endSpeed = endSpeed*3.6+1 + ((MaintainOrbit and FastOrbit*(endSpeed*3.6)) or 0)
                 local orbitalRoll = adjustedRoll
                 -- Getting as close to orbit distance as comfortably possible
                 if not orbitAligned then
@@ -6446,6 +6458,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         orbitAligned = true
                     end
                 else
+    
                     if orbitalParams.VectorToTarget then
                         AlignToWorldVector(targetVec:normalize():project_on_plane(worldVertical))
                     elseif velMag > 150 then
@@ -6477,8 +6490,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             return
                         end
                     end
-                    if orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.eccentricity < 1 and coreAltitude > OrbitTargetOrbit*0.9 and coreAltitude < OrbitTargetOrbit*1.4 then
-                        if orbit.apoapsis ~= nil then
+                    if orbitalRecover or (orbit.periapsis ~= nil and orbit.apoapsis ~= nil and orbit.eccentricity < 1 and coreAltitude > OrbitTargetOrbit*0.9 and coreAltitude < OrbitTargetOrbit*1.4) then
+                        if orbit.apoapsis ~= nil or orbitalRecover then
                             if (orbitCheck() or OrbitAchieved) and not MaintainOrbit then -- This should get us a stable orbit within 10% with the way we do it
                                 if OrbitAchieved then
                                     BrakeIsOn = false
@@ -6496,7 +6509,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                         OrbitAchieved = true
                                     end
                                 end
-                                
                             else
                                 if orbitCheck() then 
                                     orbitMsg = "Maintaining " 
@@ -6504,23 +6516,19 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                     orbitMsg = "Adjusting " 
                                     orbitalRecover = true
                                     -- Just set cruise to endspeed...
-                                    cmdC = endSpeed*3.6+1
+                                    cmdC = endSpeed
                                     -- And set pitch to something that scales with vSpd
                                     -- Well, a pid is made for this stuff
                                     local altDiff = OrbitTargetOrbit - coreAltitude
         
-                                    if (VSpdPID == nil) then
-                                        VSpdPID = pid.new(0.1, 0, 1 * 0.1)
-                                    end
+    
                                     -- Scale vspd up to cubed as altDiff approaches 0, starting at 2km
                                     -- 20's are kinda arbitrary but I've tested lots of others and these are consistent
                                     -- The 2000's also.  
                                     -- Also the smoothstep might not be entirely necessary alongside the cubing but, I'm sure it helps...
-                                    -- Well many of the numbers changed, including the cubing but.  This looks amazing.  
+                                    -- Well many of the numbers changed, including the cubing but.  This looks amazing.
                                     VSpdPID:inject(altDiff-vSpd*uclamp((utils.smoothstep(2000-altDiff,-2000,2000))^6*10,1,10)) 
-                                    
-        
-                                    orbitPitch = uclamp(VSpdPID:get(),-60,60) -- Prevent it from pitching so much that cruise starts braking
+                                    orbitPitch = uclamp(VSpdPID:get(),-75,75) -- Prevent it from pitching so much that cruise starts braking
                                 end
                                 orbitMsg = orbitMsg .." - OrbitHeight: "..orbitHeightString
                             end
@@ -6557,9 +6565,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 end
                 if orbitPitch ~= nil then
-                    if (OrbitPitchPID == nil) then
-                        OrbitPitchPID = pid.new(1 * 0.01, 0, 5 * 0.1)
-                    end
                     local orbitPitchDiff = orbitPitch - adjustedPitch
                     OrbitPitchPID:inject(orbitPitchDiff)
                     local orbitPitchInput = uclamp(OrbitPitchPID:get(),-0.5,0.5)
@@ -6725,17 +6730,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     local currentYaw = -math.deg(signedRotationAngle(constructUp, constructForward, constructVelocity:normalize()))
                     local currentPitch = -math.deg(signedRotationAngle(constructRight, constructForward, constructVelocity:normalize()))
     
-                    if (apPitchPID == nil) then
-                        apPitchPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
-                    end
                     apPitchPID:inject(targetPitch - currentPitch)
                     local autoPitchInput = uclamp(apPitchPID:get(),-1,1)
     
                     pitchInput2 = pitchInput2 + autoPitchInput
     
-                    if (apYawPID == nil) then -- Changed from 2 to 8 to tighten it up around the target
-                        apYawPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
-                    end
+    
                     --yawPID:inject(yawDiff) -- Aim for 85% stall angle, not full
                     apYawPID:inject(targetYaw - currentYaw)
                     local autoYawInput = uclamp(apYawPID:get(),-1,1) -- Keep it reasonable so player can override
@@ -7060,9 +7060,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local autoPitchThreshold = 0
                 -- Copied from autoroll let's hope this is how a PID works... 
                 if mabs(targetPitch - adjustedPitch) > autoPitchThreshold then
-                    if (pitchPID == nil) then
-                        pitchPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
-                    end
+    
                     pitchPID:inject(targetPitch - adjustedPitch)
                     local autoPitchInput = pitchPID:get()
     
@@ -7269,9 +7267,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
     
                     if not stalling and velMag > minRollVelocity and inAtmo then
-                        if (yawPID == nil) then
-                            yawPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
-                        end
+    
                         yawPID:inject(yawDiff)
                         local autoYawInput = uclamp(yawPID:get(),-1,1) -- Keep it reasonable so player can override
                         yawInput2 = yawInput2 + autoYawInput
@@ -7401,7 +7397,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             navCom:setTargetGroundAltitude(500)
                             navCom:activateGroundEngineAltitudeStabilization(500)
                         end
-                        stablized = true
+                        --stablized = true
                         if not inAtmo then spaceBrake = true end
                         initBL = true
                     end
@@ -7517,7 +7513,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                     eLL = true
                                     navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                                 end
-                                if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading and groundDistance-3 < LandingGearGroundHeight then -- Or if they start going back up
+                                if (velMag < 1 or constructVelocity:normalize():dot(worldVertical) < 0) and not alignHeading and groundDistance-3 < LandingGearGroundHeight and 
+                                    (stablized or velMag == 0) then -- Or if they start going back up
                                     BrakeLanding = false
                                     AltitudeHold = false
                                     upAmount = 0
@@ -7617,9 +7614,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     pitchDiff = uclamp(targetPitch-pitchToUse, -MaxPitch, MaxPitch) -- I guess
                 end
                 if (((mabs(adjustedRoll) < 5 or VectorToTarget or ReversalIsOn)) or BrakeLanding or onGround or AltitudeHold) then
-                    if (pitchPID == nil) then -- Changed from 8 to 5 to help reduce problems?
-                        pitchPID = pid.new(5 * 0.01, 0, 5 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
-                    end
+    
                     pitchPID:inject(pitchDiff)
                     local autoPitchInput = pitchPID:get()
                     pitchInput2 = pitchInput2 + autoPitchInput
@@ -7656,21 +7651,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
     
     
-                if (throttlePID == nil) then
-                    throttlePID = pid.new(0.1, 0, 1) -- First param, higher means less range in which to PID to a proper value
-                    -- IE 1 there means it tries to get within 1m/s of target, 0.5 there means it tries to get within 5m/s of target
-                    -- The smaller the value, the further the end-speed is from the target, but also the sooner it starts reducing throttle
-                    -- It is also the same as taking the result * (firstParam), it's a direct scalar
     
-                    -- Second value makes it change constantly over time.  This doesn't work in this case, it just builds up forever while they're not at max
-    
-                    -- And third value affects how hard it tries to fix it.  Higher values mean it will very quickly go to negative values as you approach target
-                    -- Lower values means it steps down slower
-    
-                    -- 0.5, 0, 20 works pretty great
-                    -- And I think it was, 0.5, 0, 0.001 is smooth, but gets some braking early
-                    -- 0.5, 0, 1 is v good.  One early braking bit then stabilizes easily .  10 as the last is way too much, it's bouncy.  Even 2.  1 will do
-                end
                 -- Add in vertical speed as well as the front speed, to help with ships that have very bad brakes
                 local addThrust = 0
                 if ExtraEscapeThrust > 0 and not Reentry and atmosDensity > 0.005 and atmosDensity < 0.1 and vSpd > -50 then
@@ -7691,11 +7672,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 end
     
-                
-                -- Then additionally
-                if (brakePID == nil) then
-                    brakePID = pid.new(1 * 0.01, 0, 1 * 0.1)
-                end
                 brakePID:inject(constructVelocity:len() - (adjustedAtmoSpeedLimit/3.6) - addThrust) 
                 local calculatedBrake = uclamp(brakePID:get(),0,1)
                 if (inAtmo and vSpd < -80) or (atmosDensity > 0.005 or Reentry or finalLand) then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
@@ -7777,9 +7753,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local targetSpeed = u.getAxisCommandValue(0)
     
                 if not throttleMode then -- Use a PID to brake past targetSpeed
-                    if (brakePID == nil) then
-                        brakePID = pid.new(1 * 0.01, 0, 1 * 0.1)
-                    end
                     brakePID:inject(constructVelocity:len() - (targetSpeed/3.6)) 
                     local calculatedBrake = uclamp(brakePID:get(),0,1)
                     finalBrakeInput = uclamp(finalBrakeInput + calculatedBrake,0,1)
@@ -7968,7 +7941,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             BrakeIsOn = "Landing"
                         end
                     end
-                    if eLL or (abvGndDet ~= -1 and abvGndDet > (LandingGearGroundHeight-3)) then BrakeLanding = true end
+                    if eLL or (abvGndDet ~= -1 and abvGndDet > (LandingGearGroundHeight-3)) or not stablized then BrakeLanding = true end
+                    navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
                     navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                     AltitudeHold = false
                     HoverMode = false
@@ -7989,6 +7963,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     else
                         navCom:setTargetGroundAltitude(TargetHoverHeight)
                     end
+                else
+                    navCom:setTargetGroundAltitude(TargetHoverHeight)
                 end
             end
         end
@@ -9147,9 +9123,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             Nav.control.retractLandingGears()
                         end
                     end
-                    GearExtended = (Nav.control.isAnyLandingGearDeployed() == 1) or (abvGndDet ~=-1 and (abvGndDet - 3) < LandingGearGroundHeight)
+                    GearExtended = (Nav.control.isAnyLandingGearDeployed() == 1) or not stablized or (abvGndDet ~=-1 and (abvGndDet - 3) < LandingGearGroundHeight)
                     -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
-                    if abvGndDet ~= -1 or (not inAtmo and coreVelocity:len() < 30) then
+                    local slow = coreVelocity:len() < 30
+                    if (abvGndDet ~= -1 and stabilzied) or ((not inAtmo or not stabilzied) and slow) then
                         BrakeIsOn = "Startup"
                     else
                         BrakeIsOn = false
