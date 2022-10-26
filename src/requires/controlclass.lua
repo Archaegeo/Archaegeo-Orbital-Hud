@@ -38,7 +38,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                         BrakeIsOn = "Landing"
                     end
                 end
-                if eLL or (abvGndDet ~= -1 and abvGndDet > (LandingGearGroundHeight-3)) then BrakeLanding = true end
+                if eLL or (abvGndDet ~= -1 and abvGndDet > (LandingGearGroundHeight-3)) or not stablized then BrakeLanding = true end
+                navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
                 navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                 AltitudeHold = false
                 HoverMode = false
@@ -59,6 +60,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 else
                     navCom:setTargetGroundAltitude(TargetHoverHeight)
                 end
+            else
+                navCom:setTargetGroundAltitude(TargetHoverHeight)
             end
         end
     end
