@@ -83,7 +83,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
         local function msg(msgt)
             if not msgt then return end
             if msgText ~= "empty" then 
-                if msgText ~= msgt then 
+                if not string.find(msgText, msgt) then 
                     msgText = msgText.."\n"..msgt
                     msgTimer = 7 
                 end

@@ -476,7 +476,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
         end
         local routeOrbit = false
-        HoverMode = false
         if (time - apDoubleClick) < 1.5 and inAtmo then
             if not SpaceEngines then
                 if inAtmo then
@@ -670,7 +669,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
     
     function ap.ToggleAltitudeHold()  -- Toggle Altitude Hold mode on and off
         if (time - ahDoubleClick) < 1.5 then
-            HoverMode = false
             if planet.hasAtmosphere then
                 if inAtmo then
                     HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude
@@ -716,11 +714,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             LockPitch = nil
             OrbitAchieved = false
             if abvGndDet ~= -1 then 
-                if not GearExtended and not VectorToTarget and not spaceLaunch then
-                    HoldAltitude = coreAltitude 
-                    HoverMode = abvGndDet
-                    navCom:setTargetGroundAltitude(HoverMode)
-                elseif velMag < 20 then
+                if velMag < 20 then
                     if GearExtended then CONTROL.landingGear() end
                     play("lfs", "LS")
                     AutoTakeoff = true
@@ -769,7 +763,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             AutoTakeoff = false
             VectorToTarget = false
             ahDoubleClick = 0
-            HoverMode = false
         end
     end
 
@@ -1961,7 +1954,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 --end
 
                 if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
-                    if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
+                    if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone and not isWarping) then
                             if pvpDist < lastPvPDist and pvpDist > 2000 then
                                 AP.ResetAutopilots(1)
                                 msg("Autopilot cancelled to prevent crossing PvP Line" )
@@ -2196,13 +2189,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
         end
         if AltitudeHold or BrakeLanding or Reentry or VectorToTarget or LockPitch ~= nil then 
-            if HoverMode then 
-                if abvGndDet == -1 then 
-                    HoldAltitude = HoldAltitude - 0.2 
-                else
-                    HoldAltitude = coreAltitude + (HoverMode - abvGndDet) 
-                end
-            end
             -- We want current brake value, not max
             local curBrake = LastMaxBrakeInAtmo
             if curBrake then
