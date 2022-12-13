@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.015
+VERSION_NUMBER = 0.016
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -209,7 +209,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     saveRoute = {}
     apRoute = {}
     ecuThrottle = {}
-    HoverMode = false
+
     autoVariables = {VertTakeOff={set=function (i)VertTakeOff=i end,get=function() return VertTakeOff end}, VertTakeOffEngine={set=function (i)VertTakeOffEngine=i end,get=function() return VertTakeOffEngine end},SpaceTarget={set=function (i)SpaceTarget=i end,get=function() return SpaceTarget end},BrakeToggleStatus={set=function (i)BrakeToggleStatus=i end,get=function() return BrakeToggleStatus end}, BrakeIsOn={set=function (i)BrakeIsOn=i end,get=function() return BrakeIsOn end}, RetrogradeIsOn={set=function (i)RetrogradeIsOn=i end,get=function() return RetrogradeIsOn end}, ProgradeIsOn={set=function (i)ProgradeIsOn=i end,get=function() return ProgradeIsOn end},
     Autopilot={set=function (i)Autopilot=i end,get=function() return Autopilot end}, TurnBurn={set=function (i)TurnBurn=i end,get=function() return TurnBurn end}, AltitudeHold={set=function (i)AltitudeHold=i end,get=function() return AltitudeHold end}, BrakeLanding={set=function (i)BrakeLanding=i end,get=function() return BrakeLanding end},
     Reentry={set=function (i)Reentry=i end,get=function() return Reentry end}, AutoTakeoff={set=function (i)AutoTakeoff=i end,get=function() return AutoTakeoff end}, HoldAltitude={set=function (i)HoldAltitude=i end,get=function() return HoldAltitude end}, AutopilotAccelerating={set=function (i)AutopilotAccelerating=i end,get=function() return AutopilotAccelerating end}, AutopilotBraking={set=function (i)AutopilotBraking=i end,get=function() return AutopilotBraking end},
@@ -218,7 +218,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     AutopilotTargetIndex={set=function (i)AutopilotTargetIndex=i end,get=function() return AutopilotTargetIndex end}, TotalDistanceTravelled={set=function (i)TotalDistanceTravelled=i end,get=function() return TotalDistanceTravelled end},
     TotalFlightTime={set=function (i)TotalFlightTime=i end,get=function() return TotalFlightTime end}, SavedLocations={set=function (i)SavedLocations=i end,get=function() return SavedLocations end}, VectorToTarget={set=function (i)VectorToTarget=i end,get=function() return VectorToTarget end}, LocationIndex={set=function (i)LocationIndex=i end,get=function() return LocationIndex end}, LastMaxBrake={set=function (i)LastMaxBrake=i end,get=function() return LastMaxBrake end}, 
     LockPitch={set=function (i)LockPitch=i end,get=function() return LockPitch end}, LastMaxBrakeInAtmo={set=function (i)LastMaxBrakeInAtmo=i end,get=function() return LastMaxBrakeInAtmo end}, AntigravTargetAltitude={set=function (i)AntigravTargetAltitude=i end,get=function() return AntigravTargetAltitude end}, LastStartTime={set=function (i)LastStartTime=i end,get=function() return LastStartTime end}, iphCondition={set=function (i)iphCondition=i end,get=function() return iphCondition end}, stablized={set=function (i)stablized=i end,get=function() return stablized end}, UseExtra={set=function (i)UseExtra=i end,get=function() return UseExtra end}, SelectedTab={set=function (i)SelectedTab=i end,get=function() return SelectedTab end}, saveRoute={set=function (i)saveRoute=i end,get=function() return saveRoute end},
-    apRoute={set=function (i)apRoute=i end,get=function() return apRoute end}, ecuThrottle={set=function (i)ecuThrottle=i end,get=function() return ecuThrottle end}, HoverMode={set=function (i)HoverMode=i end,get=function() return HoverMode end}}
+    apRoute={set=function (i)apRoute=i end,get=function() return apRoute end}, ecuThrottle={set=function (i)ecuThrottle=i end,get=function() return ecuThrottle end}}
 
     local function globalDeclare(c, u, systime, mfloor, atmosphere) -- # is how many classes variable is in
         local s = DUSystem
@@ -3583,7 +3583,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         y = y + buttonHeight + 20
                         if cnt == 9 then 
                             x = x + buttonWidth + 20 
-                            y = ResolutionY / 2 - 400 + buttonHeight/2
+                            y = ResolutionY / 2 - 330 + buttonHeight/2
                             cnt = 0
                         else
                             if x > ResolutionX/2 - buttonWidth and x < ResolutionX/2 + buttonWidth/2 and y > ResolutionY /2 - buttonHeight and y < ResolutionY/2 + buttonHeight then
@@ -4088,7 +4088,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             if CollisionSystem and activeRadar and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
             if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
             if TurnBurn then flightStyle = "TB-"..flightStyle end
-            if HoverMode then flightStyle = "HOVERMODE-"..flightStyle end
             if not stablized then flightStyle = flightStyle.."-DeCoupled" end
     
             local labelY1 = cry(99)
@@ -5348,7 +5347,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
             end
             local routeOrbit = false
-            HoverMode = false
             if (time - apDoubleClick) < 1.5 and inAtmo then
                 if not SpaceEngines then
                     if inAtmo then
@@ -5542,7 +5540,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         
         function ap.ToggleAltitudeHold()  -- Toggle Altitude Hold mode on and off
             if (time - ahDoubleClick) < 1.5 then
-                HoverMode = false
                 if planet.hasAtmosphere then
                     if inAtmo then
                         HoldAltitude = planet.spaceEngineMinAltitude - 0.01*planet.noAtmosphericDensityAltitude
@@ -5588,11 +5585,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 LockPitch = nil
                 OrbitAchieved = false
                 if abvGndDet ~= -1 then 
-                    if not GearExtended and not VectorToTarget and not spaceLaunch then
-                        HoldAltitude = coreAltitude 
-                        HoverMode = abvGndDet
-                        navCom:setTargetGroundAltitude(HoverMode)
-                    elseif velMag < 20 then
+                    if velMag < 20 then
                         if GearExtended then CONTROL.landingGear() end
                         play("lfs", "LS")
                         AutoTakeoff = true
@@ -5641,7 +5634,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 AutoTakeoff = false
                 VectorToTarget = false
                 ahDoubleClick = 0
-                HoverMode = false
             end
         end
     
@@ -6833,7 +6825,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     --end
     
                     if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
-                        if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
+                        if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone and not isWarping) then
                                 if pvpDist < lastPvPDist and pvpDist > 2000 then
                                     AP.ResetAutopilots(1)
                                     msg("Autopilot cancelled to prevent crossing PvP Line" )
@@ -7068,13 +7060,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
             end
             if AltitudeHold or BrakeLanding or Reentry or VectorToTarget or LockPitch ~= nil then 
-                if HoverMode then 
-                    if abvGndDet == -1 then 
-                        HoldAltitude = HoldAltitude - 0.2 
-                    else
-                        HoldAltitude = coreAltitude + (HoverMode - abvGndDet) 
-                    end
-                end
                 -- We want current brake value, not max
                 local curBrake = LastMaxBrakeInAtmo
                 if curBrake then
@@ -7945,7 +7930,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
                     navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                     AltitudeHold = false
-                    HoverMode = false
                 elseif hasGear and not BrakeLanding  then
                     play("grOut","LG",1)
                     Nav.control.deployLandingGears() -- Actually extend
@@ -8010,17 +7994,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         else
                             if holdingShift and inAtmo then
                                 HoldAltitude = nextTargetHeight(HoldAltitude, down)
-                                HoverMode = false 
                             else
                                 HoldAltitude = HoldAltitude + mult*holdAltitudeButtonModifier
-                                if HoverMode then 
-                                    if HoldAltitude > 100 then 
-                                        HoverMode = false 
-                                    else
-                                        navCom:updateTargetGroundAltitudeFromActionStart(mult*1.0)
-                                        HoverMode = Nav:getTargetGroundAltitude()
-                                    end
-                                end
                             end
                         end
                     else
@@ -8752,7 +8727,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local function msg(msgt)
                 if not msgt then return end
                 if msgText ~= "empty" then 
-                    if msgText ~= msgt then 
+                    if not string.find(msgText, msgt) then 
                         msgText = msgText.."\n"..msgt
                         msgTimer = 7 
                     end
@@ -9174,7 +9149,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                 }
                     end
     
-                    local altTable = { [1]=6637, [2]=3426, [26]=4242, [27]=4150, [3]=21452, [8]=3434, [9]=5916 } -- Measured min space engine altitudes for Madis, Alioth, Sanctuary, Haven, Thades, Teoma, Jago
+                    local altTable = { [1]=6637, [2]=3426, [4]=7580, [26]=4242, [27]=4150, [3]=21452, [8]=3434, [9]=5916 } -- Measured min space engine altitudes for Madis, Alioth, Talemai, Sanctuary, Haven, Thades, Teoma, Jago
                     for galaxyId,galaxy in pairs(atlas) do
                         -- Create a copy of Space with the appropriate SystemId for each galaxy
                         atlas[galaxyId][0] = getSpaceEntry()
@@ -9280,7 +9255,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 C.setDockingMode(DockingMode)
                 if shield then u.setTimer("shieldTick", 0.0166667) end
                 if userBase then PROGRAM.ExtraOnStart() end
-                play("start","SU")
+    
                 local function ecuResume()
                     if ecuThrottle[1] == 0 then
                         AP.cmdThrottle(ecuThrottle[2])
@@ -9319,6 +9294,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 dockmsg = #passengers>1 and "Passengers: "..(#passengers-1).." " or ""
                 dockmsg = dockmsg..(#ships>0 and "Ships: "..#ships or "")
                 if dockmsg ~= "" then msg("NOTICE: Docked "..dockmsg) end
+                play("start","SU")
             end)
             coroutine.resume(beginSetup)
         end
