@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 2.016 
+- Added Talemai minimum space engine altitude (affects low orbit, 11% altitude, and other factors)
 - Removed HoverMode - It was gimmicky and poorly implemented (by me) (This was an attempt to make ship act like a hover vehicle)
 - Fix: Prevent duplicate msg spam, again, I think.
 

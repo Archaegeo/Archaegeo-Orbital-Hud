@@ -505,7 +505,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                             }
                 end
 
-                local altTable = { [1]=6637, [2]=3426, [26]=4242, [27]=4150, [3]=21452, [8]=3434, [9]=5916 } -- Measured min space engine altitudes for Madis, Alioth, Sanctuary, Haven, Thades, Teoma, Jago
+                local altTable = { [1]=6637, [2]=3426, [4]=7580, [26]=4242, [27]=4150, [3]=21452, [8]=3434, [9]=5916 } -- Measured min space engine altitudes for Madis, Alioth, Talemai, Sanctuary, Haven, Thades, Teoma, Jago
                 for galaxyId,galaxy in pairs(atlas) do
                     -- Create a copy of Space with the appropriate SystemId for each galaxy
                     atlas[galaxyId][0] = getSpaceEntry()
@@ -611,7 +611,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             C.setDockingMode(DockingMode)
             if shield then u.setTimer("shieldTick", 0.0166667) end
             if userBase then PROGRAM.ExtraOnStart() end
-            play("start","SU")
+
             local function ecuResume()
                 if ecuThrottle[1] == 0 then
                     AP.cmdThrottle(ecuThrottle[2])
@@ -650,6 +650,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             dockmsg = #passengers>1 and "Passengers: "..(#passengers-1).." " or ""
             dockmsg = dockmsg..(#ships>0 and "Ships: "..#ships or "")
             if dockmsg ~= "" then msg("NOTICE: Docked "..dockmsg) end
+            play("start","SU")
         end)
         coroutine.resume(beginSetup)
     end
