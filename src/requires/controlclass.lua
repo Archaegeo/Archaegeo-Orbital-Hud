@@ -42,7 +42,6 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 navCom:activateGroundEngineAltitudeStabilization(currentGroundAltitudeStabilization)
                 navCom:setTargetGroundAltitude(LandingGearGroundHeight)
                 AltitudeHold = false
-                HoverMode = false
             elseif hasGear and not BrakeLanding  then
                 play("grOut","LG",1)
                 Nav.control.deployLandingGears() -- Actually extend
@@ -107,17 +106,8 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     else
                         if holdingShift and inAtmo then
                             HoldAltitude = nextTargetHeight(HoldAltitude, down)
-                            HoverMode = false 
                         else
                             HoldAltitude = HoldAltitude + mult*holdAltitudeButtonModifier
-                            if HoverMode then 
-                                if HoldAltitude > 100 then 
-                                    HoverMode = false 
-                                else
-                                    navCom:updateTargetGroundAltitudeFromActionStart(mult*1.0)
-                                    HoverMode = Nav:getTargetGroundAltitude()
-                                end
-                            end
                         end
                     end
                 else

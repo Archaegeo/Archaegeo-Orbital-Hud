@@ -1840,7 +1840,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     y = y + buttonHeight + 20
                     if cnt == 9 then 
                         x = x + buttonWidth + 20 
-                        y = ResolutionY / 2 - 400 + buttonHeight/2
+                        y = ResolutionY / 2 - 330 + buttonHeight/2
                         cnt = 0
                     else
                         if x > ResolutionX/2 - buttonWidth and x < ResolutionX/2 + buttonWidth/2 and y > ResolutionY /2 - buttonHeight and y < ResolutionY/2 + buttonHeight then
@@ -2345,7 +2345,6 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         if CollisionSystem and activeRadar and not AutoTakeoff and not BrakeLanding and velMag > 20 then flightStyle = flightStyle.."-COLLISION ON" end
         if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
         if TurnBurn then flightStyle = "TB-"..flightStyle end
-        if HoverMode then flightStyle = "HOVERMODE-"..flightStyle end
         if not stablized then flightStyle = flightStyle.."-DeCoupled" end
 
         local labelY1 = cry(99)

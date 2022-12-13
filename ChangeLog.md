@@ -1,5 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.016 
+- Added Talemai minimum space engine altitude (affects low orbit, 11% altitude, and other factors)
+- Removed HoverMode - It was gimmicky and poorly implemented (by me) (This was an attempt to make ship act like a hover vehicle)
+- Fix: Prevent duplicate msg spam, again, I think.
+
 Version 2.015 - I HATE YOU ALL
 - Added "Fast Orbit" support.  Usage: USE AT OWN RISK. THIS WILL PROBABLY RESULT IN YOUR SHIPS DESTRUCTION.  YOU WERE WARNED.
     If `MaintainOrbit` is true, and `FastOrbit` is set to > 0.0, then Orbit speed will be equal to 
