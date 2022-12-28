@@ -803,7 +803,7 @@
             end
 
             local function adjustAutopilotTargetIndex(up)
-                if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand then -- added to prevent crash when index == 0
+                if not alignTarget and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand then -- added to prevent crash when index == 0
                     if up == nil then 
                         AutopilotTargetIndex = AutopilotTargetIndex + 1
                         if AutopilotTargetIndex > #AtlasOrdered then

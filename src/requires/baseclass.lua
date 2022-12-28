@@ -1,4 +1,4 @@
-function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
+function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1, transponder)
     local s = DUSystem
     local C = DUConstruct
     local P = DUPlayer
@@ -592,13 +592,13 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 HUD.ButtonSetup() 
             end
             CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
-                isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank, msg)
+                isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank, msg, transponder, jencode)
             if shield then SHIELD = ShieldClass(shield, stringmatch, mfloor, msg) end
             coroutine.yield()
             u.hideWidget()
             s.showScreen(1)
             s.showHelper(0)
-            if screenHud_1 then screenHud_1.clear() end
+            if screenHud_1 then screenHud_1.setCenteredText("") end
             -- That was a lot of work with dirty strings and json.  Clean up
             collectgarbage("collect")
             -- Start timers

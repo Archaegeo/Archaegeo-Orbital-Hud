@@ -503,6 +503,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             apDoubleClick = time
         end
         TargetSet = false -- No matter what
+        alignTarget = false
         -- Toggle Autopilot, as long as the target isn't None
         if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
             --if AltitudeHold then AltitudeHold = false end
@@ -705,6 +706,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         AltitudeHold = not AltitudeHold
         BrakeLanding = false
         Reentry = false
+        alignTarget = false
         if AltitudeHold then
             Autopilot = false
             ProgradeIsOn = false
@@ -780,6 +782,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         VectorToTarget = false
         AutoTakeoff = false
         Reentry = false
+        alignTarget = false
         -- We won't abort interplanetary because that would fuck everyone.
         ProgradeIsOn = false -- No reason to brake while facing prograde, but retrograde yes.
         BrakeLanding = false
@@ -1274,8 +1277,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             antigravOn = (antigrav.isActive() == 1)
         end
 
-
-
         local deltaTick = time - lastApTickTime
         local currentYaw = -math.deg(signedRotationAngle(constructUp, constructVelocity, constructForward))
         local currentPitch = math.deg(signedRotationAngle(constructRight, constructVelocity, constructForward)) -- Let's use a consistent func that uses global velocity
@@ -1508,6 +1509,11 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 local vTPitchInput = uclamp(vTpitchPID:get(),-1,1)
                 pitchInput2 = vTPitchInput
             end
+        end
+
+        if alignTarget then
+            local target = alignTarget*(AutopilotTargetCoords - worldPos)
+            AlignToWorldVector(target ,0.1)
         end
 
         if IntoOrbit then

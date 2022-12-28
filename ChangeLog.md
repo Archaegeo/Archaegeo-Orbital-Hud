@@ -1,5 +1,25 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.017 - New Features (Pipecenter, lock alignment, Transponder support)
+- New Feature: New lua chat command - `/pipecenter` - Shows a waypoint to closest pipe center, prints loc in lua chat, 
+    and sets it to 1-Temp in IPH for use with autopilot/alignment
+    - Used to get to center of, or to move 180 away from, center of closest pipe
+- New Feature: IPH Target alignment lock. Will allow easy travel towards or away from an IPH location, maintaining alignment (or retrograde alignment)
+    - `Alt-5` locks alignment to IPH target if not in some mode of autopilot.
+    - `Alt-5-5` locks retrograde alignment to IPH target if not in some mode of autopilot
+    - `Alt-5` again after locking, or starting any autopilot mode, or hitting brakes, will cancel alignment.
+NOTE: Use Alignment Lock at your own risk in atmosphere.
+- Change: Lock Pitch feature changed to alt-shift-5.  Will now lock to current pitch.
+- Removed: `LockPitchTarget` from user variables.
+- Removed HELP window - RTFM instead :) (The manual exists and code space savings was needed)
+- Added Space Engine Altitude value to IPH
+- Added support for manually linked transponders. To use the below features, link the transponder to control unit, then rerun Archhud autoconf.
+- If a transponder is linked to the seat, then the following are available:
+    - A new command, /trans.  `/trans` shows current transponder tag.  `/trans whatever` sets the transponder tag to `whatever`.
+    - Pressing `Alt-B` will toggle the transponder On or Off.
+NOTE: Currently changing a transponders tag does not broadcast the new tag till you log out and back in. Same for deactivating or activating, doesnt update on the fly (NQ Issue)
+
+
 Version 2.016 
 - Added Talemai minimum space engine altitude (affects low orbit, 11% altitude, and other factors)
 - Removed HoverMode - It was gimmicky and poorly implemented (by me) (This was an attempt to make ship act like a hover vehicle)

@@ -981,83 +981,6 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             end
         end
 
-        local function DisplayHelp(newContent)
-            local x = OrbitMapX+10
-            local y = OrbitMapY+20
-            local help = {}
-            local helpAtmoGround = {"Alt-4: AutoTakeoff to Target"}
-            local helpAtmoAir = { "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", 
-                                "Alt-Q/E: Hard Bankroll left/right till released", "Alt-S: 180 deg bank turn"}
-            local helpSpace = {"Alt-6: Orbit at current altitude", "Alt-6-6: Orbit at LowOrbitHeight over atmosphere","G: Raise or lower landing gear", "Alt-W: Toggle prograde align", "Alt-S: Toggle retrograde align / Turn&Burn (AP)"}
-            local helpGeneral = {"", "------------------ALWAYS--------------------", "Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-Shift 1: Show passengers on board","Alt-Shift-2: Deboard passengers",
-                                "Alt-3: Toggle Vanilla Widget view", "Alt-4: Autopilot to IPH target", "Alt-Shift-3: Show docked ships","Alt-Shift-4: Undock all ships",
-                                "Alt-5: Lock Pitch at current pitch","Alt-Shift-5: Lock pitch at preset pitch","Alt-7: Toggle Collision System on and off", "Alt-8: Toggle ground stabilization (underwater flight)",
-                                "B: Toggle rocket boost on/off","CTRL: Toggle Brakes on and off. Cancels active AP", "LAlt: Tap to shift freelook on and off", 
-                                "Shift: Hold while not in freelook to see Buttons", "L: Toggle lights on and off", "Type /commands or /help in lua chat to see text commands"}
-            table.insert(help, "--------------DYNAMIC-----------------")
-            if inAtmo then 
-                if abvGndDet ~= -1 then
-                    addTable(help, helpAtmoGround)
-                    if autopilotTargetPlanet and planet and autopilotTargetPlanet.name == planet.name then
-                        table.insert(help,"Alt-4-4: Low Orbit Autopilot to Target")
-                    end
-                    if antigrav or VertTakeOffEngine then 
-                        if antigrav then
-                            if antigravOn then
-                                table.insert(help, "Alt-6: AGG is on, will takeoff to AGG Height")
-                            else
-                                table.insert(help,  "Turn on AGG to takeoff to AGG Height")
-                            end
-                        end
-                        if VertTakeOffEngine then 
-                            table.insert(help, "Alt-6: Begins Vertical AutoTakeoff.")
-                        end
-                    else
-                        table.insert(help, "Alt-6: Autotakeoff to AutoTakeoffAltitude")
-                        table.insert(help, "Alt-6-6: Autotakeoff to 11% atmosphere")
-                    end
-                    if GearExtended then
-                        table.insert(help,"G: Takeoff to hover height, raise gear")
-                    else
-                        table.insert(help,"G: Lowergear and Land")
-                    end
-                else
-                    addTable(help,helpAtmoAir)
-                    table.insert(help,"G: Begin BrakeLanding or Land")
-                end
-                if VertTakeOff then
-                    table.insert(help,"Hit Alt-6 before exiting Atmosphere during VTO to hold in level flight")
-                end
-            else
-                addTable(help, helpSpace)
-                if shield then
-                    table.insert(help,"Alt-Shift-6: Vent shields")
-                    if not AutoShieldToggle then table.insert(help,"Alt-Shift-7: Toggle shield off/on") end
-                end
-            end
-            if CustomTarget ~= nil then
-                table.insert(help, "Alt-Shift-8: Add current IPH target to Route")
-            end
-            if gyro then
-                table.insert(help,"Alt-9: Activate Gyroscope")
-            end
-            if ExtraLateralTags ~= "none" or ExtraLongitudeTags ~= "none" or ExtraVerticalTags ~= "none" then
-                table.insert(help, "Alt-Shift-9: Cycles engines with Extra tags")
-            end
-            if AltitudeHold then 
-                table.insert(help, "Alt-Spacebar/C will raise/lower target height")
-                table.insert(help, "Alt+Shift+Spacebar/C will raise/lower target to preset values")
-            end
-            if AtmoSpeedAssist or not inAtmo then
-                table.insert(help,"LALT+Mousewheel will lower/raise speed limit")
-            end
-            addTable(help, helpGeneral)
-            for i = 1, #help do
-                y=y+12
-                newContent[#newContent + 1] = svgText( x, y, help[i], "pdim txtbig txtstart")
-            end
-        end
-        
         local function DisplayOrbitScreen(newContent)
             local orbitMapX = OrbitMapX
             local orbitMapY = OrbitMapY
@@ -1327,8 +1250,6 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 end
             elseif SelectedTab == "INFO" then
                 newContent = HUD.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
-            elseif SelectedTab == "HELP" then
-                newContent = DisplayHelp(newContent)
             elseif SelectedTab == "SCOPE" then
                 newContent[#newContent + 1] = '<g clip-path="url(#orbitRect)">'
                 local fov = scopeFOV
@@ -1688,33 +1609,36 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             local pipe = (destCenter - origCenter):normalize()
             local r = (worldPos -origCenter):dot(pipe) / pipe:dot(pipe)
             if r <= 0. then
-            return (worldPos-origCenter):len()
+                return (worldPos-origCenter):len(), nil
             elseif r >= (destCenter - origCenter):len() then
-            return (worldPos-destCenter):len()
+                return (worldPos-destCenter):len(), nil
             end
             local L = origCenter + (r * pipe)
             pipeDistance =  (L - worldPos):len()
-            return pipeDistance
+            return pipeDistance, L
         end
 
         local function getClosestPipe() -- Many thanks to Tiramon for the idea and functionality, thanks to Dimencia for the assist
             local pipeDistance
+            local tempPos = nil
             local nearestDistance = nil
             local nearestPipePlanet = nil
             local pipeOriginPlanet = nil
             for k,nextPlanet in pairs(atlas[0]) do
                 if nextPlanet.hasAtmosphere then -- Skip moons
-                    local distance = getPipeDistance(planet.center, nextPlanet.center)
+                    local distance, tempPos = getPipeDistance(planet.center, nextPlanet.center)
                     if nearestDistance == nil or distance < nearestDistance then
                         nearestPipePlanet = nextPlanet
                         nearestDistance = distance
+                        if tempPos then pipePos = tempPos end
                         pipeOriginPlanet = planet
                     end
                     if autopilotTargetPlanet and autopilotTargetPlanet.hasAtmosphere and autopilotTargetPlanet.name ~= planet.name then 
-                        local distance2 = getPipeDistance(autopilotTargetPlanet.center, nextPlanet.center)
+                        local distance2, tempPos = getPipeDistance(autopilotTargetPlanet.center, nextPlanet.center)
                         if distance2 < nearestDistance then
                             nearestPipePlanet = nextPlanet
                             nearestDistance = distance2
+                            if tempPos then pipePos = tempPos end
                             pipeOriginPlanet = autopilotTargetPlanet
                         end
                     end
@@ -2169,8 +2093,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
 
             -- Make tab buttons
             local tabHeight = ConvertResolutionY(20)
-            local button = MakeTabButton(0, 0, ConvertResolutionX(70), tabHeight, "HELP")
-            button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(80),tabHeight, "INFO")
+            local button = MakeTabButton(0,0,ConvertResolutionX(80),tabHeight, "INFO")
             button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"ORBIT")
             button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"SCOPE")
             MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"HIDE")
@@ -2346,6 +2269,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
         if TurnBurn then flightStyle = "TB-"..flightStyle end
         if not stablized then flightStyle = flightStyle.."-DeCoupled" end
+        if alignTarget then flightStyle = "Alignment Lock-"..flightStyle end
 
         local labelY1 = cry(99)
         local labelY2 = cry(80)
@@ -2686,7 +2610,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             end
             local function DrawTabButtons(newContent)
                 if not SelectedTab or SelectedTab == "" then
-                    SelectedTab = "HELP"
+                    SelectedTab = "INFO"
                 end
                 if showHud then 
                     for k,v in pairs(TabButtons) do
@@ -2869,6 +2793,10 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 widgetTargetOrbit = sysCrWid(panelInterplanetary, "value")
                 widgetTargetOrbitText = sysCrData('{"label": "Target Altitude", "value": "N/A", "unit":""}')
                 sysAddData(widgetTargetOrbitText, widgetTargetOrbit)
+
+                widgetTargetEngine = sysCrWid(panelInterplanetary, "value")
+                widgetTargetEngineText = sysCrData('{"label": "Space Engine", "value": "N/A", "unit":""}')
+                sysAddData(widgetTargetEngineText, widgetTargetEngine)
                 
                 widgetStopSpeed = sysCrWid(panelInterplanetary, "value")
                 widgetStopSpeedText = sysCrData('{"label": "End Speed", "value": "N/A", "unit":""}')
@@ -2940,8 +2868,10 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 sysUpData(widgetStopSpeedText, '{"label": "End Speed", "value": "' ..
                     stringf("%.0fkph", stopSpeed ) .. '", "unit":""}')
                 displayText = getDistanceDisplayString(AutopilotTargetOrbit)
-                sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
+                sysUpData(widgetTargetOrbitText, '{"label": "High Orbit", "value": "' ..
                 displayText .. '"}')
+                sysUpData(widgetTargetEngineText, '{"label": "Space Engine Alt", "value": "' ..
+                    autopilotTargetPlanet.spaceEngineMinAltitude .. 'm"}')
                 if inAtmo and not WasInAtmo then
                     s.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
                     s.removeDataFromWidget(widgetStopSpeedText, widgetStopSpeed)
