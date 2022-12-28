@@ -150,5 +150,7 @@
         mouseDistance = 0 -- 2
         sEFC = false -- 2
         MaxSpeed = C.getMaxSpeed() -- 2
+        pipePos = nil -- 2
+        alignTarget = false -- 2
         if shield then shieldPercent = mfloor(0.5 + shield.getShieldHitpoints() * 100 / shield.getMaxShieldHitpoints()) end
     end
