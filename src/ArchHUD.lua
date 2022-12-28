@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.016
+VERSION_NUMBER = 0.017
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -63,7 +63,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     brakeLandingRate = 30 -- (Default: 30) Max loss of altitude speed in m/s when doing a brake landing. 30 is safe for almost all ships.  
     MaxPitch = 30 -- (Default: 30) Maximum allowed pitch during takeoff and altitude changes while in altitude hold. You can set higher or lower depending on your ships capabilities.
     ReEntryPitch = -30 -- (Default: -30) Maximum downward pitch allowed during freefall portion of re-entry.
-    LockPitchTarget = 0 -- (Default: 0) Target pitch ship tries to hold when LALT-LSHIFT-5 is pressed.
     AutopilotSpaceDistance = 5000 -- (Default: 5000) Target distance AP will try to stop from a custom waypoint in space.  Good ships can lower this value a lot.
     TargetOrbitRadius = 1.3 -- (Default: 1.3) How tight you want to orbit the planet at end of autopilot.  The smaller the value the tighter the orbit.  Value is multiple of Atmospheric Height
     LowOrbitHeight = 2000 -- (Default: 2000) Height of Orbit above top of atmospehre when using Alt-4-4 same planet autopilot or alt-6-6 in space.
@@ -85,7 +84,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     EmergencyWarp = 0 -- (Default: 0) If > 0 and a radar contact is detected in pvp space and the contact is closer than EmergencyWarp value, and all other warp conditions met, will initiate warp.
     DockingMode = 1 -- (Default: 1) Docking mode of ship, default is 2 (Automatic), options are Manual = 1, Automatic = 2, Semi-automatic = 3
 
-    savableVariablesHandling = {YawStallAngle={set=function (i)YawStallAngle=i end,get=function() return YawStallAngle end},PitchStallAngle={set=function (i)PitchStallAngle=i end,get=function() return PitchStallAngle end},brakeLandingRate={set=function (i)brakeLandingRate=i end,get=function() return brakeLandingRate end},MaxPitch={set=function (i)MaxPitch=i end,get=function() return MaxPitch end}, ReEntryPitch={set=function (i)ReEntryPitch=i end,get=function() return ReEntryPitch end},LockPitchTarget={set=function (i)LockPitchTarget=i end,get=function() return LockPitchTarget end}, AutopilotSpaceDistance={set=function (i)AutopilotSpaceDistance=i end,get=function() return AutopilotSpaceDistance end}, TargetOrbitRadius={set=function (i)TargetOrbitRadius=i end,get=function() return TargetOrbitRadius end}, LowOrbitHeight={set=function (i)LowOrbitHeight=i end,get=function() return LowOrbitHeight end},
+    savableVariablesHandling = {YawStallAngle={set=function (i)YawStallAngle=i end,get=function() return YawStallAngle end},PitchStallAngle={set=function (i)PitchStallAngle=i end,get=function() return PitchStallAngle end},brakeLandingRate={set=function (i)brakeLandingRate=i end,get=function() return brakeLandingRate end},MaxPitch={set=function (i)MaxPitch=i end,get=function() return MaxPitch end}, ReEntryPitch={set=function (i)ReEntryPitch=i end,get=function() return ReEntryPitch end}, AutopilotSpaceDistance={set=function (i)AutopilotSpaceDistance=i end,get=function() return AutopilotSpaceDistance end}, TargetOrbitRadius={set=function (i)TargetOrbitRadius=i end,get=function() return TargetOrbitRadius end}, LowOrbitHeight={set=function (i)LowOrbitHeight=i end,get=function() return LowOrbitHeight end},
     AtmoSpeedLimit={set=function (i)AtmoSpeedLimit=i end,get=function() return AtmoSpeedLimit end},SpaceSpeedLimit={set=function (i)SpaceSpeedLimit=i end,get=function() return SpaceSpeedLimit end},AutoTakeoffAltitude={set=function (i)AutoTakeoffAltitude=i end,get=function() return AutoTakeoffAltitude end},TargetHoverHeight={set=function (i)TargetHoverHeight=i end,get=function() return TargetHoverHeight end}, LandingGearGroundHeight={set=function (i)LandingGearGroundHeight=i end,get=function() return LandingGearGroundHeight end}, ReEntryHeight={set=function (i)ReEntryHeight=i end,get=function() return ReEntryHeight end},
     MaxGameVelocity={set=function (i)MaxGameVelocity=i end,get=function() return MaxGameVelocity end}, AutopilotInterplanetaryThrottle={set=function (i)AutopilotInterplanetaryThrottle=i end,get=function() return AutopilotInterplanetaryThrottle end},warmup={set=function (i)warmup=i end,get=function() return warmup end},fuelTankHandlingAtmo={set=function (i)fuelTankHandlingAtmo=i end,get=function() return fuelTankHandlingAtmo end},fuelTankHandlingSpace={set=function (i)fuelTankHandlingSpace=i end,get=function() return fuelTankHandlingSpace end},
     fuelTankHandlingRocket={set=function (i)fuelTankHandlingRocket=i end,get=function() return fuelTankHandlingRocket end},ContainerOptimization={set=function (i)ContainerOptimization=i end,get=function() return ContainerOptimization end},FuelTankOptimization={set=function (i)FuelTankOptimization=i end,get=function() return FuelTankOptimization end},AutoShieldPercent={set=function (i)AutoShieldPercent=i end,get=function() return AutoShieldPercent end},
@@ -313,6 +312,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         mouseDistance = 0 -- 2
         sEFC = false -- 2
         MaxSpeed = C.getMaxSpeed() -- 2
+        pipePos = nil -- 2
+        alignTarget = false -- 2
         if shield then shieldPercent = mfloor(0.5 + shield.getShieldHitpoints() * 100 / shield.getMaxShieldHitpoints()) end
     end    
     ---[[ timestamped print function for debugging
@@ -1123,7 +1124,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             end
 
             local function adjustAutopilotTargetIndex(up)
-                if not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand then -- added to prevent crash when index == 0
+                if not alignTarget and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand then -- added to prevent crash when index == 0
                     if up == nil then 
                         AutopilotTargetIndex = AutopilotTargetIndex + 1
                         if AutopilotTargetIndex > #AtlasOrdered then
@@ -2724,83 +2725,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
             end
     
-            local function DisplayHelp(newContent)
-                local x = OrbitMapX+10
-                local y = OrbitMapY+20
-                local help = {}
-                local helpAtmoGround = {"Alt-4: AutoTakeoff to Target"}
-                local helpAtmoAir = { "Alt-6: Altitude hold at current altitude", "Alt-6-6: Altitude Hold at 11% atmosphere", 
-                                    "Alt-Q/E: Hard Bankroll left/right till released", "Alt-S: 180 deg bank turn"}
-                local helpSpace = {"Alt-6: Orbit at current altitude", "Alt-6-6: Orbit at LowOrbitHeight over atmosphere","G: Raise or lower landing gear", "Alt-W: Toggle prograde align", "Alt-S: Toggle retrograde align / Turn&Burn (AP)"}
-                local helpGeneral = {"", "------------------ALWAYS--------------------", "Alt-1: Increment Interplanetary Helper", "Alt-2: Decrement Interplanetary Helper", "Alt-Shift 1: Show passengers on board","Alt-Shift-2: Deboard passengers",
-                                    "Alt-3: Toggle Vanilla Widget view", "Alt-4: Autopilot to IPH target", "Alt-Shift-3: Show docked ships","Alt-Shift-4: Undock all ships",
-                                    "Alt-5: Lock Pitch at current pitch","Alt-Shift-5: Lock pitch at preset pitch","Alt-7: Toggle Collision System on and off", "Alt-8: Toggle ground stabilization (underwater flight)",
-                                    "B: Toggle rocket boost on/off","CTRL: Toggle Brakes on and off. Cancels active AP", "LAlt: Tap to shift freelook on and off", 
-                                    "Shift: Hold while not in freelook to see Buttons", "L: Toggle lights on and off", "Type /commands or /help in lua chat to see text commands"}
-                table.insert(help, "--------------DYNAMIC-----------------")
-                if inAtmo then 
-                    if abvGndDet ~= -1 then
-                        addTable(help, helpAtmoGround)
-                        if autopilotTargetPlanet and planet and autopilotTargetPlanet.name == planet.name then
-                            table.insert(help,"Alt-4-4: Low Orbit Autopilot to Target")
-                        end
-                        if antigrav or VertTakeOffEngine then 
-                            if antigrav then
-                                if antigravOn then
-                                    table.insert(help, "Alt-6: AGG is on, will takeoff to AGG Height")
-                                else
-                                    table.insert(help,  "Turn on AGG to takeoff to AGG Height")
-                                end
-                            end
-                            if VertTakeOffEngine then 
-                                table.insert(help, "Alt-6: Begins Vertical AutoTakeoff.")
-                            end
-                        else
-                            table.insert(help, "Alt-6: Autotakeoff to AutoTakeoffAltitude")
-                            table.insert(help, "Alt-6-6: Autotakeoff to 11% atmosphere")
-                        end
-                        if GearExtended then
-                            table.insert(help,"G: Takeoff to hover height, raise gear")
-                        else
-                            table.insert(help,"G: Lowergear and Land")
-                        end
-                    else
-                        addTable(help,helpAtmoAir)
-                        table.insert(help,"G: Begin BrakeLanding or Land")
-                    end
-                    if VertTakeOff then
-                        table.insert(help,"Hit Alt-6 before exiting Atmosphere during VTO to hold in level flight")
-                    end
-                else
-                    addTable(help, helpSpace)
-                    if shield then
-                        table.insert(help,"Alt-Shift-6: Vent shields")
-                        if not AutoShieldToggle then table.insert(help,"Alt-Shift-7: Toggle shield off/on") end
-                    end
-                end
-                if CustomTarget ~= nil then
-                    table.insert(help, "Alt-Shift-8: Add current IPH target to Route")
-                end
-                if gyro then
-                    table.insert(help,"Alt-9: Activate Gyroscope")
-                end
-                if ExtraLateralTags ~= "none" or ExtraLongitudeTags ~= "none" or ExtraVerticalTags ~= "none" then
-                    table.insert(help, "Alt-Shift-9: Cycles engines with Extra tags")
-                end
-                if AltitudeHold then 
-                    table.insert(help, "Alt-Spacebar/C will raise/lower target height")
-                    table.insert(help, "Alt+Shift+Spacebar/C will raise/lower target to preset values")
-                end
-                if AtmoSpeedAssist or not inAtmo then
-                    table.insert(help,"LALT+Mousewheel will lower/raise speed limit")
-                end
-                addTable(help, helpGeneral)
-                for i = 1, #help do
-                    y=y+12
-                    newContent[#newContent + 1] = svgText( x, y, help[i], "pdim txtbig txtstart")
-                end
-            end
-            
             local function DisplayOrbitScreen(newContent)
                 local orbitMapX = OrbitMapX
                 local orbitMapY = OrbitMapY
@@ -3070,8 +2994,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 elseif SelectedTab == "INFO" then
                     newContent = HUD.DrawOdometer(newContent, totalDistanceTrip, TotalDistanceTravelled, flightTime)
-                elseif SelectedTab == "HELP" then
-                    newContent = DisplayHelp(newContent)
                 elseif SelectedTab == "SCOPE" then
                     newContent[#newContent + 1] = '<g clip-path="url(#orbitRect)">'
                     local fov = scopeFOV
@@ -3431,33 +3353,36 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local pipe = (destCenter - origCenter):normalize()
                 local r = (worldPos -origCenter):dot(pipe) / pipe:dot(pipe)
                 if r <= 0. then
-                return (worldPos-origCenter):len()
+                    return (worldPos-origCenter):len(), nil
                 elseif r >= (destCenter - origCenter):len() then
-                return (worldPos-destCenter):len()
+                    return (worldPos-destCenter):len(), nil
                 end
                 local L = origCenter + (r * pipe)
                 pipeDistance =  (L - worldPos):len()
-                return pipeDistance
+                return pipeDistance, L
             end
     
             local function getClosestPipe() -- Many thanks to Tiramon for the idea and functionality, thanks to Dimencia for the assist
                 local pipeDistance
+                local tempPos = nil
                 local nearestDistance = nil
                 local nearestPipePlanet = nil
                 local pipeOriginPlanet = nil
                 for k,nextPlanet in pairs(atlas[0]) do
                     if nextPlanet.hasAtmosphere then -- Skip moons
-                        local distance = getPipeDistance(planet.center, nextPlanet.center)
+                        local distance, tempPos = getPipeDistance(planet.center, nextPlanet.center)
                         if nearestDistance == nil or distance < nearestDistance then
                             nearestPipePlanet = nextPlanet
                             nearestDistance = distance
+                            if tempPos then pipePos = tempPos end
                             pipeOriginPlanet = planet
                         end
                         if autopilotTargetPlanet and autopilotTargetPlanet.hasAtmosphere and autopilotTargetPlanet.name ~= planet.name then 
-                            local distance2 = getPipeDistance(autopilotTargetPlanet.center, nextPlanet.center)
+                            local distance2, tempPos = getPipeDistance(autopilotTargetPlanet.center, nextPlanet.center)
                             if distance2 < nearestDistance then
                                 nearestPipePlanet = nextPlanet
                                 nearestDistance = distance2
+                                if tempPos then pipePos = tempPos end
                                 pipeOriginPlanet = autopilotTargetPlanet
                             end
                         end
@@ -3912,8 +3837,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
                 -- Make tab buttons
                 local tabHeight = ConvertResolutionY(20)
-                local button = MakeTabButton(0, 0, ConvertResolutionX(70), tabHeight, "HELP")
-                button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(80),tabHeight, "INFO")
+                local button = MakeTabButton(0,0,ConvertResolutionX(80),tabHeight, "INFO")
                 button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"ORBIT")
                 button = MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"SCOPE")
                 MakeTabButton(button.x + button.width,button.y,ConvertResolutionX(70),tabHeight,"HIDE")
@@ -4089,6 +4013,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             if UseExtra ~= "Off" then flightStyle = "("..UseExtra..")-"..flightStyle end
             if TurnBurn then flightStyle = "TB-"..flightStyle end
             if not stablized then flightStyle = flightStyle.."-DeCoupled" end
+            if alignTarget then flightStyle = "Alignment Lock-"..flightStyle end
     
             local labelY1 = cry(99)
             local labelY2 = cry(80)
@@ -4429,7 +4354,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
                 local function DrawTabButtons(newContent)
                     if not SelectedTab or SelectedTab == "" then
-                        SelectedTab = "HELP"
+                        SelectedTab = "INFO"
                     end
                     if showHud then 
                         for k,v in pairs(TabButtons) do
@@ -4612,6 +4537,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     widgetTargetOrbit = sysCrWid(panelInterplanetary, "value")
                     widgetTargetOrbitText = sysCrData('{"label": "Target Altitude", "value": "N/A", "unit":""}')
                     sysAddData(widgetTargetOrbitText, widgetTargetOrbit)
+    
+                    widgetTargetEngine = sysCrWid(panelInterplanetary, "value")
+                    widgetTargetEngineText = sysCrData('{"label": "Space Engine", "value": "N/A", "unit":""}')
+                    sysAddData(widgetTargetEngineText, widgetTargetEngine)
                     
                     widgetStopSpeed = sysCrWid(panelInterplanetary, "value")
                     widgetStopSpeedText = sysCrData('{"label": "End Speed", "value": "N/A", "unit":""}')
@@ -4683,8 +4612,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     sysUpData(widgetStopSpeedText, '{"label": "End Speed", "value": "' ..
                         stringf("%.0fkph", stopSpeed ) .. '", "unit":""}')
                     displayText = getDistanceDisplayString(AutopilotTargetOrbit)
-                    sysUpData(widgetTargetOrbitText, '{"label": "Target Orbit", "value": "' ..
+                    sysUpData(widgetTargetOrbitText, '{"label": "High Orbit", "value": "' ..
                     displayText .. '"}')
+                    sysUpData(widgetTargetEngineText, '{"label": "Space Engine Alt", "value": "' ..
+                        autopilotTargetPlanet.spaceEngineMinAltitude .. 'm"}')
                     if inAtmo and not WasInAtmo then
                         s.removeDataFromWidget(widgetMaxBrakeTimeText, widgetMaxBrakeTime)
                         s.removeDataFromWidget(widgetStopSpeedText, widgetStopSpeed)
@@ -5374,6 +5305,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 apDoubleClick = time
             end
             TargetSet = false -- No matter what
+            alignTarget = false
             -- Toggle Autopilot, as long as the target isn't None
             if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
                 --if AltitudeHold then AltitudeHold = false end
@@ -5576,6 +5508,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             AltitudeHold = not AltitudeHold
             BrakeLanding = false
             Reentry = false
+            alignTarget = false
             if AltitudeHold then
                 Autopilot = false
                 ProgradeIsOn = false
@@ -5651,6 +5584,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             VectorToTarget = false
             AutoTakeoff = false
             Reentry = false
+            alignTarget = false
             -- We won't abort interplanetary because that would fuck everyone.
             ProgradeIsOn = false -- No reason to brake while facing prograde, but retrograde yes.
             BrakeLanding = false
@@ -6145,8 +6079,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 antigravOn = (antigrav.isActive() == 1)
             end
     
-    
-    
             local deltaTick = time - lastApTickTime
             local currentYaw = -math.deg(signedRotationAngle(constructUp, constructVelocity, constructForward))
             local currentPitch = math.deg(signedRotationAngle(constructRight, constructVelocity, constructForward)) -- Let's use a consistent func that uses global velocity
@@ -6379,6 +6311,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     local vTPitchInput = uclamp(vTpitchPID:get(),-1,1)
                     pitchInput2 = vTPitchInput
                 end
+            end
+    
+            if alignTarget then
+                local target = alignTarget*(AutopilotTargetCoords - worldPos)
+                AlignToWorldVector(target ,0.1)
             end
     
             if IntoOrbit then
@@ -7887,7 +7824,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         return ap
     end
     local function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
-        isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank, msg)
+        isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank, msg, transponder, jencode)
         local C = DUConstruct
         local Control = {}
         local UnitHidden = true
@@ -7896,6 +7833,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         local currentHoldAltModifier = holdAltitudeButtonModifier
         local currentAggModifier = antiGravButtonModifier
         local clearAllCheck = time
+        local aLdoubleclick = time
     
         function Control.landingGear(eLL)
             GearExtended = not GearExtended
@@ -8166,7 +8104,28 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 AP.ToggleAutopilot()
             elseif action == "option5" then 
                 toggleView = false 
-                AP.ToggleLockPitch()
+                if AltIsOn and holdingShift then
+                    alignTarget = false
+                    AP.ToggleLockPitch()
+                    return
+                end
+                if (time - aLdoubleclick) < 1.5 then
+                    if alignTarget then
+                        alignTarget = -1
+                        msg ("Retrograde Alignment lock to "..AutopilotTargetName)
+                        return
+                    end
+                end
+                aLdoubleclick = time
+                if alignTarget then
+                    alignTarget = false
+                    msg ("Alignment cancelled")
+                elseif not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand and not AltitudeHold then
+                    alignTarget = 1
+                    msg ("Alignment lock to "..AutopilotTargetName)
+                else
+                    msg("Disengage autopilot before using Alignment Lock")
+                end
             elseif action == "option6" then
                 toggleView = false 
                 if AltIsOn and holdingShift then 
@@ -8250,21 +8209,34 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     sysLockVw(1)
                 end
             elseif action == "booster" then
-                -- Dodgin's Don't Die Rocket Govenor - Cruise Control Edition
-                if VanillaRockets then 
-                    Nav:toggleBoosters()
-                elseif not isBoosting then 
-                    if not IsRocketOn then 
-                        Nav:toggleBoosters()
-                        IsRocketOn = true
+                if AltIsOn then
+                    if transponder then
+                        transponder.toggle()
+                        if transponder.isActive() == 1 then
+                            msg("Transponder On")
+                        else
+                            msg("Transponder Off")
+                        end
+                    else
+                        msg("No transponder found")
                     end
-                    isBoosting = true
                 else
-                    if IsRocketOn then
+                    -- Dodgin's Don't Die Rocket Govenor - Cruise Control Edition
+                    if VanillaRockets then 
                         Nav:toggleBoosters()
-                        IsRocketOn = false
+                    elseif not isBoosting then 
+                        if not IsRocketOn then 
+                            Nav:toggleBoosters()
+                            IsRocketOn = true
+                        end
+                        isBoosting = true
+                    else
+                        if IsRocketOn then
+                            Nav:toggleBoosters()
+                            IsRocketOn = false
+                        end
+                        isBoosting = false
                     end
-                    isBoosting = false
                 end
             elseif action == "stopengines" then
                 local function clearAll()         
@@ -8296,7 +8268,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 end
             elseif action == "speedup" then
-                AP.changeSpd()
+                    AP.changeSpd()
             elseif action == "speeddown" then
                 AP.changeSpd(true)
             elseif action == "antigravity" and not ExternalAGG then
@@ -8479,7 +8451,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     "/iphWP - displays current IPH target's ::pos waypoint in lua chat\n"..
                     "/resist 0.15, 0.15, 0.15, 0.15 - Sets shield resistance distribution of the floating 60% extra available, usable once per minute\n"..
                     "/deletewp - Deletes current selected custom wp\n"..
-                    "/createPrivate (all) - dumps private lcoations to screen if present to cut and paste to privatelocations.lua, all if present will make it include all databank locations."
+                    "/createPrivate (all) - dumps private lcoations to screen if present to cut and paste to privatelocations.lua, all if present will make it include all databank locations.\n"..
+                    "/trans (whatever) - shows the current transponder setting, whatever, if present, is the new tag that is set.\n"..
+                    "/pipecenter - Shows a waypoint to closest pipe center and prints loc in lua chat and sets it to 1-Temp in IPH for use with autopilot"
             i = string.find(text, " ")
             command = text
             if i ~= nil and string.find(text, "::") ~= 1 then
@@ -8597,6 +8571,18 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 else
                     msg ("No target selected in IPH")
                 end
+            elseif command == "/trans" then
+                if transponder then
+                    if arguement == nil or arguement == "" then
+                        msg ("Current tag: "..jencode(transponder.getTags()))
+                        return
+                    else
+                        transponder.setTags({arguement})
+                        msg ("Transponder tag set to: "..arguement)
+                    end
+                else
+                    msg ("No transponder found.")
+                end
             elseif command == "/createPrivate" then
                 local saveStr = "privatelocations = {\n"
                 local msgStr = ""
@@ -8622,6 +8608,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 if screenHud_1 then screenHud_1.setHTML(saveStr) end
                 msg (msgStr.."locations dumped to screen if present.\n Cut and paste to privatelocations.lua to use")
                 msgTimer = 7
+            elseif command == "/pipecenter" then
+                if pipePos ~= nil then
+                    local pos = "::pos{0,0,"..pipePos["x"]..","..pipePos["y"]..","..pipePos["z"].."}"
+                    p("Closest Pipe: "..pos)
+                    s.setWaypoint(pos) 
+                    AddNewLocationByWaypoint("1-Temp", pos, true)
+                else
+                    msg("No Pipe Center known")
+                end
             end
         end
     
@@ -8642,7 +8637,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
         return Control
     end
-    local function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
+    local function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1, transponder)
         local s = DUSystem
         local C = DUConstruct
         local P = DUPlayer
@@ -9236,13 +9231,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     HUD.ButtonSetup() 
                 end
                 CONTROL = ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
-                    isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank, msg)
+                    isRemote, navCom, sysIsVwLock, sysLockVw, sysDestWid, round, stringmatch, tonum, uclamp, play, saveableVariables, SaveDataBank, msg, transponder, jencode)
                 if shield then SHIELD = ShieldClass(shield, stringmatch, mfloor, msg) end
                 coroutine.yield()
                 u.hideWidget()
                 s.showScreen(1)
                 s.showHelper(0)
-                if screenHud_1 then screenHud_1.clear() end
+                if screenHud_1 then screenHud_1.setCenteredText("") end
                 -- That was a lot of work with dirty strings and json.  Clean up
                 collectgarbage("collect")
                 -- Start timers
@@ -9498,5 +9493,5 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     end
 -- Execute Script
     globalDeclare(core, unit, system.getArkTime, math.floor, unit.getAtmosphereDensity) -- Variables that need to be Global, arent user defined, and are declared in globals.lua due to use across multple modules where there values can change.
-    PROGRAM = programClass(Nav, core, unit, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1)
+    PROGRAM = programClass(Nav, core, unit, atlas, vBooster, hover, telemeter_1, antigrav, dbHud_1, dbHud_2, radar_1, radar_2, shield, gyro, warpdrive, weapon, screenHud_1, transponder_1)
     script.onStart()

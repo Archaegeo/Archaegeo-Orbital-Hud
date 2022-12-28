@@ -9,6 +9,7 @@ gyro = GyroUnit
 weapon = WeaponUnit -- select=manual
 dbHud = databank -- select=manual
 telemeter = TelemeterUnit -- select=manual
+transponder = TransponderUnit -- select=manual
 vBooster = VerticalBooster
 hover = Hovercraft
 door = DoorUnit -- select=manual
