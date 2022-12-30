@@ -1,5 +1,14 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.018 - Enhanced pipe clear support (Thanks Koruzarius for the math help)
+- `/pipecenter` now names temp targets in IPH as 1-PipeCenter and 2-PipeParallel
+- 2-PipeParallel, if used with AP, will set your destination at the target planet the same distance you are currently from center of pipe.
+    USAGE: Say your pipe says Pipe (Alioth - Teoma): 5su and you type /pipecenter in lua chat.
+        1-PipeCenter would be the location of the pipe center from you
+        2-PipeParallel would be a location 5su from Teoma.
+        Remember to `/pipecenter` initially to `Alt-5-5` away from `1-PipeCenter`, then once at desired distance, use `/pipecenter` again
+        and then `Alt-4` to AP to the `2-PipeParallel` position
+
 Version 2.017 - New Features (Pipecenter, lock alignment, Transponder support)
 - New Feature: New lua chat command - `/pipecenter` - Shows a waypoint to closest pipe center, prints loc in lua chat, 
     and sets it to 1-Temp in IPH for use with autopilot/alignment

@@ -1620,7 +1620,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
 
         local function getClosestPipe() -- Many thanks to Tiramon for the idea and functionality, thanks to Dimencia for the assist
             local pipeDistance
-            local tempPos = nil
+            local tempPos, tempPos2 = nil,nil
             local nearestDistance = nil
             local nearestPipePlanet = nil
             local pipeOriginPlanet = nil
@@ -1630,7 +1630,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     if nearestDistance == nil or distance < nearestDistance then
                         nearestPipePlanet = nextPlanet
                         nearestDistance = distance
-                        if tempPos then pipePos = tempPos end
+                        tempPos2 = tempPos 
                         pipeOriginPlanet = planet
                     end
                     if autopilotTargetPlanet and autopilotTargetPlanet.hasAtmosphere and autopilotTargetPlanet.name ~= planet.name then 
@@ -1638,12 +1638,16 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                         if distance2 < nearestDistance then
                             nearestPipePlanet = nextPlanet
                             nearestDistance = distance2
-                            if tempPos then pipePos = tempPos end
+                            tempPos2 = tempPos 
                             pipeOriginPlanet = autopilotTargetPlanet
                         end
                     end
                 end
             end 
+            if tempPos2 then 
+                pipePos = tempPos2 
+                pipeDest = nearestPipePlanet.center
+            end
             local pipeX = ConvertResolutionX(1770)
             local pipeY = ConvertResolutionY(330)
             if nearestDistance then
