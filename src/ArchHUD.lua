@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.017
+VERSION_NUMBER = 0.018
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -313,6 +313,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         sEFC = false -- 2
         MaxSpeed = C.getMaxSpeed() -- 2
         pipePos = nil -- 2
+        pipeDest = nil -- 2
         alignTarget = false -- 2
         if shield then shieldPercent = mfloor(0.5 + shield.getShieldHitpoints() * 100 / shield.getMaxShieldHitpoints()) end
     end    
@@ -3364,7 +3365,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
             local function getClosestPipe() -- Many thanks to Tiramon for the idea and functionality, thanks to Dimencia for the assist
                 local pipeDistance
-                local tempPos = nil
+                local tempPos, tempPos2 = nil,nil
                 local nearestDistance = nil
                 local nearestPipePlanet = nil
                 local pipeOriginPlanet = nil
@@ -3374,7 +3375,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         if nearestDistance == nil or distance < nearestDistance then
                             nearestPipePlanet = nextPlanet
                             nearestDistance = distance
-                            if tempPos then pipePos = tempPos end
+                            tempPos2 = tempPos 
                             pipeOriginPlanet = planet
                         end
                         if autopilotTargetPlanet and autopilotTargetPlanet.hasAtmosphere and autopilotTargetPlanet.name ~= planet.name then 
@@ -3382,12 +3383,16 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             if distance2 < nearestDistance then
                                 nearestPipePlanet = nextPlanet
                                 nearestDistance = distance2
-                                if tempPos then pipePos = tempPos end
+                                tempPos2 = tempPos 
                                 pipeOriginPlanet = autopilotTargetPlanet
                             end
                         end
                     end
                 end 
+                if tempPos2 then 
+                    pipePos = tempPos2 
+                    pipeDest = nearestPipePlanet.center
+                end
                 local pipeX = ConvertResolutionX(1770)
                 local pipeY = ConvertResolutionY(330)
                 if nearestDistance then
@@ -8611,9 +8616,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             elseif command == "/pipecenter" then
                 if pipePos ~= nil then
                     local pos = "::pos{0,0,"..pipePos["x"]..","..pipePos["y"]..","..pipePos["z"].."}"
-                    p("Closest Pipe: "..pos)
                     s.setWaypoint(pos) 
-                    AddNewLocationByWaypoint("1-Temp", pos, true)
+                    AddNewLocationByWaypoint("1-PipeCenter", pos, true)
+                    pos = worldPos + (pipeDest - pipePos)
+                    pos = "::pos{0,0,"..pos["x"]..","..pos["y"]..","..pos["z"].."}"
+                    AddNewLocationByWaypoint("2-PipeParallel", pos, true)
                 else
                     msg("No Pipe Center known")
                 end
