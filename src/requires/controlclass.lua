@@ -786,9 +786,11 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
         elseif command == "/pipecenter" then
             if pipePos ~= nil then
                 local pos = "::pos{0,0,"..pipePos["x"]..","..pipePos["y"]..","..pipePos["z"].."}"
-                p("Closest Pipe: "..pos)
                 s.setWaypoint(pos) 
-                AddNewLocationByWaypoint("1-Temp", pos, true)
+                AddNewLocationByWaypoint("1-PipeCenter", pos, true)
+                pos = worldPos + (pipeDest - pipePos)
+                pos = "::pos{0,0,"..pos["x"]..","..pos["y"]..","..pos["z"].."}"
+                AddNewLocationByWaypoint("2-PipeParallel", pos, true)
             else
                 msg("No Pipe Center known")
             end
