@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.018
+VERSION_NUMBER = 0.019
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -312,7 +312,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         mouseDistance = 0 -- 2
         sEFC = false -- 2
         MaxSpeed = C.getMaxSpeed() -- 2
-        pipePos = nil -- 2
+        pipePosC = nil -- 2
+        pipePosT = nil -- 2
         pipeDest = nil -- 2
         alignTarget = false -- 2
         if shield then shieldPercent = mfloor(0.5 + shield.getShieldHitpoints() * 100 / shield.getMaxShieldHitpoints()) end
@@ -3369,29 +3370,22 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local nearestDistance = nil
                 local nearestPipePlanet = nil
                 local pipeOriginPlanet = nil
+                local pc, npc = planet.center, nil
                 for k,nextPlanet in pairs(atlas[0]) do
-                    if nextPlanet.hasAtmosphere then -- Skip moons
-                        local distance, tempPos = getPipeDistance(planet.center, nextPlanet.center)
+                    npc = nextPlanet.center
+                    if npc then -- Skip moons
+                        local distance, tempPos = getPipeDistance(pc, npc)
                         if nearestDistance == nil or distance < nearestDistance then
                             nearestPipePlanet = nextPlanet
                             nearestDistance = distance
                             tempPos2 = tempPos 
                             pipeOriginPlanet = planet
                         end
-                        if autopilotTargetPlanet and autopilotTargetPlanet.hasAtmosphere and autopilotTargetPlanet.name ~= planet.name then 
-                            local distance2, tempPos = getPipeDistance(autopilotTargetPlanet.center, nextPlanet.center)
-                            if distance2 < nearestDistance then
-                                nearestPipePlanet = nextPlanet
-                                nearestDistance = distance2
-                                tempPos2 = tempPos 
-                                pipeOriginPlanet = autopilotTargetPlanet
-                            end
-                        end
                     end
                 end 
                 if tempPos2 then 
-                    pipePos = tempPos2 
-                    pipeDest = nearestPipePlanet.center
+                    pipePosC = tempPos2 
+                    pipeDest = nearestPipePlanet
                 end
                 local pipeX = ConvertResolutionX(1770)
                 local pipeY = ConvertResolutionY(330)
@@ -3402,7 +3396,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         if notPvPZone then txtadd = "txttick red " else txtadd = "txttick orange " end
                     end
                     pipeDistance = getDistanceDisplayString(nearestDistance,2)
-                    pipeMessage = svgText(pipeX, pipeY, "Pipe ("..pipeOriginPlanet.name.."--"..nearestPipePlanet.name.."): "..pipeDistance, txtadd.."pbright txtmid") 
+                    pipeMessage = svgText(pipeX, pipeY, "Closest Pipe ("..pipeOriginPlanet.name.."--"..nearestPipePlanet.name.."): "..pipeDistance, txtadd.."pbright txtmid")
+                    if autopilotTargetPlanet and autopilotTargetPlanet.name ~= planet.name and autopilotTargetPlanet.name ~= "Space" then
+                        nearestDistance, pipePosT = getPipeDistance(pc,autopilotTargetPlanet.center)
+                        pipeDistance = getDistanceDisplayString(nearestDistance,2) 
+                        pipeMessage = pipeMessage..svgText(pipeX, pipeY+15, "Target Pipe ("..pipeOriginPlanet.name.."--"..autopilotTargetPlanet.name.."): "..pipeDistance, txtadd.."pbright txtmid") 
+                        pipeDest = autopilotTargetPlanet
+                    else
+                        pipePosT = nil
+                    end
                 end
             end
     
@@ -8614,13 +8616,18 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 msg (msgStr.."locations dumped to screen if present.\n Cut and paste to privatelocations.lua to use")
                 msgTimer = 7
             elseif command == "/pipecenter" then
-                if pipePos ~= nil then
-                    local pos = "::pos{0,0,"..pipePos["x"]..","..pipePos["y"]..","..pipePos["z"].."}"
-                    s.setWaypoint(pos) 
-                    AddNewLocationByWaypoint("1-PipeCenter", pos, true)
-                    pos = worldPos + (pipeDest - pipePos)
+                if pipePosC ~= nil then
+                    local posP = pipePosC
+                    local pos = "::pos{0,0,"..posP["x"]..","..posP["y"]..","..posP["z"].."}"
+                    AddNewLocationByWaypoint("1-ClosestPipeCenter", pos, true)
+                    if pipePosT then 
+                        pos = "::pos{0,0,"..pipePosT["x"]..","..pipePosT["y"]..","..pipePosT["z"].."}"
+                        AddNewLocationByWaypoint("2-"..pipeDest.name.."PipeCenter", pos, true)
+                        posP = pipePosT
+                    end
+                    pos = worldPos + (pipeDest.center - posP)
                     pos = "::pos{0,0,"..pos["x"]..","..pos["y"]..","..pos["z"].."}"
-                    AddNewLocationByWaypoint("2-PipeParallel", pos, true)
+                    AddNewLocationByWaypoint("3-"..pipeDest.name.."PipeParallel", pos, true)
                 else
                     msg("No Pipe Center known")
                 end
@@ -9151,11 +9158,45 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                 }
                     end
     
+                    local function getAegisEntry()
+                        return {
+                                    id = 1000,
+                                    name = { "Aegis", "Aegis", "Aegis"},
+                                    type = {},
+                                    biosphere = {},
+                                    classification = {},
+                                    habitability = {},
+                                    description = {},
+                                    iconPath = "",
+                                    hasAtmosphere = false,
+                                    isSanctuary = false,
+                                    isInSafeZone = true,
+                                    systemId = 0,
+                                    positionInSystem = 1000,
+                                    satellites = {},
+                                    center = {13856549.3576,7386341.6738,-258459.8925},
+                                    gravity = 0,
+                                    radius = 0,
+                                    atmosphereThickness = 0,
+                                    atmosphereRadius = 0,
+                                    surfaceArea = 0,
+                                    surfaceAverageAltitude = 0,
+                                    surfaceMaxAltitude = 0,
+                                    surfaceMinAltitude = 0,
+                                    GM = 0,
+                                    ores = {},
+                                    territories = 0,
+                                    noAtmosphericDensityAltitude = 0,
+                                    spaceEngineMinAltitude = 0,
+                                }
+                    end
+    
                     local altTable = { [1]=6637, [2]=3426, [4]=7580, [26]=4242, [27]=4150, [3]=21452, [8]=3434, [9]=5916 } -- Measured min space engine altitudes for Madis, Alioth, Talemai, Sanctuary, Haven, Thades, Teoma, Jago
                     for galaxyId,galaxy in pairs(atlas) do
                         -- Create a copy of Space with the appropriate SystemId for each galaxy
                         atlas[galaxyId][0] = getSpaceEntry()
                         atlas[galaxyId][0].systemId = galaxyId
+                        atlas[galaxyId][1000] = getAegisEntry()
                         atlasCopy[galaxyId] = {} -- Prepare a copy galaxy
     
                         for planetId,planet in pairs(atlas[galaxyId]) do
