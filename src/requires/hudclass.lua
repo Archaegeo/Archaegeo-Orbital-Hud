@@ -1624,29 +1624,22 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             local nearestDistance = nil
             local nearestPipePlanet = nil
             local pipeOriginPlanet = nil
+            local pc, npc = planet.center, nil
             for k,nextPlanet in pairs(atlas[0]) do
-                if nextPlanet.hasAtmosphere then -- Skip moons
-                    local distance, tempPos = getPipeDistance(planet.center, nextPlanet.center)
+                npc = nextPlanet.center
+                if npc then -- Skip moons
+                    local distance, tempPos = getPipeDistance(pc, npc)
                     if nearestDistance == nil or distance < nearestDistance then
                         nearestPipePlanet = nextPlanet
                         nearestDistance = distance
                         tempPos2 = tempPos 
                         pipeOriginPlanet = planet
                     end
-                    if autopilotTargetPlanet and autopilotTargetPlanet.hasAtmosphere and autopilotTargetPlanet.name ~= planet.name then 
-                        local distance2, tempPos = getPipeDistance(autopilotTargetPlanet.center, nextPlanet.center)
-                        if distance2 < nearestDistance then
-                            nearestPipePlanet = nextPlanet
-                            nearestDistance = distance2
-                            tempPos2 = tempPos 
-                            pipeOriginPlanet = autopilotTargetPlanet
-                        end
-                    end
                 end
             end 
             if tempPos2 then 
-                pipePos = tempPos2 
-                pipeDest = nearestPipePlanet.center
+                pipePosC = tempPos2 
+                pipeDest = nearestPipePlanet
             end
             local pipeX = ConvertResolutionX(1770)
             local pipeY = ConvertResolutionY(330)
@@ -1657,7 +1650,15 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     if notPvPZone then txtadd = "txttick red " else txtadd = "txttick orange " end
                 end
                 pipeDistance = getDistanceDisplayString(nearestDistance,2)
-                pipeMessage = svgText(pipeX, pipeY, "Pipe ("..pipeOriginPlanet.name.."--"..nearestPipePlanet.name.."): "..pipeDistance, txtadd.."pbright txtmid") 
+                pipeMessage = svgText(pipeX, pipeY, "Closest Pipe ("..pipeOriginPlanet.name.."--"..nearestPipePlanet.name.."): "..pipeDistance, txtadd.."pbright txtmid")
+                if autopilotTargetPlanet and autopilotTargetPlanet.name ~= planet.name and autopilotTargetPlanet.name ~= "Space" then
+                    nearestDistance, pipePosT = getPipeDistance(pc,autopilotTargetPlanet.center)
+                    pipeDistance = getDistanceDisplayString(nearestDistance,2) 
+                    pipeMessage = pipeMessage..svgText(pipeX, pipeY+15, "Target Pipe ("..pipeOriginPlanet.name.."--"..autopilotTargetPlanet.name.."): "..pipeDistance, txtadd.."pbright txtmid") 
+                    pipeDest = autopilotTargetPlanet
+                else
+                    pipePosT = nil
+                end
             end
         end
 

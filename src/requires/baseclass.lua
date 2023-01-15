@@ -505,11 +505,45 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                             }
                 end
 
+                local function getAegisEntry()
+                    return {
+                                id = 1000,
+                                name = { "Aegis", "Aegis", "Aegis"},
+                                type = {},
+                                biosphere = {},
+                                classification = {},
+                                habitability = {},
+                                description = {},
+                                iconPath = "",
+                                hasAtmosphere = false,
+                                isSanctuary = false,
+                                isInSafeZone = true,
+                                systemId = 0,
+                                positionInSystem = 1000,
+                                satellites = {},
+                                center = {13856549.3576,7386341.6738,-258459.8925},
+                                gravity = 0,
+                                radius = 0,
+                                atmosphereThickness = 0,
+                                atmosphereRadius = 0,
+                                surfaceArea = 0,
+                                surfaceAverageAltitude = 0,
+                                surfaceMaxAltitude = 0,
+                                surfaceMinAltitude = 0,
+                                GM = 0,
+                                ores = {},
+                                territories = 0,
+                                noAtmosphericDensityAltitude = 0,
+                                spaceEngineMinAltitude = 0,
+                            }
+                end
+
                 local altTable = { [1]=6637, [2]=3426, [4]=7580, [26]=4242, [27]=4150, [3]=21452, [8]=3434, [9]=5916 } -- Measured min space engine altitudes for Madis, Alioth, Talemai, Sanctuary, Haven, Thades, Teoma, Jago
                 for galaxyId,galaxy in pairs(atlas) do
                     -- Create a copy of Space with the appropriate SystemId for each galaxy
                     atlas[galaxyId][0] = getSpaceEntry()
                     atlas[galaxyId][0].systemId = galaxyId
+                    atlas[galaxyId][1000] = getAegisEntry()
                     atlasCopy[galaxyId] = {} -- Prepare a copy galaxy
 
                     for planetId,planet in pairs(atlas[galaxyId]) do

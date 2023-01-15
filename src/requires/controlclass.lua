@@ -784,13 +784,18 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             msg (msgStr.."locations dumped to screen if present.\n Cut and paste to privatelocations.lua to use")
             msgTimer = 7
         elseif command == "/pipecenter" then
-            if pipePos ~= nil then
-                local pos = "::pos{0,0,"..pipePos["x"]..","..pipePos["y"]..","..pipePos["z"].."}"
-                s.setWaypoint(pos) 
-                AddNewLocationByWaypoint("1-PipeCenter", pos, true)
-                pos = worldPos + (pipeDest - pipePos)
+            if pipePosC ~= nil then
+                local posP = pipePosC
+                local pos = "::pos{0,0,"..posP["x"]..","..posP["y"]..","..posP["z"].."}"
+                AddNewLocationByWaypoint("1-ClosestPipeCenter", pos, true)
+                if pipePosT then 
+                    pos = "::pos{0,0,"..pipePosT["x"]..","..pipePosT["y"]..","..pipePosT["z"].."}"
+                    AddNewLocationByWaypoint("2-"..pipeDest.name.."PipeCenter", pos, true)
+                    posP = pipePosT
+                end
+                pos = worldPos + (pipeDest.center - posP)
                 pos = "::pos{0,0,"..pos["x"]..","..pos["y"]..","..pos["z"].."}"
-                AddNewLocationByWaypoint("2-PipeParallel", pos, true)
+                AddNewLocationByWaypoint("3-"..pipeDest.name.."PipeParallel", pos, true)
             else
                 msg("No Pipe Center known")
             end
