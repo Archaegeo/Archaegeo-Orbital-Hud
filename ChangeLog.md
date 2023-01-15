@@ -1,5 +1,19 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.019 - Enhance Pipe Support
+- Moons are now considered for pipes.
+- Pipe info now shows Closest Pipe and Target Pipe. 
+    - Closest pipe is the closest pipe at your location to the closest planet
+    - Target pipe is the pipe at your location from closest planet to IPH target planet, if IPH is not a Space location or same planet as closest planet.
+- /pipecenter now sets the following temporary locations in IPH:
+    - `1-ClosetPipeCenter`: to center of closest pipe.
+    - `2-NamePipeCenter`: to center of target planet pipe.
+    - `3-NamePipeParallel`: to destination at Name that is parallel to the pipe (closest pipe planet if no target on IPH), 
+            at your current distance from the center of that pipe.  I.E. for flying X distance from pipe whole way to avoid triangle entry.
+    These IPH locations do not update until you use /pipecenter again
+- Added Aegis as a default atlas location, like a planet. - WARNING - AP to that default location is the same as the location in F4 bookmarks,
+    Use at your own risk as a direct AP as there is a lot of garbage around.
+
 Version 2.018 - Enhanced pipe clear support (Thanks Koruzarius for the math help)
 - `/pipecenter` now names temp targets in IPH as 1-PipeCenter and 2-PipeParallel
 - 2-PipeParallel, if used with AP, will set your destination at the target planet the same distance you are currently from center of pipe.
