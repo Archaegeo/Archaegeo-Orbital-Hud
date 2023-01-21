@@ -913,6 +913,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         end
     end
 
+    
+
     function ap.TenthTick()
         local function GetAutopilotTravelTime()
             if not Autopilot then
@@ -993,6 +995,52 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 lastMaxBrakeAtG = gravity
             end
         end
+
+        local function getPipeDistance(origCenter, destCenter)  -- Many thanks to Tiramon for the idea and functionality.
+            local pipeDistance
+            local pipe = (destCenter - origCenter):normalize()
+            local r = (worldPos -origCenter):dot(pipe) / pipe:dot(pipe)
+            if r <= 0. then
+                return (worldPos-origCenter):len(), nil
+            elseif r >= (destCenter - origCenter):len() then
+                return (worldPos-destCenter):len(), nil
+            end
+            local L = origCenter + (r * pipe)
+            pipeDistance =  (L - worldPos):len()
+            return pipeDistance, L
+        end
+
+        local function getClosestPipe() -- Many thanks to Tiramon for the idea and functionality, thanks to Dimencia for the assist
+            local tempPos, tempPos2 = nil,nil
+            local nearestDistance = nil
+            local nearestPipePlanet = nil
+            local pc, npc = planet.center, nil
+            for k,nextPlanet in pairs(atlas[0]) do
+                npc = nextPlanet.center
+                if npc then
+                    local distance, tempPos = getPipeDistance(pc, npc)
+                    if nearestDistance == nil or distance < nearestDistance then
+                        nearestPipePlanet = nextPlanet
+                        nearestDistance = distance
+                        tempPos2 = tempPos 
+                    end
+                end
+            end 
+            if tempPos2 then 
+                pipePosC = tempPos2 
+                pipeDestC = nearestPipePlanet
+                pipeDistC = nearestDistance
+            end
+            if autopilotTargetPlanet then
+                if autopilotTargetPlanet and autopilotTargetPlanet.name ~= planet.name and autopilotTargetPlanet.name ~= "Space" then
+                    pipeDistT, pipePosT = getPipeDistance(pc,autopilotTargetPlanet.center)
+                    pipeDestT = autopilotTargetPlanet
+                else
+                    pipePosT = nil
+                end
+            end
+        end
+
         ships = C.getDockedConstructs() 
         passengers = C.getPlayersOnBoard()
         shipsMass = 0
@@ -1010,6 +1058,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             travelTime = GetAutopilotTravelTime() -- This also sets AutopilotDistance so we don't have to calc it again
         end
         RefreshLastMaxBrake() -- force refresh, in case we took damage
+        getClosestPipe()
     end
 
 
@@ -1382,7 +1431,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         if ProgradeIsOn then
             if spaceLand then 
                 BrakeIsOn = false -- wtf how does this keep turning on, and why does it matter if we're in cruise?
-                local aligned = false
+                local aligned, target = false, CustomTarget
+                if not target then target = vec3(constructVelocity) end
                 aligned = AlignToWorldVector(CustomTarget.position-worldPos,0.1) 
                 autoRoll = true
                 if aligned then

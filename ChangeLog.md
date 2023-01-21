@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.020
+- Fix Info box scaling different ratios (i.e. 21:9).  If text overflows outside box, increase OrbitMapSize variable.
+- Moved pipe calculations from HUD to AP so hudclass.lua remains optional
+
 Version 2.019 - Enhance Pipe Support
 - Moons are now considered for pipes.
 - Pipe info now shows Closest Pipe and Target Pipe. 

@@ -1320,13 +1320,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     local atmoAngle = math.asin((v.atmosphereRadius)/targetDistance)*constants.rad2deg
                     if atmoAngle ~= atmoAngle then atmoAngle = topAngle end -- hide atmo if inside it
                     local atmoSize = atmoAngle/fov*orbitMapHeight
-                    --local nearestDistance = targetDistance - v.radius - math.max(v.surfaceMaxAltitude,v.noAtmosphericDensityAltitude)
-                    --if nearestDistance < 0 then nearestDistance = targetDistance - v.radius - v.surfaceMaxAltitude end
-                    --if nearestDistance < 0 then nearestDistance = targetDistance - v.radius end
-                    --if v.name == "Teoma" then p(x .. "," .. y .. " - " .. xAngle .. ", " .. yAngle) end
 
-                    -- Seems useful to give the distance to the atmo, land, etc instead of to the c
-                    -- But it looks weird and I can't really label what it is, it'd take up too much space
                     local distance = getDistanceDisplayString(targetDistance,1)
                     local displayString = v.name
                     
@@ -1604,60 +1598,22 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             end
         end
 
-        local function getPipeDistance(origCenter, destCenter)  -- Many thanks to Tiramon for the idea and functionality.
+        local function drawClosestPipe() -- Many thanks to Tiramon for the idea and functionality, thanks to Dimencia for the assist
             local pipeDistance
-            local pipe = (destCenter - origCenter):normalize()
-            local r = (worldPos -origCenter):dot(pipe) / pipe:dot(pipe)
-            if r <= 0. then
-                return (worldPos-origCenter):len(), nil
-            elseif r >= (destCenter - origCenter):len() then
-                return (worldPos-destCenter):len(), nil
-            end
-            local L = origCenter + (r * pipe)
-            pipeDistance =  (L - worldPos):len()
-            return pipeDistance, L
-        end
-
-        local function getClosestPipe() -- Many thanks to Tiramon for the idea and functionality, thanks to Dimencia for the assist
-            local pipeDistance
-            local tempPos, tempPos2 = nil,nil
-            local nearestDistance = nil
-            local nearestPipePlanet = nil
-            local pipeOriginPlanet = nil
-            local pc, npc = planet.center, nil
-            for k,nextPlanet in pairs(atlas[0]) do
-                npc = nextPlanet.center
-                if npc then -- Skip moons
-                    local distance, tempPos = getPipeDistance(pc, npc)
-                    if nearestDistance == nil or distance < nearestDistance then
-                        nearestPipePlanet = nextPlanet
-                        nearestDistance = distance
-                        tempPos2 = tempPos 
-                        pipeOriginPlanet = planet
-                    end
-                end
-            end 
-            if tempPos2 then 
-                pipePosC = tempPos2 
-                pipeDest = nearestPipePlanet
-            end
+            local p = planet
             local pipeX = ConvertResolutionX(1770)
             local pipeY = ConvertResolutionY(330)
-            if nearestDistance then
+            if pipeDistC then
                 local txtadd = "txttick "
                 local fudge = 500000
-                if nearestDistance < nearestPipePlanet.radius+fudge or nearestDistance < pipeOriginPlanet.radius+fudge then 
+                if pipeDistC < p.radius+fudge then 
                     if notPvPZone then txtadd = "txttick red " else txtadd = "txttick orange " end
                 end
-                pipeDistance = getDistanceDisplayString(nearestDistance,2)
-                pipeMessage = svgText(pipeX, pipeY, "Closest Pipe ("..pipeOriginPlanet.name.."--"..nearestPipePlanet.name.."): "..pipeDistance, txtadd.."pbright txtmid")
+                pipeDistance = getDistanceDisplayString(pipeDistC,2)
+                pipeMessage = svgText(pipeX, pipeY, "Closest Pipe ("..p.name.."--"..pipeDestC.name.."): "..pipeDistance, txtadd.."pbright txtmid")
                 if autopilotTargetPlanet and autopilotTargetPlanet.name ~= planet.name and autopilotTargetPlanet.name ~= "Space" then
-                    nearestDistance, pipePosT = getPipeDistance(pc,autopilotTargetPlanet.center)
-                    pipeDistance = getDistanceDisplayString(nearestDistance,2) 
-                    pipeMessage = pipeMessage..svgText(pipeX, pipeY+15, "Target Pipe ("..pipeOriginPlanet.name.."--"..autopilotTargetPlanet.name.."): "..pipeDistance, txtadd.."pbright txtmid") 
-                    pipeDest = autopilotTargetPlanet
-                else
-                    pipePosT = nil
+                    pipeDistance = getDistanceDisplayString(pipeDistT,2) 
+                    pipeMessage = pipeMessage..svgText(pipeX, pipeY+15, "Target Pipe ("..p.name.."--"..autopilotTargetPlanet.name.."): "..pipeDistance, txtadd.."pbright txtmid") 
                 end
             end
         end
@@ -2404,7 +2360,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         if isRemote() == 0 or RemoteHud then 
             local startX = ConvertResolutionX(OrbitMapX+10)
             local startY = ConvertResolutionY(OrbitMapY+20)
-            local midX = ConvertResolutionX(OrbitMapX+10+OrbitMapSize/1.25)
+            local midX = ConvertResolutionX(OrbitMapX+60*1920/ResolutionX+OrbitMapSize/2)
             local height = 25
             local hudrate = mfloor(1/hudTickRate)
             if fpsCount < hudrate then
@@ -2440,7 +2396,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             newContent[#newContent + 1] = svgText(startX, startY+height*6, stringf("Influence: %s", planet.name))
             newContent[#newContent +1] = svgText(startX, startY+height*7, stringf("Set Max Speed: %s", mfloor(MaxGameVelocity*3.6+0.5)))
             newContent[#newContent +1] = svgText(midX, startY+height*7, stringf("Actual Max Speed: %s", mfloor(MaxSpeed*3.6+0.5)))
-            newContent[#newContent +1] = svgText(startX, startY+height*8, stringf("Friction Burn Speed: %s", mfloor(C.getFrictionBurnSpeed()*3.6)))
+            newContent[#newContent +1] = svgText(startX, startY+height*8, stringf("Burn Speed: %s", mfloor(C.getFrictionBurnSpeed()*3.6)))
             newContent[#newContent +1] = svgText(midX, startY+height*8, stringf("FPS (Avg): %s (%s)", mfloor(fps),fpsAvg))
         end
         newContent[#newContent + 1] = "</g></g>"
@@ -2480,7 +2436,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             pipeMessage = "" 
             return 
         end
-        getClosestPipe()           
+        drawClosestPipe()           
     end
 
     function Hud.DrawSettings(newContent)
