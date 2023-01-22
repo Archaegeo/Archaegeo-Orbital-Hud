@@ -264,7 +264,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 else
                     showHud = true
                 end
-                if RADAR then RADAR.ToggleRadarPanel() end
+                --if RADAR then RADAR.ToggleRadarPanel() end
             end
         elseif action == "option4" then
             toggleView = false      
