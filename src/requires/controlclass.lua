@@ -264,7 +264,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 else
                     showHud = true
                 end
-                if RADAR then RADAR.ToggleRadarPanel() end
+                --if RADAR then RADAR.ToggleRadarPanel() end
             end
         elseif action == "option4" then
             toggleView = false      
@@ -784,18 +784,20 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             msg (msgStr.."locations dumped to screen if present.\n Cut and paste to privatelocations.lua to use")
             msgTimer = 7
         elseif command == "/pipecenter" then
-            if pipePosC ~= nil then
+            if Autopilot then
+                msg("Disengage autopilot before using /pipecenter")
+            elseif pipePosC ~= nil then
                 local posP = pipePosC
                 local pos = "::pos{0,0,"..posP["x"]..","..posP["y"]..","..posP["z"].."}"
                 AddNewLocationByWaypoint("1-ClosestPipeCenter", pos, true)
                 if pipePosT then 
-                    pos = "::pos{0,0,"..pipePosT["x"]..","..pipePosT["y"]..","..pipePosT["z"].."}"
-                    AddNewLocationByWaypoint("2-"..pipeDest.name.."PipeCenter", pos, true)
                     posP = pipePosT
+                    pos = "::pos{0,0,"..posP["x"]..","..posP["y"]..","..posP["z"].."}"
+                    AddNewLocationByWaypoint("2-"..pipeDestT.name.."PipeCenter", pos, true)
+                    pos = worldPos + (pipeDestT.center - posP)
+                    pos = "::pos{0,0,"..pos["x"]..","..pos["y"]..","..pos["z"].."}"
+                    AddNewLocationByWaypoint("3-"..pipeDestT.name.."PipeParallel", pos, true)
                 end
-                pos = worldPos + (pipeDest.center - posP)
-                pos = "::pos{0,0,"..pos["x"]..","..pos["y"]..","..pos["z"].."}"
-                AddNewLocationByWaypoint("3-"..pipeDest.name.."PipeParallel", pos, true)
             else
                 msg("No Pipe Center known")
             end

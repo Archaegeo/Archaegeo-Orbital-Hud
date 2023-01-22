@@ -1,5 +1,17 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.020 - Performance improvement
+FIRST: Never use ArchHUD (or any Hud that draws on monitor) with in game settings "Graphics - Voxel Rendering" on Auto or with
+"Graphics - Number of Threads" at max.  It crushes fps on high element ships due to dedicating cores to voxels vice physics.
+I set mine to 2 of 10, and on a 527 element ship had fps go from 10 to 35 (ultra settings).
+SECOND: Anytime your FPS is low, hit alt-3 to hide the hud save for warning messages.  You will see about a 10-15 fps jump.  
+The hud has the same FPS as vanilla HUD though.
+- Refactor of hudclass to only update some things as needed vice every hudtickrate.
+- Fixed INFO panel to only update once a second.  Previously INFO panel was a 10 fps hit due to hudrate update.
+- Removed FPS from INFO panel, not needed. Recommend using windows game panel or RivaTuner Statistics Server for FPS
+- Fix Info box scaling different ratios (i.e. 21:9).  If text overflows outside box, increase OrbitMapSize variable.
+- Moved pipe calculations from HUD to AP so hudclass.lua remains optional
+
 Version 2.019 - Enhance Pipe Support
 - Moons are now considered for pipes.
 - Pipe info now shows Closest Pipe and Target Pipe. 
