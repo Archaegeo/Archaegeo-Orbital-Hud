@@ -1,8 +1,10 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 2.021 
-- Fix: Thades AP issue.  Still use caution if taking off in the canyon, but all other AP including to orbit around moonlets and moons should be good.
-REMINDER: ArchHUD does not do auto AP ground to ground to a no-atmosphere body (moonlets/moons) but will put you in orbit around them.
+- Fix: Thades AP issue. Moonlets should not long cause issues to the AP.  AP should work like anywhere else.
+Still use caution if taking off in the canyon (i.e. if you take off and face the wall to climb out, it will end in tears), 
+but all other AP including to orbit around moonlets and moons should be good.
+REMINDER: ArchHUD does not do auto AP ground to non-atmo ground (moonlets/moons) but will put you in orbit around them.
 - Fix: Flicking of Cruise/Travel on throttle indication when in AP in space.
 - Fix: Space points used in Route to only slow to < 5000 k/hr before redirecting (vice old slowing to < 180 k/hr)
 
