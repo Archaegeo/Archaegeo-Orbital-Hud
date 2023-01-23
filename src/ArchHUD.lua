@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.020
+VERSION_NUMBER = 0.021
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -662,7 +662,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local minDistance2, body
             local coord = vec3(coordinates)
             for _, params in pairs(self) do
-                local distance2 = (params.center - coord):len2()
+                local distance2 = (coord - params.center):len() - params.radius - params.atmosphereThickness
                 if (not body or distance2 < minDistance2) and params.name ~= "Space" then -- Never return space.  
                     body = params
                     minDistance2 = distance2
@@ -2080,7 +2080,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local label = "CRUISE"
                 local u = "km/h"
                 local value = flightValue
-                if (flightStyle == "TRAVEL" or flightStyle == "AUTOPILOT") then
+                if string.find(flightStyle, "TRAVEL") or string.find(flightStyle, "AUTOPILOT") then
                     label = "THROT"
                     u = "%"
                     value = throt
@@ -4727,7 +4727,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         getDistanceDisplayString, FormatTimeString, SaveDataBank, jdecode, msg)  
         local s = DUSystem
         local C = DUConstruct
-
+    
         local ap = {}
         -- Local Functions and Variables for whole class
             local speedLimitBreaking = false
@@ -4774,7 +4774,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local parseRadar = false
             local lastMouseTime = 0
             local shipsMass = 0
-
+    
             local function safeZone() -- Thanks to @SeM for the base code, modified to work with existing Atlas
                 return (C.isInPvPZone()~=1), mabs(C.getDistanceToSafeZone())
             end
@@ -4797,7 +4797,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local function GetAutopilotTBBrakeDistanceAndTime(speed)
                 local finalSpeed = AutopilotEndSpeed
                 if not Autopilot then finalSpeed = 0 end
-
+    
                 return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, Nav:maxForceForward(),
                         warmup, LastMaxBrake - (AutopilotPlanetGravity * coreMass))
             end
@@ -4983,7 +4983,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     return false
                 end
             end
-
+    
         function ap.clearAll()
             AutopilotAccelerating = false
             AutopilotBraking = false
@@ -5014,22 +5014,22 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             alignHeading = nil
             finalLand = false
         end
-
+    
         function ap.GetAutopilotBrakeDistanceAndTime(speed)
             return GetAutopilotBrakeDistanceAndTime(speed)
         end
-
+    
         function ap.GetAutopilotTBBrakeDistanceAndTime(speed)
             return GetAutopilotTBBrakeDistanceAndTime(speed)
         end
-
+    
         function ap.showWayPoint(planet, coordinates, dontSet)
             return showWaypoint(planet, coordinates, dontSet)
         end
-
+    
         function ap.APTick()
             local wheel = s.getMouseWheel()
-
+    
             if wheel > 0 then
                 AP.changeSpd()
             elseif wheel < 0 then
@@ -5076,8 +5076,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 AP.ToggleAutopilot()
             end
         end
-
-        function ap.ToggleIntoOrbit() -- Toggle IntoOrbit mode on and off
+    
+        function ap.ToggleIntoOrbit(targetPlanet) -- Toggle IntoOrbit mode on and off
             OrbitAchieved = false
             orbitPitch = nil
             orbitRoll = nil
@@ -5099,7 +5099,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     IntoOrbit = true
                     autoRoll = true
                     if OrbitTargetPlanet == nil then
-                        OrbitTargetPlanet = planet
+                        OrbitTargetPlanet = targetPlanet or planet
+                        p("Orbiting "..OrbitTargetPlanet.name)
                     end
                     if AltitudeHold then AltitudeHold = false AutoTakeoff = false end
                 else
@@ -5117,7 +5118,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 OrbitTargetSet = false
             end
         end
-
+    
         function ap.ToggleVerticalTakeoff() -- Toggle vertical takeoff mode on and off
             AltitudeHold = false
             if VertTakeOff then
@@ -5143,7 +5144,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             end
             VertTakeOff = not VertTakeOff
         end
-
+    
         function ap.checkLOS(vector)
             local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, vector,
                 function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
@@ -5153,7 +5154,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             end
             if atmoDistance ~= nil then return intersectBody, atmoDistance else return nil, nil end
         end
-
+    
         local function vertical(factor,stop)
             if stop then
                 upAmount = 0
@@ -5168,13 +5169,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 navCom:updateCommandFromActionStart(axisCommandId.vertical, factor)
             end
         end
-
+    
         function ap.vertical(factor, stop)
             vertical(factor,stop)
         end
-
+    
         function ap.ToggleAutopilot() -- Toggle autopilot mode on and off
-
+    
             local function ToggleVectorToTarget(SpaceTarget)
                 -- This is a feature to vector toward the target destination in atmo or otherwise on-planet
                 -- Uses altitude hold.  
@@ -5188,7 +5189,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
                 VectorStatus = "Proceeding to Waypoint"
             end
-
+    
             local function getIndex(name)
                 if name then
                     for i,k in pairs(AtlasOrdered) do
@@ -5275,12 +5276,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                 Autopilot = true
                             elseif not inAtmo then
                                 if IntoOrbit then AP.ToggleIntoOrbit() end -- Reset all appropriate vars
-                                OrbitTargetOrbit = ((planet.noAtmosphericDensityAltitude > 0 and planet.noAtmosphericDensityAltitude) or planet.surfaceMaxAltitude) + LowOrbitHeight
+                                OrbitTargetOrbit = ((autopilotTargetPlanet.noAtmosphericDensityAltitude > 0 and autopilotTargetPlanet.noAtmosphericDensityAltitude) or autopilotTargetPlanet.surfaceMaxAltitude) + LowOrbitHeight
                                 OrbitTargetSet = true
                                 orbitalParams.AutopilotAlign = true
                                 orbitalParams.VectorToTarget = true
                                 orbitAligned = false
-                                if not IntoOrbit then AP.ToggleIntoOrbit() end
+                                if not IntoOrbit then AP.ToggleIntoOrbit(autopilotTargetPlanet) end
                             end
                         end
                     else
@@ -5329,7 +5330,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 if aptoggle == 2 then aptoggle = true end
             end
         end
-
+    
         function ap.routeWP(getRoute, clear, loadit)
             if loadit then 
                 if loadit == 1 then 
@@ -5359,7 +5360,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             end
             return apRoute
         end
-
+    
         function ap.cmdThrottle(value, dontSwitch) -- sets the throttle value to value, also switches to throttle mode (vice cruise) unless dontSwitch passed
             if navCom:getAxisCommandType(0) ~= axisCommandType.byThrottle and not dontSwitch then
                 Nav.control.cancelCurrentControlMasterMode()
@@ -5368,7 +5369,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             PlayerThrottle = uclamp(round(value*100,0)/100, -1, 1)
             setCruiseSpeed = nil
         end
-
+    
         function ap.cmdCruise(value, dontSwitch) -- sets the cruise target speed to value, also switches to cruise mode (vice throttle) unless dontSwitch passed
             if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed and not dontSwitch then
                 Nav.control.cancelCurrentControlMasterMode()
@@ -5376,7 +5377,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             navCom:setTargetSpeedCommand(axisCommandId.longitudinal, value)
             setCruiseSpeed = value
         end
-
+    
         function ap.ToggleLockPitch()
             if LockPitch == nil then
                 play("lkPOn","LP")
@@ -5490,7 +5491,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 ahDoubleClick = 0
             end
         end
-
+    
         function ap.ResetAutopilots(ap)
             if ap then 
                 spaceLaunch = false
@@ -5528,7 +5529,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             finalLand = false
             upAmount = 0
         end
-
+    
         function ap.BrakeToggle(strBk) -- Toggle brakes on and off
             -- Toggle brakes
             if not BrakeIsOn then
@@ -5549,7 +5550,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 play("bkOff","B",1)
             end
         end
-
+    
         function ap.BeginReentry() -- Begins re-entry process
             if Reentry then
                 msg("Re-Entry cancelled")
@@ -5585,7 +5586,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             end
             AutoTakeoff = false -- This got left on somewhere.. 
         end
-
+    
         function ap.ToggleAntigrav() -- Toggles antigrav on and off
             if antigrav and not ExternalAGG then
                 if antigravOn then
@@ -5603,7 +5604,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
             end
         end
-
+    
         function ap.changeSpd(down)
             local mult=1
             if down then mult = -1 end
@@ -5635,9 +5636,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
             end
         end
-
+    
         
-
+    
         function ap.TenthTick()
             local function GetAutopilotTravelTime()
                 if not Autopilot then
@@ -5706,7 +5707,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         maxBrake = maxBrake / atmosDensity
                         if atmosDensity > 0.10 then 
                             --if LastMaxBrakeInAtmo then
-                            --LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
+                               --LastMaxBrakeInAtmo = (LastMaxBrakeInAtmo + maxBrake) / 2
                             --else
                                 LastMaxBrakeInAtmo = maxBrake 
                             --end
@@ -5718,7 +5719,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     lastMaxBrakeAtG = gravity
                 end
             end
-
+    
             local function getPipeDistance(origCenter, destCenter)  -- Many thanks to Tiramon for the idea and functionality.
                 local pipeDistance
                 local pipe = (destCenter - origCenter):normalize()
@@ -5732,7 +5733,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 pipeDistance =  (L - worldPos):len()
                 return pipeDistance, L
             end
-
+    
             local function getClosestPipe() -- Many thanks to Tiramon for the idea and functionality, thanks to Dimencia for the assist
                 local tempPos, tempPos2 = nil,nil
                 local nearestDistance = nil
@@ -5763,7 +5764,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 end
             end
-
+    
             ships = C.getDockedConstructs() 
             passengers = C.getPlayersOnBoard()
             shipsMass = 0
@@ -5783,13 +5784,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             RefreshLastMaxBrake() -- force refresh, in case we took damage
             getClosestPipe()
         end
-
-
+    
+    
             local targetSpeedPID2 = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
             
         -- Local functions and static variables for onFlush
             local function composeAxisAccelerationFromTargetSpeedV(commandAxis, targetSpeed)
-
+    
                 local axisCRefDirection = vec3()
                 local axisWorldDirection = vec3()
             
@@ -5812,12 +5813,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local airResistanceAcceleration = vec3(C.getWorldAirFrictionAcceleration())
                 local airResistanceAccelerationCommand = airResistanceAcceleration:dot(axisWorldDirection)
             
-
+    
                 local currentAxisSpeedMS = coreVelocity:dot(axisCRefDirection)
             
                 local targetAxisSpeedMS = targetSpeed * constants.kph2m
             
-
+    
             
                 targetSpeedPID2:inject(targetAxisSpeedMS - currentAxisSpeedMS) -- update PID
             
@@ -5832,9 +5833,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 return finalAcceleration
             end
             local targetSpeedPID = pid.new(10, 0, 10.0) -- The PID used to compute acceleration to reach target speed
-
+    
             local function composeAxisAccelerationFromTargetSpeed(commandAxis, targetSpeed)
-
+    
                 local axisCRefDirection = vec3()
                 local axisWorldDirection = vec3()
             
@@ -5861,7 +5862,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             
                 local targetAxisSpeedMS = targetSpeed * constants.kph2m
             
-
+    
             
                 targetSpeedPID:inject(targetAxisSpeedMS - currentAxisSpeedMS) -- update PID
             
@@ -5875,7 +5876,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             
                 return finalAcceleration
             end
-
+    
             local function getPitch(gravityDirection, forward, right)
             
                 local horizontalForward = gravityDirection:cross(right):normalize_inplace() -- Cross forward?
@@ -5886,7 +5887,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end -- Cross right dot forward?
                 return pitch
             end
-
+    
             local function checkCollision()
                 if collisionTarget and not BrakeLanding then
                     local body = collisionTarget[1]
@@ -5936,7 +5937,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local yawPID = pid.new(2 * 0.01, 0, 2 * 0.1) -- magic number tweaked to have a default factor in the 1-10 range
             local throttlePID = pid.new(0.1, 0, 1) 
             local brakePID = pid.new(1 * 0.01, 0, 1 * 0.1)
-
+    
         function ap.onFlush()
             if antigrav and not ExternalAGG and not antigravOn and antigrav.getBaseAltitude() ~= AntigravTargetAltitude then
                     sba = AntigravTargetAltitude
@@ -5960,7 +5961,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local finalYawInput = uclamp((yawInput + yawInput2) - s.getControlDeviceLeftRightInput(),-1,1)
             
             local finalBrakeInput = (BrakeIsOn and 1) or 0
-
+    
             -- Axis
             if inAtmo then
                 worldVertical = vec3(c.getWorldVertical()) -- along gravity
@@ -5971,7 +5972,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 worldVertical = (planet.center - worldPos):normalize()
             end
                     
-
+    
             constructUp = vec3(C.getWorldOrientationUp())
             constructForward = vec3(C.getWorldOrientationForward())
             constructRight = vec3(C.getWorldOrientationRight())
@@ -5986,17 +5987,17 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local corrX = math.cos(radianRoll)
             local corrY = math.sin(radianRoll)
             adjustedPitch = getPitch(worldVertical, constructForward, (constructRight * corrX) + (constructUp * corrY)) 
-
+    
             local constructVelocityDir = constructVelocity:normalize()
             local currentRollDegAbs = mabs(adjustedRoll)
             local currentRollDegSign = utils.sign(adjustedRoll)
-
+    
             -- Rotation
             local constructAngularVelocity = vec3(C.getWorldAngularVelocity())
             local targetAngularVelocity = finalPitchInput * pitchSpeedFactor * constructRight + finalRollInput * rollSpeedFactor * constructForward +
                     finalYawInput * yawSpeedFactor * constructUp
-
-
+    
+    
             if autoRoll == true and worldVertical:len() > 0.01 then
                 -- autoRoll on AND adjustedRoll is big enough AND player is not rolling
                 local currentRollDelta = mabs(targetRoll-adjustedRoll)
@@ -6008,35 +6009,35 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         targetRoll = 0 -- Always roll to 0 out of atmo
                         targetRollDeg = 0
                     end
-
+    
                     rollPID:inject(targetRollDeg - adjustedRoll)
                     local autoRollInput = rollPID:get()
                     targetAngularVelocity = targetAngularVelocity + autoRollInput * constructForward
                 end
             end
-
-
-
-
+    
+    
+    
+    
             brakeInput2 = 0
-
+    
         -- Start old APTick Code 
             atmosDensity = atmosphere()
             inAtmo = false or (coreAltitude < planet.noAtmosphericDensityAltitude and atmosDensity > 0.00001 )
-
+    
             --coreAltitude = c.getAltitude()
             coreAltitude = (worldPos - planet.center):len() - planet.radius
             abvGndDet = AboveGroundLevel()
             time = systime()
             lastApTickTime = time
-
+    
             if GearExtended and abvGndDet > -1 and (abvGndDet - 3) < LandingGearGroundHeight then
                 if navCom.targetGroundAltitudeActivated then 
                     navCom:deactivateGroundEngineAltitudeStabilization()
                 end
                 navCom:updateCommandFromActionStart(axisCommandId.vertical, -1)
             end        
-
+    
             if RADAR then
                 parseRadar = not parseRadar
                 if parseRadar then 
@@ -6044,16 +6045,16 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
                 if CollisionSystem then checkCollision() end
             end
-
+    
             if antigrav then
                 antigravOn = (antigrav.isActive() == 1)
             end
-
+    
             local deltaTick = time - lastApTickTime
             local currentYaw = -math.deg(signedRotationAngle(constructUp, constructVelocity, constructForward))
             local currentPitch = math.deg(signedRotationAngle(constructRight, constructVelocity, constructForward)) -- Let's use a consistent func that uses global velocity
             local up = worldVertical * -1
-
+    
             stalling = inAtmo and currentYaw < -YawStallAngle or currentYaw > YawStallAngle or currentPitch < -PitchStallAngle or currentPitch > PitchStallAngle
             local deltaX = s.getMouseDeltaX()
             local deltaY = s.getMouseDeltaY()
@@ -6069,7 +6070,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             yawInput2 = 0
             rollInput2 = 0
             pitchInput2 = 0
-
+    
             local cWorldPos = C.getWorldPosition()
             planet = sys:closestBody(cWorldPos)
             kepPlanet = Kep(planet)
@@ -6078,11 +6079,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 --coreAltitude = (worldPos - planet.center):len() - planet.radius
             --end
             nearPlanet = u.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
-
+    
             local gravity = planet:getGravity(cWorldPos):len() * coreMass
             targetRoll = 0
             local maxKinematicUp = C.getMaxThrustAlongAxis("ground", C.getOrientationUp())[1]
-
+    
             if sivl == 0 then
                 if isRemote() == 1 and holdingShift then
                     if not Animating then
@@ -6105,7 +6106,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                     if userControlScheme == "virtual joystick" then -- Virtual Joystick
                         -- Do navigation things
-
+    
                         if mouseDistance > DeadZone then
                             yawInput2 = yawInput2 - (uclamp(mabs(simulatedX)-DeadZone,0,ResolutionX/2)*utils.sign(simulatedX)) * MouseXSensitivity * dx
                             pitchInput2 = pitchInput2 - (uclamp(mabs(simulatedY)-DeadZone,0,ResolutionY/2)*utils.sign(simulatedY)) * MouseYSensitivity * dy
@@ -6120,14 +6121,14 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 end
             end
-
+    
             local isWarping = (velMag > 27777)
-
+    
             if velMag > SpaceSpeedLimit/3.6 and not inAtmo and not Autopilot and not isWarping then
                 msg("Space Speed Engine Shutoff reached")
                 cmdT = 0
             end
-
+    
             if not isWarping and LastIsWarping then
                 if not BrakeIsOn then
                     AP.BrakeToggle()
@@ -6138,7 +6139,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 cmdT = 0
             end
             LastIsWarping = isWarping
-
+    
             if atmosDensity > 0.09 then
                 if velMag > (adjustedAtmoSpeedLimit / 3.6) and not AtmoSpeedAssist and not speedLimitBreaking then
                         BrakeIsOn = "SpdLmt"
@@ -6150,7 +6151,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 end    
             end
-
+    
             if ProgradeIsOn then
                 if spaceLand then 
                     BrakeIsOn = false -- wtf how does this keep turning on, and why does it matter if we're in cruise?
@@ -6178,7 +6179,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     AlignToWorldVector(vec3(constructVelocity),0.01) 
                 end
             end
-
+    
             if RetrogradeIsOn then
                 if inAtmo then 
                     RetrogradeIsOn = false
@@ -6186,7 +6187,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     AlignToWorldVector(-(vec3(constructVelocity)))
                 end
             end
-
+    
             if not ProgradeIsOn and spaceLand and not IntoOrbit then 
                 if not inAtmo then 
                     if spaceLand ~= 2 then reentryMode = true end
@@ -6198,13 +6199,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if not aptoggle then aptoggle = true end
                 end
             end
-
+    
             if finalLand and CustomTarget and (coreAltitude < (HoldAltitude + 250) and coreAltitude > (HoldAltitude - 250)) and mabs(vSpd) < 25 and atmosDensity >= 0.1
                 and (CustomTarget.position-worldPos):len() > 2000 + coreAltitude then -- Only engage if far enough away to be able to turn back for it
                     if not aptoggle then aptoggle = true end
                 finalLand = false
             end
-
+    
             if VertTakeOff then
                 autoRoll = true
                 local targetAltitude = HoldAltitude
@@ -6230,7 +6231,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         if antigravOn then 
                             if Autopilot or VectorToTarget then
                                 AP.ToggleVerticalTakeoff()
-
+    
                             else
                                 BrakeIsOn = "VTO Complete"
                                 VertTakeOff = false
@@ -6283,12 +6284,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     pitchInput2 = vTPitchInput
                 end
             end
-
+    
             if alignTarget then
                 local target = alignTarget*(AutopilotTargetCoords - worldPos)
                 AlignToWorldVector(target ,0.1)
             end
-
+    
             if IntoOrbit then
                 local function orbitCheck()
                     if not orbit.apoapsis or not orbit.periapsis then return false end
@@ -6303,7 +6304,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local targetVec
                 local yawAligned = false
                 local orbitHeightString = getDistanceDisplayString(OrbitTargetOrbit,4)
-
+    
                 if OrbitTargetPlanet == nil then
                     OrbitTargetPlanet = planet
                     if VectorToTarget then
@@ -6317,7 +6318,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                     OrbitTargetSet = true
                 end     
-
+    
                 if orbitalParams.VectorToTarget and CustomTarget then
                     targetVec = CustomTarget.position - worldPos
                 end
@@ -6331,7 +6332,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     cmdT = 0
                     orbitRoll = 0
                     orbitMsg = "Aligning to orbital path - OrbitHeight: "..orbitHeightString
-
+    
                     if orbitalParams.VectorToTarget then
                         AlignToWorldVector(targetVec:normalize():project_on_plane(worldVertical)) -- Returns a value that wants both pitch and yaw to align, which we don't do
                         yawAligned = constructForward:dot(targetVec:project_on_plane(constructUp):normalize()) > 0.95
@@ -6358,7 +6359,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         orbitAligned = true
                     end
                 else
-
+    
                     if orbitalParams.VectorToTarget then
                         AlignToWorldVector(targetVec:normalize():project_on_plane(worldVertical))
                     elseif velMag > 150 then
@@ -6367,7 +6368,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     pitchInput2 = 0
                     if orbitalParams.VectorToTarget and CustomTarget then
                         -- Orbit to target...
-
+    
                         local brakeDistance, _ =  Kinematic.computeDistanceAndTime(velMag, adjustedAtmoSpeedLimit/3.6, coreMass, 0, 0, LastMaxBrake)
                         if OrbitAchieved and targetVec:len() > 15000+brakeDistance+coreAltitude then -- Triggers when we get close to passing it or within 15km+height I guess
                             orbitMsg = "Orbiting to Target"
@@ -6421,7 +6422,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                     -- Well, a pid is made for this stuff
                                     local altDiff = OrbitTargetOrbit - coreAltitude
         
-
+    
                                     -- Scale vspd up to cubed as altDiff approaches 0, starting at 2km
                                     -- 20's are kinda arbitrary but I've tested lots of others and these are consistent
                                     -- The 2000's also.  
@@ -6471,7 +6472,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     pitchInput2 = orbitPitchInput
                 end
             end
-
+    
             if Autopilot and not inAtmo and not spaceLand then
                 local function finishAutopilot(msgt, orbit)
                     s.print(msgt)
@@ -6491,7 +6492,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             OrbitTargetOrbit = coreAltitude
                             OrbitTargetSet = true
                         end
-                        AP.ToggleIntoOrbit()
+                        AP.ToggleIntoOrbit(autopilotTargetPlanet)
                     end
                 end
                 -- Planetary autopilot engaged, we are out of atmo, and it has a target
@@ -6524,7 +6525,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         end
                         AutopilotTargetCoords = targetCoords
                         AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
-
+    
                         skipAlign = true
                         TargetSet = true -- Only set the targetCoords once.  Don't let them change as we fly.
                     end
@@ -6538,11 +6539,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         TargetSet = true
                         -- We forgot to normalize this... though that should have really fucked everything up... 
                         -- Ah also we were using AutopilotTargetOrbit which gets set to 0 for space.  
-
+    
                         -- So we should ... do what, if they're inside that range?  I guess just let it pilot them to outside. 
                         -- TODO: Later have some settable intervals like 10k, 5k, 1k, 500m and have it approach the nearest one that's below it
                         -- With warnings about what it's doing 
-
+    
                         targetCoords = CustomTarget.position + (worldPos - CustomTarget.position):normalize()*AutopilotSpaceDistance
                         AutopilotTargetCoords = targetCoords
                         -- Unsure if we should update the waypoint to the new target or not.  
@@ -6550,7 +6551,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 elseif CustomTarget == nil then -- and not autopilotTargetPlanet.name == planet.name then
                     AutopilotPlanetGravity = 0
-
+    
                     if not TargetSet then
                         -- Set the target to something on the radius in the direction closest to velocity
                         -- We have to fudge a high velocity because at standstill this can give us bad results
@@ -6584,13 +6585,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     --local value, units = getDistanceDisplayString(atmoDistance)
                     --msg = "Adjusting Brake Distance, will hit atmo in: " .. value .. units
                 end
-
+    
                 
                 -- We do this in tenthSecond already.
                 --sysUpData(widgetDistanceText, '{"label": "distance", "value": "' ..
                 --    displayText.. '", "u":"' .. displayUnit .. '"}')
                 local aligned = true -- It shouldn't be used if the following condition isn't met, but just in case
-
+    
                 local projectedAltitude = (autopilotTargetPlanet.center -
                                             (worldPos +
                                                 (vec3(constructVelocity):normalize() * AutopilotDistance))):len() -
@@ -6598,13 +6599,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local displayText = getDistanceDisplayString(projectedAltitude)
                 sudi = widgetTrajectoryAltitudeText 
                 sudv = '{"label": "Projected Altitude", "value": "' ..displayText.. '"}'
-
+    
                 
-
-
-
+    
+    
+    
                 --orbit.apoapsis == nil and 
-
+    
                 -- Brought this min velocity way down from 300 because the logic when velocity is low doesn't even point at the target or anything
                 -- I'll prob make it do that, too, though.  There was just no reason for this to wait for such high speeds
                 if velMag > 50 and AutopilotAccelerating then
@@ -6613,7 +6614,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     local targetVec = (vec3(targetCoords) - worldPos)
                     local targetYaw = uclamp(math.deg(signedRotationAngle(constructUp, constructVelocity:normalize(), targetVec:normalize()))*(velMag/500),-90,90)
                     local targetPitch = uclamp(math.deg(signedRotationAngle(constructRight, constructVelocity:normalize(), targetVec:normalize()))*(velMag/500),-90,90)
-
+    
                 
                     -- If they're both very small, scale them both up a lot to converge that last bit
                     if mabs(targetYaw) < 20 and mabs(targetPitch) < 20 then
@@ -6625,25 +6626,25 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         targetYaw = targetYaw * 2
                         targetPitch = targetPitch * 2
                     end
-
+    
                     -- We'll do our own currentYaw and Pitch
                     local currentYaw = -math.deg(signedRotationAngle(constructUp, constructForward, constructVelocity:normalize()))
                     local currentPitch = -math.deg(signedRotationAngle(constructRight, constructForward, constructVelocity:normalize()))
-
+    
                     apPitchPID:inject(targetPitch - currentPitch)
                     local autoPitchInput = uclamp(apPitchPID:get(),-1,1)
-
+    
                     pitchInput2 = pitchInput2 + autoPitchInput
-
-
+    
+    
                     --yawPID:inject(yawDiff) -- Aim for 85% stall angle, not full
                     apYawPID:inject(targetYaw - currentYaw)
                     local autoYawInput = uclamp(apYawPID:get(),-1,1) -- Keep it reasonable so player can override
                     yawInput2 = yawInput2 + autoYawInput
                     
-
+    
                     skipAlign = true
-
+    
                     if mabs(targetYaw) > 2 or mabs(targetPitch) > 2 then
                         if AutopilotStatus ~= "Adjusting Trajectory" then
                             AutopilotStatus = "Adjusting Trajectory"
@@ -6660,7 +6661,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     -- Point at target... 
                     AlignToWorldVector((targetCoords - worldPos):normalize())
                 end
-
+    
                 if projectedAltitude < AutopilotTargetOrbit*1.5 then
                     AutopilotEndSpeed = adjustedAtmoSpeedLimit/3.6
                     -- Recalc end speeds for the projectedAltitude since it's reasonable... 
@@ -6705,7 +6706,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if AtmoSpeedAssist then throttle = PlayerThrottle end
                     -- If we're within warmup/8 seconds of needing to brake, cut throttle to handle warmdowns
                     -- Note that warmup/8 is kindof an arbitrary guess.  But it shouldn't matter that much.  
-
+    
                     -- We need the travel time, the one we compute elsewhere includes estimates on acceleration
                     -- Also it doesn't account for velocity not being in the correct direction, this should
                     local timeUntilBrake = 99999 -- Default in case accel and velocity are both 0 
@@ -6731,7 +6732,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     --if autopilotTargetPlanet.name == "Space" then
                     --    apDist = apDist - AutopilotSpaceDistance
                     --end
-
+    
                     if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                         if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone and not isWarping) then
                                 if pvpDist < lastPvPDist and pvpDist > 2000 then
@@ -6768,16 +6769,16 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     -- Check if an orbit has been established and cut brakes and disable autopilot if so
                     -- We'll try <0.9 instead of <1 so that we don't end up in a barely-orbit where touching the controls will make it an escape orbit
                     -- Though we could probably keep going until it starts getting more eccentric, so we'd maybe have a circular orbit
-                    local _, endSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed((worldPos-planet.center):len()-planet.radius)
+                    local _, endSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed((worldPos-autopilotTargetPlanet.center):len()-autopilotTargetPlanet.radius)
                     
-
+    
                     local targetVec--, targetAltitude, --horizontalDistance
                     if CustomTarget then
                         targetVec = CustomTarget.position - worldPos
                         --targetAltitude = planet:getAltitude(CustomTarget.position)
                         --horizontalDistance = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
                     end
-                    if (CustomTarget and CustomTarget.planetname == "Space" and velMag < 50) then
+                    if (CustomTarget and CustomTarget.planetname == "Space" and (velMag < 50 or (velMag < 1388 and #apRoute>0))) then
                         if #apRoute>0 then
                             if not aptoggle then table.remove(apRoute,1) end
                             if #apRoute>0 then
@@ -6803,7 +6804,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             play("apCir", "AP")
                             AutopilotStatus = "Circularizing"
                         end
-                        if velMag <= endSpeed then 
+                        if velMag <= endSpeed then
                             if CustomTarget then
                                 if constructVelocity:normalize():dot(targetVec:normalize()) > 0.4 then -- Triggers when we get close to passing it
                                     if AutopilotStatus ~= "Orbiting to Target" then
@@ -6838,7 +6839,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     --if autopilotTargetPlanet.name == "Space" then
                     --    apDist = apDist - AutopilotSpaceDistance
                     --end
-
+    
                     if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                         if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                             if pvpDist < lastPvPDist and pvpDist > 2000 then 
@@ -6919,7 +6920,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 spaceLand = true
                 AP.showWayPoint(autopilotTargetPlanet, CustomTarget.position)
             end
-
+    
             if followMode then
                 -- User is assumed to be outside the construct
                 autoRoll = true -- Let Nav handle that while we're here
@@ -6960,10 +6961,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local autoPitchThreshold = 0
                 -- Copied from autoroll let's hope this is how a PID works... 
                 if mabs(targetPitch - adjustedPitch) > autoPitchThreshold then
-
+    
                     pitchPID:inject(targetPitch - adjustedPitch)
                     local autoPitchInput = pitchPID:get()
-
+    
                     pitchInput2 = autoPitchInput
                 end
             end
@@ -6978,22 +6979,22 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 if not inAtmo then
                     curBrake = LastMaxBrake -- Assume space brakes
                 end
-
+    
                 hSpd = constructForward:project_on_plane(worldVertical):normalize():dot(constructVelocity)
-
+    
                 if hSpd > 100 then 
                     brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(hSpd, 100, coreMass, 0, 0,
                                                     curBrake)
-
+    
                     local lastDist, _ = Kinematic.computeDistanceAndTime(100, 0, coreMass, 0, 0, curBrake*0.55)
                     brakeDistance = brakeDistance + lastDist
                 else 
                     brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(hSpd, 0, coreMass, 0, 0, curBrake*0.55)
                 end
                 -- HoldAltitude is the alt we want to hold at
-
+    
                 -- Dampen this.
-
+    
                 -- Consider: 100m below target, but 30m/s vspeed.  We should pitch down.  
                 -- Or 100m above and -30m/s vspeed.  So (Hold-Core) - vspd
                 -- Scenario 1: Hold-c = -100.  Scen2: Hold-c = 100
@@ -7007,7 +7008,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local velMultiplier = 1
                 if AutoTakeoff then velMultiplier = uclamp(velMag/100,0.1,1) end
                 local targetPitch = (utils.smoothstep(altDiff, -minmax, minmax) - 0.5) * 2 * MaxPitch * velMultiplier
-
+    
                             -- not inAtmo and
                 if not Reentry and not spaceLand and not VectorToTarget and constructForward:dot(constructVelocity:normalize()) < 0.99 then
                     -- Widen it up and go much harder based on atmo level if we're exiting atmo and velocity is keeping up with the nose
@@ -7015,7 +7016,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     -- Scaled in a way that no change up to 10% atmo, then from 10% to 0% scales to *20 and *2
                     targetPitch = (utils.smoothstep(altDiff, -minmax*uclamp(20 - 19*atmosDensity*10,1,20), minmax*uclamp(20 - 19*atmosDensity*10,1,20)) - 0.5) * 2 * MaxPitch * uclamp(2 - atmosDensity*10,1,2) * velMultiplier
                 end
-
+    
                 if not AltitudeHold then
                     targetPitch = 0
                 end
@@ -7027,12 +7028,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 end
                 autoRoll = true
-
+    
                 local oldInput = pitchInput2 
                 if Reentry then
-
+    
                     local ReentrySpeed = mfloor(adjustedAtmoSpeedLimit)
-
+    
                     local brakeDistancer, brakeTimer = Kinematic.computeDistanceAndTime(velMag, ReentrySpeed/3.6, coreMass, 0, 0, LastMaxBrake - planet.gravity*9.8*coreMass)
                     brakeDistancer = brakeDistancer == -1 and 5000 or brakeDistancer
                     local distanceToTarget = coreAltitude - (planet.noAtmosphericDensityAltitude + brakeDistancer)
@@ -7070,7 +7071,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             autoRoll = autoRollPreference
                         end
                     elseif planet.noAtmosphericDensityAltitude > 0 and freeFallHeight then -- 5km is good
-
+    
                         autoRoll = true -- It shouldn't actually do it, except while aligning
                     elseif not freeFallHeight then
                         if not inAtmo and (throttleMode or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= ReentrySpeed) then 
@@ -7094,7 +7095,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         if type(ReversalIsOn) == "table" then
                             targetVec = ReversalIsOn
                         elseif ReversalIsOn < 3 and ReversalIsOn > 0 then
-                        targetVec = -worldVertical:cross(constructVelocity)*5000
+                           targetVec = -worldVertical:cross(constructVelocity)*5000
                         elseif ReversalIsOn >= 3 then
                             targetVec = worldVertical:cross(constructVelocity)*5000
                         elseif ReversalIsOn < 0 then
@@ -7105,7 +7106,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     else
                         targetVec = autopilotTargetPlanet.center - worldPos
                     end
-
+    
                     local targetYaw = math.deg(signedRotationAngle(worldVertical:normalize(),constructVelocity,targetVec))*2
                     local rollRad = math.rad(mabs(adjustedRoll))
                     if velMag > minRollVelocity and inAtmo then
@@ -7139,33 +7140,33 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         if mabs(adjustedRoll) > 90 then rollPitch = -rollPitch end
                         targetPitch = rollMatchMult*uclamp(uclamp(rollPitch*math.cos(rollRad),-PitchStallAngle*0.8,PitchStallAngle*0.8) + mabs(uclamp(mabs(origTargetYaw)*math.sin(rollRad),-PitchStallAngle*0.80,PitchStallAngle*0.80)),-PitchStallAngle*0.80,PitchStallAngle*0.80) -- Always yaw positive 
                         -- And also it seems pitch might be backwards when we roll upside down...
-
+    
                         -- But things were working great with just the rollMatchMult and vSpd*10
                         
                     else
                         targetRoll = 0
                         targetYaw = uclamp(targetYaw,-YawStallAngle*0.80,YawStallAngle*0.80)
                     end
-
-
+    
+    
                     local yawDiff = currentYaw-targetYaw
-
+    
                     if ReversalIsOn and mabs(yawDiff) <= 0.0001 and
                                         ((type(ReversalIsOn) == "table") or 
-                                        (type(ReversalIsOn) ~= "table" and ReversalIsOn < 0 and mabs(adjustedRoll) < 1)) then
+                                         (type(ReversalIsOn) ~= "table" and ReversalIsOn < 0 and mabs(adjustedRoll) < 1)) then
                         if ReversalIsOn == -2 then AP.ToggleAltitudeHold() end
                         ReversalIsOn = nil
                         play("180Off", "BR")
                         return
                     end
-
+    
                     if not stalling and velMag > minRollVelocity and inAtmo then
-
+    
                         yawPID:inject(yawDiff)
                         local autoYawInput = uclamp(yawPID:get(),-1,1) -- Keep it reasonable so player can override
                         yawInput2 = yawInput2 + autoYawInput
                     elseif (inAtmo and abvGndDet > -1 or velMag < minRollVelocity) then
-
+    
                         AlignToWorldVector(targetVec) -- Point to the target if on the ground and 'stalled'
                     elseif stalling and inAtmo then
                         -- Do this if we're yaw stalling
@@ -7187,12 +7188,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         local targetAltitude = planet:getAltitude(CustomTarget.position)
                         --local olddistanceToTarget = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
                         local distanceToTarget = targetVec:project_on_plane(worldVertical):len()
-
+    
                     
                         StrongBrakes = true -- We don't care about this or glide landing anymore and idk where all it gets used
                         
                         -- Fudge it with the distance we'll travel in a tick - or half that and the next tick accounts for the other? idk
-
+    
                         -- Just fudge it arbitrarily by 5% so that we get some feathering for better accuracy
                         -- Make it think it will take longer to brake than it will
                         if (HoldAltitude < planet.noAtmosphericDensityAltitude and not spaceLaunch and not AutoTakeoff and not Reentry and (distanceToTarget <= brakeDistance and targetVec:len() < planet.radius) and 
@@ -7238,7 +7239,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         local distanceToTarget = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
                         local curBrake = LastMaxBrakeInAtmo
                         if curBrake then
-
+    
                             brakeDistance, brakeTime = Kinematic.computeDistanceAndTime(velMag, 0, coreMass, 0, 0, curBrake/2)
                             StrongBrakes = true
                             if distanceToTarget <= brakeDistance + (velMag*deltaTick)/2 and constructVelocity:project_on_plane(worldVertical):normalize():dot(targetVec:project_on_plane(worldVertical):normalize()) > 0.99 then 
@@ -7257,7 +7258,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         end
                     end
                 end
-
+    
                 -- Altitude hold and AutoTakeoff orbiting
                 if not inAtmo and abvGndDet == -1 and (AltitudeHold and HoldAltitude > planet.noAtmosphericDensityAltitude) and not (spaceLaunch or IntoOrbit or Reentry ) then
                     if not OrbitAchieved and not IntoOrbit then
@@ -7269,16 +7270,16 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         orbitAligned = true
                     end
                 end
-
+    
                 if stalling and inAtmo and abvGndDet == -1 and velMag > minRollVelocity and VectorStatus ~= "Finalizing Approach" then
                     AlignToWorldVector(constructVelocity) -- Otherwise try to pull out of the stall, and let it pitch into it
                     targetPitch = uclamp(adjustedPitch-currentPitch,adjustedPitch - PitchStallAngle*0.80, adjustedPitch + PitchStallAngle*0.80) -- Just try to get within un-stalling range to not bounce too much
                 end
-
-
+    
+    
                 pitchInput2 = oldInput
                 local groundDistance = -1
-
+    
                 if BrakeLanding then
                     local drift = allowedHorizontalDrift or 0.05
                     if not initBL then
@@ -7300,7 +7301,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if not ExternalAGG and antigravOn then 
                         aggBase = antigrav.getBaseAltitude() 
                         if (aggBase < planet.surfaceMaxAltitude and CustomTarget == nil) or
-                        (CustomTarget ~= nil and planet:getAltitude(CustomTarget.position) > aggBase) then 
+                           (CustomTarget ~= nil and planet:getAltitude(CustomTarget.position) > aggBase) then 
                             aggBase = false 
                         end
                     else
@@ -7325,7 +7326,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     else
                         local skipLandingRate = false
                         local distanceToStop = 30 
-
+    
                         if absHspd < 10 and maxKinematicUp ~= nil and maxKinematicUp > 0 then
                             -- Funny enough, LastMaxBrakeInAtmo has stuff done to it to convert to a flat value
                             -- But we need the instant one back, to know how good we are at braking at this exact moment
@@ -7333,13 +7334,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             local curBrake = LastMaxBrakeInAtmo * uclamp(velMag/100,0.1,1) * atmos
                             local totalNewtons = maxKinematicUp * atmos + curBrake - gravity -- Ignore air friction for leeway, KinematicUp and Brake are already in newtons
                             local weakBreakNewtons = curBrake/2 - gravity
-
+    
                             local speedAfterBraking = velMag - msqrt((mabs(weakBreakNewtons/2)*20)/(0.5*coreMass))*utils.sign(weakBreakNewtons)
                             if speedAfterBraking < 0 then  
                                 speedAfterBraking = 0 -- Just in case it gives us negative values
                             end
                             -- So then see if hovers can finish the job in the remaining distance
-
+    
                             local brakeStopDistance
                             if velMag > 100 then
                                 local brakeStopDistance1, _ = Kinematic.computeDistanceAndTime(velMag, 100, coreMass, 0, 0, curBrake)
@@ -7494,7 +7495,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 -- Don't pitch if there is significant roll, or if there is stall
                 local onGround = abvGndDet > -1
                 local pitchToUse = adjustedPitch
-
+    
                 if (VectorToTarget or spaceLaunch or ReversalIsOn) and not onGround and velMag > minRollVelocity and inAtmo then
                     local rollRad = math.rad(mabs(adjustedRoll))
                     pitchToUse = adjustedPitch*mabs(math.cos(rollRad))+currentPitch*math.sin(rollRad)
@@ -7507,7 +7508,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     pitchDiff = uclamp(targetPitch-pitchToUse, -MaxPitch, MaxPitch) -- I guess
                 end
                 if (((mabs(adjustedRoll) < 5 or VectorToTarget or ReversalIsOn)) or BrakeLanding or onGround or AltitudeHold) then
-
+    
                     pitchPID:inject(pitchDiff)
                     local autoPitchInput = pitchPID:get()
                     pitchInput2 = pitchInput2 + autoPitchInput
@@ -7520,9 +7521,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     sba = desiredBaseAltitude
                 end
             end
-
+    
         -- End old APTick Code
-
+    
             if (inAtmo or Reentry or finalLand) and AtmoSpeedAssist and throttleMode then
                 -- This is meant to replace cruise
                 -- Uses AtmoSpeedLimit as the desired speed in which to 'cruise'
@@ -7532,19 +7533,19 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     -- We could instead only throttle down when the velMag in the direction of ShipFront exceeds AtmoSpeedLimt.  
                 -- We also need to do braking if the speed is high enough above the desired limit.  
                 -- Braking should happen immediately if the speed is not mostly forward
-
+    
                 -- .. Maybe as a whole we just, also PID brakeForce to keep speed under that limit, so if we barely go over it'll only tap them and throttle down
-
+    
                 -- We're going to want a param, PlayerThrottle, which we always keep (not between loads).  We set it in SpeedUp and SpeedDown
                 -- So we only control throttle if their last throttle input was 100%
-
+    
                 -- Well, no.  Even better, do it all the time.  We would show their throttle on the HUD, then a red line separating it from our adjusted throttle
                 -- Along with a message like, "Atmospheric Speed Limit Reached - Press Something to Disable Temporarily"
                 -- But of course, don't throttle up for them.  Only down. 
-
-
-
-
+    
+    
+    
+    
                 -- Add in vertical speed as well as the front speed, to help with ships that have very bad brakes
                 local addThrust = 0
                 if ExtraEscapeThrust > 0 and not Reentry and atmosDensity > 0.005 and atmosDensity < 0.1 and vSpd > -50 then
@@ -7564,7 +7565,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         ThrottleValue = PlayerThrottle
                     end
                 end
-
+    
                 brakePID:inject(constructVelocity:len() - (adjustedAtmoSpeedLimit/3.6) - addThrust) 
                 local calculatedBrake = uclamp(brakePID:get(),0,1)
                 if (inAtmo and vSpd < -80) or (atmosDensity > 0.005 or Reentry or finalLand) then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
@@ -7577,28 +7578,28 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 else -- For display purposes, keep calculatedThrottle positive in this case
                     calculatedThrottle = uclamp(calculatedThrottle,0.01,1)
                 end
-
+    
                 -- And finally, do what cruise does for angling wings toward the nose
-
+    
                 local autoNavigationEngineTags = ''
                 local autoNavigationAcceleration = vec3()
                 
-
+    
                 local verticalStrafeAcceleration = composeAxisAccelerationFromTargetSpeedV(axisCommandId.vertical,upAmount*1000)
                 Nav:setEngineForceCommand("vertical airfoil , vertical ground ", verticalStrafeAcceleration, dontKeepCollinearity)
                 --autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. "vertical airfoil , vertical ground "
                 --autoNavigationAcceleration = autoNavigationAcceleration + verticalStrafeAcceleration
-
+    
                 local longitudinalEngineTags = 'thrust analog longitudinal '
                 if (UseExtra=="All" or UseExtra=="Longitude") then longitudinalEngineTags = longitudinalEngineTags..ExtraLongitudeTags end
                 local longitudinalCommandType = navCom:getAxisCommandType(axisCommandId.longitudinal)
                 local longitudinalAcceleration = navCom:composeAxisAccelerationFromThrottle(
                                                         longitudinalEngineTags, axisCommandId.longitudinal)
-
+    
                 local lateralAcceleration = composeAxisAccelerationFromTargetSpeed(axisCommandId.lateral, LeftAmount*1000)
                 autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. "lateral airfoil , lateral ground " -- We handle the rest later
                 autoNavigationAcceleration = autoNavigationAcceleration + lateralAcceleration
-
+    
                 -- Auto Navigation (Cruise Control)
                 if (autoNavigationAcceleration:len() > constants.epsilon) then
                     Nav:setEngineForceCommand(autoNavigationEngineTags, autoNavigationAcceleration, dontKeepCollinearity, '', '',
@@ -7606,35 +7607,35 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
                 -- And let throttle do its thing separately
                 Nav:setEngineForceCommand(longitudinalEngineTags, longitudinalAcceleration, keepCollinearity)
-
+    
                 local verticalStrafeEngineTags = 'thrust analog vertical fueled '
                 local lateralStrafeEngineTags = 'thrust analog lateral fueled '
-
+    
                 if (UseExtra=="All" or UseExtra=="Lateral")then lateralStrafeEngineTags = lateralStrafeEngineTags..ExtraLateralTags end
                 if (UseExtra=="All" or UseExtra=="Vertical") then verticalStrafeEngineTags = verticalStrafeEngineTags..ExtraVerticalTags end
-
+    
                 -- Vertical also handles the non-airfoils separately
                 if upAmount ~= 0 or (BrakeLanding and BrakeIsOn) or (not GearExtended and not stablized) then
                     Nav:setEngineForceCommand(verticalStrafeEngineTags, verticalStrafeAcceleration, keepCollinearity)
                 else
                     Nav:setEngineForceCommand(verticalStrafeEngineTags, vec3(), keepCollinearity) -- Reset vertical engines but not airfoils or ground
                 end
-
+    
                 if LeftAmount ~= 0 then
                     Nav:setEngineForceCommand(lateralStrafeEngineTags, lateralAcceleration, keepCollinearity)
                 else
                     Nav:setEngineForceCommand(lateralStrafeEngineTags, vec3(), keepCollinearity) -- Reset vertical engines but not airfoils or ground
                 end
-
+    
                 if finalBrakeInput == 0 then -- If player isn't braking, use cruise assist braking
                     finalBrakeInput = brakeInput2
                 end
-
+    
                 -- Brakes
                 local brakeAcceleration = -finalBrakeInput *
                 (brakeSpeedFactor * constructVelocity + brakeFlatFactor * constructVelocityDir)
                 Nav:setEngineForceCommand('brake', brakeAcceleration)
-
+    
             else
                 --PlayerThrottle = 0
                 if AtmoSpeedAssist then
@@ -7642,25 +7643,25 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         ThrottleValue = PlayerThrottle -- Use PlayerThrottle always.
                     end
                 end
-
+    
                 local targetSpeed = u.getAxisCommandValue(0)
-
+    
                 if not throttleMode then -- Use a PID to brake past targetSpeed
                     brakePID:inject(constructVelocity:len() - (targetSpeed/3.6)) 
                     local calculatedBrake = uclamp(brakePID:get(),0,1)
                     finalBrakeInput = uclamp(finalBrakeInput + calculatedBrake,0,1)
                 end
-
+    
                 -- Brakes - Do these first so Cruise can override it
                 local brakeAcceleration = -finalBrakeInput *
                 (brakeSpeedFactor * constructVelocity + brakeFlatFactor * constructVelocityDir)
                 Nav:setEngineForceCommand('brake', brakeAcceleration)
-
+    
                 -- AutoNavigation regroups all the axis command by 'TargetSpeed'
                 local autoNavigationEngineTags = ''
                 local autoNavigationAcceleration = vec3()
                 local autoNavigationUseBrake = false
-
+    
                 -- Longitudinal Translation
                 local longitudinalEngineTags = 'thrust analog longitudinal '
                 if ExtraLongitudeTags ~= "none" and (UseExtra=="All" or UseExtra=="Longitude") then longitudinalEngineTags = longitudinalEngineTags..ExtraLongitudeTags end
@@ -7680,9 +7681,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     then
                         autoNavigationUseBrake = true
                     end
-
+    
                 end
-
+    
                 -- Lateral Translation
                 local lateralStrafeEngineTags = 'thrust analog lateral '
                 if ExtraLateralTags ~= "none" and (UseExtra=="All" or UseExtra=="Lateral") then lateralStrafeEngineTags = lateralStrafeEngineTags..ExtraLateralTags end
@@ -7696,7 +7697,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. lateralStrafeEngineTags
                     autoNavigationAcceleration = autoNavigationAcceleration + lateralAcceleration
                 end
-
+    
                 -- Vertical Translation
                 local verticalStrafeEngineTags = 'thrust analog vertical '
                 if ExtraVerticalTags ~= "none" and (UseExtra=="All" or UseExtra=="Vertical") then verticalStrafeEngineTags = verticalStrafeEngineTags..ExtraVerticalTags end
@@ -7723,7 +7724,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. verticalStrafeEngineTags
                     autoNavigationAcceleration = autoNavigationAcceleration + verticalAcceleration
                 end
-
+    
                 -- Auto Navigation (Cruise Control)
                 if (autoNavigationAcceleration:len() > constants.epsilon) then -- This means it's in cruise
                     if (finalBrakeInput ~= 0 or autoNavigationUseBrake or mabs(constructVelocityDir:dot(constructForward)) < 0.5)
@@ -7734,7 +7735,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         '', tolerancePercentToSkipOtherPriorities)
                 end
             end
-
+    
             -- Rotation
             local angularAcceleration = torqueFactor * (targetAngularVelocity - constructAngularVelocity)
             local airAcceleration = vec3(C.getWorldAirFrictionAngularAcceleration())
@@ -7742,7 +7743,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             
             Nav:setEngineTorqueCommand('torque', angularAcceleration, keepCollinearity, 'airfoil', '', '',
                 tolerancePercentToSkipOtherPriorities)
-
+    
             -- Rockets
             Nav:setBoosterCommand('rocket_engine')
             -- Dodgin's Don't Die Rocket Govenor - Cruise Control Edition
@@ -7785,13 +7786,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
             end
         end
-
+    
         if userAP then 
             for k,v in pairs(userAP) do ap[k] = v end 
         end   
-
+    
         abvGndDet = AboveGroundLevel()
-
+    
         return ap
     end
     local function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, dbHud_2, gyro, screenHud_1,
