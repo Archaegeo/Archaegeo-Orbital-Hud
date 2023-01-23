@@ -335,7 +335,7 @@
             local minDistance2, body
             local coord = vec3(coordinates)
             for _, params in pairs(self) do
-                local distance2 = (params.center - coord):len2()
+                local distance2 = (coord - params.center):len() - params.radius - params.atmosphereThickness
                 if (not body or distance2 < minDistance2) and params.name ~= "Space" then -- Never return space.  
                     body = params
                     minDistance2 = distance2

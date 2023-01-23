@@ -354,7 +354,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         end
     end
 
-    function ap.ToggleIntoOrbit() -- Toggle IntoOrbit mode on and off
+    function ap.ToggleIntoOrbit(targetPlanet) -- Toggle IntoOrbit mode on and off
         OrbitAchieved = false
         orbitPitch = nil
         orbitRoll = nil
@@ -376,7 +376,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 IntoOrbit = true
                 autoRoll = true
                 if OrbitTargetPlanet == nil then
-                    OrbitTargetPlanet = planet
+                    OrbitTargetPlanet = targetPlanet or planet
+                    p("Orbiting "..OrbitTargetPlanet.name)
                 end
                 if AltitudeHold then AltitudeHold = false AutoTakeoff = false end
             else
@@ -552,12 +553,12 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                             Autopilot = true
                         elseif not inAtmo then
                             if IntoOrbit then AP.ToggleIntoOrbit() end -- Reset all appropriate vars
-                            OrbitTargetOrbit = ((planet.noAtmosphericDensityAltitude > 0 and planet.noAtmosphericDensityAltitude) or planet.surfaceMaxAltitude) + LowOrbitHeight
+                            OrbitTargetOrbit = ((autopilotTargetPlanet.noAtmosphericDensityAltitude > 0 and autopilotTargetPlanet.noAtmosphericDensityAltitude) or autopilotTargetPlanet.surfaceMaxAltitude) + LowOrbitHeight
                             OrbitTargetSet = true
                             orbitalParams.AutopilotAlign = true
                             orbitalParams.VectorToTarget = true
                             orbitAligned = false
-                            if not IntoOrbit then AP.ToggleIntoOrbit() end
+                            if not IntoOrbit then AP.ToggleIntoOrbit(autopilotTargetPlanet) end
                         end
                     end
                 else
@@ -1768,7 +1769,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         OrbitTargetOrbit = coreAltitude
                         OrbitTargetSet = true
                     end
-                    AP.ToggleIntoOrbit()
+                    AP.ToggleIntoOrbit(autopilotTargetPlanet)
                 end
             end
             -- Planetary autopilot engaged, we are out of atmo, and it has a target
@@ -2045,7 +2046,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 -- Check if an orbit has been established and cut brakes and disable autopilot if so
                 -- We'll try <0.9 instead of <1 so that we don't end up in a barely-orbit where touching the controls will make it an escape orbit
                 -- Though we could probably keep going until it starts getting more eccentric, so we'd maybe have a circular orbit
-                local _, endSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed((worldPos-planet.center):len()-planet.radius)
+                local _, endSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed((worldPos-autopilotTargetPlanet.center):len()-autopilotTargetPlanet.radius)
                 
 
                 local targetVec--, targetAltitude, --horizontalDistance
@@ -2054,7 +2055,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     --targetAltitude = planet:getAltitude(CustomTarget.position)
                     --horizontalDistance = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
                 end
-                if (CustomTarget and CustomTarget.planetname == "Space" and velMag < 50) then
+                if (CustomTarget and CustomTarget.planetname == "Space" and (velMag < 50 or (velMag < 1388 and #apRoute>0))) then
                     if #apRoute>0 then
                         if not aptoggle then table.remove(apRoute,1) end
                         if #apRoute>0 then
@@ -2080,7 +2081,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         play("apCir", "AP")
                         AutopilotStatus = "Circularizing"
                     end
-                    if velMag <= endSpeed then 
+                    if velMag <= endSpeed then
                         if CustomTarget then
                             if constructVelocity:normalize():dot(targetVec:normalize()) > 0.4 then -- Triggers when we get close to passing it
                                 if AutopilotStatus ~= "Orbiting to Target" then
