@@ -2,7 +2,8 @@
 
 Version 2.022 - AP enahncements.
 - CHANGE: HUD will now try to clear a LOS blockage more proactively by moving he arrival wp if needed.  It will change initial arrival WP to the
-one that would be used if just flying to the planet (vice surface landing) but will still then proceed to surface land.
+one that would be used if just flying to the planet (vice surface landing) but will still then proceed to surface land.  This fixes Madis-Mission
+to Thades Market 1 for example without affecting normal AP.
 - CHANGE: User Variable `MaxGameVelocity` if set to -1 means always set AP max speed to current max speed.  If set > -1 then set AP Max speed 
 to `MaxGameVelocity`  Alt-Mousewheel will adjust set max speed and save it till you get into seat again.  NOTE: If `MaxGameVelocity` is -1 then
 Alt-Mousewheel will have no effect on max speed while in autopilot in space.

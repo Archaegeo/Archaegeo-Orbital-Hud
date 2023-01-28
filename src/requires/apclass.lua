@@ -2070,7 +2070,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     -- We only aim for endSpeed even if going straight in, because it gives us a smoother transition to alignment
                 elseif (CustomTarget and CustomTarget.planetname ~= "Space") and velMag <= endSpeed and (orbit.apoapsis == nil or orbit.periapsis == nil or orbit.apoapsis.altitude <= 0 or orbit.periapsis.altitude <= 0) then
                     -- They aren't in orbit, that's a problem if we wanted to do anything other than reenter.  Reenter regardless.                  
-                    finishAutopilot("Autopilot complete, commencing reentry")
+                    finishAutopilot("Autopilot complete, commencing reentry", true)
                     --BrakeIsOn = true
                     --BrakeIsOn = false -- Leave brakes on to be safe while we align prograde
                     AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
