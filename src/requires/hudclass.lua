@@ -567,16 +567,16 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         local function DisplayRoute(newContent)
             local checkRoute = AP.routeWP(true)
             if not checkRoute or #checkRoute==0 then return end
-            local x = crx(750)
+            local x = crx(960)
             local y = cry(360)
             if Autopilot or VectorToTarget then
-                newContent[#newContent + 1] = svgText(x, y, "REMAINING ROUTE","pdim txtstart size20" )
+                newContent[#newContent + 1] = svgText(x, y, "REMAINING ROUTE","pdim txtmid size20" )
             else
-                newContent[#newContent + 1] = svgText(x, y, "LOADED ROUTE","pdim txtstart size20" )
+                newContent[#newContent + 1] = svgText(x, y, "LOADED ROUTE","pdim txtmid size20" )
             end
             for k,i in pairs(checkRoute) do
                 y=y+20
-                newContent[#newContent + 1] = svgText( x, y, k..". "..checkRoute[k], "pdim txtstart size20")
+                newContent[#newContent + 1] = svgText( x, y, k..". "..checkRoute[k], "pdim txtmid size20")
             end
         end
 

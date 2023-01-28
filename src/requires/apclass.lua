@@ -425,7 +425,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
 
     function ap.checkLOS(vector)
         local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, vector,
-            function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
+            function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.1) end end)
         local atmoDistance = farSide
         if nearSide ~= nil and farSide ~= nil then
             atmoDistance = math.min(nearSide,farSide)
@@ -508,19 +508,15 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         alignTarget = false
         -- Toggle Autopilot, as long as the target isn't None
         if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
-            --if AltitudeHold then AltitudeHold = false end
             if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then msg("WARNING: Heavy Loads may affect autopilot performance.") end
+            AutopilotTargetIndex = (#apRoute>0 and not finalLand) and getIndex(apRoute[1]) or AutopilotTargetIndex
+            ATLAS.UpdateAutopilotTarget()
             if #apRoute>0 and not finalLand then 
-                AutopilotTargetIndex = getIndex(apRoute[1])
-                ATLAS.UpdateAutopilotTarget()
                 msg("Route Autopilot in Progress")
-                local targetVec = CustomTarget.position - worldPos
-                local distanceToTarget = targetVec:project_on_plane(worldVertical):len()
-                if distanceToTarget > 50000 and CustomTarget.planetname == planet.name then 
+                if (CustomTarget.position - worldPos):project_on_plane(worldVertical):len() > 50000 and CustomTarget.planetname == planet.name then 
                     routeOrbit=true
                 end
             end
-            ATLAS.UpdateAutopilotTarget()
             AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
             if CustomTarget ~= nil then
                 if CustomTarget.agg and not ExternalAGG and antigrav then
@@ -659,8 +655,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
     function ap.ToggleLockPitch()
         if LockPitch == nil then
             play("lkPOn","LP")
-            if not holdingShift then LockPitch = adjustedPitch
-            else LockPitch = LockPitchTarget end
+            LockPitch = adjustedPitch
             AutoTakeoff = false
             AltitudeHold = false
             BrakeLanding = false
@@ -1016,15 +1011,13 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local tempPos, tempPos2 = nil,nil
             local nearestDistance = nil
             local nearestPipePlanet = nil
-            local pc, npc = planet.center, nil
+            local pc, npc, pn = planet.center, nil, planet.name
             for k,nextPlanet in pairs(atlas[0]) do
                 npc = nextPlanet.center
-                if npc then
+                if npc and nextPlanet.name ~= pn then
                     local distance, tempPos = getPipeDistance(pc, npc)
                     if nearestDistance == nil or distance < nearestDistance then
                         nearestPipePlanet = nextPlanet
-                        nearestDistance = distance
-                        tempPos2 = tempPos 
                     end
                 end
             end 
@@ -1034,7 +1027,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 pipeDistC = nearestDistance
             end
             if autopilotTargetPlanet then
-                if autopilotTargetPlanet and autopilotTargetPlanet.name ~= planet.name and autopilotTargetPlanet.name ~= "Space" then
+                if autopilotTargetPlanet and autopilotTargetPlanet.name ~= pn and autopilotTargetPlanet.name ~= "Space" then
                     pipeDistT, pipePosT = getPipeDistance(pc,autopilotTargetPlanet.center)
                     pipeDestT = autopilotTargetPlanet
                 else
@@ -1294,7 +1287,18 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
         end
 
-
+        local function planetTarget()
+                        -- Set the target to something on the radius in the direction closest to velocity
+            -- We have to fudge a high velocity because at standstill this can give us bad results
+            local initialDirection = ((worldPos+(constructVelocity*100000)) - autopilotTargetPlanet.center):normalize() -- Should be pointing up
+            local finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize()
+            if finalDirection:len() < 1 then
+            initialDirection = ((worldPos+(constructForward*100000)) - autopilotTargetPlanet.center):normalize()
+            finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize() -- Align to nearest to ship forward then
+            end
+            -- And... actually that's all that I need.  If forward is really gone, this should give us a point on the edge of the planet
+            return autopilotTargetPlanet.center + finalDirection*(autopilotTargetPlanet.radius + AutopilotTargetOrbit)
+        end
 
 
         brakeInput2 = 0
@@ -1781,6 +1785,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             -- Maybe instead of pointing at our vector, we point at our vector + how far off our velocity vector is
             -- This is gonna be hard to get the negatives right.
             -- If we're still in orbit, don't do anything, that velocity will suck
+
             local targetCoords, skipAlign = AutopilotTargetCoords, false
             -- This isn't right.  Maybe, just take the smallest distance vector between the normal one, and the wrongSide calculated one
             --local wrongSide = (CustomTarget.position-worldPos):len() > (autopilotTargetPlanet.center-worldPos):len()
@@ -1803,6 +1808,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         AutopilotEndSpeed = 0
                     end
                     AutopilotTargetCoords = targetCoords
+                    local intersect, _ = AP.checkLOS((AutopilotTargetCoords-worldPos):normalize())
+                    if intersect then AutopilotTargetCoords = planetTarget() end
                     AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
 
                     skipAlign = true
@@ -1836,7 +1843,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize() -- Align to nearest to ship forward then
                     end
                     -- And... actually that's all that I need.  If forward is really gone, this should give us a point on the edge of the planet
-                    targetCoords = autopilotTargetPlanet.center + finalDirection*(autopilotTargetPlanet.radius + AutopilotTargetOrbit)
+                    targetCoords = planetTarget() 
                     AutopilotTargetCoords = targetCoords
                     TargetSet = true
                     skipAlign = true
@@ -1847,12 +1854,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
             
             AutopilotDistance = (vec3(targetCoords) - worldPos):len()
-            local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), 
-                function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
-            local atmoDistance = farSide
-            if nearSide ~= nil and farSide ~= nil then
-                atmoDistance = math.min(nearSide,farSide)
-            end
+            local intersectBody, atmoDistance = AP.checkLOS(constructVelocity:normalize())
+
             if atmoDistance ~= nil and atmoDistance < AutopilotDistance and intersectBody.name == autopilotTargetPlanet.name then
                 AutopilotDistance = atmoDistance -- If we're going to hit atmo before our target, use that distance instead.
                 -- Can we put this on the HUD easily?
@@ -1955,6 +1958,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 if autopilotTargetPlanet.name ~= planet.name then 
                     if intersectBody ~= nil and autopilotTargetPlanet.name ~= intersectBody.name and atmoDistance < AutopilotDistance then 
                         collisionAlertStatus = "Attempting to clear LOS between "..intersectBody.name.." and waypoint."
+                        AutopilotTargetCoords = planetTarget()
                         AutopilotPaused = true
                     else
                         AutopilotPaused = false
@@ -2719,14 +2723,14 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 initBL = false
             end
             if AutoTakeoff or spaceLaunch then
-                local intersectBody, nearSide, farSide
+                local intersectBody, distance
                 if AutopilotTargetCoords ~= nil then
-                    intersectBody, nearSide, farSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (AutopilotTargetCoords-worldPos):normalize(), 
-                        function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
-                end
-                if intersectBody ~= nil then 
-                    if intersectBody.name ~= autopilotTargetPlanet.name and not inAtmo then
-                        collisionAlertStatus = "Clearing LOS between "..intersectBody.name.." and waypoint."
+                    intersectBody, distance = AP.checkLOS((AutopilotTargetCoords-worldPos):normalize())
+                    if intersectBody ~= nil then 
+                        if intersectBody.name ~= autopilotTargetPlanet.name and not inAtmo then
+                            collisionAlertStatus = "Takeoff LOS blocked by "..intersectBody.name.." in "..getDistanceDisplayString(distance,1)
+                            if intersectBody.name ~= planet.name then AutopilotTargetCoords = planetTarget() end
+                        end
                     end
                 end
                 if antigravOn and not spaceLaunch then
