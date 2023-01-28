@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.022
+- Fixed: Issue where sometimes HUD would not vector to target on re-entry till past it when it should have sooner. (Better AP re-entries)
+- CHANGE: User Variable `MaxGameVelocity` if set to -1 means always set AP max speed to current max speed.  If set > -1 then set AP Max speed 
+to `MaxGameVelocity`  Alt-Mousewheel will adjust set max speed and save it till you get into seat again.  NOTE: If `MaxGameVelocity` is -1 then
+Alt-Mousewheel will have no effect on max speed while in autopilot in space.
+- CHANGE: Make double MMB clear more features (cleaner turn off all AP)
+
 Version 2.021 
 - Fix: Thades AP issue. Moonlets should not long cause issues to the AP.  AP should work like anywhere else.
 Still use caution if taking off in the canyon (i.e. if you take off and face the wall to climb out, it will end in tears), 

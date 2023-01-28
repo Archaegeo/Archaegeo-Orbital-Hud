@@ -69,14 +69,14 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 end
             end
             return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, 0, 0,
-                    whichBrake - (AutopilotPlanetGravity * coreMass))
+                    whichBrake)
         end
         local function GetAutopilotTBBrakeDistanceAndTime(speed)
             local finalSpeed = AutopilotEndSpeed
             if not Autopilot then finalSpeed = 0 end
 
             return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, Nav:maxForceForward(),
-                    warmup, LastMaxBrake - (AutopilotPlanetGravity * coreMass))
+                    warmup, LastMaxBrake)
         end
         local function signedRotationAngle(normal, vecA, vecB)
             vecA = vecA:project_on_plane(normal)
@@ -290,6 +290,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         apBrk = false
         alignHeading = nil
         finalLand = false
+        AP.ResetAutopilots(1)
     end
 
     function ap.GetAutopilotBrakeDistanceAndTime(speed)
@@ -897,7 +898,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 if inAtmo or Reentry then
                     adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
                 elseif Autopilot then
-                    MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, MaxSpeed-0.2)
+                    adjMaxGameVelocity = uclamp(adjMaxGameVelocity + mult*speedChangeLarge/3.6*100,0, MaxSpeed-0.2)
                 end
             else
                 navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge/10)
@@ -929,7 +930,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local throttle = u.getThrottle()/100
             if AtmoSpeedAssist then throttle = PlayerThrottle end
             local accelDistance, accelTime =
-                Kinematic.computeDistanceAndTime(velMag, MaxGameVelocity, -- From currently velocity to max
+                Kinematic.computeDistanceAndTime(velMag, adjMaxGameVelocity, -- From currently velocity to max
                     coreMass, Nav:maxForceForward()*throttle, warmup, -- T50?  Assume none, negligible for this
                     0) -- Brake thrust, none for this
             -- accelDistance now has the amount of distance for which we will be accelerating
@@ -937,9 +938,9 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             -- Note that for some nearby moons etc, it may never reach full speed though.
             local brakeDistance, brakeTime
             if not TurnBurn then
-                brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
+                brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(adjMaxGameVelocity)
             else
-                brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
+                brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(adjMaxGameVelocity)
             end
             local _, curBrakeTime
             if not TurnBurn and speed > 0 then -- Will this cause problems?  Was spamming something in here was giving 0 speed and 0 accel
@@ -956,7 +957,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             elseif brakeDistance + accelDistance < AutopilotDistance then
                 -- Add any remaining distance
                 cruiseDistance = AutopilotDistance - (brakeDistance + accelDistance)
-                cruiseTime = Kinematic.computeTravelTime(MaxGameVelocity, 0, cruiseDistance)
+                cruiseTime = Kinematic.computeTravelTime(adjMaxGameVelocity, 0, cruiseDistance)
             else
                 local accelRatio = (AutopilotDistance - brakeDistance) / accelDistance
                 accelDistance = AutopilotDistance - brakeDistance -- Accel until we brake
@@ -1477,8 +1478,9 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
         end
 
-        if finalLand and CustomTarget and (coreAltitude < (HoldAltitude + 250) and coreAltitude > (HoldAltitude - 250)) and mabs(vSpd) < 25 and atmosDensity >= 0.1
-            and (CustomTarget.position-worldPos):len() > 2000 + coreAltitude then -- Only engage if far enough away to be able to turn back for it
+        if finalLand and CustomTarget and (mabs(coreAltitude-HoldAltitude) < 500 or atmosDensity >= 0.11)
+            and ((CustomTarget.position-worldPos):len() - mabs(coreAltitude - autopilotTargetPlanet:getAltitude(CustomTarget.position))) > 3000 then -- Only engage if far enough away to be able to turn back for it
+
                 if not aptoggle then aptoggle = true end
             finalLand = false
         end
@@ -1806,11 +1808,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     skipAlign = true
                     TargetSet = true -- Only set the targetCoords once.  Don't let them change as we fly.
                 end
-                --AutopilotPlanetGravity = autopilotTargetPlanet.gravity*9.8 -- Since we're aiming straight at it, we have to assume gravity?
-                AutopilotPlanetGravity = 0
             elseif CustomTarget and CustomTarget.planetname == "Space" then
                 if not TargetSet then
-                    AutopilotPlanetGravity = 0
                     skipAlign = true
                     AutopilotRealigned = true
                     TargetSet = true
@@ -1827,8 +1826,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     --AP.showWayPoint(autopilotTargetPlanet, targetCoords)
                 end
             elseif CustomTarget == nil then -- and not autopilotTargetPlanet.name == planet.name then
-                AutopilotPlanetGravity = 0
-
                 if not TargetSet then
                     -- Set the target to something on the radius in the direction closest to velocity
                     -- We have to fudge a high velocity because at standstill this can give us bad results
@@ -1992,8 +1989,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 if velAlongTarget > 0 or accel > 0 then -- (otherwise divide by 0 errors)
                     timeUntilBrake = Kinematic.computeTravelTime(velAlongTarget, accel, AutopilotDistance-brakeDistance)
                 end
-                if MaxGameVelocity > MaxSpeed then MaxGameVelocity = MaxSpeed - 0.2 end
-                if (coreVelocity:len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet) or warmup/4 > timeUntilBrake) then
+                if adjMaxGameVelocity > MaxSpeed or (MaxGameVelocity == -1 and adjMaxGameVelocity < MaxSpeed) then adjMaxGameVelocity = MaxSpeed - 0.2 end
+                if (coreVelocity:len() >= adjMaxGameVelocity or (throttle == 0 and apThrottleSet) or warmup/4 > timeUntilBrake) then
                     AutopilotAccelerating = false
                     if AutopilotStatus ~= "Cruising" then
                         play("apCru","AP")
@@ -3041,7 +3038,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 if AtmoSpeedAssist then throttle = PlayerThrottle*100 end
                 local targetSpeed = (throttle/100)
                 if not inAtmo then
-                    targetSpeed = targetSpeed * MaxGameVelocity
+                    targetSpeed = targetSpeed * adjMaxGameVelocity
                     if speed >= (targetSpeed * (1- maxSpeedLag)) and IsRocketOn then
                         IsRocketOn = false
                         Nav:toggleBoosters()

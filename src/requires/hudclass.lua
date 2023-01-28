@@ -368,8 +368,8 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 -- Display AtmoSpeedLimit above the throttle
                 newContent[#newContent + 1] = svgText(throtPosX+10, y1-40, "LIMIT: ".. adjustedAtmoSpeedLimit .. " km/h", "dim txtstart")
             elseif not inAtmo and Autopilot then
-                -- Display MaxGameVelocity above the throttle
-                newContent[#newContent + 1] = svgText(throtPosX+10, y1-40, "LIMIT: ".. mfloor(MaxGameVelocity*3.6+0.5) .. " km/h", "dim txtstart")
+                -- Display adjMaxGameVelocity above the throttle
+                newContent[#newContent + 1] = svgText(throtPosX+10, y1-40, "LIMIT: ".. mfloor(adjMaxGameVelocity*3.6+0.5) .. " km/h", "dim txtstart")
             end
         end
 
@@ -684,7 +684,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 if tempOrbit.periapsis == nil then 
                     tempOrbit.periapsis = {}
                     tempOrbit.periapsis.altitude = -planet.radius
-                    tempOrbit.periapsis.speed = MaxGameVelocity -- Don't show it
+                    tempOrbit.periapsis.speed = adjMaxGameVelocity -- Don't show it
                 end
                 if tempOrbit.eccentricity == nil then
                     tempOrbit.eccentricity = 1
@@ -777,14 +777,14 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     x = orbitMapX + orbitMapSize + pad*4 + rx -- Aligning left makes us need more padding... for some reason... 
                     y = orbitMapY + orbitMapSize*1.5 / 2 + 5 + pad
 
-                    if tempOrbit.apoapsis ~= nil and tempOrbit.apoapsis.speed < MaxGameVelocity then
+                    if tempOrbit.apoapsis ~= nil and tempOrbit.apoapsis.speed < adjMaxGameVelocity then
                         orbitInfo("Apoapsis")
                     end
             
                     y = orbitMapY + orbitMapSize*1.5 / 2 + 5 + pad
                     x = orbitMapX + orbitMapSize - pad*2 - rx
             
-                    if tempOrbit.periapsis ~= nil and tempOrbit.periapsis.speed < MaxGameVelocity and tempOrbit.periapsis.altitude > 0 then
+                    if tempOrbit.periapsis ~= nil and tempOrbit.periapsis.speed < adjMaxGameVelocity and tempOrbit.periapsis.altitude > 0 then
                         orbitInfo("Periapsis")
                     end
             
@@ -2460,10 +2460,10 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 end
                 if not TurnBurn then
                     brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(velMag)
-                    maxBrakeDistance, maxBrakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
+                    maxBrakeDistance, maxBrakeTime = AP.GetAutopilotBrakeDistanceAndTime(adjMaxGameVelocity)
                 else
                     brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(velMag)
-                    maxBrakeDistance, maxBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
+                    maxBrakeDistance, maxBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(adjMaxGameVelocity)
                 end
                 local displayText = getDistanceDisplayString(targetDistance)
                 sysUpData(widgetDistanceText, '{"label": "distance", "value": "' .. displayText
@@ -2897,7 +2897,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 infoContent = infoContent.. svgText(midX, startY+height*5, stringf("Safe Space Mass: %s", (safeSpaceMass)))
                 infoContent = infoContent.. svgText(midX, startY+height*6, stringf("Safe Hover Mass: %s", (safeHoverMass)))
                 infoContent = infoContent.. svgText(startX, startY+height*6, stringf("Influence: %s", planet.name))
-                infoContent = infoContent.. svgText(startX, startY+height*7, stringf("Set Max Speed: %s", mfloor(MaxGameVelocity*3.6+0.5)))
+                infoContent = infoContent.. svgText(startX, startY+height*7, stringf("Set Max Speed: %s", mfloor(adjMaxGameVelocity*3.6+0.5)))
                 infoContent = infoContent.. svgText(midX, startY+height*7, stringf("Actual Max Speed: %s", mfloor(MaxSpeed*3.6+0.5)))
                 infoContent = infoContent.. svgText(startX, startY+height*8, stringf("Burn Speed: %s", mfloor(C.getFrictionBurnSpeed()*3.6)))
             end
