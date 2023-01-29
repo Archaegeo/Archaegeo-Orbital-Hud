@@ -1609,7 +1609,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             endSpeed = endSpeed*3.6+1 + ((MaintainOrbit and FastOrbit*(endSpeed*3.6)) or 0)
             local orbitalRoll = adjustedRoll
             -- Getting as close to orbit distance as comfortably possible
-            if not orbitAligned then
+            if not orbitAligned and adjustedPitch > -45 then
                 local pitchAligned = false
                 local rollAligned = false
                 cmdT = 0
@@ -1774,8 +1774,11 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         if not coreAltitude or coreAltitude == 0 then return end
                         OrbitTargetOrbit = coreAltitude
                         OrbitTargetSet = true
+                        AP.ToggleIntoOrbit(autopilotTargetPlanet)
+                    elseif spaceLand then
+                        spaceLand = false
+                        aptoggle = true
                     end
-                    AP.ToggleIntoOrbit(autopilotTargetPlanet)
                 end
             end
             -- Planetary autopilot engaged, we are out of atmo, and it has a target
@@ -2069,13 +2072,10 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     BrakeIsOn = "Space Arrival"
                     -- We only aim for endSpeed even if going straight in, because it gives us a smoother transition to alignment
                 elseif (CustomTarget and CustomTarget.planetname ~= "Space") and velMag <= endSpeed and (orbit.apoapsis == nil or orbit.periapsis == nil or orbit.apoapsis.altitude <= 0 or orbit.periapsis.altitude <= 0) then
-                    -- They aren't in orbit, that's a problem if we wanted to do anything other than reenter.  Reenter regardless.                  
-                    finishAutopilot("Autopilot complete, commencing reentry", true)
-                    --BrakeIsOn = true
-                    --BrakeIsOn = false -- Leave brakes on to be safe while we align prograde
-                    AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
-                    --ProgradeIsOn = true  
-                    spaceLand = true
+                    -- They aren't in orbit, that's a problem if we wanted to do anything other than reenter.  Reenter regardless.    
+                    AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint 
+                    spaceLand = true             
+                    finishAutopilot("Autopilot complete, commencing reentry")
                     AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
                 elseif ((CustomTarget and CustomTarget.planetname ~= "Space") or CustomTarget == nil) and orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 or AutopilotStatus == "Circularizing" then
                     if AutopilotStatus ~= "Circularizing" then
@@ -2084,24 +2084,12 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     end
                     if velMag <= endSpeed then
                         if CustomTarget then
-                            if constructVelocity:normalize():dot(targetVec:normalize()) > 0.4 then -- Triggers when we get close to passing it
-                                if AutopilotStatus ~= "Orbiting to Target" then
-                                    play("apOrb","OB")
-                                    AutopilotStatus = "Orbiting to Target"
-                                end
-                                if not WaypointSet then
-                                    BrakeIsOn = false -- We have to set this at least once
-                                    AP.showWayPoint(autopilotTargetPlanet, CustomTarget.position)
-                                    WaypointSet = true
-                                end
-                            else 
-                                finishAutopilot("Autopilot complete, proceeding with reentry")
                                 AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
                                 --ProgradeIsOn = true
-                                spaceLand = true
                                 AP.showWayPoint(autopilotTargetPlanet, CustomTarget.position)
                                 WaypointSet = false -- Don't need it anymore
-                            end
+                                spaceLand = true
+                                finishAutopilot("Autopilot complete, establishing low orbit")
                         else
                             finishAutopilot("Autopilot completed, setting orbit", true)
                             BrakeIsOn = false

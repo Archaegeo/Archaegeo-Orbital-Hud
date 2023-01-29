@@ -2855,27 +2855,22 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
     
             local maxThrust = Nav:maxForceForward()
             gravity = c.getGravityIntensity()
-            if velMag < 5 and abvGndDet ~= -1 then
-                local axisCRefDirection = vec3(C.getOrientationForward())
-                local maxKPAlongAxis = C.getMaxThrustAlongAxis('thrust analog longitudinal ', {axisCRefDirection:unpack()})
-                safeAtmoMass = 0.5*maxKPAlongAxis[1]/gravity
-                safeAtmoMass = safeAtmoMass > 1000000 and round(safeAtmoMass / 1000000,1).." kTons" or round(safeAtmoMass / 1000, 1).." Tons"
-                safeSpaceMass = 0.5*maxKPAlongAxis[3]/gravity
-                safeSpaceMass = safeSpaceMass > 1000000 and round(safeSpaceMass / 1000000,1).." kTons" or round(safeSpaceMass / 1000, 1).." Tons"
-                axisCRefDirection = vec3(C.getOrientationUp())
-                maxKPAlongAxis = C.getMaxThrustAlongAxis('hover_engine, booster_engine', {axisCRefDirection:unpack()})
-                safeHoverMass = 0.5*maxKPAlongAxis[1]/gravity
-                safeHoverMass = safeHoverMass > 1000000 and round(safeHoverMass / 1000000,1).." kTons" or round(safeHoverMass / 1000, 1).." Tons"
-                safeBrakeMass = 0.5*brakeValue/gravity
-                safeBrakeMass = safeBrakeMass > 1000000 and round(safeBrakeMass / 1000000,1).." kTons" or round(safeBrakeMass / 1000, 1).." Tons"
-            end
+            if gravity < 0.1 then gravity = 9.80665 end
+            local axisCRefDirection = vec3(C.getOrientationForward())
+            local maxKPAlongAxis = C.getMaxThrustAlongAxis('thrust analog longitudinal ', {axisCRefDirection:unpack()})
+            safeAtmoMass = 0.5*maxKPAlongAxis[1]/gravity
+            safeAtmoMass = safeAtmoMass > 1000000 and round(safeAtmoMass / 1000000,1).." kTons" or round(safeAtmoMass / 1000, 1).." Tons"
+            safeSpaceMass = 0.5*maxKPAlongAxis[3]/gravity
+            safeSpaceMass = safeSpaceMass > 1000000 and round(safeSpaceMass / 1000000,1).." kTons" or round(safeSpaceMass / 1000, 1).." Tons"
+            axisCRefDirection = vec3(C.getOrientationUp())
+            maxKPAlongAxis = C.getMaxThrustAlongAxis('hover_engine, booster_engine', {axisCRefDirection:unpack()})
+            safeHoverMass = 0.5*maxKPAlongAxis[1]/gravity
+            safeHoverMass = safeHoverMass > 1000000 and round(safeHoverMass / 1000000,1).." kTons" or round(safeHoverMass / 1000, 1).." Tons"
+            safeBrakeMass = 0.5*brakeValue/gravity
+            safeBrakeMass = safeBrakeMass > 1000000 and round(safeBrakeMass / 1000000,1).." kTons" or round(safeBrakeMass / 1000, 1).." Tons"
             brakeValue = round((brakeValue / (coreMass * gravConstant)),2).." g"
-            if gravity > 0.1 then
-                reqThrust = coreMass * gravity
-                reqThrust = round((reqThrust / (coreMass * gravConstant)),2).." g"
-            else
-                reqThrust = "n/a"
-            end
+            reqThrust = coreMass * gravity
+            reqThrust = round((reqThrust / (coreMass * gravConstant)),2).." g"
             maxThrust = round((maxThrust / (coreMass * gravConstant)),2).." g"
             if isRemote() == 0 or RemoteHud then 
                 local startX = crx(OrbitMapX+10)
@@ -2890,15 +2885,16 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 infoContent = infoContent.. svgText(startX, startY+height*2, "Trip Time: "..FormatTimeString(flightTime)) 
                 infoContent = infoContent.. svgText(midX, startY+height*2, "Total Time: "..FormatTimeString(TotalFlightTime)) 
                 infoContent = infoContent.. svgText(startX, startY+height*3, stringf("Mass: %s", mass)) 
-                infoContent = infoContent.. svgText(midX, startY+height*3, stringf("Safe Brake Mass: %s",  safeBrakeMass)) 
+                infoContent = infoContent.. svgText(midX, startY+height*3, stringf("Req Thrust: %s",  reqThrust)) 
+                infoContent = infoContent.. svgText(midX, startY+height*4, stringf("Safe Brake Mass: %s",  safeBrakeMass)) 
                 infoContent = infoContent.. svgText(startX, startY+height*4, stringf("Max Thrust: %s", maxThrust)) 
-                infoContent = infoContent.. svgText(midX, startY+height*4, stringf("Safe Atmo Mass: %s", (safeAtmoMass)))
+                infoContent = infoContent.. svgText(midX, startY+height*5, stringf("Safe Atmo Mass: %s", (safeAtmoMass)))
                 infoContent = infoContent.. svgText(startX, startY+height*5, stringf("Max Brake: %s", brakeValue )) 
-                infoContent = infoContent.. svgText(midX, startY+height*5, stringf("Safe Space Mass: %s", (safeSpaceMass)))
-                infoContent = infoContent.. svgText(midX, startY+height*6, stringf("Safe Hover Mass: %s", (safeHoverMass)))
+                infoContent = infoContent.. svgText(midX, startY+height*6, stringf("Safe Space Mass: %s", (safeSpaceMass)))
+                infoContent = infoContent.. svgText(midX, startY+height*7, stringf("Safe Hover Mass: %s", (safeHoverMass)))
                 infoContent = infoContent.. svgText(startX, startY+height*6, stringf("Influence: %s", planet.name))
                 infoContent = infoContent.. svgText(startX, startY+height*7, stringf("Set Max Speed: %s", mfloor(adjMaxGameVelocity*3.6+0.5)))
-                infoContent = infoContent.. svgText(midX, startY+height*7, stringf("Actual Max Speed: %s", mfloor(MaxSpeed*3.6+0.5)))
+                infoContent = infoContent.. svgText(midX, startY+height*8, stringf("Actual Max Speed: %s", mfloor(MaxSpeed*3.6+0.5)))
                 infoContent = infoContent.. svgText(startX, startY+height*8, stringf("Burn Speed: %s", mfloor(C.getFrictionBurnSpeed()*3.6)))
             end
             infoContent = infoContent.. "</g></g>"

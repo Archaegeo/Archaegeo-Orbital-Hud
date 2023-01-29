@@ -1,13 +1,17 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 2.022 - AP enahncements.
-- CHANGE: HUD will now try to clear a LOS blockage more proactively by moving he arrival wp if needed.  It will change initial arrival WP to the
+- CHANGE: HUD will now try to clear a LOS blockage more proactively by moving the arrival wp if needed.  It will change initial arrival WP to the
 one that would be used if just flying to the planet (vice surface landing) but will still then proceed to surface land.  This fixes Madis-Mission
 to Thades Market 1 for example without affecting normal AP.
 - CHANGE: User Variable `MaxGameVelocity` if set to -1 means always set AP max speed to current max speed.  If set > -1 then set AP Max speed 
 to `MaxGameVelocity`  Alt-Mousewheel will adjust set max speed and save it till you get into seat again.  NOTE: If `MaxGameVelocity` is -1 then
 Alt-Mousewheel will have no effect on max speed while in autopilot in space.
 - CHANGE: Make double MMB clear more features (cleaner turn off all AP)
+- CHANGE: After arriving on planet to planet AP, if target on ground, will use low orbit to get to it quicker.
+- ADDED: Required Thrust re-added to INFO panel.
+- CHANGE: Required Thrust and Safe XXX Mass numbers will update continuiously now based on gravity. If gravity > 0.1 detected that value is used,
+otherwise will show based on 9.8m/s gravity. SAFE XXX numbers are still 50% of the actual value you could barely move.  WARNING: LEARN YOUR SHIP to know if they are valid numbers.
 - Fixed: Issue where sometimes HUD would not vector to target on re-entry till past it when it should have sooner. (Better AP re-entries)
 - Fixed: `Alt-Shift-5` to lockpitch at current pitch will work now.
 - Cleanup Route Display on Ultrawide monitors to not be under buttons.
