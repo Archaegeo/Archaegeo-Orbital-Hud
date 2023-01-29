@@ -10,8 +10,9 @@ Alt-Mousewheel will have no effect on max speed while in autopilot in space.
 - CHANGE: Make double MMB clear more features (cleaner turn off all AP)
 - CHANGE: After arriving on planet to planet AP, if target on ground, will use low orbit to get to it quicker.
 - ADDED: Required Thrust re-added to INFO panel.
-- CHANGE: Required Thrust and Safe XXX Mass numbers will update continuiously now based on gravity. If gravity > 0.1 detected that value is used,
-otherwise will show based on 9.8m/s gravity. SAFE XXX numbers are still 50% of the actual value you could barely move.  WARNING: LEARN YOUR SHIP to know if they are valid numbers.
+- CHANGE: Required Thrust and Safe XXX Mass numbers will update continuiously now based on gravity. If gravity > 0.1 then the detected value is used,
+otherwise will be based on 9.8m/s gravity. SAFE XXX numbers are still 50% of the actual value you could barely move.  WARNING: LEARN YOUR SHIP to know if they are valid numbers.
+- CHANGE: Default `ReEntryPitch` to -60.  Recommend changing with /G ReEntryPitch -60 in Lua Chat.  -30 still works, -60 gets you down quicker.
 - Fixed: Issue where sometimes HUD would not vector to target on re-entry till past it when it should have sooner. (Better AP re-entries)
 - Fixed: `Alt-Shift-5` to lockpitch at current pitch will work now.
 - Cleanup Route Display on Ultrawide monitors to not be under buttons.
