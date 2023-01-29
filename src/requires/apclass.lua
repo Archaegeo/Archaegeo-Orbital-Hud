@@ -69,14 +69,14 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 end
             end
             return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, 0, 0,
-                    whichBrake - (AutopilotPlanetGravity * coreMass))
+                    whichBrake)
         end
         local function GetAutopilotTBBrakeDistanceAndTime(speed)
             local finalSpeed = AutopilotEndSpeed
             if not Autopilot then finalSpeed = 0 end
 
             return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, Nav:maxForceForward(),
-                    warmup, LastMaxBrake - (AutopilotPlanetGravity * coreMass))
+                    warmup, LastMaxBrake)
         end
         local function signedRotationAngle(normal, vecA, vecB)
             vecA = vecA:project_on_plane(normal)
@@ -290,6 +290,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         apBrk = false
         alignHeading = nil
         finalLand = false
+        AP.ResetAutopilots(1)
     end
 
     function ap.GetAutopilotBrakeDistanceAndTime(speed)
@@ -424,7 +425,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
 
     function ap.checkLOS(vector)
         local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, vector,
-            function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
+            function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.1) end end)
         local atmoDistance = farSide
         if nearSide ~= nil and farSide ~= nil then
             atmoDistance = math.min(nearSide,farSide)
@@ -507,19 +508,15 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         alignTarget = false
         -- Toggle Autopilot, as long as the target isn't None
         if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
-            --if AltitudeHold then AltitudeHold = false end
             if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then msg("WARNING: Heavy Loads may affect autopilot performance.") end
+            AutopilotTargetIndex = (#apRoute>0 and not finalLand) and getIndex(apRoute[1]) or AutopilotTargetIndex
+            ATLAS.UpdateAutopilotTarget()
             if #apRoute>0 and not finalLand then 
-                AutopilotTargetIndex = getIndex(apRoute[1])
-                ATLAS.UpdateAutopilotTarget()
                 msg("Route Autopilot in Progress")
-                local targetVec = CustomTarget.position - worldPos
-                local distanceToTarget = targetVec:project_on_plane(worldVertical):len()
-                if distanceToTarget > 50000 and CustomTarget.planetname == planet.name then 
+                if (CustomTarget.position - worldPos):project_on_plane(worldVertical):len() > 50000 and CustomTarget.planetname == planet.name then 
                     routeOrbit=true
                 end
             end
-            ATLAS.UpdateAutopilotTarget()
             AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
             if CustomTarget ~= nil then
                 if CustomTarget.agg and not ExternalAGG and antigrav then
@@ -658,8 +655,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
     function ap.ToggleLockPitch()
         if LockPitch == nil then
             play("lkPOn","LP")
-            if not holdingShift then LockPitch = adjustedPitch
-            else LockPitch = LockPitchTarget end
+            LockPitch = adjustedPitch
             AutoTakeoff = false
             AltitudeHold = false
             BrakeLanding = false
@@ -897,7 +893,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 if inAtmo or Reentry then
                     adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
                 elseif Autopilot then
-                    MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, MaxSpeed-0.2)
+                    adjMaxGameVelocity = uclamp(adjMaxGameVelocity + mult*speedChangeLarge/3.6*100,0, MaxSpeed-0.2)
                 end
             else
                 navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge/10)
@@ -929,7 +925,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local throttle = u.getThrottle()/100
             if AtmoSpeedAssist then throttle = PlayerThrottle end
             local accelDistance, accelTime =
-                Kinematic.computeDistanceAndTime(velMag, MaxGameVelocity, -- From currently velocity to max
+                Kinematic.computeDistanceAndTime(velMag, adjMaxGameVelocity, -- From currently velocity to max
                     coreMass, Nav:maxForceForward()*throttle, warmup, -- T50?  Assume none, negligible for this
                     0) -- Brake thrust, none for this
             -- accelDistance now has the amount of distance for which we will be accelerating
@@ -937,9 +933,9 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             -- Note that for some nearby moons etc, it may never reach full speed though.
             local brakeDistance, brakeTime
             if not TurnBurn then
-                brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
+                brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(adjMaxGameVelocity)
             else
-                brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
+                brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(adjMaxGameVelocity)
             end
             local _, curBrakeTime
             if not TurnBurn and speed > 0 then -- Will this cause problems?  Was spamming something in here was giving 0 speed and 0 accel
@@ -956,7 +952,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             elseif brakeDistance + accelDistance < AutopilotDistance then
                 -- Add any remaining distance
                 cruiseDistance = AutopilotDistance - (brakeDistance + accelDistance)
-                cruiseTime = Kinematic.computeTravelTime(MaxGameVelocity, 0, cruiseDistance)
+                cruiseTime = Kinematic.computeTravelTime(adjMaxGameVelocity, 0, cruiseDistance)
             else
                 local accelRatio = (AutopilotDistance - brakeDistance) / accelDistance
                 accelDistance = AutopilotDistance - brakeDistance -- Accel until we brake
@@ -1015,15 +1011,13 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local tempPos, tempPos2 = nil,nil
             local nearestDistance = nil
             local nearestPipePlanet = nil
-            local pc, npc = planet.center, nil
+            local pc, npc, pn = planet.center, nil, planet.name
             for k,nextPlanet in pairs(atlas[0]) do
                 npc = nextPlanet.center
-                if npc then
+                if npc and nextPlanet.name ~= pn then
                     local distance, tempPos = getPipeDistance(pc, npc)
                     if nearestDistance == nil or distance < nearestDistance then
                         nearestPipePlanet = nextPlanet
-                        nearestDistance = distance
-                        tempPos2 = tempPos 
                     end
                 end
             end 
@@ -1033,7 +1027,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 pipeDistC = nearestDistance
             end
             if autopilotTargetPlanet then
-                if autopilotTargetPlanet and autopilotTargetPlanet.name ~= planet.name and autopilotTargetPlanet.name ~= "Space" then
+                if autopilotTargetPlanet and autopilotTargetPlanet.name ~= pn and autopilotTargetPlanet.name ~= "Space" then
                     pipeDistT, pipePosT = getPipeDistance(pc,autopilotTargetPlanet.center)
                     pipeDestT = autopilotTargetPlanet
                 else
@@ -1293,7 +1287,18 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
         end
 
-
+        local function planetTarget()
+                        -- Set the target to something on the radius in the direction closest to velocity
+            -- We have to fudge a high velocity because at standstill this can give us bad results
+            local initialDirection = ((worldPos+(constructVelocity*100000)) - autopilotTargetPlanet.center):normalize() -- Should be pointing up
+            local finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize()
+            if finalDirection:len() < 1 then
+            initialDirection = ((worldPos+(constructForward*100000)) - autopilotTargetPlanet.center):normalize()
+            finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize() -- Align to nearest to ship forward then
+            end
+            -- And... actually that's all that I need.  If forward is really gone, this should give us a point on the edge of the planet
+            return autopilotTargetPlanet.center + finalDirection*(autopilotTargetPlanet.radius + AutopilotTargetOrbit)
+        end
 
 
         brakeInput2 = 0
@@ -1477,8 +1482,9 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
         end
 
-        if finalLand and CustomTarget and (coreAltitude < (HoldAltitude + 250) and coreAltitude > (HoldAltitude - 250)) and mabs(vSpd) < 25 and atmosDensity >= 0.1
-            and (CustomTarget.position-worldPos):len() > 2000 + coreAltitude then -- Only engage if far enough away to be able to turn back for it
+        if finalLand and CustomTarget and (mabs(coreAltitude-HoldAltitude) < 500 or atmosDensity >= 0.11)
+            and ((CustomTarget.position-worldPos):len() - mabs(coreAltitude - autopilotTargetPlanet:getAltitude(CustomTarget.position))) > 3000 then -- Only engage if far enough away to be able to turn back for it
+
                 if not aptoggle then aptoggle = true end
             finalLand = false
         end
@@ -1603,7 +1609,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             endSpeed = endSpeed*3.6+1 + ((MaintainOrbit and FastOrbit*(endSpeed*3.6)) or 0)
             local orbitalRoll = adjustedRoll
             -- Getting as close to orbit distance as comfortably possible
-            if not orbitAligned then
+            if not orbitAligned and adjustedPitch > -45 then
                 local pitchAligned = false
                 local rollAligned = false
                 cmdT = 0
@@ -1768,8 +1774,11 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         if not coreAltitude or coreAltitude == 0 then return end
                         OrbitTargetOrbit = coreAltitude
                         OrbitTargetSet = true
+                        AP.ToggleIntoOrbit(autopilotTargetPlanet)
+                    elseif spaceLand then
+                        spaceLand = false
+                        aptoggle = true
                     end
-                    AP.ToggleIntoOrbit(autopilotTargetPlanet)
                 end
             end
             -- Planetary autopilot engaged, we are out of atmo, and it has a target
@@ -1779,6 +1788,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             -- Maybe instead of pointing at our vector, we point at our vector + how far off our velocity vector is
             -- This is gonna be hard to get the negatives right.
             -- If we're still in orbit, don't do anything, that velocity will suck
+
             local targetCoords, skipAlign = AutopilotTargetCoords, false
             -- This isn't right.  Maybe, just take the smallest distance vector between the normal one, and the wrongSide calculated one
             --local wrongSide = (CustomTarget.position-worldPos):len() > (autopilotTargetPlanet.center-worldPos):len()
@@ -1801,16 +1811,15 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         AutopilotEndSpeed = 0
                     end
                     AutopilotTargetCoords = targetCoords
+                    local intersect, _ = AP.checkLOS((AutopilotTargetCoords-worldPos):normalize())
+                    if intersect then AutopilotTargetCoords = planetTarget() end
                     AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
 
                     skipAlign = true
                     TargetSet = true -- Only set the targetCoords once.  Don't let them change as we fly.
                 end
-                --AutopilotPlanetGravity = autopilotTargetPlanet.gravity*9.8 -- Since we're aiming straight at it, we have to assume gravity?
-                AutopilotPlanetGravity = 0
             elseif CustomTarget and CustomTarget.planetname == "Space" then
                 if not TargetSet then
-                    AutopilotPlanetGravity = 0
                     skipAlign = true
                     AutopilotRealigned = true
                     TargetSet = true
@@ -1827,8 +1836,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     --AP.showWayPoint(autopilotTargetPlanet, targetCoords)
                 end
             elseif CustomTarget == nil then -- and not autopilotTargetPlanet.name == planet.name then
-                AutopilotPlanetGravity = 0
-
                 if not TargetSet then
                     -- Set the target to something on the radius in the direction closest to velocity
                     -- We have to fudge a high velocity because at standstill this can give us bad results
@@ -1839,7 +1846,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize() -- Align to nearest to ship forward then
                     end
                     -- And... actually that's all that I need.  If forward is really gone, this should give us a point on the edge of the planet
-                    targetCoords = autopilotTargetPlanet.center + finalDirection*(autopilotTargetPlanet.radius + AutopilotTargetOrbit)
+                    targetCoords = planetTarget() 
                     AutopilotTargetCoords = targetCoords
                     TargetSet = true
                     skipAlign = true
@@ -1850,12 +1857,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
             
             AutopilotDistance = (vec3(targetCoords) - worldPos):len()
-            local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), 
-                function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
-            local atmoDistance = farSide
-            if nearSide ~= nil and farSide ~= nil then
-                atmoDistance = math.min(nearSide,farSide)
-            end
+            local intersectBody, atmoDistance = AP.checkLOS(constructVelocity:normalize())
+
             if atmoDistance ~= nil and atmoDistance < AutopilotDistance and intersectBody.name == autopilotTargetPlanet.name then
                 AutopilotDistance = atmoDistance -- If we're going to hit atmo before our target, use that distance instead.
                 -- Can we put this on the HUD easily?
@@ -1958,6 +1961,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 if autopilotTargetPlanet.name ~= planet.name then 
                     if intersectBody ~= nil and autopilotTargetPlanet.name ~= intersectBody.name and atmoDistance < AutopilotDistance then 
                         collisionAlertStatus = "Attempting to clear LOS between "..intersectBody.name.." and waypoint."
+                        AutopilotTargetCoords = planetTarget()
                         AutopilotPaused = true
                     else
                         AutopilotPaused = false
@@ -1992,8 +1996,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 if velAlongTarget > 0 or accel > 0 then -- (otherwise divide by 0 errors)
                     timeUntilBrake = Kinematic.computeTravelTime(velAlongTarget, accel, AutopilotDistance-brakeDistance)
                 end
-                if MaxGameVelocity > MaxSpeed then MaxGameVelocity = MaxSpeed - 0.2 end
-                if (coreVelocity:len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet) or warmup/4 > timeUntilBrake) then
+                if adjMaxGameVelocity > MaxSpeed or (MaxGameVelocity == -1 and adjMaxGameVelocity < MaxSpeed) then adjMaxGameVelocity = MaxSpeed - 0.2 end
+                if (coreVelocity:len() >= adjMaxGameVelocity or (throttle == 0 and apThrottleSet) or warmup/4 > timeUntilBrake) then
                     AutopilotAccelerating = false
                     if AutopilotStatus ~= "Cruising" then
                         play("apCru","AP")
@@ -2068,13 +2072,10 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     BrakeIsOn = "Space Arrival"
                     -- We only aim for endSpeed even if going straight in, because it gives us a smoother transition to alignment
                 elseif (CustomTarget and CustomTarget.planetname ~= "Space") and velMag <= endSpeed and (orbit.apoapsis == nil or orbit.periapsis == nil or orbit.apoapsis.altitude <= 0 or orbit.periapsis.altitude <= 0) then
-                    -- They aren't in orbit, that's a problem if we wanted to do anything other than reenter.  Reenter regardless.                  
+                    -- They aren't in orbit, that's a problem if we wanted to do anything other than reenter.  Reenter regardless.    
+                    AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint 
+                    spaceLand = true             
                     finishAutopilot("Autopilot complete, commencing reentry")
-                    --BrakeIsOn = true
-                    --BrakeIsOn = false -- Leave brakes on to be safe while we align prograde
-                    AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
-                    --ProgradeIsOn = true  
-                    spaceLand = true
                     AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
                 elseif ((CustomTarget and CustomTarget.planetname ~= "Space") or CustomTarget == nil) and orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 or AutopilotStatus == "Circularizing" then
                     if AutopilotStatus ~= "Circularizing" then
@@ -2083,24 +2084,12 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     end
                     if velMag <= endSpeed then
                         if CustomTarget then
-                            if constructVelocity:normalize():dot(targetVec:normalize()) > 0.4 then -- Triggers when we get close to passing it
-                                if AutopilotStatus ~= "Orbiting to Target" then
-                                    play("apOrb","OB")
-                                    AutopilotStatus = "Orbiting to Target"
-                                end
-                                if not WaypointSet then
-                                    BrakeIsOn = false -- We have to set this at least once
-                                    AP.showWayPoint(autopilotTargetPlanet, CustomTarget.position)
-                                    WaypointSet = true
-                                end
-                            else 
-                                finishAutopilot("Autopilot complete, proceeding with reentry")
                                 AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
                                 --ProgradeIsOn = true
-                                spaceLand = true
                                 AP.showWayPoint(autopilotTargetPlanet, CustomTarget.position)
                                 WaypointSet = false -- Don't need it anymore
-                            end
+                                spaceLand = true
+                                finishAutopilot("Autopilot complete, establishing low orbit")
                         else
                             finishAutopilot("Autopilot completed, setting orbit", true)
                             BrakeIsOn = false
@@ -2722,14 +2711,14 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 initBL = false
             end
             if AutoTakeoff or spaceLaunch then
-                local intersectBody, nearSide, farSide
+                local intersectBody, distance
                 if AutopilotTargetCoords ~= nil then
-                    intersectBody, nearSide, farSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (AutopilotTargetCoords-worldPos):normalize(), 
-                        function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
-                end
-                if intersectBody ~= nil then 
-                    if intersectBody.name ~= autopilotTargetPlanet.name and not inAtmo then
-                        collisionAlertStatus = "Clearing LOS between "..intersectBody.name.." and waypoint."
+                    intersectBody, distance = AP.checkLOS((AutopilotTargetCoords-worldPos):normalize())
+                    if intersectBody ~= nil then 
+                        if intersectBody.name ~= autopilotTargetPlanet.name and not inAtmo then
+                            collisionAlertStatus = "Takeoff LOS blocked by "..intersectBody.name.." in "..getDistanceDisplayString(distance,1)
+                            if intersectBody.name ~= planet.name then AutopilotTargetCoords = planetTarget() end
+                        end
                     end
                 end
                 if antigravOn and not spaceLaunch then
@@ -3041,7 +3030,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 if AtmoSpeedAssist then throttle = PlayerThrottle*100 end
                 local targetSpeed = (throttle/100)
                 if not inAtmo then
-                    targetSpeed = targetSpeed * MaxGameVelocity
+                    targetSpeed = targetSpeed * adjMaxGameVelocity
                     if speed >= (targetSpeed * (1- maxSpeedLag)) and IsRocketOn then
                         IsRocketOn = false
                         Nav:toggleBoosters()

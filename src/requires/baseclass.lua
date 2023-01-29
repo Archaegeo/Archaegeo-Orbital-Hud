@@ -239,7 +239,9 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                     if #privatelocations>0 then customlocations = addTable(customlocations, privatelocations) end
                 end
                 VectorStatus = "Proceeding to Waypoint"
-                if not MaxGameVelocity or MaxGameVelocity < 0 then MaxGameVelocity = C.getMaxSpeed()-0.1 end
+                if MaxGameVelocity == -1 then 
+                    adjMaxGameVelocity = C.getMaxSpeed()
+                end
             end
 
             local function ProcessElements()

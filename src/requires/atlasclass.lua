@@ -791,7 +791,6 @@
                 else
                     _, AutopilotEndSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed(AutopilotTargetOrbit)
                 end
-                AutopilotPlanetGravity = 0 -- This is inaccurate unless we integrate and we're not doing that.  
                 AutopilotAccelerating = false
                 AutopilotBraking = false
                 AutopilotCruising = false

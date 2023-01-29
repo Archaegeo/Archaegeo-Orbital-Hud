@@ -438,7 +438,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     if inAtmo then 
                         AP.cmdCruise(adjustedAtmoSpeedLimit) 
                     else
-                        AP.cmdCruise(MaxGameVelocity*3.6)
+                        AP.cmdCruise(adjMaxGameVelocity*3.6)
                     end
                 end
             end
@@ -705,11 +705,11 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                         if k=="AtmoSpeedLimit" then adjustedAtmoSpeedLimit = newGlobalValue end
                     end
                     msg ("Variable "..globalVariableName.." changed to "..newGlobalValue)
-                    if k=="MaxGameVelocity" then 
+                    if k=="MaxGameVelocity" and newGlobalValue ~= -1 then 
                         newGlobalValue = newGlobalValue/3.6
                         if newGlobalValue > MaxSpeed-0.2 then 
                             newGlobalValue = MaxSpeed-0.2 
-                            msg ("Variable "..globalVariableName.." changed to "..round(newGlobalValue*3.6,1))
+                            msg ("Updated "..globalVariableName.." changed to "..round(newGlobalValue*3.6,1))
                         end
                     end
                     if varType == "boolean" then
