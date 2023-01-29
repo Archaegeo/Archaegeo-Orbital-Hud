@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.021
+VERSION_NUMBER = 0.022
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -182,7 +182,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     AutopilotCruising = false
     AutopilotEndSpeed = 0
     AutopilotStatus = "Aligning"
-    AutopilotPlanetGravity = 0
     PrevViewLock = 1
     AutopilotTargetName = "None"
     AutopilotTargetCoords = nil
@@ -208,16 +207,17 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     saveRoute = {}
     apRoute = {}
     ecuThrottle = {}
+    adjMaxGameVelocity = 9000
 
     autoVariables = {VertTakeOff={set=function (i)VertTakeOff=i end,get=function() return VertTakeOff end}, VertTakeOffEngine={set=function (i)VertTakeOffEngine=i end,get=function() return VertTakeOffEngine end},SpaceTarget={set=function (i)SpaceTarget=i end,get=function() return SpaceTarget end},BrakeToggleStatus={set=function (i)BrakeToggleStatus=i end,get=function() return BrakeToggleStatus end}, BrakeIsOn={set=function (i)BrakeIsOn=i end,get=function() return BrakeIsOn end}, RetrogradeIsOn={set=function (i)RetrogradeIsOn=i end,get=function() return RetrogradeIsOn end}, ProgradeIsOn={set=function (i)ProgradeIsOn=i end,get=function() return ProgradeIsOn end},
     Autopilot={set=function (i)Autopilot=i end,get=function() return Autopilot end}, TurnBurn={set=function (i)TurnBurn=i end,get=function() return TurnBurn end}, AltitudeHold={set=function (i)AltitudeHold=i end,get=function() return AltitudeHold end}, BrakeLanding={set=function (i)BrakeLanding=i end,get=function() return BrakeLanding end},
     Reentry={set=function (i)Reentry=i end,get=function() return Reentry end}, AutoTakeoff={set=function (i)AutoTakeoff=i end,get=function() return AutoTakeoff end}, HoldAltitude={set=function (i)HoldAltitude=i end,get=function() return HoldAltitude end}, AutopilotAccelerating={set=function (i)AutopilotAccelerating=i end,get=function() return AutopilotAccelerating end}, AutopilotBraking={set=function (i)AutopilotBraking=i end,get=function() return AutopilotBraking end},
     AutopilotCruising={set=function (i)AutopilotCruising=i end,get=function() return AutopilotCruising end}, AutopilotRealigned={set=function (i)AutopilotRealigned=i end,get=function() return AutopilotRealigned end}, AutopilotEndSpeed={set=function (i)AutopilotEndSpeed=i end,get=function() return AutopilotEndSpeed end}, AutopilotStatus={set=function (i)AutopilotStatus=i end,get=function() return AutopilotStatus end},
-    AutopilotPlanetGravity={set=function (i)AutopilotPlanetGravity=i end,get=function() return AutopilotPlanetGravity end}, PrevViewLock={set=function (i)PrevViewLock=i end,get=function() return PrevViewLock end}, AutopilotTargetName={set=function (i)AutopilotTargetName=i end,get=function() return AutopilotTargetName end}, AutopilotTargetCoords={set=function (i)AutopilotTargetCoords=i end,get=function() return AutopilotTargetCoords end},
+    PrevViewLock={set=function (i)PrevViewLock=i end,get=function() return PrevViewLock end}, AutopilotTargetName={set=function (i)AutopilotTargetName=i end,get=function() return AutopilotTargetName end}, AutopilotTargetCoords={set=function (i)AutopilotTargetCoords=i end,get=function() return AutopilotTargetCoords end},
     AutopilotTargetIndex={set=function (i)AutopilotTargetIndex=i end,get=function() return AutopilotTargetIndex end}, TotalDistanceTravelled={set=function (i)TotalDistanceTravelled=i end,get=function() return TotalDistanceTravelled end},
     TotalFlightTime={set=function (i)TotalFlightTime=i end,get=function() return TotalFlightTime end}, SavedLocations={set=function (i)SavedLocations=i end,get=function() return SavedLocations end}, VectorToTarget={set=function (i)VectorToTarget=i end,get=function() return VectorToTarget end}, LocationIndex={set=function (i)LocationIndex=i end,get=function() return LocationIndex end}, LastMaxBrake={set=function (i)LastMaxBrake=i end,get=function() return LastMaxBrake end}, 
     LockPitch={set=function (i)LockPitch=i end,get=function() return LockPitch end}, LastMaxBrakeInAtmo={set=function (i)LastMaxBrakeInAtmo=i end,get=function() return LastMaxBrakeInAtmo end}, AntigravTargetAltitude={set=function (i)AntigravTargetAltitude=i end,get=function() return AntigravTargetAltitude end}, LastStartTime={set=function (i)LastStartTime=i end,get=function() return LastStartTime end}, iphCondition={set=function (i)iphCondition=i end,get=function() return iphCondition end}, stablized={set=function (i)stablized=i end,get=function() return stablized end}, UseExtra={set=function (i)UseExtra=i end,get=function() return UseExtra end}, SelectedTab={set=function (i)SelectedTab=i end,get=function() return SelectedTab end}, saveRoute={set=function (i)saveRoute=i end,get=function() return saveRoute end},
-    apRoute={set=function (i)apRoute=i end,get=function() return apRoute end}, ecuThrottle={set=function (i)ecuThrottle=i end,get=function() return ecuThrottle end}}
+    apRoute={set=function (i)apRoute=i end,get=function() return apRoute end}, ecuThrottle={set=function (i)ecuThrottle=i end,get=function() return ecuThrottle end}, adjMaxGameVelocity={set=function (i)adjMaxGameVelocity=i end,get=function() return adjMaxGameVelocity end}}
 
     local function globalDeclare(c, u, systime, mfloor, atmosphere) -- # is how many classes variable is in
         local s = DUSystem
@@ -1117,7 +1117,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 else
                     _, AutopilotEndSpeed = Kep(autopilotTargetPlanet):escapeAndOrbitalSpeed(AutopilotTargetOrbit)
                 end
-                AutopilotPlanetGravity = 0 -- This is inaccurate unless we integrate and we're not doing that.  
                 AutopilotAccelerating = false
                 AutopilotBraking = false
                 AutopilotCruising = false
@@ -2117,8 +2116,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     -- Display AtmoSpeedLimit above the throttle
                     newContent[#newContent + 1] = svgText(throtPosX+10, y1-40, "LIMIT: ".. adjustedAtmoSpeedLimit .. " km/h", "dim txtstart")
                 elseif not inAtmo and Autopilot then
-                    -- Display MaxGameVelocity above the throttle
-                    newContent[#newContent + 1] = svgText(throtPosX+10, y1-40, "LIMIT: ".. mfloor(MaxGameVelocity*3.6+0.5) .. " km/h", "dim txtstart")
+                    -- Display adjMaxGameVelocity above the throttle
+                    newContent[#newContent + 1] = svgText(throtPosX+10, y1-40, "LIMIT: ".. mfloor(adjMaxGameVelocity*3.6+0.5) .. " km/h", "dim txtstart")
                 end
             end
     
@@ -2316,16 +2315,16 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local function DisplayRoute(newContent)
                 local checkRoute = AP.routeWP(true)
                 if not checkRoute or #checkRoute==0 then return end
-                local x = crx(750)
+                local x = crx(960)
                 local y = cry(360)
                 if Autopilot or VectorToTarget then
-                    newContent[#newContent + 1] = svgText(x, y, "REMAINING ROUTE","pdim txtstart size20" )
+                    newContent[#newContent + 1] = svgText(x, y, "REMAINING ROUTE","pdim txtmid size20" )
                 else
-                    newContent[#newContent + 1] = svgText(x, y, "LOADED ROUTE","pdim txtstart size20" )
+                    newContent[#newContent + 1] = svgText(x, y, "LOADED ROUTE","pdim txtmid size20" )
                 end
                 for k,i in pairs(checkRoute) do
                     y=y+20
-                    newContent[#newContent + 1] = svgText( x, y, k..". "..checkRoute[k], "pdim txtstart size20")
+                    newContent[#newContent + 1] = svgText( x, y, k..". "..checkRoute[k], "pdim txtmid size20")
                 end
             end
     
@@ -2433,7 +2432,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if tempOrbit.periapsis == nil then 
                         tempOrbit.periapsis = {}
                         tempOrbit.periapsis.altitude = -planet.radius
-                        tempOrbit.periapsis.speed = MaxGameVelocity -- Don't show it
+                        tempOrbit.periapsis.speed = adjMaxGameVelocity -- Don't show it
                     end
                     if tempOrbit.eccentricity == nil then
                         tempOrbit.eccentricity = 1
@@ -2526,14 +2525,14 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         x = orbitMapX + orbitMapSize + pad*4 + rx -- Aligning left makes us need more padding... for some reason... 
                         y = orbitMapY + orbitMapSize*1.5 / 2 + 5 + pad
     
-                        if tempOrbit.apoapsis ~= nil and tempOrbit.apoapsis.speed < MaxGameVelocity then
+                        if tempOrbit.apoapsis ~= nil and tempOrbit.apoapsis.speed < adjMaxGameVelocity then
                             orbitInfo("Apoapsis")
                         end
                 
                         y = orbitMapY + orbitMapSize*1.5 / 2 + 5 + pad
                         x = orbitMapX + orbitMapSize - pad*2 - rx
                 
-                        if tempOrbit.periapsis ~= nil and tempOrbit.periapsis.speed < MaxGameVelocity and tempOrbit.periapsis.altitude > 0 then
+                        if tempOrbit.periapsis ~= nil and tempOrbit.periapsis.speed < adjMaxGameVelocity and tempOrbit.periapsis.altitude > 0 then
                             orbitInfo("Periapsis")
                         end
                 
@@ -4209,10 +4208,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                     if not TurnBurn then
                         brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(velMag)
-                        maxBrakeDistance, maxBrakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
+                        maxBrakeDistance, maxBrakeTime = AP.GetAutopilotBrakeDistanceAndTime(adjMaxGameVelocity)
                     else
                         brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(velMag)
-                        maxBrakeDistance, maxBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
+                        maxBrakeDistance, maxBrakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(adjMaxGameVelocity)
                     end
                     local displayText = getDistanceDisplayString(targetDistance)
                     sysUpData(widgetDistanceText, '{"label": "distance", "value": "' .. displayText
@@ -4604,27 +4603,22 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         
                 local maxThrust = Nav:maxForceForward()
                 gravity = c.getGravityIntensity()
-                if velMag < 5 and abvGndDet ~= -1 then
-                    local axisCRefDirection = vec3(C.getOrientationForward())
-                    local maxKPAlongAxis = C.getMaxThrustAlongAxis('thrust analog longitudinal ', {axisCRefDirection:unpack()})
-                    safeAtmoMass = 0.5*maxKPAlongAxis[1]/gravity
-                    safeAtmoMass = safeAtmoMass > 1000000 and round(safeAtmoMass / 1000000,1).." kTons" or round(safeAtmoMass / 1000, 1).." Tons"
-                    safeSpaceMass = 0.5*maxKPAlongAxis[3]/gravity
-                    safeSpaceMass = safeSpaceMass > 1000000 and round(safeSpaceMass / 1000000,1).." kTons" or round(safeSpaceMass / 1000, 1).." Tons"
-                    axisCRefDirection = vec3(C.getOrientationUp())
-                    maxKPAlongAxis = C.getMaxThrustAlongAxis('hover_engine, booster_engine', {axisCRefDirection:unpack()})
-                    safeHoverMass = 0.5*maxKPAlongAxis[1]/gravity
-                    safeHoverMass = safeHoverMass > 1000000 and round(safeHoverMass / 1000000,1).." kTons" or round(safeHoverMass / 1000, 1).." Tons"
-                    safeBrakeMass = 0.5*brakeValue/gravity
-                    safeBrakeMass = safeBrakeMass > 1000000 and round(safeBrakeMass / 1000000,1).." kTons" or round(safeBrakeMass / 1000, 1).." Tons"
-                end
+                if gravity < 0.1 then gravity = 9.80665 end
+                local axisCRefDirection = vec3(C.getOrientationForward())
+                local maxKPAlongAxis = C.getMaxThrustAlongAxis('thrust analog longitudinal ', {axisCRefDirection:unpack()})
+                safeAtmoMass = 0.5*maxKPAlongAxis[1]/gravity
+                safeAtmoMass = safeAtmoMass > 1000000 and round(safeAtmoMass / 1000000,1).." kTons" or round(safeAtmoMass / 1000, 1).." Tons"
+                safeSpaceMass = 0.5*maxKPAlongAxis[3]/gravity
+                safeSpaceMass = safeSpaceMass > 1000000 and round(safeSpaceMass / 1000000,1).." kTons" or round(safeSpaceMass / 1000, 1).." Tons"
+                axisCRefDirection = vec3(C.getOrientationUp())
+                maxKPAlongAxis = C.getMaxThrustAlongAxis('hover_engine, booster_engine', {axisCRefDirection:unpack()})
+                safeHoverMass = 0.5*maxKPAlongAxis[1]/gravity
+                safeHoverMass = safeHoverMass > 1000000 and round(safeHoverMass / 1000000,1).." kTons" or round(safeHoverMass / 1000, 1).." Tons"
+                safeBrakeMass = 0.5*brakeValue/gravity
+                safeBrakeMass = safeBrakeMass > 1000000 and round(safeBrakeMass / 1000000,1).." kTons" or round(safeBrakeMass / 1000, 1).." Tons"
                 brakeValue = round((brakeValue / (coreMass * gravConstant)),2).." g"
-                if gravity > 0.1 then
-                    reqThrust = coreMass * gravity
-                    reqThrust = round((reqThrust / (coreMass * gravConstant)),2).." g"
-                else
-                    reqThrust = "n/a"
-                end
+                reqThrust = coreMass * gravity
+                reqThrust = round((reqThrust / (coreMass * gravConstant)),2).." g"
                 maxThrust = round((maxThrust / (coreMass * gravConstant)),2).." g"
                 if isRemote() == 0 or RemoteHud then 
                     local startX = crx(OrbitMapX+10)
@@ -4639,15 +4633,16 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     infoContent = infoContent.. svgText(startX, startY+height*2, "Trip Time: "..FormatTimeString(flightTime)) 
                     infoContent = infoContent.. svgText(midX, startY+height*2, "Total Time: "..FormatTimeString(TotalFlightTime)) 
                     infoContent = infoContent.. svgText(startX, startY+height*3, stringf("Mass: %s", mass)) 
-                    infoContent = infoContent.. svgText(midX, startY+height*3, stringf("Safe Brake Mass: %s",  safeBrakeMass)) 
+                    infoContent = infoContent.. svgText(midX, startY+height*3, stringf("Req Thrust: %s",  reqThrust)) 
+                    infoContent = infoContent.. svgText(midX, startY+height*4, stringf("Safe Brake Mass: %s",  safeBrakeMass)) 
                     infoContent = infoContent.. svgText(startX, startY+height*4, stringf("Max Thrust: %s", maxThrust)) 
-                    infoContent = infoContent.. svgText(midX, startY+height*4, stringf("Safe Atmo Mass: %s", (safeAtmoMass)))
+                    infoContent = infoContent.. svgText(midX, startY+height*5, stringf("Safe Atmo Mass: %s", (safeAtmoMass)))
                     infoContent = infoContent.. svgText(startX, startY+height*5, stringf("Max Brake: %s", brakeValue )) 
-                    infoContent = infoContent.. svgText(midX, startY+height*5, stringf("Safe Space Mass: %s", (safeSpaceMass)))
-                    infoContent = infoContent.. svgText(midX, startY+height*6, stringf("Safe Hover Mass: %s", (safeHoverMass)))
+                    infoContent = infoContent.. svgText(midX, startY+height*6, stringf("Safe Space Mass: %s", (safeSpaceMass)))
+                    infoContent = infoContent.. svgText(midX, startY+height*7, stringf("Safe Hover Mass: %s", (safeHoverMass)))
                     infoContent = infoContent.. svgText(startX, startY+height*6, stringf("Influence: %s", planet.name))
-                    infoContent = infoContent.. svgText(startX, startY+height*7, stringf("Set Max Speed: %s", mfloor(MaxGameVelocity*3.6+0.5)))
-                    infoContent = infoContent.. svgText(midX, startY+height*7, stringf("Actual Max Speed: %s", mfloor(MaxSpeed*3.6+0.5)))
+                    infoContent = infoContent.. svgText(startX, startY+height*7, stringf("Set Max Speed: %s", mfloor(adjMaxGameVelocity*3.6+0.5)))
+                    infoContent = infoContent.. svgText(midX, startY+height*8, stringf("Actual Max Speed: %s", mfloor(MaxSpeed*3.6+0.5)))
                     infoContent = infoContent.. svgText(startX, startY+height*8, stringf("Burn Speed: %s", mfloor(C.getFrictionBurnSpeed()*3.6)))
                 end
                 infoContent = infoContent.. "</g></g>"
@@ -4792,14 +4787,14 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 end
                 return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, 0, 0,
-                        whichBrake - (AutopilotPlanetGravity * coreMass))
+                        whichBrake)
             end
             local function GetAutopilotTBBrakeDistanceAndTime(speed)
                 local finalSpeed = AutopilotEndSpeed
                 if not Autopilot then finalSpeed = 0 end
     
                 return Kinematic.computeDistanceAndTime(speed, finalSpeed, coreMass, Nav:maxForceForward(),
-                        warmup, LastMaxBrake - (AutopilotPlanetGravity * coreMass))
+                        warmup, LastMaxBrake)
             end
             local function signedRotationAngle(normal, vecA, vecB)
                 vecA = vecA:project_on_plane(normal)
@@ -5013,6 +5008,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             apBrk = false
             alignHeading = nil
             finalLand = false
+            AP.ResetAutopilots(1)
         end
     
         function ap.GetAutopilotBrakeDistanceAndTime(speed)
@@ -5147,7 +5143,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
         function ap.checkLOS(vector)
             local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, vector,
-                function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
+                function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.1) end end)
             local atmoDistance = farSide
             if nearSide ~= nil and farSide ~= nil then
                 atmoDistance = math.min(nearSide,farSide)
@@ -5230,19 +5226,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             alignTarget = false
             -- Toggle Autopilot, as long as the target isn't None
             if (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
-                --if AltitudeHold then AltitudeHold = false end
                 if 0.5 * Nav:maxForceForward() / c.getGravityIntensity() < coreMass then msg("WARNING: Heavy Loads may affect autopilot performance.") end
+                AutopilotTargetIndex = (#apRoute>0 and not finalLand) and getIndex(apRoute[1]) or AutopilotTargetIndex
+                ATLAS.UpdateAutopilotTarget()
                 if #apRoute>0 and not finalLand then 
-                    AutopilotTargetIndex = getIndex(apRoute[1])
-                    ATLAS.UpdateAutopilotTarget()
                     msg("Route Autopilot in Progress")
-                    local targetVec = CustomTarget.position - worldPos
-                    local distanceToTarget = targetVec:project_on_plane(worldVertical):len()
-                    if distanceToTarget > 50000 and CustomTarget.planetname == planet.name then 
+                    if (CustomTarget.position - worldPos):project_on_plane(worldVertical):len() > 50000 and CustomTarget.planetname == planet.name then 
                         routeOrbit=true
                     end
                 end
-                ATLAS.UpdateAutopilotTarget()
                 AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
                 if CustomTarget ~= nil then
                     if CustomTarget.agg and not ExternalAGG and antigrav then
@@ -5381,8 +5373,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         function ap.ToggleLockPitch()
             if LockPitch == nil then
                 play("lkPOn","LP")
-                if not holdingShift then LockPitch = adjustedPitch
-                else LockPitch = LockPitchTarget end
+                LockPitch = adjustedPitch
                 AutoTakeoff = false
                 AltitudeHold = false
                 BrakeLanding = false
@@ -5620,7 +5611,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if inAtmo or Reentry then
                         adjustedAtmoSpeedLimit = uclamp(adjustedAtmoSpeedLimit + mult*speedChangeLarge,0,AtmoSpeedLimit)
                     elseif Autopilot then
-                        MaxGameVelocity = uclamp(MaxGameVelocity + mult*speedChangeLarge/3.6*100,0, MaxSpeed-0.2)
+                        adjMaxGameVelocity = uclamp(adjMaxGameVelocity + mult*speedChangeLarge/3.6*100,0, MaxSpeed-0.2)
                     end
                 else
                     navCom:updateCommandFromActionStart(axisCommandId.longitudinal, mult*speedChangeLarge/10)
@@ -5652,7 +5643,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local throttle = u.getThrottle()/100
                 if AtmoSpeedAssist then throttle = PlayerThrottle end
                 local accelDistance, accelTime =
-                    Kinematic.computeDistanceAndTime(velMag, MaxGameVelocity, -- From currently velocity to max
+                    Kinematic.computeDistanceAndTime(velMag, adjMaxGameVelocity, -- From currently velocity to max
                         coreMass, Nav:maxForceForward()*throttle, warmup, -- T50?  Assume none, negligible for this
                         0) -- Brake thrust, none for this
                 -- accelDistance now has the amount of distance for which we will be accelerating
@@ -5660,9 +5651,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 -- Note that for some nearby moons etc, it may never reach full speed though.
                 local brakeDistance, brakeTime
                 if not TurnBurn then
-                    brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(MaxGameVelocity)
+                    brakeDistance, brakeTime = AP.GetAutopilotBrakeDistanceAndTime(adjMaxGameVelocity)
                 else
-                    brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(MaxGameVelocity)
+                    brakeDistance, brakeTime = AP.GetAutopilotTBBrakeDistanceAndTime(adjMaxGameVelocity)
                 end
                 local _, curBrakeTime
                 if not TurnBurn and speed > 0 then -- Will this cause problems?  Was spamming something in here was giving 0 speed and 0 accel
@@ -5679,7 +5670,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 elseif brakeDistance + accelDistance < AutopilotDistance then
                     -- Add any remaining distance
                     cruiseDistance = AutopilotDistance - (brakeDistance + accelDistance)
-                    cruiseTime = Kinematic.computeTravelTime(MaxGameVelocity, 0, cruiseDistance)
+                    cruiseTime = Kinematic.computeTravelTime(adjMaxGameVelocity, 0, cruiseDistance)
                 else
                     local accelRatio = (AutopilotDistance - brakeDistance) / accelDistance
                     accelDistance = AutopilotDistance - brakeDistance -- Accel until we brake
@@ -5738,15 +5729,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local tempPos, tempPos2 = nil,nil
                 local nearestDistance = nil
                 local nearestPipePlanet = nil
-                local pc, npc = planet.center, nil
+                local pc, npc, pn = planet.center, nil, planet.name
                 for k,nextPlanet in pairs(atlas[0]) do
                     npc = nextPlanet.center
-                    if npc then
+                    if npc and nextPlanet.name ~= pn then
                         local distance, tempPos = getPipeDistance(pc, npc)
                         if nearestDistance == nil or distance < nearestDistance then
                             nearestPipePlanet = nextPlanet
-                            nearestDistance = distance
-                            tempPos2 = tempPos 
                         end
                     end
                 end 
@@ -5756,7 +5745,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     pipeDistC = nearestDistance
                 end
                 if autopilotTargetPlanet then
-                    if autopilotTargetPlanet and autopilotTargetPlanet.name ~= planet.name and autopilotTargetPlanet.name ~= "Space" then
+                    if autopilotTargetPlanet and autopilotTargetPlanet.name ~= pn and autopilotTargetPlanet.name ~= "Space" then
                         pipeDistT, pipePosT = getPipeDistance(pc,autopilotTargetPlanet.center)
                         pipeDestT = autopilotTargetPlanet
                     else
@@ -6016,7 +6005,18 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
             end
     
-    
+            local function planetTarget()
+                            -- Set the target to something on the radius in the direction closest to velocity
+                -- We have to fudge a high velocity because at standstill this can give us bad results
+                local initialDirection = ((worldPos+(constructVelocity*100000)) - autopilotTargetPlanet.center):normalize() -- Should be pointing up
+                local finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize()
+                if finalDirection:len() < 1 then
+                initialDirection = ((worldPos+(constructForward*100000)) - autopilotTargetPlanet.center):normalize()
+                finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize() -- Align to nearest to ship forward then
+                end
+                -- And... actually that's all that I need.  If forward is really gone, this should give us a point on the edge of the planet
+                return autopilotTargetPlanet.center + finalDirection*(autopilotTargetPlanet.radius + AutopilotTargetOrbit)
+            end
     
     
             brakeInput2 = 0
@@ -6200,8 +6200,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
             end
     
-            if finalLand and CustomTarget and (coreAltitude < (HoldAltitude + 250) and coreAltitude > (HoldAltitude - 250)) and mabs(vSpd) < 25 and atmosDensity >= 0.1
-                and (CustomTarget.position-worldPos):len() > 2000 + coreAltitude then -- Only engage if far enough away to be able to turn back for it
+            if finalLand and CustomTarget and (mabs(coreAltitude-HoldAltitude) < 500 or atmosDensity >= 0.11)
+                and ((CustomTarget.position-worldPos):len() - mabs(coreAltitude - autopilotTargetPlanet:getAltitude(CustomTarget.position))) > 3000 then -- Only engage if far enough away to be able to turn back for it
+    
                     if not aptoggle then aptoggle = true end
                 finalLand = false
             end
@@ -6326,7 +6327,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 endSpeed = endSpeed*3.6+1 + ((MaintainOrbit and FastOrbit*(endSpeed*3.6)) or 0)
                 local orbitalRoll = adjustedRoll
                 -- Getting as close to orbit distance as comfortably possible
-                if not orbitAligned then
+                if not orbitAligned and adjustedPitch > -45 then
                     local pitchAligned = false
                     local rollAligned = false
                     cmdT = 0
@@ -6491,8 +6492,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             if not coreAltitude or coreAltitude == 0 then return end
                             OrbitTargetOrbit = coreAltitude
                             OrbitTargetSet = true
+                            AP.ToggleIntoOrbit(autopilotTargetPlanet)
+                        elseif spaceLand then
+                            spaceLand = false
+                            aptoggle = true
                         end
-                        AP.ToggleIntoOrbit(autopilotTargetPlanet)
                     end
                 end
                 -- Planetary autopilot engaged, we are out of atmo, and it has a target
@@ -6502,6 +6506,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 -- Maybe instead of pointing at our vector, we point at our vector + how far off our velocity vector is
                 -- This is gonna be hard to get the negatives right.
                 -- If we're still in orbit, don't do anything, that velocity will suck
+    
                 local targetCoords, skipAlign = AutopilotTargetCoords, false
                 -- This isn't right.  Maybe, just take the smallest distance vector between the normal one, and the wrongSide calculated one
                 --local wrongSide = (CustomTarget.position-worldPos):len() > (autopilotTargetPlanet.center-worldPos):len()
@@ -6524,16 +6529,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             AutopilotEndSpeed = 0
                         end
                         AutopilotTargetCoords = targetCoords
+                        local intersect, _ = AP.checkLOS((AutopilotTargetCoords-worldPos):normalize())
+                        if intersect then AutopilotTargetCoords = planetTarget() end
                         AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
     
                         skipAlign = true
                         TargetSet = true -- Only set the targetCoords once.  Don't let them change as we fly.
                     end
-                    --AutopilotPlanetGravity = autopilotTargetPlanet.gravity*9.8 -- Since we're aiming straight at it, we have to assume gravity?
-                    AutopilotPlanetGravity = 0
                 elseif CustomTarget and CustomTarget.planetname == "Space" then
                     if not TargetSet then
-                        AutopilotPlanetGravity = 0
                         skipAlign = true
                         AutopilotRealigned = true
                         TargetSet = true
@@ -6550,8 +6554,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         --AP.showWayPoint(autopilotTargetPlanet, targetCoords)
                     end
                 elseif CustomTarget == nil then -- and not autopilotTargetPlanet.name == planet.name then
-                    AutopilotPlanetGravity = 0
-    
                     if not TargetSet then
                         -- Set the target to something on the radius in the direction closest to velocity
                         -- We have to fudge a high velocity because at standstill this can give us bad results
@@ -6562,7 +6564,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize() -- Align to nearest to ship forward then
                         end
                         -- And... actually that's all that I need.  If forward is really gone, this should give us a point on the edge of the planet
-                        targetCoords = autopilotTargetPlanet.center + finalDirection*(autopilotTargetPlanet.radius + AutopilotTargetOrbit)
+                        targetCoords = planetTarget() 
                         AutopilotTargetCoords = targetCoords
                         TargetSet = true
                         skipAlign = true
@@ -6573,12 +6575,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
                 
                 AutopilotDistance = (vec3(targetCoords) - worldPos):len()
-                local intersectBody, farSide, nearSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (constructVelocity):normalize(), 
-                    function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
-                local atmoDistance = farSide
-                if nearSide ~= nil and farSide ~= nil then
-                    atmoDistance = math.min(nearSide,farSide)
-                end
+                local intersectBody, atmoDistance = AP.checkLOS(constructVelocity:normalize())
+    
                 if atmoDistance ~= nil and atmoDistance < AutopilotDistance and intersectBody.name == autopilotTargetPlanet.name then
                     AutopilotDistance = atmoDistance -- If we're going to hit atmo before our target, use that distance instead.
                     -- Can we put this on the HUD easily?
@@ -6681,6 +6679,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if autopilotTargetPlanet.name ~= planet.name then 
                         if intersectBody ~= nil and autopilotTargetPlanet.name ~= intersectBody.name and atmoDistance < AutopilotDistance then 
                             collisionAlertStatus = "Attempting to clear LOS between "..intersectBody.name.." and waypoint."
+                            AutopilotTargetCoords = planetTarget()
                             AutopilotPaused = true
                         else
                             AutopilotPaused = false
@@ -6715,8 +6714,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if velAlongTarget > 0 or accel > 0 then -- (otherwise divide by 0 errors)
                         timeUntilBrake = Kinematic.computeTravelTime(velAlongTarget, accel, AutopilotDistance-brakeDistance)
                     end
-                    if MaxGameVelocity > MaxSpeed then MaxGameVelocity = MaxSpeed - 0.2 end
-                    if (coreVelocity:len() >= MaxGameVelocity or (throttle == 0 and apThrottleSet) or warmup/4 > timeUntilBrake) then
+                    if adjMaxGameVelocity > MaxSpeed or (MaxGameVelocity == -1 and adjMaxGameVelocity < MaxSpeed) then adjMaxGameVelocity = MaxSpeed - 0.2 end
+                    if (coreVelocity:len() >= adjMaxGameVelocity or (throttle == 0 and apThrottleSet) or warmup/4 > timeUntilBrake) then
                         AutopilotAccelerating = false
                         if AutopilotStatus ~= "Cruising" then
                             play("apCru","AP")
@@ -6791,13 +6790,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         BrakeIsOn = "Space Arrival"
                         -- We only aim for endSpeed even if going straight in, because it gives us a smoother transition to alignment
                     elseif (CustomTarget and CustomTarget.planetname ~= "Space") and velMag <= endSpeed and (orbit.apoapsis == nil or orbit.periapsis == nil or orbit.apoapsis.altitude <= 0 or orbit.periapsis.altitude <= 0) then
-                        -- They aren't in orbit, that's a problem if we wanted to do anything other than reenter.  Reenter regardless.                  
+                        -- They aren't in orbit, that's a problem if we wanted to do anything other than reenter.  Reenter regardless.    
+                        AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint 
+                        spaceLand = true             
                         finishAutopilot("Autopilot complete, commencing reentry")
-                        --BrakeIsOn = true
-                        --BrakeIsOn = false -- Leave brakes on to be safe while we align prograde
-                        AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
-                        --ProgradeIsOn = true  
-                        spaceLand = true
                         AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
                     elseif ((CustomTarget and CustomTarget.planetname ~= "Space") or CustomTarget == nil) and orbit.periapsis ~= nil and orbit.periapsis.altitude > 0 and orbit.eccentricity < 1 or AutopilotStatus == "Circularizing" then
                         if AutopilotStatus ~= "Circularizing" then
@@ -6806,24 +6802,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         end
                         if velMag <= endSpeed then
                             if CustomTarget then
-                                if constructVelocity:normalize():dot(targetVec:normalize()) > 0.4 then -- Triggers when we get close to passing it
-                                    if AutopilotStatus ~= "Orbiting to Target" then
-                                        play("apOrb","OB")
-                                        AutopilotStatus = "Orbiting to Target"
-                                    end
-                                    if not WaypointSet then
-                                        BrakeIsOn = false -- We have to set this at least once
-                                        AP.showWayPoint(autopilotTargetPlanet, CustomTarget.position)
-                                        WaypointSet = true
-                                    end
-                                else 
-                                    finishAutopilot("Autopilot complete, proceeding with reentry")
                                     AutopilotTargetCoords = CustomTarget.position -- For setting the waypoint
                                     --ProgradeIsOn = true
-                                    spaceLand = true
                                     AP.showWayPoint(autopilotTargetPlanet, CustomTarget.position)
                                     WaypointSet = false -- Don't need it anymore
-                                end
+                                    spaceLand = true
+                                    finishAutopilot("Autopilot complete, establishing low orbit")
                             else
                                 finishAutopilot("Autopilot completed, setting orbit", true)
                                 BrakeIsOn = false
@@ -7445,14 +7429,14 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     initBL = false
                 end
                 if AutoTakeoff or spaceLaunch then
-                    local intersectBody, nearSide, farSide
+                    local intersectBody, distance
                     if AutopilotTargetCoords ~= nil then
-                        intersectBody, nearSide, farSide = galaxyReference:getPlanetarySystem(0):castIntersections(worldPos, (AutopilotTargetCoords-worldPos):normalize(), 
-                            function(body) if body.noAtmosphericDensityAltitude > 0 then return (body.radius+body.noAtmosphericDensityAltitude) else return (body.radius+body.surfaceMaxAltitude*1.5) end end)
-                    end
-                    if intersectBody ~= nil then 
-                        if intersectBody.name ~= autopilotTargetPlanet.name and not inAtmo then
-                            collisionAlertStatus = "Clearing LOS between "..intersectBody.name.." and waypoint."
+                        intersectBody, distance = AP.checkLOS((AutopilotTargetCoords-worldPos):normalize())
+                        if intersectBody ~= nil then 
+                            if intersectBody.name ~= autopilotTargetPlanet.name and not inAtmo then
+                                collisionAlertStatus = "Takeoff LOS blocked by "..intersectBody.name.." in "..getDistanceDisplayString(distance,1)
+                                if intersectBody.name ~= planet.name then AutopilotTargetCoords = planetTarget() end
+                            end
                         end
                     end
                     if antigravOn and not spaceLaunch then
@@ -7764,7 +7748,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if AtmoSpeedAssist then throttle = PlayerThrottle*100 end
                     local targetSpeed = (throttle/100)
                     if not inAtmo then
-                        targetSpeed = targetSpeed * MaxGameVelocity
+                        targetSpeed = targetSpeed * adjMaxGameVelocity
                         if speed >= (targetSpeed * (1- maxSpeedLag)) and IsRocketOn then
                             IsRocketOn = false
                             Nav:toggleBoosters()
@@ -8235,7 +8219,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         if inAtmo then 
                             AP.cmdCruise(adjustedAtmoSpeedLimit) 
                         else
-                            AP.cmdCruise(MaxGameVelocity*3.6)
+                            AP.cmdCruise(adjMaxGameVelocity*3.6)
                         end
                     end
                 end
@@ -8502,11 +8486,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             if k=="AtmoSpeedLimit" then adjustedAtmoSpeedLimit = newGlobalValue end
                         end
                         msg ("Variable "..globalVariableName.." changed to "..newGlobalValue)
-                        if k=="MaxGameVelocity" then 
+                        if k=="MaxGameVelocity" and newGlobalValue ~= -1 then 
                             newGlobalValue = newGlobalValue/3.6
                             if newGlobalValue > MaxSpeed-0.2 then 
                                 newGlobalValue = MaxSpeed-0.2 
-                                msg ("Variable "..globalVariableName.." changed to "..round(newGlobalValue*3.6,1))
+                                msg ("Updated "..globalVariableName.." changed to "..round(newGlobalValue*3.6,1))
                             end
                         end
                         if varType == "boolean" then
@@ -8859,7 +8843,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         if #privatelocations>0 then customlocations = addTable(customlocations, privatelocations) end
                     end
                     VectorStatus = "Proceeding to Waypoint"
-                    if not MaxGameVelocity or MaxGameVelocity < 0 then MaxGameVelocity = C.getMaxSpeed()-0.1 end
+                    if MaxGameVelocity == -1 then 
+                        adjMaxGameVelocity = C.getMaxSpeed()
+                    end
                 end
     
                 local function ProcessElements()
