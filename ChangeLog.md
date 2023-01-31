@@ -1,5 +1,12 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.023
+(Sorry about the frequent update - This one should sit for a bit and be the new standard)
+- Fixed: Yo-yo yawing should no longer occur when arriving at AP planet and orbit alignment pitches down -65 to reach orbit corridor quicker.
+- Fixed: IntoOrbit should pull out of -65 dive more reliably to avoid going below target orbit height (assuming your ship has good adjustors)
+- Reversed: Changed `ReEntryPitch` default back to -30 for extra safety, -60 will work for most ships, this does not affect
+Orbit Corridor pitch, but rather pitch when finishing orbit.
+
 Version 2.022 - AP enahncements.
 - CHANGE: HUD will now try to clear a LOS blockage more proactively by moving the arrival wp if needed.  It will change initial arrival WP to the
 one that would be used if just flying to the planet (vice surface landing) but will still then proceed to surface land.  This fixes Madis-Mission
