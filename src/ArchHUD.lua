@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.022
+VERSION_NUMBER = 0.023
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -6327,7 +6327,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 endSpeed = endSpeed*3.6+1 + ((MaintainOrbit and FastOrbit*(endSpeed*3.6)) or 0)
                 local orbitalRoll = adjustedRoll
                 -- Getting as close to orbit distance as comfortably possible
-                if not orbitAligned and adjustedPitch > -45 then
+                if not orbitAligned then
                     local pitchAligned = false
                     local rollAligned = false
                     cmdT = 0
@@ -6360,11 +6360,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         orbitAligned = true
                     end
                 else
-    
-                    if orbitalParams.VectorToTarget then
-                        AlignToWorldVector(targetVec:normalize():project_on_plane(worldVertical))
-                    elseif velMag > 150 then
-                        AlignToWorldVector(constructVelocity)
+                    if coreAltitude < OrbitTargetOrbit*1.5 then
+                        if orbitalParams.VectorToTarget then
+                            AlignToWorldVector(targetVec:normalize():project_on_plane(worldVertical))
+                        elseif velMag > 150 then
+                            AlignToWorldVector(constructVelocity)
+                        end
                     end
                     pitchInput2 = 0
                     if orbitalParams.VectorToTarget and CustomTarget then
@@ -6414,6 +6415,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             else
                                 if orbitCheck() then 
                                     orbitMsg = "Maintaining " 
+                                    orbitalRecover = false
                                 else
                                     orbitMsg = "Adjusting " 
                                     orbitalRecover = true
@@ -6452,15 +6454,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             orbitMsg = "Approaching orbital corridor - OrbitHeight: "..orbitHeightString
                             pcs = pcs*0.75
                             if vSpd < 0 or orbitalRecover then
-                                orbitPitch = utils.map(coreAltitude, OrbitTargetOrbit*1.5, OrbitTargetOrbit*1.01, -30, 0) -- Going down? pitch up.
+                                orbitPitch = utils.map(coreAltitude, OrbitTargetOrbit*1.5, OrbitTargetOrbit*1.01, -30, 60) -- Going down? pitch up.
                                 --orbitPitch = utils.map(vSpd, 100, -100, -15, 65)
                             else
-                                orbitPitch = utils.map(coreAltitude, OrbitTargetOrbit*0.99, OrbitTargetOrbit*1.5, 0, 30) -- Going up? pitch down.
+                                orbitPitch = utils.map(coreAltitude, OrbitTargetOrbit*0.99, OrbitTargetOrbit*1.5, 0, -30) -- Going up? pitch down.
                             end
                         elseif coreAltitude > OrbitTargetOrbit*1.5 then
                             orbitMsg = "Reentering orbital corridor - OrbitHeight: "..orbitHeightString
                             orbitPitch = -65 --utils.map(vSpd, 25, -200, -65, -30)
-                            local pcsAdjust = utils.map(vSpd, -150, -400, 1, 0.55)
+                            local pcsAdjust = utils.map(vSpd, -150, -400, 1, 0.15)
                             pcs = pcs*pcsAdjust
                         end
                         cmdC = mfloor(pcs)
