@@ -276,6 +276,9 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 return
             end
             ReversalIsOn = nil
+            if not inAtmo and (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
+                AP.cmdThrottle(1)
+            end
             AP.ToggleAutopilot()
         elseif action == "option5" then 
             toggleView = false 
