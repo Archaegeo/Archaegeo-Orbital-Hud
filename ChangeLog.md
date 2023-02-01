@@ -1,6 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 2.024
+- Change: When pasting a temp location, the IPH will swap to position 1.
+- Change: Prevent ability to paste waypoints in lua chat if currently in autopilot.
 - Fixed: When starting AP from cruise mode (alt-4) it will first switch to throttle mode. This prevents the 250000% throttle error.
 
 Version 2.023

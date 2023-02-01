@@ -886,6 +886,7 @@
                         -- Nearest planet, gravity also important - if it's 0, we don't autopilot to the target planet, the target isn't near a planet.                      
                         table.insert(atlas[0], newLocation)
                         UpdateAtlasLocationsList()
+                        if temp then AutopilotTargetIndex = 1 end
                         UpdateAutopilotTarget() -- This is safe and necessary to do right?
                         -- Store atmosphere so we know whether the location is in space or not
                         msg ("Location saved as " .. name.."("..p.name..")")

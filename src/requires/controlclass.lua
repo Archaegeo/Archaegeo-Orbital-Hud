@@ -662,12 +662,16 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 arguement = command
                 temp = true
             end
-            i = string.find(arguement, "::")
-            if not temp then savename = string.sub(arguement, 1, i-2) end
-            local pos = string.sub(arguement, i)
-            pos = pos:gsub("%s+", "")
-            AddNewLocationByWaypoint(savename, pos, temp)
-            elseif command == "/agg" then
+            if not alignTarget and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand then
+                i = string.find(arguement, "::")
+                if not temp then savename = string.sub(arguement, 1, i-2) end
+                local pos = string.sub(arguement, i)
+                pos = pos:gsub("%s+", "")
+                AddNewLocationByWaypoint(savename, pos, temp)
+            else
+                msg("Disengage Autopilot before adding waypoints")
+            end
+        elseif command == "/agg" then
             if arguement == nil or arguement == "" then
                 msg ("Usage: /agg targetheight")
                 return
