@@ -2057,7 +2057,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     --targetAltitude = planet:getAltitude(CustomTarget.position)
                     --horizontalDistance = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
                 end
-                if (CustomTarget and CustomTarget.planetname == "Space" and (velMag < 50 or (velMag < 1388 and #apRoute>0))) then
+                if (CustomTarget and CustomTarget.planetname == "Space" and (velMag < 50 or (velMag < 555 and #apRoute>0))) then
                     if #apRoute>0 then
                         if not aptoggle then table.remove(apRoute,1) end
                         if #apRoute>0 then

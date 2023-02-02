@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 2.025
+- Change: AP Route re-align when at a route point in space at 2000k/hr (vice 5000k/hr)
 - Fixed: Aegis is never considered "closest planet"
 
 Version 2.024
