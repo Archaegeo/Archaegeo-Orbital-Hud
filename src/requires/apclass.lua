@@ -1014,10 +1014,12 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local pc, npc, pn = planet.center, nil, planet.name
             for k,nextPlanet in pairs(atlas[0]) do
                 npc = nextPlanet.center
-                if npc and nextPlanet.name ~= pn then
+                if npc and nextPlanet.name ~= pn and string.find(nextPlanet.name, "Asteroid") == nil  then
                     local distance, tempPos = getPipeDistance(pc, npc)
                     if nearestDistance == nil or distance < nearestDistance then
                         nearestPipePlanet = nextPlanet
+                        tempPos2 = tempPos
+                        nearestDistance = distance
                     end
                 end
             end 
