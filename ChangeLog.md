@@ -1,7 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 2.024
-- Fixed: Apparently I broke /pipecenter in one of the recent patches.  It is working again.
+- Fixed: Apparently I broke closest pipe and /pipecenter in one of the recent patches.  Working again.
 - Change: When pasting a temp location, the IPH will swap to position 1 (0-Temp) so you can just hit alt-4 to go to it.
 - Change: Prevent ability to paste waypoints in lua chat if currently in autopilot.
 - Fixed: When starting AP from cruise mode (alt-4) it will first switch to throttle mode. This prevents the 250000% throttle error.
