@@ -997,11 +997,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local pipeDistance
             local pipe = (destCenter - origCenter):normalize()
             local r = (worldPos -origCenter):dot(pipe) / pipe:dot(pipe)
-            if r <= 0. then
-                return (worldPos-origCenter):len(), nil
-            elseif r >= (destCenter - origCenter):len() then
-                return (worldPos-destCenter):len(), nil
-            end
+
             local L = origCenter + (r * pipe)
             pipeDistance =  (L - worldPos):len()
             return pipeDistance, L
@@ -1014,10 +1010,12 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local pc, npc, pn = planet.center, nil, planet.name
             for k,nextPlanet in pairs(atlas[0]) do
                 npc = nextPlanet.center
-                if npc and nextPlanet.name ~= pn then
+                if npc and nextPlanet.name ~= pn and string.find(nextPlanet.name, "Asteroid") == nil and nextPlanet.name ~= "Space" then
                     local distance, tempPos = getPipeDistance(pc, npc)
                     if nearestDistance == nil or distance < nearestDistance then
                         nearestPipePlanet = nextPlanet
+                        tempPos2 = tempPos
+                        nearestDistance = distance
                     end
                 end
             end 
@@ -1027,11 +1025,9 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 pipeDistC = nearestDistance
             end
             if autopilotTargetPlanet then
-                if autopilotTargetPlanet and autopilotTargetPlanet.name ~= pn and autopilotTargetPlanet.name ~= "Space" then
+                if autopilotTargetPlanet.name ~= pn and autopilotTargetPlanet.name ~= "Space" then
                     pipeDistT, pipePosT = getPipeDistance(pc,autopilotTargetPlanet.center)
                     pipeDestT = autopilotTargetPlanet
-                else
-                    pipePosT = nil
                 end
             end
         end
