@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.023
+VERSION_NUMBER = 0.024
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -1212,6 +1212,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         -- Nearest planet, gravity also important - if it's 0, we don't autopilot to the target planet, the target isn't near a planet.                      
                         table.insert(atlas[0], newLocation)
                         UpdateAtlasLocationsList()
+                        if temp then AutopilotTargetIndex = 1 end
                         UpdateAutopilotTarget() -- This is safe and necessary to do right?
                         -- Store atmosphere so we know whether the location is in space or not
                         msg ("Location saved as " .. name.."("..p.name..")")
@@ -5715,11 +5716,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local pipeDistance
                 local pipe = (destCenter - origCenter):normalize()
                 local r = (worldPos -origCenter):dot(pipe) / pipe:dot(pipe)
-                if r <= 0. then
-                    return (worldPos-origCenter):len(), nil
-                elseif r >= (destCenter - origCenter):len() then
-                    return (worldPos-destCenter):len(), nil
-                end
+    
                 local L = origCenter + (r * pipe)
                 pipeDistance =  (L - worldPos):len()
                 return pipeDistance, L
@@ -5732,10 +5729,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local pc, npc, pn = planet.center, nil, planet.name
                 for k,nextPlanet in pairs(atlas[0]) do
                     npc = nextPlanet.center
-                    if npc and nextPlanet.name ~= pn then
+                    if npc and nextPlanet.name ~= pn and string.find(nextPlanet.name, "Asteroid") == nil and nextPlanet.name ~= "Space" then
                         local distance, tempPos = getPipeDistance(pc, npc)
                         if nearestDistance == nil or distance < nearestDistance then
                             nearestPipePlanet = nextPlanet
+                            tempPos2 = tempPos
+                            nearestDistance = distance
                         end
                     end
                 end 
@@ -5745,11 +5744,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     pipeDistC = nearestDistance
                 end
                 if autopilotTargetPlanet then
-                    if autopilotTargetPlanet and autopilotTargetPlanet.name ~= pn and autopilotTargetPlanet.name ~= "Space" then
+                    if autopilotTargetPlanet.name ~= pn and autopilotTargetPlanet.name ~= "Space" then
                         pipeDistT, pipePosT = getPipeDistance(pc,autopilotTargetPlanet.center)
                         pipeDestT = autopilotTargetPlanet
-                    else
-                        pipePosT = nil
                     end
                 end
             end
@@ -8059,6 +8056,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     return
                 end
                 ReversalIsOn = nil
+                if not inAtmo and (AutopilotTargetIndex > 0 or #apRoute>0) and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit then
+                    AP.cmdThrottle(1)
+                end
                 AP.ToggleAutopilot()
             elseif action == "option5" then 
                 toggleView = false 
@@ -8442,12 +8442,16 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     arguement = command
                     temp = true
                 end
-                i = string.find(arguement, "::")
-                if not temp then savename = string.sub(arguement, 1, i-2) end
-                local pos = string.sub(arguement, i)
-                pos = pos:gsub("%s+", "")
-                AddNewLocationByWaypoint(savename, pos, temp)
-                elseif command == "/agg" then
+                if not alignTarget and not Autopilot and not VectorToTarget and not spaceLaunch and not IntoOrbit and not Reentry and not finalLand then
+                    i = string.find(arguement, "::")
+                    if not temp then savename = string.sub(arguement, 1, i-2) end
+                    local pos = string.sub(arguement, i)
+                    pos = pos:gsub("%s+", "")
+                    AddNewLocationByWaypoint(savename, pos, temp)
+                else
+                    msg("Disengage Autopilot before adding waypoints")
+                end
+            elseif command == "/agg" then
                 if arguement == nil or arguement == "" then
                     msg ("Usage: /agg targetheight")
                     return
