@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.025
+- Fixed: Aegis is never considered "closest planet"
+
 Version 2.024
 - Fixed: Apparently I broke closest pipe and /pipecenter in one of the recent patches.  Working again.
 - Change: When pasting a temp location, the IPH will swap to position 1 (0-Temp) so you can just hit alt-4 to go to it.
