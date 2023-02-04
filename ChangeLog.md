@@ -1,5 +1,13 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.025
+- Change: AP Route re-align when at a route point in space at 2000k/hr (vice 5000k/hr)
+- Fixed: AP should not recalculate due to LOS conflict when it isnt a true conflict.
+- Fixed: AGG Singulartiy Altitude would not adjust to a new setting if > 200k in space, now it will.
+- Fixed: (Maybe) Autopilot not completely clearing out when cancelled, resulting in wierd performance 
+if restarted before getting out of seat
+- Fixed: Aegis is never considered "closest planet"
+
 Version 2.024
 - Fixed: Apparently I broke closest pipe and /pipecenter in one of the recent patches.  Working again.
 - Change: When pasting a temp location, the IPH will swap to position 1 (0-Temp) so you can just hit alt-4 to go to it.

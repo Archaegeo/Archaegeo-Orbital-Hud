@@ -525,7 +525,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 local type
                 if string.find(collisionAlertStatus, "COLLISION") then type = "warnings" else type = "crit" end
                 newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, collisionAlertStatus, type)
-            elseif atmosDensity == 0 then
+            elseif atmosDensity == 0 and not Autopilot then
                 local intersectBody, atmoDistance = AP.checkLOS((constructVelocity):normalize())
                 if atmoDistance ~= nil and velMag > 0 then
 

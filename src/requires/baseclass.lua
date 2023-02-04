@@ -208,7 +208,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                     if valuesAreSet then
                         msg ("Loaded Saved Variables")
                     elseif not useTheseSettings then
-                        msg ("No Databank Saved Variables Found\nVariables will save to Databank on standing")
+                        msg ("Databank Found, No Saved Variables Found\nVariables will save to Databank on standing")
                         msgTimer = 5
                     end
                     if #SavedLocations>0 then customlocations = addTable(customlocations, SavedLocations) end
