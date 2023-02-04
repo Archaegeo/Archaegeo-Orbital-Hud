@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.024
+VERSION_NUMBER = 0.025
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -663,7 +663,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local coord = vec3(coordinates)
             for _, params in pairs(self) do
                 local distance2 = (coord - params.center):len() - params.radius - params.atmosphereThickness
-                if (not body or distance2 < minDistance2) and params.name ~= "Space" then -- Never return space.  
+                if (not body or distance2 < minDistance2) and params.name ~= "Space" and params.name ~= "Aegis" then -- Never return space or Aegis 
                     body = params
                     minDistance2 = distance2
                 end
@@ -2274,7 +2274,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     local type
                     if string.find(collisionAlertStatus, "COLLISION") then type = "warnings" else type = "crit" end
                     newContent[#newContent + 1] = svgText(warningX, turnBurnY+20, collisionAlertStatus, type)
-                elseif atmosDensity == 0 then
+                elseif atmosDensity == 0 and not Autopilot then
                     local intersectBody, atmoDistance = AP.checkLOS((constructVelocity):normalize())
                     if atmoDistance ~= nil and velMag > 0 then
     
@@ -5319,7 +5319,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 aptoggle = false
             else
                 play("apOff", "AP")
-                AP.ResetAutopilots(1)
+                AP.clearAll()
                 if aptoggle == 2 then aptoggle = true end
             end
         end
@@ -5890,7 +5890,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         if LockPitch then AP.ToggleLockPitch() end
                         msg("Autopilot Cancelled due to possible collision")
                         s.print(body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2))
-                        AP.ResetAutopilots(1)
+                        AP.clearAll()
                         StrongBrakes = true
                         if inAtmo then BrakeLanding = true end
                         autoRoll = true
@@ -6131,7 +6131,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     AP.BrakeToggle()
                 end
                 if Autopilot then
-                    AP.ResetAutopilots(1)
+                    AP.clearAll()
                 end
                 cmdT = 0
             end
@@ -6528,8 +6528,10 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             AutopilotEndSpeed = 0
                         end
                         AutopilotTargetCoords = targetCoords
-                        local intersect, _ = AP.checkLOS((AutopilotTargetCoords-worldPos):normalize())
-                        if intersect then AutopilotTargetCoords = planetTarget() end
+                        local intersect, dis = AP.checkLOS((AutopilotTargetCoords-worldPos):normalize())
+                        if intersect and dis < (worldPos - AutopilotTargetCoords):len() then 
+                            AutopilotTargetCoords = planetTarget() 
+                        end
                         AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
     
                         skipAlign = true
@@ -6554,15 +6556,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 elseif CustomTarget == nil then -- and not autopilotTargetPlanet.name == planet.name then
                     if not TargetSet then
-                        -- Set the target to something on the radius in the direction closest to velocity
-                        -- We have to fudge a high velocity because at standstill this can give us bad results
-                        local initialDirection = ((worldPos+(constructVelocity*100000)) - autopilotTargetPlanet.center):normalize() -- Should be pointing up
-                        local finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize()
-                        if finalDirection:len() < 1 then
-                            initialDirection = ((worldPos+(constructForward*100000)) - autopilotTargetPlanet.center):normalize()
-                            finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize() -- Align to nearest to ship forward then
-                        end
-                        -- And... actually that's all that I need.  If forward is really gone, this should give us a point on the edge of the planet
                         targetCoords = planetTarget() 
                         AutopilotTargetCoords = targetCoords
                         TargetSet = true
@@ -6675,15 +6668,18 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
                 if Autopilot and not AutopilotAccelerating and not AutopilotCruising and not AutopilotBraking then
                     local intersectBody, atmoDistance = AP.checkLOS( (AutopilotTargetCoords-worldPos):normalize())
-                    if autopilotTargetPlanet.name ~= planet.name then 
-                        if intersectBody ~= nil and autopilotTargetPlanet.name ~= intersectBody.name and atmoDistance < AutopilotDistance then 
-                            collisionAlertStatus = "Attempting to clear LOS between "..intersectBody.name.." and waypoint."
-                            AutopilotTargetCoords = planetTarget()
-                            AutopilotPaused = true
-                        else
-                            AutopilotPaused = false
-                            collisionAlertStatus = false
+                    if intersectBody then
+                        local ibn = intersectBody.name
+                        if autopilotTargetPlanet.name ~= planet.name then 
+                            if autopilotTargetPlanet.name ~= ibn and atmoDistance < AutopilotDistance then 
+                                collisionAlertStatus = "Attempting to clear LOS between "..ibn.." and waypoint."
+                                AutopilotTargetCoords = planetTarget()
+                                AutopilotPaused = true
+                            end
                         end
+                    else
+                        AutopilotPaused = false
+                        collisionAlertStatus = false
                     end
                 end
                 if not AutopilotPaused then
@@ -6734,7 +6730,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                         if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone and not isWarping) then
                                 if pvpDist < lastPvPDist and pvpDist > 2000 then
-                                    AP.ResetAutopilots(1)
+                                    AP.clearAll()
                                     msg("Autopilot cancelled to prevent crossing PvP Line" )
                                     BrakeIsOn = "PvP Prevent"
                                     lastPvPDist = pvpDist
@@ -6776,7 +6772,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         --targetAltitude = planet:getAltitude(CustomTarget.position)
                         --horizontalDistance = msqrt(targetVec:len()^2-(coreAltitude-targetAltitude)^2)
                     end
-                    if (CustomTarget and CustomTarget.planetname == "Space" and (velMag < 50 or (velMag < 1388 and #apRoute>0))) then
+                    if (CustomTarget and CustomTarget.planetname == "Space" and (velMag < 50 or (velMag < 555 and #apRoute>0))) then
                         if #apRoute>0 then
                             if not aptoggle then table.remove(apRoute,1) end
                             if #apRoute>0 then
@@ -7428,13 +7424,16 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     initBL = false
                 end
                 if AutoTakeoff or spaceLaunch then
-                    local intersectBody, distance
+                    local intersectBody, distance, ibn
                     if AutopilotTargetCoords ~= nil then
                         intersectBody, distance = AP.checkLOS((AutopilotTargetCoords-worldPos):normalize())
                         if intersectBody ~= nil then 
-                            if intersectBody.name ~= autopilotTargetPlanet.name and not inAtmo then
-                                collisionAlertStatus = "Takeoff LOS blocked by "..intersectBody.name.." in "..getDistanceDisplayString(distance,1)
-                                if intersectBody.name ~= planet.name then AutopilotTargetCoords = planetTarget() end
+                            ibn = intersectBody.name
+                            if ibn ~= autopilotTargetPlanet.name and not inAtmo then
+                                collisionAlertStatus = "Takeoff LOS blocked by "..ibn.." in "..getDistanceDisplayString(distance,1)
+                                if ibn ~= planet.name then 
+                                    AutopilotTargetCoords = planetTarget() 
+                                end
                             end
                         end
                     end
@@ -7462,7 +7461,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             cmdT = 0
                             BrakeIsOn = "ATO Space"
                         end --coreAltitude > 75000
-                    elseif spaceLaunch and not inAtmo and autopilotTargetPlanet ~= nil and (intersectBody == nil or intersectBody.name == autopilotTargetPlanet.name) then
+                    elseif spaceLaunch and not inAtmo and autopilotTargetPlanet ~= nil and (intersectBody == nil or ibn == autopilotTargetPlanet.name) then
                         Autopilot = true
                         collisionAlertStatus = false
                         spaceLaunch = false
@@ -7497,7 +7496,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     pitchInput2 = pitchInput2 + autoPitchInput
                 end
             end
-            if antigrav ~= nil and (antigrav and not ExternalAGG and coreAltitude < 200000) then
+            if antigrav ~= nil and not ExternalAGG then
                 if AntigravTargetAltitude == nil or AntigravTargetAltitude < 1000 then AntigravTargetAltitude = 1000 end
                 if desiredBaseAltitude ~= AntigravTargetAltitude then
                     desiredBaseAltitude = AntigravTargetAltitude
@@ -8818,7 +8817,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         if valuesAreSet then
                             msg ("Loaded Saved Variables")
                         elseif not useTheseSettings then
-                            msg ("No Databank Saved Variables Found\nVariables will save to Databank on standing")
+                            msg ("Databank Found, No Saved Variables Found\nVariables will save to Databank on standing")
                             msgTimer = 5
                         end
                         if #SavedLocations>0 then customlocations = addTable(customlocations, SavedLocations) end
