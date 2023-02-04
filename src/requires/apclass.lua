@@ -600,7 +600,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             aptoggle = false
         else
             play("apOff", "AP")
-            AP.ResetAutopilots(1)
+            AP.clearAll()
             if aptoggle == 2 then aptoggle = true end
         end
     end
@@ -1171,7 +1171,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     if LockPitch then AP.ToggleLockPitch() end
                     msg("Autopilot Cancelled due to possible collision")
                     s.print(body.name.." COLLISION "..FormatTimeString(collisionTime).." / "..getDistanceDisplayString(collisionDistance,2))
-                    AP.ResetAutopilots(1)
+                    AP.clearAll()
                     StrongBrakes = true
                     if inAtmo then BrakeLanding = true end
                     autoRoll = true
@@ -1412,7 +1412,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 AP.BrakeToggle()
             end
             if Autopilot then
-                AP.ResetAutopilots(1)
+                AP.clearAll()
             end
             cmdT = 0
         end
@@ -1809,8 +1809,11 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         AutopilotEndSpeed = 0
                     end
                     AutopilotTargetCoords = targetCoords
-                    local intersect, _ = AP.checkLOS((AutopilotTargetCoords-worldPos):normalize())
-                    if intersect then AutopilotTargetCoords = planetTarget() end
+                    local intersect, dis = AP.checkLOS((AutopilotTargetCoords-worldPos):normalize())
+                    if intersect and dis < (worldPos - AutopilotTargetCoords):len() then 
+                        p("Custom LOS Target change due to "..intersect.name.." in "..dis.." APD: "..(worldPos - AutopilotTargetCoords):len())
+                        AutopilotTargetCoords = planetTarget() 
+                    end
                     AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
 
                     skipAlign = true
@@ -1835,15 +1838,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 end
             elseif CustomTarget == nil then -- and not autopilotTargetPlanet.name == planet.name then
                 if not TargetSet then
-                    -- Set the target to something on the radius in the direction closest to velocity
-                    -- We have to fudge a high velocity because at standstill this can give us bad results
-                    local initialDirection = ((worldPos+(constructVelocity*100000)) - autopilotTargetPlanet.center):normalize() -- Should be pointing up
-                    local finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize()
-                    if finalDirection:len() < 1 then
-                        initialDirection = ((worldPos+(constructForward*100000)) - autopilotTargetPlanet.center):normalize()
-                        finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize() -- Align to nearest to ship forward then
-                    end
-                    -- And... actually that's all that I need.  If forward is really gone, this should give us a point on the edge of the planet
                     targetCoords = planetTarget() 
                     AutopilotTargetCoords = targetCoords
                     TargetSet = true
@@ -1956,15 +1950,19 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
             if Autopilot and not AutopilotAccelerating and not AutopilotCruising and not AutopilotBraking then
                 local intersectBody, atmoDistance = AP.checkLOS( (AutopilotTargetCoords-worldPos):normalize())
-                if autopilotTargetPlanet.name ~= planet.name then 
-                    if intersectBody ~= nil and autopilotTargetPlanet.name ~= intersectBody.name and atmoDistance < AutopilotDistance then 
-                        collisionAlertStatus = "Attempting to clear LOS between "..intersectBody.name.." and waypoint."
-                        AutopilotTargetCoords = planetTarget()
-                        AutopilotPaused = true
-                    else
-                        AutopilotPaused = false
-                        collisionAlertStatus = false
+                if intersectBody then
+                    local ibn = intersectBody.name
+                    if autopilotTargetPlanet.name ~= planet.name then 
+                        if autopilotTargetPlanet.name ~= ibn and atmoDistance < AutopilotDistance then 
+                            collisionAlertStatus = "Attempting to clear LOS between "..ibn.." and waypoint."
+                            p("AP LOS Target change due to "..ibn.." in "..atmoDistance.." APTPN: "..autopilotTargetPlanet.name)
+                            AutopilotTargetCoords = planetTarget()
+                            AutopilotPaused = true
+                        end
                     end
+                else
+                    AutopilotPaused = false
+                    collisionAlertStatus = false
                 end
             end
             if not AutopilotPaused then
@@ -2015,7 +2013,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 if apDist <= brakeDistance or (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone) then
                     if (PreventPvP and pvpDist <= brakeDistance+10000 and notPvPZone and not isWarping) then
                             if pvpDist < lastPvPDist and pvpDist > 2000 then
-                                AP.ResetAutopilots(1)
+                                AP.clearAll()
                                 msg("Autopilot cancelled to prevent crossing PvP Line" )
                                 BrakeIsOn = "PvP Prevent"
                                 lastPvPDist = pvpDist
@@ -2709,13 +2707,17 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 initBL = false
             end
             if AutoTakeoff or spaceLaunch then
-                local intersectBody, distance
+                local intersectBody, distance, ibn
                 if AutopilotTargetCoords ~= nil then
                     intersectBody, distance = AP.checkLOS((AutopilotTargetCoords-worldPos):normalize())
                     if intersectBody ~= nil then 
-                        if intersectBody.name ~= autopilotTargetPlanet.name and not inAtmo then
-                            collisionAlertStatus = "Takeoff LOS blocked by "..intersectBody.name.." in "..getDistanceDisplayString(distance,1)
-                            if intersectBody.name ~= planet.name then AutopilotTargetCoords = planetTarget() end
+                        ibn = intersectBody.name
+                        if ibn ~= autopilotTargetPlanet.name and not inAtmo then
+                            collisionAlertStatus = "Takeoff LOS blocked by "..ibn.." in "..getDistanceDisplayString(distance,1)
+                            if ibn ~= planet.name then 
+                                p("Takeoff LOS Target change due to "..ibn.." in "..distance)
+                                AutopilotTargetCoords = planetTarget() 
+                            end
                         end
                     end
                 end
@@ -2743,7 +2745,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         cmdT = 0
                         BrakeIsOn = "ATO Space"
                     end --coreAltitude > 75000
-                elseif spaceLaunch and not inAtmo and autopilotTargetPlanet ~= nil and (intersectBody == nil or intersectBody.name == autopilotTargetPlanet.name) then
+                elseif spaceLaunch and not inAtmo and autopilotTargetPlanet ~= nil and (intersectBody == nil or ibn == autopilotTargetPlanet.name) then
                     Autopilot = true
                     collisionAlertStatus = false
                     spaceLaunch = false
@@ -2778,7 +2780,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 pitchInput2 = pitchInput2 + autoPitchInput
             end
         end
-        if antigrav ~= nil and (antigrav and not ExternalAGG and coreAltitude < 200000) then
+        if antigrav ~= nil and not ExternalAGG then
             if AntigravTargetAltitude == nil or AntigravTargetAltitude < 1000 then AntigravTargetAltitude = 1000 end
             if desiredBaseAltitude ~= AntigravTargetAltitude then
                 desiredBaseAltitude = AntigravTargetAltitude
