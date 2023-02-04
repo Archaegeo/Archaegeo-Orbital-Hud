@@ -1811,7 +1811,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     AutopilotTargetCoords = targetCoords
                     local intersect, dis = AP.checkLOS((AutopilotTargetCoords-worldPos):normalize())
                     if intersect and dis < (worldPos - AutopilotTargetCoords):len() then 
-                        p("Custom LOS Target change due to "..intersect.name.." in "..dis.." APD: "..(worldPos - AutopilotTargetCoords):len())
                         AutopilotTargetCoords = planetTarget() 
                     end
                     AP.showWayPoint(autopilotTargetPlanet, AutopilotTargetCoords)
@@ -1955,7 +1954,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     if autopilotTargetPlanet.name ~= planet.name then 
                         if autopilotTargetPlanet.name ~= ibn and atmoDistance < AutopilotDistance then 
                             collisionAlertStatus = "Attempting to clear LOS between "..ibn.." and waypoint."
-                            p("AP LOS Target change due to "..ibn.." in "..atmoDistance.." APTPN: "..autopilotTargetPlanet.name)
                             AutopilotTargetCoords = planetTarget()
                             AutopilotPaused = true
                         end
@@ -2715,7 +2713,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         if ibn ~= autopilotTargetPlanet.name and not inAtmo then
                             collisionAlertStatus = "Takeoff LOS blocked by "..ibn.." in "..getDistanceDisplayString(distance,1)
                             if ibn ~= planet.name then 
-                                p("Takeoff LOS Target change due to "..ibn.." in "..distance)
                                 AutopilotTargetCoords = planetTarget() 
                             end
                         end
