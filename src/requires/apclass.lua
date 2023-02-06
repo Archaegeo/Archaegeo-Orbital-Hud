@@ -1408,11 +1408,9 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         end
 
         if not isWarping and LastIsWarping then
+            AP.clearAll()
             if not BrakeIsOn then
                 AP.BrakeToggle()
-            end
-            if Autopilot then
-                AP.clearAll()
             end
             cmdT = 0
         end

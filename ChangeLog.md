@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.026
+- Fixed: Issue with AP not completely resetting when exiting warp resulting in wierd alt-4 AP resume.
+
 Version 2.025
 - Change: AP Route re-align when at a route point in space at 2000k/hr (vice 5000k/hr)
 - Fixed: AP should not recalculate due to LOS conflict when it isnt a true conflict.
