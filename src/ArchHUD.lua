@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.025
+VERSION_NUMBER = 0.026
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -73,7 +73,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     LandingGearGroundHeight = 0 -- (Default: 0) Set to AGL when on ground. Will help prevent ship landing on ground then bouncing back up to landing gear height. 
     ReEntryHeight = 100000 -- (Default: 100000) Height above a planets maximum surface altitude used for re-entry, if height exceeds min space engine height, then 11% atmo is used instead. (100000 means 11% is used)
     MaxGameVelocity = -1.00 -- (Default: -1.00) Max speed for your autopilot in m/s.  If -1 then when you sit down it will set to actual max speed.
-    AutopilotInterplanetaryThrottle = 1.0 -- (Default: 1.0) How much throttle, 0.0 to 1.0, you want it to use when in autopilot to another planet while reaching MaxGameVelocity
+    AutopilotInterplanetaryThrottle = 1 -- (Default: 1) How much throttle, 0.0 to 1, you want it to use when in autopilot to another planet while reaching MaxGameVelocity
     warmup = 32 -- How long it takes your space engines to warmup. Basic Space Engines, from XS to XL: 0.25,1,4,16,32. Only affects turn and burn brake calculations.
     fuelTankHandlingAtmo = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
     fuelTankHandlingSpace = 0 --  (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
@@ -4754,9 +4754,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local constructUp = vec3(C.getWorldOrientationUp())
             local setCruiseSpeed = nil
             local hSpd = 0
-            local cmdT = -1
-            local cmdC = -1
-            local cmdDS = false
             local eLL = false
             local sivl = 0
             local AutopilotPaused = false
@@ -5048,22 +5045,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 sudi = false
                 sudv = ""
             end
-            if cmdC ~= -1 then 
-                AP.cmdCruise(cmdC, cmdDS) 
-                cmdDS = false 
-                cmdC = -1 
-            end
             if setCruiseSpeed ~= nil then
-                if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
+                if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed then
+                    Nav.control.cancelCurrentControlMasterMode()
+                end
+                if navCom:getTargetSpeed(axisCommandId.longitudinal) ~= setCruiseSpeed then
                     navCom:setTargetSpeedCommand(axisCommandId.longitudinal, setCruiseSpeed)
                 else
                     setCruiseSpeed = nil
                 end
-            end
-            if cmdT ~= -1 then
-                AP.cmdThrottle(cmdT, cmdDS) 
-                cmdDS = false
-                cmdT = -1 
             end
             if eLL then
                 CONTROL.landingGear(eLL)
@@ -5097,7 +5087,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     autoRoll = true
                     if OrbitTargetPlanet == nil then
                         OrbitTargetPlanet = targetPlanet or planet
-                        p("Orbiting "..OrbitTargetPlanet.name)
                     end
                     if AltitudeHold then AltitudeHold = false AutoTakeoff = false end
                 else
@@ -5130,7 +5119,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     AltitudeHold = true
                     upAmount = 0
                     Nav:setEngineForceCommand('thrust analog vertical fueled ', vec3(), 1)
-                    cmdC = mfloor(adjustedAtmoSpeedLimit)
+                    AP.cmdCruise(mfloor(adjustedAtmoSpeedLimit))
                 end
             else
                 OrbitAchieved = false
@@ -5364,6 +5353,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         end
     
         function ap.cmdCruise(value, dontSwitch) -- sets the cruise target speed to value, also switches to cruise mode (vice throttle) unless dontSwitch passed
+            if setCruiseSpeed then setCruiseSpeed = value return end
             if navCom:getAxisCommandType(0) ~= axisCommandType.byTargetSpeed and not dontSwitch then
                 Nav.control.cancelCurrentControlMasterMode()
             end
@@ -5467,7 +5457,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if mabs(coreAltitude-gBA) < 100 and velMag < 20 then 
                         HoldAltitude = gBA
                         BrakeIsOn = "AGG Hold"
-                        cmdT = 0 
+                        AP.cmdThrottle(0)   
                     end
                 end
                 if spaceLaunch then HoldAltitude = 200000 end
@@ -5574,7 +5564,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local text = getDistanceDisplayString(HoldAltitude)
                 msg( "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text )
                 play("glide","RE")
-                cmdC = mfloor(adjustedAtmoSpeedLimit)
+                AP.cmdCruise(mfloor(adjustedAtmoSpeedLimit))
             end
             AutoTakeoff = false -- This got left on somewhere.. 
         end
@@ -5750,7 +5740,6 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 end
             end
-    
             ships = C.getDockedConstructs() 
             passengers = C.getPlayersOnBoard()
             shipsMass = 0
@@ -5885,7 +5874,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if apAction and not ignoreCollision and (brakeDistance*1.5 > collisionDistance or collisionTime < 1) then
                         BrakeIsOn = "Collision"
                         apRoute = {}
-                        cmdT = 0
+                        AP.cmdThrottle(0)  
                         if AltitudeHold then AP.ToggleAltitudeHold() end
                         if LockPitch then AP.ToggleLockPitch() end
                         msg("Autopilot Cancelled due to possible collision")
@@ -6123,17 +6112,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
             if velMag > SpaceSpeedLimit/3.6 and not inAtmo and not Autopilot and not isWarping then
                 msg("Space Speed Engine Shutoff reached")
-                cmdT = 0
+                AP.cmdThrottle(0)  
             end
     
             if not isWarping and LastIsWarping then
+                AP.clearAll()
                 if not BrakeIsOn then
                     AP.BrakeToggle()
                 end
-                if Autopilot then
-                    AP.clearAll()
-                end
-                cmdT = 0
+                AP.cmdThrottle(0)  
             end
             LastIsWarping = isWarping
     
@@ -6157,7 +6144,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     aligned = AlignToWorldVector(CustomTarget.position-worldPos,0.1) 
                     autoRoll = true
                     if aligned then
-                        cmdC = mfloor(adjustedAtmoSpeedLimit)
+                        AP.cmdCruise(mfloor(adjustedAtmoSpeedLimit))
                         if (mabs(adjustedRoll) < 2 or mabs(adjustedPitch) > 85) and velMag >= adjustedAtmoSpeedLimit/3.6-1 then
                             -- Try to force it to get full speed toward target, so it goes straight to throttle and all is well
                             BrakeIsOn = false
@@ -6170,7 +6157,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             AP.BeginReentry()
                         end
                     elseif inAtmo and AtmoSpeedAssist then 
-                        cmdT = 1
+                        AP.cmdThrottle(1)  
                     end
                 elseif velMag > minAutopilotSpeed then
                     AlignToWorldVector(vec3(constructVelocity),0.01) 
@@ -6257,7 +6244,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         else
                             upAmount = 0
                             VtPitch = 36
-                            cmdC = 3500
+                            AP.cmdCruise(3500)
                         end
                     else
                         autoRoll = autoRollPreference
@@ -6327,7 +6314,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 if not orbitAligned then
                     local pitchAligned = false
                     local rollAligned = false
-                    cmdT = 0
+                    if PlayerThrottle > 0 then AP.cmdThrottle(0)   end
                     orbitRoll = 0
                     orbitMsg = "Aligning to orbital path - OrbitHeight: "..orbitHeightString
     
@@ -6395,7 +6382,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             if (orbitCheck() or OrbitAchieved) and not MaintainOrbit then -- This should get us a stable orbit within 10% with the way we do it
                                 if OrbitAchieved then
                                     BrakeIsOn = false
-                                    cmdT = 0
+                                    if not throttleMode or PlayerThrottle > 0 then AP.cmdThrottle(0)   end
                                     orbitPitch = 0
                                     
                                     if not orbitalParams.VectorToTarget then
@@ -6417,7 +6404,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                     orbitMsg = "Adjusting " 
                                     orbitalRecover = true
                                     -- Just set cruise to endspeed...
-                                    cmdC = endSpeed
+                                    AP.cmdCruise(endSpeed)
                                     -- And set pitch to something that scales with vSpd
                                     -- Well, a pid is made for this stuff
                                     local altDiff = OrbitTargetOrbit - coreAltitude
@@ -6462,7 +6449,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             local pcsAdjust = utils.map(vSpd, -150, -400, 1, 0.15)
                             pcs = pcs*pcsAdjust
                         end
-                        cmdC = mfloor(pcs)
+                        AP.cmdCruise(pcs)
                     end
                 end
                 if orbitPitch ~= nil then
@@ -6482,7 +6469,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     Autopilot = false
                     TargetSet = false
                     AutopilotStatus = "Aligning" -- Disable autopilot and reset
-                    cmdT = 0
+                    AP.cmdThrottle(0)  
                     apThrottleSet = false
                     msg(msgt)
                     play("apCom","AP")
@@ -6692,7 +6679,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 if AutopilotAccelerating then
                     if not apThrottleSet then
                         BrakeIsOn = false
-                        cmdT = AutopilotInterplanetaryThrottle
+                        AP.cmdThrottle(AutopilotInterplanetaryThrottle)
                         PlayerThrottle = round(AutopilotInterplanetaryThrottle,2)
                         apThrottleSet = true
                     end
@@ -6717,7 +6704,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             AutopilotStatus = "Cruising"
                         end
                         AutopilotCruising = true
-                        cmdT = 0
+                        AP.cmdThrottle(0)  
                         --apThrottleSet = false -- We already did it, if they cancelled let them throttle up again
                     end
                     -- Check if accel needs to stop for braking
@@ -6749,7 +6736,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             ProgradeIsOn = true 
                             autoRoll = true
                         end
-                        cmdT = 0
+                        AP.cmdThrottle(0)  
                         apThrottleSet = false
                     end
                 elseif AutopilotBraking then
@@ -6757,8 +6744,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         BrakeIsOn = "AP Brk"
                     end
                     if TurnBurn then
-                        cmdT = 1
-                        cmdDS = true
+                        AP.cmdThrottle(1, true) 
                     end
                     -- Check if an orbit has been established and cut brakes and disable autopilot if so
                     -- We'll try <0.9 instead of <1 so that we don't end up in a barely-orbit where touching the controls will make it an escape orbit
@@ -6873,8 +6859,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                 end
                                 -- Set throttle to max
                                 if not apThrottleSet then
-                                    cmdT = AutopilotInterplanetaryThrottle
-                                    cmdDS = true
+                                    AP.cmdThrottle(AutopilotInterplanetaryThrottle, true) 
                                     PlayerThrottle = round(AutopilotInterplanetaryThrottle,2)
                                     apThrottleSet = true
                                     BrakeIsOn = false
@@ -6893,7 +6878,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 Autopilot = false
                 TargetSet = false
                 AutopilotStatus = "Aligning" -- Disable autopilot and reset
-                cmdT = 0
+                AP.cmdThrottle(0)  
                 apThrottleSet = false
                 ProgradeIsOn = true
                 spaceLand = true
@@ -7021,16 +7006,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         targetPitch = ReEntryPitch
                         if velMag <= ReentrySpeed/3.6 and velMag > (ReentrySpeed/3.6)-10 and mabs(constructVelocity:normalize():dot(constructForward)) > 0.9 and not throttleMode then
                             WasInCruise = false
-                            cmdT = 1
+                            AP.cmdThrottle(1)  
                         end
                     elseif (throttleMode or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= ReentrySpeed) and not freeFallHeight and not inAtmo then 
-                        cmdC = ReentrySpeed
-                        cmdDS = true
+                        AP.cmdCruise(ReentrySpeed)
                     end
                     if throttleMode then
                         if velMag > ReentrySpeed/3.6 and not freeFallHeight then
                             BrakeIsOn = "Reentry Limit"
-                            if PlayerThrottle > 0 then cmdT = 0 end
+                            if PlayerThrottle > 0 then AP.cmdThrottle(0)   end
                         else
                             BrakeIsOn = false
                         end
@@ -7045,7 +7029,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             Reentry = false
                             BrakeLanding = true
                             StrongBrakes = true
-                            cmdT = 0
+                            AP.cmdThrottle(0)  
                             targetPitch = 0
                             autoRoll = autoRollPreference
                         end
@@ -7054,14 +7038,14 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         autoRoll = true -- It shouldn't actually do it, except while aligning
                     elseif not freeFallHeight then
                         if not inAtmo and (throttleMode or navCom:getTargetSpeed(axisCommandId.longitudinal) ~= ReentrySpeed) then 
-                            cmdC = ReentrySpeed
+                            AP.cmdCruise(ReentrySpeed)
                         end
                         if velMag < ((ReentrySpeed/3.6)+1) then
                             BrakeIsOn = false
                             reentryMode = false
                             Reentry = false
                             autoRoll = true 
-                            cmdT = 1
+                            AP.cmdThrottle(1)  
                         end
                     end
                 end
@@ -7185,7 +7169,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                     return
                                 end
                             end
-                            cmdT = 0 -- Kill throttle in case they weren't in cruise
+                            if not throttleMode or PlayerThrottle > 0 then AP.cmdThrottle(0)   end-- Kill throttle in case they weren't in cruise
                             if AltitudeHold then
                                 -- if not OrbitAchieved then
                                     AP.ToggleAltitudeHold() -- Don't need this anymore
@@ -7264,7 +7248,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if not initBL then
                         spaceBrake = false
                         if not throttleMode then
-                            cmdT = 0
+                            AP.cmdThrottle(0)  
                         end
                         if abvGndDet == -1 then 
                             navCom:setTargetGroundAltitude(500)
@@ -7442,7 +7426,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             AutoTakeoff = false
                             if not Autopilot and not VectorToTarget then
                                 BrakeIsOn = "ATO Agg Arrive"
-                                cmdT = 0
+                                AP.cmdThrottle(0)  
                             end
                         end
                     elseif mabs(targetPitch) < 15 and (coreAltitude/HoldAltitude) > 0.75 then
@@ -7456,9 +7440,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             spaceLaunch = false
                             AltitudeHold = false
                             AutoTakeoff = false
-                            cmdT = 0
+                            AP.cmdThrottle(0)  
                         elseif spaceLaunch then
-                            cmdT = 0
+                            AP.cmdThrottle(0)  
                             BrakeIsOn = "ATO Space"
                         end --coreAltitude > 75000
                     elseif spaceLaunch and not inAtmo and autopilotTargetPlanet ~= nil and (intersectBody == nil or ibn == autopilotTargetPlanet.name) then
@@ -7468,7 +7452,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         AltitudeHold = false
                         AutoTakeoff = false
                         if not throttleMode then
-                            cmdT = 0
+                            AP.cmdThrottle(0)  
                         end
                         AutopilotAccelerating = true -- Skip alignment and don't warm down the engines
                     end
@@ -8211,7 +8195,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         navCom:resetCommand(axisCommandId.longitudinal)
                         AP.cmdThrottle(0)
                     else
-                        AP.cmdThrottle(100)
+                        AP.cmdThrottle(1)
                     end
                 else
                     if navCom:getTargetSpeed(axisCommandId.longitudinal) ~= 0 then
