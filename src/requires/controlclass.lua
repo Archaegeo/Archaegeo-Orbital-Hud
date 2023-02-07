@@ -432,7 +432,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                     navCom:resetCommand(axisCommandId.longitudinal)
                     AP.cmdThrottle(0)
                 else
-                    AP.cmdThrottle(100)
+                    AP.cmdThrottle(1)
                 end
             else
                 if navCom:getTargetSpeed(axisCommandId.longitudinal) ~= 0 then

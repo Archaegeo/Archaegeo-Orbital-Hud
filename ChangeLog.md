@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 2.026
+- Fixed: Intermittant but critical issue where cruise speed would set negative on re-entry.
 - Fixed: Issue with AP not completely resetting when exiting warp resulting in wierd alt-4 AP resume.
 
 Version 2.025

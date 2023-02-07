@@ -378,7 +378,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 autoRoll = true
                 if OrbitTargetPlanet == nil then
                     OrbitTargetPlanet = targetPlanet or planet
-                    p("Orbiting "..OrbitTargetPlanet.name)
                 end
                 if AltitudeHold then AltitudeHold = false AutoTakeoff = false end
             else
@@ -855,7 +854,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local text = getDistanceDisplayString(HoldAltitude)
             msg( "Beginning Re-entry.  Target speed: " .. adjustedAtmoSpeedLimit .. " Target Altitude: " .. text )
             play("glide","RE")
-            cmdC = mfloor(adjustedAtmoSpeedLimit)
+            cmdC = mfloor(adjustedAtmoSpeedLimit) 
         end
         AutoTakeoff = false -- This got left on somewhere.. 
     end
@@ -1031,7 +1030,6 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 end
             end
         end
-
         ships = C.getDockedConstructs() 
         passengers = C.getPlayersOnBoard()
         shipsMass = 0
@@ -1581,6 +1579,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local targetVec
             local yawAligned = false
             local orbitHeightString = getDistanceDisplayString(OrbitTargetOrbit,4)
+            local ccS = navCom:getTargetSpeed(axisCommandId.longitudinal)
 
             if OrbitTargetPlanet == nil then
                 OrbitTargetPlanet = planet
@@ -1606,7 +1605,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             if not orbitAligned then
                 local pitchAligned = false
                 local rollAligned = false
-                cmdT = 0
+                if PlayerThrottle > 0 then cmdT = 0 end
                 orbitRoll = 0
                 orbitMsg = "Aligning to orbital path - OrbitHeight: "..orbitHeightString
 
@@ -1674,7 +1673,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         if (orbitCheck() or OrbitAchieved) and not MaintainOrbit then -- This should get us a stable orbit within 10% with the way we do it
                             if OrbitAchieved then
                                 BrakeIsOn = false
-                                cmdT = 0
+                                if not throttleMode or PlayerThrottle > 0 or cmdT > 0 then cmdT = 0 end
                                 orbitPitch = 0
                                 
                                 if not orbitalParams.VectorToTarget then
@@ -1696,7 +1695,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                                 orbitMsg = "Adjusting " 
                                 orbitalRecover = true
                                 -- Just set cruise to endspeed...
-                                cmdC = endSpeed
+                                if throttleMode or mabs(endSpeed - ccS) > 3 then cmdC = endSpeed end
                                 -- And set pitch to something that scales with vSpd
                                 -- Well, a pid is made for this stuff
                                 local altDiff = OrbitTargetOrbit - coreAltitude
@@ -1741,7 +1740,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                         local pcsAdjust = utils.map(vSpd, -150, -400, 1, 0.15)
                         pcs = pcs*pcsAdjust
                     end
-                    cmdC = mfloor(pcs)
+                    if throttleMode or mabs(pcs - ccS) > 3 then cmdC = mfloor(pcs) end
                 end
             end
             if orbitPitch ~= nil then
@@ -2464,7 +2463,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                                 return
                             end
                         end
-                        cmdT = 0 -- Kill throttle in case they weren't in cruise
+                        if not throttleMode or PlayerThrottle > 0 or cmdT > 0 then cmdT = 0 end-- Kill throttle in case they weren't in cruise
                         if AltitudeHold then
                             -- if not OrbitAchieved then
                                 AP.ToggleAltitudeHold() -- Don't need this anymore
