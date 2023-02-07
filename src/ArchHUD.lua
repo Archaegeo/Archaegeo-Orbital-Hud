@@ -67,7 +67,7 @@ end
         LandingGearGroundHeight = 0 --export: (Default: 0) Set to AGL when on ground. Will help prevent ship landing on ground then bouncing back up to landing gear height. 
         ReEntryHeight = 100000 --export: (Default: 100000) Height above a planets maximum surface altitude used for re-entry, if height exceeds min space engine height, then 11% atmo is used instead. (100000 means 11% is used)
         MaxGameVelocity = -1.00 --export: (Default: -1.00) Max speed for your autopilot in m/s.  If -1 then when you sit down it will set to actualy max speed.
-        AutopilotInterplanetaryThrottle = 1.0 --export: (Default: 1.0) How much throttle, 0.0 to 1.0, you want it to use when in autopilot to another planet while reaching MaxGameVelocity
+        AutopilotInterplanetaryThrottle = 1 --export: (Default: 1) How much throttle, 0.0 to 1, you want it to use when in autopilot to another planet while reaching MaxGameVelocity
         warmup = 32 --export: (Default: 32) How long it takes your space engines to warmup. Basic Space Engines, from XS to XL: 0.25,1,4,16,32. Only affects turn and burn brake calculations.
         fuelTankHandlingAtmo = 0 --export: (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
         fuelTankHandlingSpace = 0 --export: (Default: 0) For accurate estimates on unslotted tanks, set this to the fuel tank handling level of the person who placed the tank. Ignored for slotted tanks.
@@ -160,7 +160,7 @@ end
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 2.025
+VERSION_NUMBER = 2.026
 
 
 -- DU Events written for wrap and minimization. Written by Dimencia and Archaegeo. Optimization and Automation of scripting by ChronosWS  Linked sources where appropriate, most have been modified.
