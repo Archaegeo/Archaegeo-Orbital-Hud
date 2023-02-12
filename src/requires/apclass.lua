@@ -1552,7 +1552,9 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         end
 
         if alignTarget then
-            local target = alignTarget*(AutopilotTargetCoords - worldPos)
+            local coord = AutopilotTargetCoords
+            if CustomTarget then coord = CustomTarget.position end
+            local target = alignTarget*(coord - worldPos)
             AlignToWorldVector(target ,0.1)
         end
 

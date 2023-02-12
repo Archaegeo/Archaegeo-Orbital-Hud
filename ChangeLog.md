@@ -1,5 +1,9 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.027
+- Fixed: When using align to target (alt-5) with a space location, will align to target location vice space distance stop distance location.  
+(Useful for when manually piloting in the rest of the way)
+
 Version 2.026 - Major improvements on AP throttle control
 - Refactor: Throttle/Cruise speed control to be more responsive.
 - Fixed: Intermittant but critical issue where cruise speed would set negative on re-entry.
