@@ -1,6 +1,7 @@
 ## ChangeLog - Most recent changes at the top
 
 Version 2.027
+- Fixed: Issue when AP to custom space location but start with LOS blocked.  Before it would keep saying blocked once clear.
 - Fixed: When using align to target (alt-5) with a space location, will align to target location vice space distance stop distance location.  
 (Useful for when manually piloting in the rest of the way)
 

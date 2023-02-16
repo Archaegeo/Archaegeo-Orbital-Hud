@@ -1275,6 +1275,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         local function planetTarget()
                         -- Set the target to something on the radius in the direction closest to velocity
             -- We have to fudge a high velocity because at standstill this can give us bad results
+            if CustomTarget.planetname == "Space" then return CustomTarget.position + (worldPos - CustomTarget.position):normalize()*AutopilotSpaceDistance end
             local initialDirection = ((worldPos+(constructVelocity*100000)) - autopilotTargetPlanet.center):normalize() -- Should be pointing up
             local finalDirection = initialDirection:project_on_plane((autopilotTargetPlanet.center-worldPos):normalize()):normalize()
             if finalDirection:len() < 1 then
