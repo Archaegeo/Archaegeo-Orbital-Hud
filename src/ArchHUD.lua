@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.026
+VERSION_NUMBER = 0.100
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -333,7 +333,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
 
         --[[                    START OF LOCAL IMPLEMENTATION DETAILS             ]]--
         -- Type checks
-
+    
         local function isNumber(n)
             return type(n) == 'number'
         end
@@ -511,7 +511,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             end
             return stringf('{\n%s\n}', table.concat(bdylist, ',\n'))
         end
-
+    
         local function mkPlanetarySystem(referenceTable)
             local atlas = {}
             local pid
@@ -534,7 +534,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             end
             return setmetatable(atlas, PlanetarySystem)
         end
-
+    
         -- PlanetaryReference - map planetary s ID to PlanetarySystem
         PlanetaryReference = {}
         local function mkPlanetaryReference(referenceTable)
@@ -586,7 +586,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local GM = gravityAtPosition * distance * distance
             return mkBodyParameters(systemId, id, radius, center, GM)
         end
-
+    
         PlanetaryReference.isMapPosition = isMapPosition
         function PlanetaryReference:getPlanetarySystem(overload)
             -- if galaxyAtlas then
@@ -608,7 +608,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             -- end
             -- return nil
         end
-
+    
         function PlanetarySystem:sizeCalculator(body)
             return 1.05*body.radius
          end
@@ -618,7 +618,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             if collection then
                 -- Since we don't use bodyIds anywhere, got rid of them
                 -- It was two tables doing basically the same thing
-
+    
                 -- Changed this to insert the body to candidates
                 for _, body in pairs(collection) do
                     table.insert(candidates, body)
@@ -656,7 +656,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             end
             return nil, nil, nil
         end
-
+    
         function PlanetarySystem:closestBody(coordinates)
             assert(type(coordinates) == 'table', 'Invalid coordinates.')
             local minDistance2, body
@@ -670,7 +670,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             end
             return body
         end
-
+    
         function PlanetarySystem:convertToBodyIdAndWorldCoordinates(overload)
             local mapPosition = overload
             if isString(overload) then
@@ -684,7 +684,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 return mapPosition.id, params:convertToWorldCoordinates(mapPosition)
             end
         end
-
+    
         function PlanetarySystem:getBodyParameters(overload)
             local id = overload
             if isMapPosition(overload) then
@@ -693,12 +693,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             assert(isSNumber(id), 'Argument 1 (id) must be a number:' .. type(id))
             return self[id]
         end
-
+    
         function PlanetarySystem:getPlanetarySystemId()
             local _, v = next(self)
             return v and v.systemId
         end
-
+    
         function BodyParameters:convertToMapPosition(worldCoordinates)
             assert(isTable(worldCoordinates),
                 'Argument 1 (worldCoordinates) must be an array or vec3:' .. type(worldCoordinates))
@@ -730,7 +730,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 systemId = self.systemId
             }, MapPosition)
         end
-
+    
         function BodyParameters:convertToWorldCoordinates(overload)
             local mapPosition = isString(overload) and mkMapPosition(overload) or overload
             if mapPosition.id == 0 then -- support deep space map position
@@ -745,15 +745,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     vec3(xproj * math.cos(mapPosition.longitude), xproj * math.sin(mapPosition.longitude),
                         math.sin(mapPosition.latitude))
         end
-
+    
         function BodyParameters:getAltitude(worldCoordinates)
             return (vec3(worldCoordinates) - self.center):len() - self.radius
         end
-
+    
         function BodyParameters:getDistance(worldCoordinates)
             return (vec3(worldCoordinates) - self.center):len()
         end
-
+    
         function BodyParameters:getGravity(worldCoordinates)
             local radial = self.center - vec3(worldCoordinates) -- directed towards body
             local len2 = radial:len2()
@@ -770,7 +770,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     local function Kinematics(Nav, c, u, s, msqrt, mabs) -- Part of Jaylebreak's flight files, modified slightly for hud
 
         local Kinematic = {} -- just a namespace
-
+    
         local ITERATIONS = 100 -- iterations over engine "warm-up" period
         
         --
@@ -1013,7 +1013,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 return new(...)
             end
         })
-    end  
+    end
     -- ArchHUD AtlasOrdering
     local function AtlasClass(Nav, c, u, s, dbHud_1, atlas, sysUpData, sysAddData, mfloor, tonum, msqrt, play, round, msg) -- Atlas and Interplanetary functions including Update Autopilot Target
 
@@ -1064,22 +1064,22 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     autopilotTargetPlanet = galaxyReference[0][atlasIndex]
                     if CustomTarget ~= nil then
                         if atmosDensity == 0 then
-                            if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) ~= 1 then
+                            if not sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) then
                                 sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
-                            if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) ~= 1 then
+                            if not sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) then
                                 sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
-                            if sysUpData(widgetCurBrakeTimeText, widgetCurBrakeTime) ~= 1 then
+                            if not sysUpData(widgetCurBrakeTimeText, widgetCurBrakeTime) then
                                 sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime) end
-                            if sysUpData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) ~= 1 then
+                            if not sysUpData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) then
                                 sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
-                            if sysUpData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) ~= 1 then
+                            if not sysUpData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) then
                                 sysAddData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
                         end
-                        if sysUpData(widgetMaxMassText, widgetMaxMass) ~= 1 then
+                        if not sysUpData(widgetMaxMassText, widgetMaxMass) then
                             sysAddData(widgetMaxMassText, widgetMaxMass) end
-                        if sysUpData(widgetTravelTimeText, widgetTravelTime) ~= 1 then
+                        if not sysUpData(widgetTravelTimeText, widgetTravelTime) then
                             sysAddData(widgetTravelTimeText, widgetTravelTime) end
-                        if sysUpData(widgetTargetOrbitText, widgetTargetOrbit) ~= 1 then
+                        if not sysUpData(widgetTargetOrbitText, widgetTargetOrbit) then
                             sysAddData(widgetTargetOrbitText, widgetTargetOrbit) end
                     end
                     CustomTarget = nil
@@ -1092,9 +1092,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             break
                         end
                     end
-                    if sysUpData(widgetMaxMassText, widgetMaxMass) ~= 1 then
+                    if not sysUpData(widgetMaxMassText, widgetMaxMass) then
                         sysAddData(widgetMaxMassText, widgetMaxMass) end
-                    if sysUpData(widgetTravelTimeText, widgetTravelTime) ~= 1 then
+                    if not sysUpData(widgetTravelTimeText, widgetTravelTime) then
                         sysAddData(widgetTravelTimeText, widgetTravelTime) end
                 end
                 if CustomTarget == nil then
@@ -1146,9 +1146,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         local atlasIndex = AtlasOrdered[AutopilotTargetIndex].index
                         local autopilotEntry = atlas[0][atlasIndex]
                         if autopilotEntry and 
-                          ((autopilotEntry ~= nil and autopilotEntry.name == "Space") or 
-                           (iphCondition == "Custom Only" and autopilotEntry.center) or
-                           (iphCondition == "No Moons-Asteroids" and (string.find(autopilotEntry.name, "Moon") ~= nil or string.find(autopilotEntry.name, "Asteroid") ~= nil)))
+                        ((autopilotEntry ~= nil and autopilotEntry.name == "Space") or 
+                        (iphCondition == "Custom Only" and autopilotEntry.center) or
+                        (iphCondition == "No Moons-Asteroids" and (string.find(autopilotEntry.name, "Moon") ~= nil or string.find(autopilotEntry.name, "Asteroid") ~= nil)))
                         then 
                             if up == nil then 
                                 adjustAutopilotTargetIndex()
@@ -1457,7 +1457,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     for _,v in pairs(radarData) do
                         local distance = getDistance(v)
                         if distance > 0.0 then 
-                            if hasMatchingTransponder(v) == 1 then
+                            if hasMatchingTransponder(v) then
                                 insert(friendlies,v)
                             end
                             if not notPvPZone and warpdrive and distance < EmergencyWarp and  warpdrive.getStatus() == 15 then 
@@ -1465,7 +1465,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                 msgTimer = 7
                                 warpdrive.initiate()
                             end
-                            local abandoned = AbandonedRadar and isConstructAbandoned(v) == 1
+                            local abandoned = AbandonedRadar and isConstructAbandoned(v)
                             if CollisionSystem or abandoned then
                                 local size = getSize(v)
                                 local sz = sizeMap[size]
@@ -1664,7 +1664,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
         local function setup()
             activeRadar=nil
-            if radar_2 and radar_2.getOperationalState()==1 then
+            if radar_2 and radar_2.getOperationalState() then
                 activeRadar = radar_2
             else
                 activeRadar = radar_1
@@ -1697,9 +1697,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         local function checkShield()
             local shieldState = shield.isActive()
             if AutoShieldToggle then
-                if not notPvPZone and shieldState == 0 and shield.isVenting() ~= 1 then
+                if not notPvPZone and not shieldState and not shield.isVenting() then
                     shield.toggle()
-                elseif notPvPZone and shieldState == 1 then
+                elseif notPvPZone and shieldState then
                     shield.toggle()
                 end
             end
@@ -1710,7 +1710,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local tot = 0.5999
             if sRR[1] == 0.0 and sRR[2] == 0.0 and sRR[3] == 0.0 and sRR[4] == 0.0 then return end
             local setResist = shield.setResistances((tot*sRR[1]),(tot*sRR[2]),(tot*sRR[3]),(tot*sRR[4]))
-            if setResist == 1 then msg ("Shield Resistances updated") else msg ("Value Exceeded. Failed to update Shield Resistances") end
+            if setResist then msg ("Shield Resistances updated") else msg ("Value Exceeded. Failed to update Shield Resistances") end
         end
     
         function Shield.shieldTick()
@@ -1732,7 +1732,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local posPattern = num .. ', ' .. num .. ', ' ..  num .. ', ' .. num    
             local antimatter, electromagnetic, kinetic, thermic = stringmatch(arguement, posPattern)
             if thermic == nil or (antimatter + electromagnetic+ kinetic + thermic) > 0.6 then msg ("Improperly formatted or total exceeds 0.6") return end
-            if shield.setResistances(antimatter,electromagnetic,kinetic,thermic)==1 then msg ("Shield Resistances set") else msg ("Resistance setting failed.") end
+            if shield.setResistances(antimatter,electromagnetic,kinetic,thermic) then msg ("Shield Resistances set") else msg ("Resistance setting failed.") end
         end
     
         function Shield.ventShield()
@@ -1803,7 +1803,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             end
     
             local function IsInFreeLook()
-                return sysIsVwLock() == 0 and userControlScheme ~= "keyboard" and isRemote() == 0
+                return not sysIsVwLock() and userControlScheme ~= "keyboard" and not isRemote()
             end
     
     
@@ -2073,7 +2073,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 throt = mfloor(throt+0.5) -- Hard-round it to an int
                 local y1 = throtPosY+10
                 local y2 = throtPosY+20
-                if isRemote() == 1 and not RemoteHud then
+                if isRemote() and not RemoteHud then
                     y1 = 55
                     y2 = 65
                 end            
@@ -2127,7 +2127,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local ys = throtPosY-10 
                 local x1 = throtPosX + 10
                 newContent[#newContent + 1] = svgText(0,0,"", "pdim txt txtend")
-                if isRemote() == 1 and not RemoteHud then
+                if isRemote() and not RemoteHud then
                     ys = 75
                 end
                 newContent[#newContent + 1] = svgText( x1, ys, mfloor(spd).." km/h" , "pbright txtbig txtstart")
@@ -2137,7 +2137,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
                 newContent[#newContent + 1] = svgText(crx(150), cry(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
                 newContent[#newContent + 1] = [[<g class="warnings">]]
-                if u.isMouseControlActivated() == 1 then
+                if u.isMouseControlActivated() then
                     newContent[#newContent + 1] = svgText(crx(960), cry(550), "Warning: Invalid Control Scheme Detected", "warnings")
                     newContent[#newContent + 1] = svgText(crx(960), cry(600), "Keyboard Scheme must be selected", "warnings")
                     newContent[#newContent + 1] = svgText(crx(960), cry(650), "Set your preferred scheme in Lua Parameters instead", "warnings")
@@ -2150,7 +2150,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local apY = cry(200)
                 local turnBurnY = cry(250)
                 local gyroY = cry(960)
-                if isRemote() == 1 and not RemoteHud then
+                if isRemote() and not RemoteHud then
                     brakeY = cry(135)
                     gearY = cry(155)
                     hoverY = cry(175)
@@ -2607,7 +2607,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     local cameraForward = vec3(DUSystem.getCameraWorldForward())
                     
                     -- If view is locked, use ship forward and position instead
-                    if sysIsVwLock() == 1 then
+                    if sysIsVwLock() then
                         cameraPos = worldPos
                         cameraRight = constructRight
                         cameraForward = constructForward
@@ -3129,7 +3129,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end   
     
                 local function ToggleFollowMode() -- Toggle Follow Mode on and off
-                    if isRemote() == 1 then
+                    if isRemote()  then
                         followMode = not followMode
                         if followMode then
                             Autopilot = false
@@ -3327,7 +3327,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 MakeButton("Engage Follow Mode", "Disable Follow Mode", buttonWidth, buttonHeight, x, y, function()
                     return followMode
                     end, ToggleFollowMode, function()
-                        return isRemote() == 1
+                        return isRemote() 
                     end)
                     MakeButton("Enable Repair Arrows", "Disable Repair Arrows", buttonWidth, buttonHeight, x + buttonWidth + 20, y, function()
                         return repairArrows
@@ -3339,7 +3339,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             msg ("Repair Arrows Diabled")
                         end
                     end, function()
-                        return isRemote() == 1
+                        return isRemote() 
                     end)
                 y = y + buttonHeight + 20
                 if not ExternalAGG then
@@ -3627,7 +3627,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
             DrawVerticalSpeed(newContent, coreAltitude) -- Weird this is draw during remote control...?
     
-            if isRemote() == 0 or RemoteHud then
+            if not isRemote() or RemoteHud then
                 if not IsInFreeLook() or brightHud then
                     if nearPlanet then -- use real pitch, roll, and heading
                         DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
@@ -3876,11 +3876,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             if msgText ~= "empty" then
                 DisplayMessage(newContent, msgText)
             end
-            if isRemote() == 0 and userControlScheme == "virtual joystick" then
+            if not isRemote() and userControlScheme == "virtual joystick" then
                 if DisplayDeadZone then DrawDeadZone(newContent) end
             end
-            if sysIsVwLock() == 0 then
-                if isRemote() == 1 and holdingShift then
+            if not sysIsVwLock() then
+                if isRemote()  and holdingShift then
                     if not AltIsOn then
                         SetButtonContains()
                         DrawButtons(newContent)
@@ -3913,7 +3913,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     CheckButtons()
                 end
             else
-                if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
+                if not holdingShift and not isRemote() then -- Draw deadzone circle if it's navigating
                     CheckButtons()
                     if mouseDistance > DeadZone then -- Draw a line to the cursor from the screen center
                         -- Note that because SVG lines fucking suck, we have to do a translate and they can't use calc in their params
@@ -4029,7 +4029,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         local y1 = tankY
                         local y2 = tankY+5
                         if not BarFuelDisplay then y2=y2+5 end
-                        if isRemote() == 1 and not RemoteHud then
+                        if isRemote()  and not RemoteHud then
                             y1 = y1 - 50
                             y2 = y2 - 50
                         end
@@ -4156,7 +4156,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             
                 end
                 local function DrawShield()
-                    local shieldState = (shield.isActive() == 1) and "Shield Active" or "Shield Disabled"
+                    local shieldState = shield.isActive() and "Shield Active" or "Shield Disabled"
                     local pvpTime = C.getPvPTimer()
                     local resistances = shield.getResistances()
                     local resistString = "A: "..(10+resistances[1]*100).."% / E: "..(10+resistances[2]*100).."% / K:"..(10+resistances[3]*100).."% / T: "..(10+resistances[4]*100).."%"
@@ -4253,17 +4253,17 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         end
                     end
                     if not inAtmo and WasInAtmo then
-                        if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) == 1 then
+                        if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime)  then
                             sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
-                        if sysUpData(widgetMaxBrakeTimeText, widgetStopSpeed) == 1 then
+                        if sysUpData(widgetMaxBrakeTimeText, widgetStopSpeed)  then
                             sysAddData(widgetStopSpeedText, widgetStopSpeed) end
-                        if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) == 1 then
+                        if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)  then
                             sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
-                        if sysUpData(widgetCurBrakeTimeText, widgetCurBrakeTime) == 1 then
+                        if sysUpData(widgetCurBrakeTimeText, widgetCurBrakeTime)  then
                             sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime) end
-                        if sysUpData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) == 1 then
+                        if sysUpData(widgetCurBrakeDistanceText, widgetCurBrakeDistance)  then
                             sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
-                        if sysUpData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) == 1 then
+                        if sysUpData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) then
                             sysAddData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
                         WasInAtmo = false
                     end
@@ -4523,7 +4523,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local accel = (vec3(C.getWorldAcceleration()):len() / 9.80665)
                 gravity =  c.getGravityIntensity()
                 newContent[#newContent + 1] = [[<g class="dim txt txtend size14">]]
-                if isRemote() == 1 and not RemoteHud then
+                if isRemote() and not RemoteHud then
                     xg = crx(1120)
                     yg1 = cry(55)
                     yg2 = yg1+10
@@ -4621,7 +4621,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 reqThrust = coreMass * gravity
                 reqThrust = round((reqThrust / (coreMass * gravConstant)),2).." g"
                 maxThrust = round((maxThrust / (coreMass * gravConstant)),2).." g"
-                if isRemote() == 0 or RemoteHud then 
+                if not isRemote() or RemoteHud then 
                     local startX = crx(OrbitMapX+10)
                     local startY = cry(OrbitMapY+20)
                     local midX = crx(OrbitMapX+60*1920/ResolutionX+OrbitMapSize/2)
@@ -4769,7 +4769,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local shipsMass = 0
     
             local function safeZone() -- Thanks to @SeM for the base code, modified to work with existing Atlas
-                return (C.isInPvPZone()~=1), mabs(C.getDistanceToSafeZone())
+                return (not C.isInPvPZone()), mabs(C.getDistanceToSafeZone())
             end
             local function GetAutopilotBrakeDistanceAndTime(speed)
                 -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
@@ -4829,7 +4829,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
                 local hovGndDet = hoverDetectGround()  
                 local groundDistance = -1
-                if antigrav and antigrav.isActive() == 1 and not ExternalAGG and velMag < minAutopilotSpeed then
+                if antigrav and antigrav.isActive() and not ExternalAGG and velMag < minAutopilotSpeed then
                     local diffAgg = mabs(coreAltitude - antigrav.getBaseAltitude())
                     if diffAgg < 50 then return diffAgg end
                 end
@@ -6033,7 +6033,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             end
     
             if antigrav then
-                antigravOn = (antigrav.isActive() == 1)
+                antigravOn = antigrav.isActive()
             end
     
             local deltaTick = time - lastApTickTime
@@ -6071,7 +6071,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local maxKinematicUp = C.getMaxThrustAlongAxis("ground", C.getOrientationUp())[1]
     
             if sivl == 0 then
-                if isRemote() == 1 and holdingShift then
+                if isRemote() and holdingShift then
                     if not Animating then
                         simulatedX = uclamp(simulatedX + deltaX/2,-ResolutionX/2,ResolutionX/2)
                         simulatedY = uclamp(simulatedY + deltaY/2,-ResolutionY/2,ResolutionY/2)
@@ -6085,7 +6085,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 simulatedX = uclamp(simulatedX + deltaX/2,-ResolutionX/2,ResolutionX/2)
                 simulatedY = uclamp(simulatedY + deltaY/2,-ResolutionY/2,ResolutionY/2)
                 mouseDistance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
-                if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
+                if not holdingShift and not isRemote() then -- Draw deadzone circle if it's navigating
                     local dx,dy = 1,1
                     if SelectedTab == "SCOPE" then
                         dx,dy = (scopeFOV/90),(scopeFOV/90)
@@ -7413,7 +7413,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         intersectBody, distance = AP.checkLOS((AutopilotTargetCoords-worldPos):normalize())
                         if intersectBody ~= nil then 
                             ibn = intersectBody.name
-                            if ibn ~= autopilotTargetPlanet.name and not inAtmo then
+                            if autopilotTargetPlanet and ibn ~= autopilotTargetPlanet.name and not inAtmo then
                                 collisionAlertStatus = "Takeoff LOS blocked by "..ibn.." in "..getDistanceDisplayString(distance,1)
                                 if ibn ~= planet.name then 
                                     AutopilotTargetCoords = planetTarget() 
@@ -7890,7 +7890,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                 AP.ToggleAutopilot() 
                             end
                             play("180On", "BR")
-                        elseif vectorType==1 then
+                        elseif vectorType == 1 then
                             play("bnkLft","BR")
                         else
                             play("bnkRht", "BR")
@@ -7908,11 +7908,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end                
                 end
                 local function holdingShiftOff()
-                    if sysIsVwLock() == 1 then
+                    if sysIsVwLock() then
                         simulatedX = 0
                         simulatedY = 0 -- Reset for steering purposes
                         sysLockVw(PrevViewLock)
-                    elseif isRemote() == 1 and ShiftShowsRemoteButtons then
+                    elseif isRemote() and ShiftShowsRemoteButtons then
                         Animated = false
                         Animating = false
                     end
@@ -7922,14 +7922,14 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 CONTROL.landingGear()
             elseif action == "light" then
                 if AltIsOn then
-                    if isRemote() == 1 then
-                        if DUPlayer.isFrozen()==1 then DUPlayer.freeze(0) msg("Player Unfrozen, pitch/yaw/roll disabled") else DUPlayer.freeze(1) msg("Player Frozen, pitch/yaw/roll enabled") end
+                    if isRemote() then
+                        if DUPlayer.isFrozen() then DUPlayer.freeze(false) msg("Player Unfrozen, pitch/yaw/roll disabled") else DUPlayer.freeze(true) msg("Player Frozen, pitch/yaw/roll enabled") end
                     else
                         msg("Player Freeze/Unfreeze only used with remote")
                     end
                     return
                 end
-                if Nav.control.isAnyHeadlightSwitchedOn() == 1 then
+                if Nav.control.isAnyHeadlightSwitchedOn() then
                     Nav.control.switchOffHeadlights()
                 else
                     Nav.control.switchOnHeadlights()
@@ -8126,7 +8126,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     u.setTimer("tagTick",0.1)
                 elseif gyro ~= nil then
                     gyro.toggle()
-                    gyroIsOn = gyro.isActive() == 1
+                    gyroIsOn = gyro.isActive()
                     if gyroIsOn then play("gyOn", "GA") else play("gyOff", "GA") end
                 else
                     msg ("No gyro found")
@@ -8146,14 +8146,14 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             elseif action == "lalt" then
                 toggleView = true
                 AltIsOn = true
-                if isRemote() == 0 and not freeLookToggle and userControlScheme == "keyboard" then
-                    sysLockVw(1)
+                if not isRemote() and not freeLookToggle and userControlScheme == "keyboard" then
+                    sysLockVw(true)
                 end
             elseif action == "booster" then
                 if AltIsOn then
                     if transponder then
                         transponder.toggle()
-                        if transponder.isActive() == 1 then
+                        if transponder.isActive() then
                             msg("Transponder On")
                         else
                             msg("Transponder Off")
@@ -8226,7 +8226,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 else
                         holdingShift = true
                         PrevViewLock = sysIsVwLock()
-                        sysLockVw(1)
+                        sysLockVw(true)
                 end
             end
         end
@@ -8285,18 +8285,18 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
             elseif action == "lalt" then
                 if holdingShift then holdingShift = false end
-                if isRemote() == 0 and freeLookToggle then
+                if not isRemote() and freeLookToggle then
                     if toggleView then
-                        if sysIsVwLock() == 1 then
-                            sysLockVw(0)
+                        if sysIsVwLock() then
+                            sysLockVw(false)
                         else
-                            sysLockVw(1)
+                            sysLockVw(true)
                         end
                     else
                         toggleView = true
                     end
-                elseif isRemote() == 0 and not freeLookToggle and userControlScheme == "keyboard" then
-                    sysLockVw(0)
+                elseif not isRemote() and not freeLookToggle and userControlScheme == "keyboard" then
+                    sysLockVw(false)
                 end
                 AltIsOn = false
             end
@@ -8862,14 +8862,14 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     for k in pairs(elementsID) do --Look for space engines, landing gear, fuel tanks if not slotted and c size
                         local type = c.getElementDisplayNameById(elementsID[k])
                         if stringmatch(type, '^.*Atmospheric Engine$') then
-                            if stringmatch(tostring(c.getElementTagsById(elementsID[k])), '^.*vertical.*$') and c.getElementForwardById(elementsID[k])[3]>0 then
+                            if stringmatch(tostring(c.getEngineTagsById(elementsID[k])), '^.*vertical.*$') and c.getElementForwardById(elementsID[k])[3]>0 then
                                 UpVertAtmoEngine = true
                             end
                         end
     
                         if stringmatch(type, '^.*Space Engine$') then
                             SpaceEngines = true
-                            if stringmatch(tostring(c.getElementTagsById(elementsID[k])), '^.*vertical.*$') then
+                            if stringmatch(tostring(c.getEngineTagsById(elementsID[k])), '^.*vertical.*$') then
                                 local enrot = c.getElementForwardById(elementsID[k])
                                 if enrot[3] < 0 then
                                     SpaceEngineVertUp = true
@@ -9006,15 +9006,15 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local function SetupChecks()
                     
                     if gyro ~= nil then
-                        gyroIsOn = gyro.isActive() == 1
+                        gyroIsOn = gyro.isActive()
                     end
                     if not stablized then 
                         navCom:deactivateGroundEngineAltitudeStabilization()
                     end
                     if userControlScheme ~= "keyboard" then
-                        sysLockVw(1)
+                        sysLockVw(true)
                     else
-                        sysLockVw(0)
+                        sysLockVw(false)
                     end
                     -- Close door and retract ramp if available
                     if door and (inAtmo or (not inAtmo and coreAltitude < 10000)) then
@@ -9033,11 +9033,11 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         end
                     end
                     if antigrav then
-                        antigravOn = (antigrav.isActive() == 1)
+                        antigravOn = antigrav.isActive()
                         if antigravOn and not ExternalAGG then antigrav.showWidget() end
                     end
                     -- unfreeze the player if he is remote controlling the construct
-                    if isRemote() == 1 and RemoteFreeze then
+                    if isRemote() and RemoteFreeze then
                         P.freeze(1)
                     else
                         P.freeze(0)
@@ -9049,7 +9049,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             Nav.control.retractLandingGears()
                         end
                     end
-                    GearExtended = (Nav.control.isAnyLandingGearDeployed() == 1) or not stablized or (abvGndDet ~=-1 and (abvGndDet - 3) < LandingGearGroundHeight)
+                    GearExtended = Nav.control.isAnyLandingGearDeployed() or not stablized or (abvGndDet ~=-1 and (abvGndDet - 3) < LandingGearGroundHeight)
                     -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
                     local slow = coreVelocity:len() < 30
                     if (abvGndDet ~= -1 and stabilzied) or ((not inAtmo or not stabilzied) and slow) then
@@ -9065,6 +9065,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
     
                 local function atlasSetup()
+                    AutopilotTargetIndex = 0
                     local atlasCopy = {}
                     
                     local function getSpaceEntry()
@@ -9133,7 +9134,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                                 }
                     end
     
-                    local altTable = { [1]=6637, [2]=3426, [4]=7580, [26]=4242, [27]=4150, [3]=21452, [8]=3434, [9]=5916 } -- Measured min space engine altitudes for Madis, Alioth, Talemai, Sanctuary, Haven, Thades, Teoma, Jago
+                    local altTable = { [1]=6637, [2]=3426, [4]=7580, [26]=4242, [27]=4150, [3]=21452, [6]=4498, [7]=6285, [8]=3434, [9]=5916 } -- Measured min space engine altitudes for:
+                    -- Madis, Alioth, Talemai, Sanctuary, Haven, Sicari, Sinnen, Thades, Teoma, Jago
                     for galaxyId,galaxy in pairs(atlas) do
                         -- Create a copy of Space with the appropriate SystemId for each galaxy
                         atlas[galaxyId][0] = getSpaceEntry()
@@ -9225,8 +9227,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 if shield then SHIELD = ShieldClass(shield, stringmatch, mfloor, msg) end
                 coroutine.yield()
                 u.hideWidget()
-                s.showScreen(1)
-                s.showHelper(0)
+                s.showScreen(true)
+                s.showHelper(false)
                 if screenHud_1 then screenHud_1.setCenteredText("") end
                 -- That was a lot of work with dirty strings and json.  Clean up
                 collectgarbage("collect")
