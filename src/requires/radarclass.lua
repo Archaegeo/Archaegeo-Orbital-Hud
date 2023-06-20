@@ -141,7 +141,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
                 for _,v in pairs(radarData) do
                     local distance = getDistance(v)
                     if distance > 0.0 then 
-                        if hasMatchingTransponder(v) == 1 then
+                        if hasMatchingTransponder(v) then
                             insert(friendlies,v)
                         end
                         if not notPvPZone and warpdrive and distance < EmergencyWarp and  warpdrive.getStatus() == 15 then 
@@ -149,7 +149,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
                             msgTimer = 7
                             warpdrive.initiate()
                         end
-                        local abandoned = AbandonedRadar and isConstructAbandoned(v) == 1
+                        local abandoned = AbandonedRadar and isConstructAbandoned(v)
                         if CollisionSystem or abandoned then
                             local size = getSize(v)
                             local sz = sizeMap[size]
@@ -267,16 +267,16 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
     end
 
     function Radar.GetRadarHud(friendx, friendy, radarX, radarY)
-        local radarMessage, msgt
+        local radarMessage, msg
         local num = numKnown or 0 
         radarContacts = #radarData
         if radarContacts > 0 then 
             if CollisionSystem then 
-                msgt = num.."/"..static.." Known/InRange : "..radarContacts.." Total" 
+                msg = num.."/"..static.." Known/InRange : "..radarContacts.." Total" 
             else
-                msgt = "Radar Contacts: "..radarContacts
+                msg = "Radar Contacts: "..radarContacts
             end
-            radarMessage = svgText(radarX, radarY, msgt, "pbright txtbig txtmid")
+            radarMessage = svgText(radarX, radarY, msg, "pbright txtbig txtmid")
             if #friendlies > 0 then
                 radarMessage = radarMessage..svgText( friendx, friendy, "Friendlies In Range", "pbright txtbig txtmid")
                 for k, v in pairs(friendlies) do
@@ -348,7 +348,7 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
 
     local function setup()
         activeRadar=nil
-        if radar_2 and radar_2.getOperationalState()==1 then
+        if radar_2 and radar_2.getOperationalState() then
             activeRadar = radar_2
         else
             activeRadar = radar_1
@@ -373,4 +373,4 @@ function RadarClass(c, s, u, radar_1, radar_2, warpdrive,
     setup()
 
     return Radar
-end 
+end

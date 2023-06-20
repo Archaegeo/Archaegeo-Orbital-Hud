@@ -5,9 +5,9 @@ function ShieldClass(shield, stringmatch, mfloor, msg) -- Everything related to 
     local function checkShield()
         local shieldState = shield.isActive()
         if AutoShieldToggle then
-            if not notPvPZone and shieldState == 0 and shield.isVenting() ~= 1 then
+            if not notPvPZone and not shieldState and not shield.isVenting() then
                 shield.toggle()
-            elseif notPvPZone and shieldState == 1 then
+            elseif notPvPZone and shieldState then
                 shield.toggle()
             end
         end
@@ -18,7 +18,7 @@ function ShieldClass(shield, stringmatch, mfloor, msg) -- Everything related to 
         local tot = 0.5999
         if sRR[1] == 0.0 and sRR[2] == 0.0 and sRR[3] == 0.0 and sRR[4] == 0.0 then return end
         local setResist = shield.setResistances((tot*sRR[1]),(tot*sRR[2]),(tot*sRR[3]),(tot*sRR[4]))
-        if setResist == 1 then msg ("Shield Resistances updated") else msg ("Value Exceeded. Failed to update Shield Resistances") end
+        if setResist then msg ("Shield Resistances updated") else msg ("Value Exceeded. Failed to update Shield Resistances") end
     end
 
     function Shield.shieldTick()
@@ -40,7 +40,7 @@ function ShieldClass(shield, stringmatch, mfloor, msg) -- Everything related to 
         local posPattern = num .. ', ' .. num .. ', ' ..  num .. ', ' .. num    
         local antimatter, electromagnetic, kinetic, thermic = stringmatch(arguement, posPattern)
         if thermic == nil or (antimatter + electromagnetic+ kinetic + thermic) > 0.6 then msg ("Improperly formatted or total exceeds 0.6") return end
-        if shield.setResistances(antimatter,electromagnetic,kinetic,thermic)==1 then msg ("Shield Resistances set") else msg ("Resistance setting failed.") end
+        if shield.setResistances(antimatter,electromagnetic,kinetic,thermic) then msg ("Shield Resistances set") else msg ("Resistance setting failed.") end
     end
 
     function Shield.ventShield()

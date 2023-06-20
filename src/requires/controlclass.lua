@@ -127,7 +127,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                             AP.ToggleAutopilot() 
                         end
                         play("180On", "BR")
-                    elseif vectorType==1 then
+                    elseif vectorType == 1 then
                         play("bnkLft","BR")
                     else
                         play("bnkRht", "BR")
@@ -145,11 +145,11 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 end                
             end
             local function holdingShiftOff()
-                if sysIsVwLock() == 1 then
+                if sysIsVwLock() then
                     simulatedX = 0
                     simulatedY = 0 -- Reset for steering purposes
                     sysLockVw(PrevViewLock)
-                elseif isRemote() == 1 and ShiftShowsRemoteButtons then
+                elseif isRemote() and ShiftShowsRemoteButtons then
                     Animated = false
                     Animating = false
                 end
@@ -159,14 +159,14 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             CONTROL.landingGear()
         elseif action == "light" then
             if AltIsOn then
-                if isRemote() == 1 then
-                    if DUPlayer.isFrozen()==1 then DUPlayer.freeze(0) msg("Player Unfrozen, pitch/yaw/roll disabled") else DUPlayer.freeze(1) msg("Player Frozen, pitch/yaw/roll enabled") end
+                if isRemote() then
+                    if DUPlayer.isFrozen() then DUPlayer.freeze(false) msg("Player Unfrozen, pitch/yaw/roll disabled") else DUPlayer.freeze(true) msg("Player Frozen, pitch/yaw/roll enabled") end
                 else
                     msg("Player Freeze/Unfreeze only used with remote")
                 end
                 return
             end
-            if Nav.control.isAnyHeadlightSwitchedOn() == 1 then
+            if Nav.control.isAnyHeadlightSwitchedOn() then
                 Nav.control.switchOffHeadlights()
             else
                 Nav.control.switchOnHeadlights()
@@ -363,7 +363,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
                 u.setTimer("tagTick",0.1)
             elseif gyro ~= nil then
                 gyro.toggle()
-                gyroIsOn = gyro.isActive() == 1
+                gyroIsOn = gyro.isActive()
                 if gyroIsOn then play("gyOn", "GA") else play("gyOff", "GA") end
             else
                 msg ("No gyro found")
@@ -383,14 +383,14 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
         elseif action == "lalt" then
             toggleView = true
             AltIsOn = true
-            if isRemote() == 0 and not freeLookToggle and userControlScheme == "keyboard" then
-                sysLockVw(1)
+            if not isRemote() and not freeLookToggle and userControlScheme == "keyboard" then
+                sysLockVw(true)
             end
         elseif action == "booster" then
             if AltIsOn then
                 if transponder then
                     transponder.toggle()
-                    if transponder.isActive() == 1 then
+                    if transponder.isActive() then
                         msg("Transponder On")
                     else
                         msg("Transponder Off")
@@ -463,7 +463,7 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             else
                     holdingShift = true
                     PrevViewLock = sysIsVwLock()
-                    sysLockVw(1)
+                    sysLockVw(true)
             end
         end
     end
@@ -522,18 +522,18 @@ function ControlClass(Nav, c, u, s, atlas, vBooster, hover, antigrav, shield, db
             end
         elseif action == "lalt" then
             if holdingShift then holdingShift = false end
-            if isRemote() == 0 and freeLookToggle then
+            if not isRemote() and freeLookToggle then
                 if toggleView then
-                    if sysIsVwLock() == 1 then
-                        sysLockVw(0)
+                    if sysIsVwLock() then
+                        sysLockVw(false)
                     else
-                        sysLockVw(1)
+                        sysLockVw(true)
                     end
                 else
                     toggleView = true
                 end
-            elseif isRemote() == 0 and not freeLookToggle and userControlScheme == "keyboard" then
-                sysLockVw(0)
+            elseif not isRemote() and not freeLookToggle and userControlScheme == "keyboard" then
+                sysLockVw(false)
             end
             AltIsOn = false
         end

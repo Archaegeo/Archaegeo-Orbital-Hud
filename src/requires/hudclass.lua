@@ -54,7 +54,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         end
 
         local function IsInFreeLook()
-            return sysIsVwLock() == 0 and userControlScheme ~= "keyboard" and isRemote() == 0
+            return not sysIsVwLock() and userControlScheme ~= "keyboard" and not isRemote()
         end
 
 
@@ -324,7 +324,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             throt = mfloor(throt+0.5) -- Hard-round it to an int
             local y1 = throtPosY+10
             local y2 = throtPosY+20
-            if isRemote() == 1 and not RemoteHud then
+            if isRemote() and not RemoteHud then
                 y1 = 55
                 y2 = 65
             end            
@@ -378,7 +378,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             local ys = throtPosY-10 
             local x1 = throtPosX + 10
             newContent[#newContent + 1] = svgText(0,0,"", "pdim txt txtend")
-            if isRemote() == 1 and not RemoteHud then
+            if isRemote() and not RemoteHud then
                 ys = 75
             end
             newContent[#newContent + 1] = svgText( x1, ys, mfloor(spd).." km/h" , "pbright txtbig txtstart")
@@ -388,7 +388,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
 
             newContent[#newContent + 1] = svgText(crx(150), cry(1070), stringf("ARCH Hud Version: %.3f", VERSION_NUMBER), "hudver")
             newContent[#newContent + 1] = [[<g class="warnings">]]
-            if u.isMouseControlActivated() == 1 then
+            if u.isMouseControlActivated() then
                 newContent[#newContent + 1] = svgText(crx(960), cry(550), "Warning: Invalid Control Scheme Detected", "warnings")
                 newContent[#newContent + 1] = svgText(crx(960), cry(600), "Keyboard Scheme must be selected", "warnings")
                 newContent[#newContent + 1] = svgText(crx(960), cry(650), "Set your preferred scheme in Lua Parameters instead", "warnings")
@@ -401,7 +401,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             local apY = cry(200)
             local turnBurnY = cry(250)
             local gyroY = cry(960)
-            if isRemote() == 1 and not RemoteHud then
+            if isRemote() and not RemoteHud then
                 brakeY = cry(135)
                 gearY = cry(155)
                 hoverY = cry(175)
@@ -854,17 +854,17 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 local fov = scopeFOV
                 -- Sort the atlas by distance so closer planets draw on top
                 local cameraPos = vec3(DUSystem.getCameraWorldPos())
-				local cameraRight = vec3(DUSystem.getCameraWorldRight())
-				local cameraForward = vec3(DUSystem.getCameraWorldForward())
-				
-				-- If view is locked, use ship forward and position instead
-				if sysIsVwLock() == 1 then
-					cameraPos = worldPos
-					cameraRight = constructRight
-					cameraForward = constructForward
-				end
-				
-				
+                local cameraRight = vec3(DUSystem.getCameraWorldRight())
+                local cameraForward = vec3(DUSystem.getCameraWorldForward())
+                
+                -- If view is locked, use ship forward and position instead
+                if sysIsVwLock() then
+                    cameraPos = worldPos
+                    cameraRight = constructRight
+                    cameraForward = constructForward
+                end
+                
+                
                 -- If atmoDensity == 0, this already gets sorted in a hudTick
                 if atmosDensity > 0 then
                     table.sort(planetAtlas, function(a1,b2) local a,b = a1.center,b2.center return (a.x-cameraPos.x)^2+(a.y-cameraPos.y)^2+(a.z-cameraPos.z)^2 < (b.x-cameraPos.x)^2+(b.y-cameraPos.y)^2+(b.z-cameraPos.z)^2  end)
@@ -886,7 +886,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     local target =  (v.center)-cameraPos -- +v.radius*constructForward
                     local targetDistance = target:len()
                     local targetN = target:normalize()
-				   
+                   
                     local horizontalRight = target:cross(cameraForward):normalize()
                     local rollRad = math.acos(horizontalRight:dot(cameraRight))
                     if rollRad ~= rollRad then rollRad = 0 end -- I don't know why this would fail but it does... so this fixes it... 
@@ -1380,7 +1380,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             end   
 
             local function ToggleFollowMode() -- Toggle Follow Mode on and off
-                if isRemote() == 1 then
+                if isRemote()  then
                     followMode = not followMode
                     if followMode then
                         Autopilot = false
@@ -1578,7 +1578,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             MakeButton("Engage Follow Mode", "Disable Follow Mode", buttonWidth, buttonHeight, x, y, function()
                 return followMode
                 end, ToggleFollowMode, function()
-                    return isRemote() == 1
+                    return isRemote() 
                 end)
                 MakeButton("Enable Repair Arrows", "Disable Repair Arrows", buttonWidth, buttonHeight, x + buttonWidth + 20, y, function()
                     return repairArrows
@@ -1590,7 +1590,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                         msg ("Repair Arrows Diabled")
                     end
                 end, function()
-                    return isRemote() == 1
+                    return isRemote() 
                 end)
             y = y + buttonHeight + 20
             if not ExternalAGG then
@@ -1878,7 +1878,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
 
         DrawVerticalSpeed(newContent, coreAltitude) -- Weird this is draw during remote control...?
 
-        if isRemote() == 0 or RemoteHud then
+        if not isRemote() or RemoteHud then
             if not IsInFreeLook() or brightHud then
                 if nearPlanet then -- use real pitch, roll, and heading
                     DrawRollLines (newContent, centerX, centerY, originalRoll, bottomText, nearPlanet)
@@ -2127,11 +2127,11 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         if msgText ~= "empty" then
             DisplayMessage(newContent, msgText)
         end
-        if isRemote() == 0 and userControlScheme == "virtual joystick" then
+        if not isRemote() and userControlScheme == "virtual joystick" then
             if DisplayDeadZone then DrawDeadZone(newContent) end
         end
-        if sysIsVwLock() == 0 then
-            if isRemote() == 1 and holdingShift then
+        if not sysIsVwLock() then
+            if isRemote()  and holdingShift then
                 if not AltIsOn then
                     SetButtonContains()
                     DrawButtons(newContent)
@@ -2164,7 +2164,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                 CheckButtons()
             end
         else
-            if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
+            if not holdingShift and not isRemote() then -- Draw deadzone circle if it's navigating
                 CheckButtons()
                 if mouseDistance > DeadZone then -- Draw a line to the cursor from the screen center
                     -- Note that because SVG lines fucking suck, we have to do a translate and they can't use calc in their params
@@ -2280,7 +2280,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     local y1 = tankY
                     local y2 = tankY+5
                     if not BarFuelDisplay then y2=y2+5 end
-                    if isRemote() == 1 and not RemoteHud then
+                    if isRemote()  and not RemoteHud then
                         y1 = y1 - 50
                         y2 = y2 - 50
                     end
@@ -2407,7 +2407,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
         
             end
             local function DrawShield()
-                local shieldState = (shield.isActive() == 1) and "Shield Active" or "Shield Disabled"
+                local shieldState = shield.isActive() and "Shield Active" or "Shield Disabled"
                 local pvpTime = C.getPvPTimer()
                 local resistances = shield.getResistances()
                 local resistString = "A: "..(10+resistances[1]*100).."% / E: "..(10+resistances[2]*100).."% / K:"..(10+resistances[3]*100).."% / T: "..(10+resistances[4]*100).."%"
@@ -2504,17 +2504,17 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                     end
                 end
                 if not inAtmo and WasInAtmo then
-                    if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) == 1 then
+                    if sysUpData(widgetMaxBrakeTimeText, widgetMaxBrakeTime)  then
                         sysAddData(widgetMaxBrakeTimeText, widgetMaxBrakeTime) end
-                    if sysUpData(widgetMaxBrakeTimeText, widgetStopSpeed) == 1 then
+                    if sysUpData(widgetMaxBrakeTimeText, widgetStopSpeed)  then
                         sysAddData(widgetStopSpeedText, widgetStopSpeed) end
-                    if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) == 1 then
+                    if sysUpData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance)  then
                         sysAddData(widgetMaxBrakeDistanceText, widgetMaxBrakeDistance) end
-                    if sysUpData(widgetCurBrakeTimeText, widgetCurBrakeTime) == 1 then
+                    if sysUpData(widgetCurBrakeTimeText, widgetCurBrakeTime)  then
                         sysAddData(widgetCurBrakeTimeText, widgetCurBrakeTime) end
-                    if sysUpData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) == 1 then
+                    if sysUpData(widgetCurBrakeDistanceText, widgetCurBrakeDistance)  then
                         sysAddData(widgetCurBrakeDistanceText, widgetCurBrakeDistance) end
-                    if sysUpData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) == 1 then
+                    if sysUpData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) then
                         sysAddData(widgetTrajectoryAltitudeText, widgetTrajectoryAltitude) end
                     WasInAtmo = false
                 end
@@ -2774,7 +2774,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             local accel = (vec3(C.getWorldAcceleration()):len() / 9.80665)
             gravity =  c.getGravityIntensity()
             newContent[#newContent + 1] = [[<g class="dim txt txtend size14">]]
-            if isRemote() == 1 and not RemoteHud then
+            if isRemote() and not RemoteHud then
                 xg = crx(1120)
                 yg1 = cry(55)
                 yg2 = yg1+10
@@ -2872,7 +2872,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             reqThrust = coreMass * gravity
             reqThrust = round((reqThrust / (coreMass * gravConstant)),2).." g"
             maxThrust = round((maxThrust / (coreMass * gravConstant)),2).." g"
-            if isRemote() == 0 or RemoteHud then 
+            if not isRemote() or RemoteHud then 
                 local startX = crx(OrbitMapX+10)
                 local startY = cry(OrbitMapY+20)
                 local midX = crx(OrbitMapX+60*1920/ResolutionX+OrbitMapSize/2)
