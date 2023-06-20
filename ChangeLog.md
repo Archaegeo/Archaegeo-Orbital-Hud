@@ -1,5 +1,19 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.1
+- Updated for Dual Universe 1.4 (Thanks to NQ-Ligo for a lot of the legwork)
+- Added support for Sicari and Sinnen
+NOTE: The default NQ atlas.lua located in C:\ProgramData\Dual Universe\Game\data\lua (or your install directory) has an error for 1.4 where Sicari is listed as index [6] but id = 5.
+    You must change the id to 6 in order to use the HUD (or wait for next patch of Dual Universe, which will overwrite your atlas.lua changes anyway)
+NOTE: It also appears Sicari's planet.center or planet.radius is off as well, this makes the HUD reported altitude incorrect compared to actual altitude, especially as you get closer to planet. 
+    Recommend using the HUD around Sicari manually or with active oversight of AP functions.
+
+
+Version 2.027
+- Fixed: Issue when AP to custom space location but start with LOS blocked.  Before it would keep saying blocked once clear.
+- Fixed: When using align to target (alt-5) with a space location, will align to target location vice space distance stop distance location.  
+(Useful for when manually piloting in the rest of the way)
+
 Version 2.026 - Major improvements on AP throttle control
 - Refactor: Throttle/Cruise speed control to be more responsive.
 - Fixed: Intermittant but critical issue where cruise speed would set negative on re-entry.

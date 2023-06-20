@@ -269,14 +269,14 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 for k in pairs(elementsID) do --Look for space engines, landing gear, fuel tanks if not slotted and c size
                     local type = c.getElementDisplayNameById(elementsID[k])
                     if stringmatch(type, '^.*Atmospheric Engine$') then
-                        if stringmatch(tostring(c.getElementTagsById(elementsID[k])), '^.*vertical.*$') and c.getElementForwardById(elementsID[k])[3]>0 then
+                        if stringmatch(tostring(c.getEngineTagsById(elementsID[k])), '^.*vertical.*$') and c.getElementForwardById(elementsID[k])[3]>0 then
                             UpVertAtmoEngine = true
                         end
                     end
 
                     if stringmatch(type, '^.*Space Engine$') then
                         SpaceEngines = true
-                        if stringmatch(tostring(c.getElementTagsById(elementsID[k])), '^.*vertical.*$') then
+                        if stringmatch(tostring(c.getEngineTagsById(elementsID[k])), '^.*vertical.*$') then
                             local enrot = c.getElementForwardById(elementsID[k])
                             if enrot[3] < 0 then
                                 SpaceEngineVertUp = true
@@ -322,18 +322,18 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                                 vanillaMaxVolume = vanillaMaxVolume + (vanillaMaxVolume * (fuelTankHandlingAtmo * 0.2))
                             end
                             vanillaMaxVolume =  CalculateFuelVolume(curMass, vanillaMaxVolume)
-							
-							local name = eleName(elementsID[k])
-							
-							local slottedIndex = 0
-							for j = 1, slottedTanksAtmo do
-								if name == jdecode(u["atmofueltank_" .. j].getWidgetData()).name then
-									slottedIndex = j
-									break
-								end
-							end
-							
-							local tank = {elementsID[k], string.sub(name, 1, 12),
+                            
+                            local name = eleName(elementsID[k])
+                            
+                            local slottedIndex = 0
+                            for j = 1, slottedTanksAtmo do
+                                if name == jdecode(u["atmofueltank_" .. j].getWidgetData()).name then
+                                    slottedIndex = j
+                                    break
+                                end
+                            end
+                            
+                            local tank = {elementsID[k], string.sub(name, 1, 12),
                                                         vanillaMaxVolume, massEmpty, curMass, curTime, slottedIndex}
                             atmoTanks[#atmoTanks + 1] = tank
                         end
@@ -356,17 +356,17 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                             end
                             vanillaMaxVolume =  CalculateFuelVolume(curMass, vanillaMaxVolume)
                             
-							local name = eleName(elementsID[k])
-							
-							local slottedIndex = 0
-							for j = 1, slottedTanksRocket do
-								if name == jdecode(u["rocketfueltank_" .. j].getWidgetData()).name then
-									slottedIndex = j
-									break
-								end
-							end
-							
-							local tank = {elementsID[k], string.sub(name, 1, 12),
+                            local name = eleName(elementsID[k])
+                            
+                            local slottedIndex = 0
+                            for j = 1, slottedTanksRocket do
+                                if name == jdecode(u["rocketfueltank_" .. j].getWidgetData()).name then
+                                    slottedIndex = j
+                                    break
+                                end
+                            end
+                            
+                            local tank = {elementsID[k], string.sub(name, 1, 12),
                                                         vanillaMaxVolume, massEmpty, curMass, curTime, slottedIndex}
                             rocketTanks[#rocketTanks + 1] = tank
                         end
@@ -391,15 +391,15 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                             
                             local name = eleName(elementsID[k])
                             
-							local slottedIndex = 0
-							for j = 1, slottedTanksSpace do
-								if name == jdecode(u["spacefueltank_" .. j].getWidgetData()).name then
-									slottedIndex = j
-									break
-								end
-							end
-							
-							local tank = {elementsID[k], string.sub(name, 1, 12),
+                            local slottedIndex = 0
+                            for j = 1, slottedTanksSpace do
+                                if name == jdecode(u["spacefueltank_" .. j].getWidgetData()).name then
+                                    slottedIndex = j
+                                    break
+                                end
+                            end
+                            
+                            local tank = {elementsID[k], string.sub(name, 1, 12),
                                                         vanillaMaxVolume, massEmpty, curMass, curTime, slottedIndex}
                             spaceTanks[#spaceTanks + 1] = tank
                         end
@@ -413,15 +413,15 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             local function SetupChecks()
                 
                 if gyro ~= nil then
-                    gyroIsOn = gyro.isActive() == 1
+                    gyroIsOn = gyro.isActive()
                 end
                 if not stablized then 
                     navCom:deactivateGroundEngineAltitudeStabilization()
                 end
                 if userControlScheme ~= "keyboard" then
-                    sysLockVw(1)
+                    sysLockVw(true)
                 else
-                    sysLockVw(0)
+                    sysLockVw(false)
                 end
                 -- Close door and retract ramp if available
                 if door and (inAtmo or (not inAtmo and coreAltitude < 10000)) then
@@ -440,11 +440,11 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                     end
                 end
                 if antigrav then
-                    antigravOn = (antigrav.isActive() == 1)
+                    antigravOn = antigrav.isActive()
                     if antigravOn and not ExternalAGG then antigrav.showWidget() end
                 end
                 -- unfreeze the player if he is remote controlling the construct
-                if isRemote() == 1 and RemoteFreeze then
+                if isRemote() and RemoteFreeze then
                     P.freeze(1)
                 else
                     P.freeze(0)
@@ -456,7 +456,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                         Nav.control.retractLandingGears()
                     end
                 end
-                GearExtended = (Nav.control.isAnyLandingGearDeployed() == 1) or not stablized or (abvGndDet ~=-1 and (abvGndDet - 3) < LandingGearGroundHeight)
+                GearExtended = Nav.control.isAnyLandingGearDeployed() or not stablized or (abvGndDet ~=-1 and (abvGndDet - 3) < LandingGearGroundHeight)
                 -- Engage brake and extend Gear if either a hover detects something, or they're in space and moving very slowly
                 local slow = coreVelocity:len() < 30
                 if (abvGndDet ~= -1 and stabilzied) or ((not inAtmo or not stabilzied) and slow) then
@@ -472,6 +472,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             end
 
             local function atlasSetup()
+                AutopilotTargetIndex = 0
                 local atlasCopy = {}
                 
                 local function getSpaceEntry()
@@ -540,7 +541,8 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                             }
                 end
 
-                local altTable = { [1]=6637, [2]=3426, [4]=7580, [26]=4242, [27]=4150, [3]=21452, [8]=3434, [9]=5916 } -- Measured min space engine altitudes for Madis, Alioth, Talemai, Sanctuary, Haven, Thades, Teoma, Jago
+                local altTable = { [1]=6637, [2]=3426, [4]=7580, [26]=4242, [27]=4150, [3]=21452, [6]=4498, [7]=6285, [8]=3434, [9]=5916 } -- Measured min space engine altitudes for:
+                -- Madis, Alioth, Talemai, Sanctuary, Haven, Sicari, Sinnen, Thades, Teoma, Jago
                 for galaxyId,galaxy in pairs(atlas) do
                     -- Create a copy of Space with the appropriate SystemId for each galaxy
                     atlas[galaxyId][0] = getSpaceEntry()
@@ -632,8 +634,8 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             if shield then SHIELD = ShieldClass(shield, stringmatch, mfloor, msg) end
             coroutine.yield()
             u.hideWidget()
-            s.showScreen(1)
-            s.showHelper(0)
+            s.showScreen(true)
+            s.showHelper(false)
             if screenHud_1 then screenHud_1.setCenteredText("") end
             -- That was a lot of work with dirty strings and json.  Clean up
             collectgarbage("collect")

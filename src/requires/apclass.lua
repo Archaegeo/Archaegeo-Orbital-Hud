@@ -50,7 +50,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         local shipsMass = 0
 
         local function safeZone() -- Thanks to @SeM for the base code, modified to work with existing Atlas
-            return (C.isInPvPZone()~=1), mabs(C.getDistanceToSafeZone())
+            return (not C.isInPvPZone()), mabs(C.getDistanceToSafeZone())
         end
         local function GetAutopilotBrakeDistanceAndTime(speed)
             -- If we're in atmo, just return some 0's or LastMaxBrake, whatever's bigger
@@ -110,7 +110,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             end
             local hovGndDet = hoverDetectGround()  
             local groundDistance = -1
-            if antigrav and antigrav.isActive() == 1 and not ExternalAGG and velMag < minAutopilotSpeed then
+            if antigrav and antigrav.isActive() and not ExternalAGG and velMag < minAutopilotSpeed then
                 local diffAgg = mabs(coreAltitude - antigrav.getBaseAltitude())
                 if diffAgg < 50 then return diffAgg end
             end
@@ -1314,7 +1314,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         end
 
         if antigrav then
-            antigravOn = (antigrav.isActive() == 1)
+            antigravOn = antigrav.isActive()
         end
 
         local deltaTick = time - lastApTickTime
@@ -1352,7 +1352,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
         local maxKinematicUp = C.getMaxThrustAlongAxis("ground", C.getOrientationUp())[1]
 
         if sivl == 0 then
-            if isRemote() == 1 and holdingShift then
+            if isRemote() and holdingShift then
                 if not Animating then
                     simulatedX = uclamp(simulatedX + deltaX/2,-ResolutionX/2,ResolutionX/2)
                     simulatedY = uclamp(simulatedY + deltaY/2,-ResolutionY/2,ResolutionY/2)
@@ -1366,7 +1366,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             simulatedX = uclamp(simulatedX + deltaX/2,-ResolutionX/2,ResolutionX/2)
             simulatedY = uclamp(simulatedY + deltaY/2,-ResolutionY/2,ResolutionY/2)
             mouseDistance = msqrt(simulatedX * simulatedX + simulatedY * simulatedY)
-            if not holdingShift and isRemote() == 0 then -- Draw deadzone circle if it's navigating
+            if not holdingShift and not isRemote() then -- Draw deadzone circle if it's navigating
                 local dx,dy = 1,1
                 if SelectedTab == "SCOPE" then
                     dx,dy = (scopeFOV/90),(scopeFOV/90)
@@ -2694,7 +2694,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     intersectBody, distance = AP.checkLOS((AutopilotTargetCoords-worldPos):normalize())
                     if intersectBody ~= nil then 
                         ibn = intersectBody.name
-                        if ibn ~= autopilotTargetPlanet.name and not inAtmo then
+                        if autopilotTargetPlanet and ibn ~= autopilotTargetPlanet.name and not inAtmo then
                             collisionAlertStatus = "Takeoff LOS blocked by "..ibn.." in "..getDistanceDisplayString(distance,1)
                             if ibn ~= planet.name then 
                                 AutopilotTargetCoords = planetTarget() 
