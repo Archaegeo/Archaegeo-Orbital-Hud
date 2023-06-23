@@ -445,9 +445,9 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
                 end
                 -- unfreeze the player if he is remote controlling the construct
                 if isRemote() and RemoteFreeze then
-                    P.freeze(1)
+                    P.freeze(true)
                 else
-                    P.freeze(0)
+                    P.freeze(false)
                 end
                 if hasGear then
                     if abvGndDet ~= -1 and not antigravOn then
@@ -472,7 +472,7 @@ function programClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, 
             end
 
             local function atlasSetup()
-                AutopilotTargetIndex = 0
+                --AutopilotTargetIndex = 0
                 local atlasCopy = {}
                 
                 local function getSpaceEntry()

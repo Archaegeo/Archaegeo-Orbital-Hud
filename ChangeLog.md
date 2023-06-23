@@ -1,5 +1,17 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.101 - Analog HOTAS/Single Stick support
+- Added Joystick support for pitch, roll, yaw, and throttle.  To use, go into DU Settings, Controls, Keybindings, LUA, and set:
+    Lua Axis 0 to JoystickAxis0+ (Forward/Back will pitch Up/Down)
+    Lua Axis 1 to JoystickAxis1+ (Left/Right will roll left/right)
+    Lua Axis 2 to JoystickAxis2+ (Twist CCW/CW will yaw left/right)
+    Lua Axis 3 to JoystickAxis3- (Only supported in throttle mode, use standard controls for cruise control)
+Note: You can change which axis you bind if you wish (for example some people want roll on twist and yaw on left/right)
+Note: If you define pitch up/down, roll left/right, yaw left/right in the Piloting Keybinds to your joystick, ArchHUD will still use the analog input (gradiant) vice the binary (on/off) that those controls give.  This allows you to use your joysticks on ships without analog hud support.
+Note: HOTAS Supported, HOSAS is not.  Also there is a tiny deadzone that is NQ related, but isnt terrible.
+- Fixed issue with IPH not remembering what index it was on when you got out of seat (wont reset to 0 anymore)
+- Fixed ship moving while in freelook (wont happen anymore)
+
 Version 2.1
 - Updated for Dual Universe 1.4 (Thanks to NQ-Ligo for a lot of the legwork)
 - Added support for Sicari and Sinnen

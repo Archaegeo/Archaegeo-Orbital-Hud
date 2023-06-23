@@ -19,7 +19,7 @@
     AutopilotCruising = false
     AutopilotEndSpeed = 0
     AutopilotStatus = "Aligning"
-    PrevViewLock = 1
+    PrevViewLock = true
     AutopilotTargetName = "None"
     AutopilotTargetCoords = nil
     AutopilotTargetIndex = 0
