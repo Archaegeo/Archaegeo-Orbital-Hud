@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.100
+VERSION_NUMBER = 0.101
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -182,7 +182,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     AutopilotCruising = false
     AutopilotEndSpeed = 0
     AutopilotStatus = "Aligning"
-    PrevViewLock = 1
+    PrevViewLock = true
     AutopilotTargetName = "None"
     AutopilotTargetCoords = nil
     AutopilotTargetIndex = 0
@@ -4755,7 +4755,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local setCruiseSpeed = nil
             local hSpd = 0
             local eLL = false
-            local sivl = 0
+            local sivl = false
             local AutopilotPaused = false
             local initBL = false
             local swp = false
@@ -4767,6 +4767,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             local parseRadar = false
             local lastMouseTime = 0
             local shipsMass = 0
+            local throtValue = u.getThrottle()
     
             local function safeZone() -- Thanks to @SeM for the base code, modified to work with existing Atlas
                 return (not C.isInPvPZone()), mabs(C.getDistanceToSafeZone())
@@ -5021,9 +5022,21 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             return showWaypoint(planet, coordinates, dontSet)
         end
     
+        local throtAxis = s.getAxisValue(3)
+    
         function ap.APTick()
             local wheel = s.getMouseWheel()
-    
+            if throttleMode then
+                local gav = s.getAxisValue(3)
+                if gav ~= throtAxis then 
+                     if AtmoSpeedAssist then 
+                        PlayerThrottle = gav 
+                    else 
+                        navCom:setThrottleCommand(axisCommandId.longitudinal, gav) 
+                    end
+                    throtAxis = gav
+                end
+            end
             if wheel > 0 then
                 AP.changeSpd()
             elseif wheel < 0 then
@@ -5631,8 +5644,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                 end
                 local speed = velMag
-                local throttle = u.getThrottle()/100
-                if AtmoSpeedAssist then throttle = PlayerThrottle end
+                local throttle = (AtmoSpeedAssist and PlayerThrottle) or throtValue/100
+    
                 local accelDistance, accelTime =
                     Kinematic.computeDistanceAndTime(velMag, adjMaxGameVelocity, -- From currently velocity to max
                         coreMass, Nav:maxForceForward()*throttle, warmup, -- T50?  Assume none, negligible for this
@@ -5930,10 +5943,17 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             brakeSpeedFactor = math.max(brakeSpeedFactor, 0.01)
             brakeFlatFactor = math.max(brakeFlatFactor, 0.01)
             autoRollFactor = math.max(autoRollFactor, 0.01)
+            throtValue = u.getThrottle()
             -- final inputs
-            local finalPitchInput = uclamp(pitchInput + pitchInput2 + s.getControlDeviceForwardInput(),-1,1)
-            local finalRollInput = uclamp(rollInput + rollInput2 + s.getControlDeviceYawInput(),-1,1)
-            local finalYawInput = uclamp((yawInput + yawInput2) - s.getControlDeviceLeftRightInput(),-1,1)
+            local pci = s.getAxisValue(1)
+            if pci == 0 then pci = s.getControlDeviceForwardInput() end
+            local finalPitchInput = uclamp(pitchInput + pitchInput2 + pci,-1,1)
+            local rci = s.getAxisValue(0)
+            if rci == 0 then rci = s.getControlDeviceYawInput() end
+            local finalRollInput = uclamp(rollInput + rollInput2 + rci,-1,1)
+            local yci = s.getAxisValue(2)
+            if yci == 0 then yci = s.getControlDeviceLeftRightInput() end
+            local finalYawInput = uclamp(yawInput + yawInput2 - yci,-1,1)
             
             local finalBrakeInput = (BrakeIsOn and 1) or 0
     
@@ -6061,16 +6081,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
             planet = sys:closestBody(cWorldPos)
             kepPlanet = Kep(planet)
             orbit = kepPlanet:orbitalParameters(cWorldPos, constructVelocity)
-            --if coreAltitude == 0 then
-                --coreAltitude = (worldPos - planet.center):len() - planet.radius
-            --end
             nearPlanet = u.getClosestPlanetInfluence() > 0 or (coreAltitude > 0 and coreAltitude < 200000)
     
             local gravity = planet:getGravity(cWorldPos):len() * coreMass
             targetRoll = 0
             local maxKinematicUp = C.getMaxThrustAlongAxis("ground", C.getOrientationUp())[1]
     
-            if sivl == 0 then
+            if not sivl then
                 if isRemote() and holdingShift then
                     if not Animating then
                         simulatedX = uclamp(simulatedX + deltaX/2,-ResolutionX/2,ResolutionX/2)
@@ -6683,8 +6700,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         PlayerThrottle = round(AutopilotInterplanetaryThrottle,2)
                         apThrottleSet = true
                     end
-                    local throttle = u.getThrottle()
-                    if AtmoSpeedAssist then throttle = PlayerThrottle end
+                    local throttle = (AtmoSpeedAssist and PlayerThrottle) or throtValue
+    
                     -- If we're within warmup/8 seconds of needing to brake, cut throttle to handle warmdowns
                     -- Note that warmup/8 is kindof an arbitrary guess.  But it shouldn't matter that much.  
     
@@ -6828,8 +6845,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                             autoRoll = true
                         end
                     end
-                    local throttle = u.getThrottle()
-                    if AtmoSpeedAssist then throttle = PlayerThrottle end
+                    local throttle = (AtmoSpeedAssist and PlayerThrottle) or throtValue
                     if throttle > 0 then
                         AutopilotAccelerating = true
                         if AutopilotStatus ~= "Accelerating" then
@@ -7726,8 +7742,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         Nav:toggleBoosters()
                     end
                 else -- Atmosphere Rocket Boost Assist Not in Cruise Control by Azraeil
-                    local throttle = u.getThrottle()
-                    if AtmoSpeedAssist then throttle = PlayerThrottle*100 end
+                    local throttle = (AtmoSpeedAssist and PlayerThrottle*100) or throtValue
                     local targetSpeed = (throttle/100)
                     if not inAtmo then
                         targetSpeed = targetSpeed * adjMaxGameVelocity
@@ -9038,9 +9053,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     end
                     -- unfreeze the player if he is remote controlling the construct
                     if isRemote() and RemoteFreeze then
-                        P.freeze(1)
+                        P.freeze(true)
                     else
-                        P.freeze(0)
+                        P.freeze(false)
                     end
                     if hasGear then
                         if abvGndDet ~= -1 and not antigravOn then
@@ -9065,7 +9080,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 end
     
                 local function atlasSetup()
-                    AutopilotTargetIndex = 0
+                    --AutopilotTargetIndex = 0
                     local atlasCopy = {}
                     
                     local function getSpaceEntry()
