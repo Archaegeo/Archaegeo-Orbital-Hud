@@ -304,6 +304,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
     end
 
     local throtAxis = s.getAxisValue(3)
+    local latAxis = s.getAxisValue(4)
+    local vertAxis = s.getAxisValue(5)
 
     function ap.APTick()
         local wheel = s.getMouseWheel()
@@ -316,6 +318,18 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     navCom:setThrottleCommand(axisCommandId.longitudinal, gav) 
                 end
                 throtAxis = gav
+            end
+            gav = s.getAxisValue(4)
+            if gav ~= latAxis then
+                navCom:setThrottleCommand(axisCommandId.lateral, gav)
+                LeftAmount = gav
+                latAxis = gav
+            end
+            gav = s.getAxisValue(5)
+            if gav ~= vertAxis then
+                navCom:setThrottleCommand(axisCommandId.vertical, gav)
+                upAmount = gav
+                vertAxis = gav
             end
         end
         if wheel > 0 then
@@ -2848,7 +2862,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local autoNavigationAcceleration = vec3()
             
 
-            local verticalStrafeAcceleration = composeAxisAccelerationFromTargetSpeedV(axisCommandId.vertical,upAmount*1000)
+            local verticalStrafeAcceleration = composeAxisAccelerationFromTargetSpeedV(axisCommandId.vertical,upAmount*100)
             Nav:setEngineForceCommand("vertical airfoil , vertical ground ", verticalStrafeAcceleration, dontKeepCollinearity)
             --autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. "vertical airfoil , vertical ground "
             --autoNavigationAcceleration = autoNavigationAcceleration + verticalStrafeAcceleration
@@ -2859,7 +2873,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local longitudinalAcceleration = navCom:composeAxisAccelerationFromThrottle(
                                                     longitudinalEngineTags, axisCommandId.longitudinal)
 
-            local lateralAcceleration = composeAxisAccelerationFromTargetSpeed(axisCommandId.lateral, LeftAmount*1000)
+            local lateralAcceleration = composeAxisAccelerationFromTargetSpeed(axisCommandId.lateral, LeftAmount)
+            local lateralStrafeAcceleration = navCom:composeAxisAccelerationFromThrottle(lateralStrafeEngineTags, axisCommandId.lateral)
             autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. "lateral airfoil , lateral ground " -- We handle the rest later
             autoNavigationAcceleration = autoNavigationAcceleration + lateralAcceleration
 
@@ -2878,13 +2893,13 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             if (UseExtra=="All" or UseExtra=="Vertical") then verticalStrafeEngineTags = verticalStrafeEngineTags..ExtraVerticalTags end
 
             -- Vertical also handles the non-airfoils separately
-            if upAmount ~= 0 or (BrakeLanding and BrakeIsOn) or (not GearExtended and not stablized) then
+            if (upAmount ~= 0 or vertAxis ~= 0) or (BrakeLanding and BrakeIsOn) or (not GearExtended and not stablized) then
                 Nav:setEngineForceCommand(verticalStrafeEngineTags, verticalStrafeAcceleration, keepCollinearity)
             else
                 Nav:setEngineForceCommand(verticalStrafeEngineTags, vec3(), keepCollinearity) -- Reset vertical engines but not airfoils or ground
             end
 
-            if LeftAmount ~= 0 then
+            if (LeftAmount ~= 0 or latAxis ~= 0) then
                 Nav:setEngineForceCommand(lateralStrafeEngineTags, lateralAcceleration, keepCollinearity)
             else
                 Nav:setEngineForceCommand(lateralStrafeEngineTags, vec3(), keepCollinearity) -- Reset vertical engines but not airfoils or ground
@@ -2968,7 +2983,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             if (verticalCommandType == axisCommandType.byThrottle)  then
                 local verticalStrafeAcceleration = navCom:composeAxisAccelerationFromThrottle(
                                                     verticalStrafeEngineTags, axisCommandId.vertical)
-                if upAmount ~= 0 or (BrakeLanding and BrakeIsOn) then
+                if (upAmount ~= 0 or vertAxis ~= 0) or (BrakeLanding and BrakeIsOn) then
                     Nav:setEngineForceCommand(verticalStrafeEngineTags, verticalStrafeAcceleration, keepCollinearity, 'airfoil',
                         'ground', '', tolerancePercentToSkipOtherPriorities)
                 else
@@ -2979,7 +2994,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                     '', '', tolerancePercentToSkipOtherPriorities)
                 end
             elseif (verticalCommandType == axisCommandType.byTargetSpeed) then
-                if upAmount < 0 then 
+                if upAmount < 0 or vertAxis < 0 then 
                     Nav:setEngineForceCommand('hover', vec3(), keepCollinearity) 
                 end
                 local verticalAcceleration = navCom:composeAxisAccelerationFromTargetSpeed(
