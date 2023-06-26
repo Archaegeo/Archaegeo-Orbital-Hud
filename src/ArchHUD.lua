@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.101
+VERSION_NUMBER = 0.102
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -5023,6 +5023,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
         end
     
         local throtAxis = s.getAxisValue(3)
+        local latAxis = s.getAxisValue(4)
+        local vertAxis = s.getAxisValue(5)
     
         function ap.APTick()
             local wheel = s.getMouseWheel()
@@ -5035,6 +5037,18 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         navCom:setThrottleCommand(axisCommandId.longitudinal, gav) 
                     end
                     throtAxis = gav
+                end
+                gav = s.getAxisValue(4)
+                if gav ~= latAxis then
+                    navCom:setThrottleCommand(axisCommandId.lateral, gav)
+                    LeftAmount = gav
+                    latAxis = gav
+                end
+                gav = s.getAxisValue(5)
+                if gav ~= vertAxis then
+                    navCom:setThrottleCommand(axisCommandId.vertical, gav)
+                    upAmount = gav
+                    vertAxis = gav
                 end
             end
             if wheel > 0 then
@@ -7567,7 +7581,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local autoNavigationAcceleration = vec3()
                 
     
-                local verticalStrafeAcceleration = composeAxisAccelerationFromTargetSpeedV(axisCommandId.vertical,upAmount*1000)
+                local verticalStrafeAcceleration = composeAxisAccelerationFromTargetSpeedV(axisCommandId.vertical,upAmount*100)
                 Nav:setEngineForceCommand("vertical airfoil , vertical ground ", verticalStrafeAcceleration, dontKeepCollinearity)
                 --autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. "vertical airfoil , vertical ground "
                 --autoNavigationAcceleration = autoNavigationAcceleration + verticalStrafeAcceleration
@@ -7578,7 +7592,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local longitudinalAcceleration = navCom:composeAxisAccelerationFromThrottle(
                                                         longitudinalEngineTags, axisCommandId.longitudinal)
     
-                local lateralAcceleration = composeAxisAccelerationFromTargetSpeed(axisCommandId.lateral, LeftAmount*1000)
+                local lateralAcceleration = composeAxisAccelerationFromTargetSpeed(axisCommandId.lateral, LeftAmount)
+                local lateralStrafeAcceleration = navCom:composeAxisAccelerationFromThrottle(lateralStrafeEngineTags, axisCommandId.lateral)
                 autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. "lateral airfoil , lateral ground " -- We handle the rest later
                 autoNavigationAcceleration = autoNavigationAcceleration + lateralAcceleration
     
@@ -7597,13 +7612,13 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 if (UseExtra=="All" or UseExtra=="Vertical") then verticalStrafeEngineTags = verticalStrafeEngineTags..ExtraVerticalTags end
     
                 -- Vertical also handles the non-airfoils separately
-                if upAmount ~= 0 or (BrakeLanding and BrakeIsOn) or (not GearExtended and not stablized) then
+                if (upAmount ~= 0 or vertAxis ~= 0) or (BrakeLanding and BrakeIsOn) or (not GearExtended and not stablized) then
                     Nav:setEngineForceCommand(verticalStrafeEngineTags, verticalStrafeAcceleration, keepCollinearity)
                 else
                     Nav:setEngineForceCommand(verticalStrafeEngineTags, vec3(), keepCollinearity) -- Reset vertical engines but not airfoils or ground
                 end
     
-                if LeftAmount ~= 0 then
+                if (LeftAmount ~= 0 or latAxis ~= 0) then
                     Nav:setEngineForceCommand(lateralStrafeEngineTags, lateralAcceleration, keepCollinearity)
                 else
                     Nav:setEngineForceCommand(lateralStrafeEngineTags, vec3(), keepCollinearity) -- Reset vertical engines but not airfoils or ground
@@ -7687,7 +7702,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 if (verticalCommandType == axisCommandType.byThrottle)  then
                     local verticalStrafeAcceleration = navCom:composeAxisAccelerationFromThrottle(
                                                         verticalStrafeEngineTags, axisCommandId.vertical)
-                    if upAmount ~= 0 or (BrakeLanding and BrakeIsOn) then
+                    if (upAmount ~= 0 or vertAxis ~= 0) or (BrakeLanding and BrakeIsOn) then
                         Nav:setEngineForceCommand(verticalStrafeEngineTags, verticalStrafeAcceleration, keepCollinearity, 'airfoil',
                             'ground', '', tolerancePercentToSkipOtherPriorities)
                     else
@@ -7698,7 +7713,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                         '', '', tolerancePercentToSkipOtherPriorities)
                     end
                 elseif (verticalCommandType == axisCommandType.byTargetSpeed) then
-                    if upAmount < 0 then 
+                    if upAmount < 0 or vertAxis < 0 then 
                         Nav:setEngineForceCommand('hover', vec3(), keepCollinearity) 
                     end
                     local verticalAcceleration = navCom:composeAxisAccelerationFromTargetSpeed(
