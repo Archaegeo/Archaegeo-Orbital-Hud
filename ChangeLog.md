@@ -1,9 +1,18 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.102 - Six Axis Joystick Support
+- Added analog stick support for Strafe (Left/Right) and Up/Down.  To use, go into DU Settings, Controls, Keybindings, LUA, and set your preferred stick axis to:
+    Lua Axis 0 is Roll left/right
+    Lua Axis 1 is Pitch Up/Down 
+    Lua Axis 2 is Yaw left/right
+    Lua Axis 3 is Throttle (both forward and back) (Only supported in throttle mode, use standard controls for cruise control)
+    Lua Axis 4 is Strafe Left/Right
+    Lua Axis 5 is Vertical Up/Down
+
 Version 2.101 - Analog HOTAS/Single Stick support
 - Added Joystick support for pitch, roll, yaw, and throttle.  To use, go into DU Settings, Controls, Keybindings, LUA, and set:
-    Lua Axis 0 to JoystickAxis0+ (Forward/Back will pitch Up/Down)
-    Lua Axis 1 to JoystickAxis1+ (Left/Right will roll left/right)
+    Lua Axis 0 to JoystickAxis0+ (Left/Right will roll left/right)
+    Lua Axis 1 to JoystickAxis1+ (Forward/Back will pitch Up/Down Left/Right will roll left/right)
     Lua Axis 2 to JoystickAxis2+ (Twist CCW/CW will yaw left/right)
     Lua Axis 3 to JoystickAxis3- (Only supported in throttle mode, use standard controls for cruise control)
 Note: You can change which axis you bind if you wish (for example some people want roll on twist and yaw on left/right)
