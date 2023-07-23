@@ -331,7 +331,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             local label = "CRUISE"
             local u = "km/h"
             local value = flightValue
-            if string.find(flightStyle, "TRAVEL") or string.find(flightStyle, "AUTOPILOT") then
+            if throttleMode and (string.find(flightStyle, "TRAVEL") or string.find(flightStyle, "AUTOPILOT")) then
                 label = "THROT"
                 u = "%"
                 value = throt
