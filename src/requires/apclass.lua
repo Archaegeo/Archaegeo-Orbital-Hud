@@ -427,6 +427,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 AltitudeHold = true
                 upAmount = 0
                 Nav:setEngineForceCommand('thrust analog vertical fueled ', vec3(), 1)
+                AP.cmdThrottle(1)
                 AP.cmdCruise(mfloor(adjustedAtmoSpeedLimit))
             end
         else
@@ -1100,6 +1101,7 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local currentAxisSpeedMS = coreVelocity:dot(axisCRefDirection)
         
             local targetAxisSpeedMS = targetSpeed * constants.kph2m
+
         
 
         
@@ -1514,16 +1516,16 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 BrakeLanding = true
             elseif (not ExternalAGG and antigravOn) or HoldAltitude < planet.spaceEngineMinAltitude then
                 if antigravOn then targetAltitude = antigrav.getBaseAltitude() end
-                if coreAltitude < (targetAltitude - 100) then
+                if coreAltitude < (targetAltitude - 200) then
                     VtPitch = 0
-                    upAmount = 15
+                    upAmount = 0.35
                     BrakeIsOn = false
                 elseif vSpd > 0 then
                     BrakeIsOn = "VTO Limit"
                     upAmount = 0
                 elseif vSpd < -30 then
                     BrakeIsOn = "VTO Fall"
-                    upAmount = 15
+                    upAmount = 1
                 elseif coreAltitude >= targetAltitude then
                     if antigravOn then 
                         if Autopilot or VectorToTarget then
@@ -1547,12 +1549,12 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
                 if atmosDensity > 0.08 then
                     VtPitch = 0
                     BrakeIsOn = false
-                    upAmount = 20
+                    upAmount = 0.8
                 elseif atmosDensity < 0.08 and inAtmo then
                     BrakeIsOn = false
                     if SpaceEngineVertDn then
                         VtPitch = 0
-                        upAmount = 20
+                        upAmount = 0.8
                     else
                         upAmount = 0
                         VtPitch = 36
@@ -2845,7 +2847,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
 
             brakePID:inject(constructVelocity:len() - (adjustedAtmoSpeedLimit/3.6) - addThrust) 
             local calculatedBrake = uclamp(brakePID:get(),0,1)
-            if (inAtmo and vSpd < -80) or (atmosDensity > 0.005 or Reentry or finalLand) then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
+            if (inAtmo and vSpd < -80) or (atmosDensity > 0.005 or Reentry or finalLand) then
+                 -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
                 brakeInput2 = calculatedBrake
             end
             if brakeInput2 > 0 then
@@ -2860,9 +2863,9 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
 
             local autoNavigationEngineTags = ''
             local autoNavigationAcceleration = vec3()
-            
-
-            local verticalStrafeAcceleration = composeAxisAccelerationFromTargetSpeedV(axisCommandId.vertical,upAmount*100)
+            local spd = 0
+            if upAmount ~= 0 then spd = adjustedAtmoSpeedLimit * upAmount end
+            local verticalStrafeAcceleration = composeAxisAccelerationFromTargetSpeedV(axisCommandId.vertical,spd)
             Nav:setEngineForceCommand("vertical airfoil , vertical ground ", verticalStrafeAcceleration, dontKeepCollinearity)
             --autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. "vertical airfoil , vertical ground "
             --autoNavigationAcceleration = autoNavigationAcceleration + verticalStrafeAcceleration
@@ -2873,8 +2876,8 @@ function APClass(Nav, c, u, atlas, vBooster, hover, telemeter_1, antigrav, dbHud
             local longitudinalAcceleration = navCom:composeAxisAccelerationFromThrottle(
                                                     longitudinalEngineTags, axisCommandId.longitudinal)
 
-            local lateralAcceleration = composeAxisAccelerationFromTargetSpeed(axisCommandId.lateral, LeftAmount)
-            local lateralStrafeAcceleration = navCom:composeAxisAccelerationFromThrottle(lateralStrafeEngineTags, axisCommandId.lateral)
+            if LeftAmount ~= 0 then spd = adjustedAtmoSpeedLimit * LeftAmount else spd = 0 end
+            local lateralAcceleration = composeAxisAccelerationFromTargetSpeed(axisCommandId.lateral, spd)
             autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. "lateral airfoil , lateral ground " -- We handle the rest later
             autoNavigationAcceleration = autoNavigationAcceleration + lateralAcceleration
 
