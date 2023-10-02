@@ -1,5 +1,8 @@
 ## ChangeLog - Most recent changes at the top
 
+Version 2.013 - Minor bug fixes
+- Fixed 100k/hr up speed limit in atmo, now limited to adjusted atmo speed limit.
+
 Version 2.102 - Six Axis Joystick Support
 - Added analog stick support for Strafe (Left/Right) and Up/Down.  To use, go into DU Settings, Controls, Keybindings, LUA, and set your preferred stick axis to:
     Lua Axis 0 is Roll left/right
