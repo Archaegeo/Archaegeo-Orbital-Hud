@@ -8,7 +8,7 @@ local atlas = require("atlas")
 
 script = {}  -- wrappable container for all the code. Different than normal DU Lua in that things are not seperated out.
 
-VERSION_NUMBER = 0.102
+VERSION_NUMBER = 0.103
 -- These values are a default set for 1920x1080 ResolutionX and Y settings. 
 
 -- User variables. Must be global to work with databank system
@@ -5146,6 +5146,7 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     AltitudeHold = true
                     upAmount = 0
                     Nav:setEngineForceCommand('thrust analog vertical fueled ', vec3(), 1)
+                    AP.cmdThrottle(1)
                     AP.cmdCruise(mfloor(adjustedAtmoSpeedLimit))
                 end
             else
@@ -6233,16 +6234,16 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     BrakeLanding = true
                 elseif (not ExternalAGG and antigravOn) or HoldAltitude < planet.spaceEngineMinAltitude then
                     if antigravOn then targetAltitude = antigrav.getBaseAltitude() end
-                    if coreAltitude < (targetAltitude - 100) then
+                    if coreAltitude < (targetAltitude - 200) then
                         VtPitch = 0
-                        upAmount = 15
+                        upAmount = 0.35
                         BrakeIsOn = false
                     elseif vSpd > 0 then
                         BrakeIsOn = "VTO Limit"
                         upAmount = 0
                     elseif vSpd < -30 then
                         BrakeIsOn = "VTO Fall"
-                        upAmount = 15
+                        upAmount = 1
                     elseif coreAltitude >= targetAltitude then
                         if antigravOn then 
                             if Autopilot or VectorToTarget then
@@ -6266,12 +6267,12 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                     if atmosDensity > 0.08 then
                         VtPitch = 0
                         BrakeIsOn = false
-                        upAmount = 20
+                        upAmount = 0.8
                     elseif atmosDensity < 0.08 and inAtmo then
                         BrakeIsOn = false
                         if SpaceEngineVertDn then
                             VtPitch = 0
-                            upAmount = 20
+                            upAmount = 0.8
                         else
                             upAmount = 0
                             VtPitch = 36
@@ -7564,7 +7565,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
     
                 brakePID:inject(constructVelocity:len() - (adjustedAtmoSpeedLimit/3.6) - addThrust) 
                 local calculatedBrake = uclamp(brakePID:get(),0,1)
-                if (inAtmo and vSpd < -80) or (atmosDensity > 0.005 or Reentry or finalLand) then -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
+                if (inAtmo and vSpd < -80) or (atmosDensity > 0.005 or Reentry or finalLand) then 
+                    -- Don't brake-limit them at <5% atmo if going up (or mostly up), it's mostly safe up there and displays 0% so people would be mad
                     brakeInput2 = calculatedBrake
                 end
                 if brakeInput2 > 0 then
@@ -7581,7 +7583,9 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local autoNavigationAcceleration = vec3()
                 
     
-                local verticalStrafeAcceleration = composeAxisAccelerationFromTargetSpeedV(axisCommandId.vertical,upAmount*100)
+                local spd = 0
+                if upAmount ~= 0 then spd = adjustedAtmoSpeedLimit * upAmount end
+                local verticalStrafeAcceleration = composeAxisAccelerationFromTargetSpeedV(axisCommandId.vertical,spd)
                 Nav:setEngineForceCommand("vertical airfoil , vertical ground ", verticalStrafeAcceleration, dontKeepCollinearity)
                 --autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. "vertical airfoil , vertical ground "
                 --autoNavigationAcceleration = autoNavigationAcceleration + verticalStrafeAcceleration
@@ -7592,8 +7596,8 @@ privateFile = "name" -- (Default "name") Set to the name of the file for private
                 local longitudinalAcceleration = navCom:composeAxisAccelerationFromThrottle(
                                                         longitudinalEngineTags, axisCommandId.longitudinal)
     
-                local lateralAcceleration = composeAxisAccelerationFromTargetSpeed(axisCommandId.lateral, LeftAmount)
-                local lateralStrafeAcceleration = navCom:composeAxisAccelerationFromThrottle(lateralStrafeEngineTags, axisCommandId.lateral)
+                if LeftAmount ~= 0 then spd = adjustedAtmoSpeedLimit * LeftAmount else spd = 0 end
+                local lateralAcceleration = composeAxisAccelerationFromTargetSpeed(axisCommandId.lateral, spd)
                 autoNavigationEngineTags = autoNavigationEngineTags .. ' , ' .. "lateral airfoil , lateral ground " -- We handle the rest later
                 autoNavigationAcceleration = autoNavigationAcceleration + lateralAcceleration
     
