@@ -331,7 +331,7 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
             local label = "CRUISE"
             local u = "km/h"
             local value = flightValue
-            if string.find(flightStyle, "TRAVEL") or string.find(flightStyle, "AUTOPILOT") then
+            if throttleMode and (string.find(flightStyle, "TRAVEL") or string.find(flightStyle, "AUTOPILOT")) then
                 label = "THROT"
                 u = "%"
                 value = throt
@@ -345,6 +345,9 @@ function HudClass(Nav, c, u, s, atlas, antigrav, hover, shield, warpdrive, weapo
                         <polygon points="%d,%d %d,%d %d,%d"/>
                     </g>]], throtclass, throtPosX-7, throtPosY-50, throtPosX, throtPosY-50, throtPosX, throtPosY+50, throtPosX-7, throtPosY+50, (1 - mabs(throt)), 
                     throtPosX-10, throtPosY+50, throtPosX-15, throtPosY+53, throtPosX-15, throtPosY+47)
+            end
+            if string.find(flightStyle, "AUTOPILOT") then
+                label = 'AP ' .. label
             end
             newContent[#newContent + 1] = svgText(throtPosX+10, y1, label , "pbright txtstart")
             newContent[#newContent + 1] = svgText(throtPosX+10, y2, stringf("%.0f %s", value, u), "pbright txtstart")
